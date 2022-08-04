@@ -391,10 +391,10 @@ def configure(keymap):
     def read_config() -> str:
         return Path(getAppExePath(), "config.py").read_text("utf-8")
 
-    def open_gist() -> None:
-        gist_url = "https://gist.github.com/AWtnb/5a4bcfa1000ff7b793954a241e3ac831/edit"
+    def open_github() -> None:
+        repo = "https://github.com/AWtnb/keyhac/edit/main/config.py"
         setClipboardText(read_config())
-        execute_path(gist_url)
+        execute_path(repo)
 
     def reload_config() -> None:
         keymap.configure()
@@ -406,7 +406,7 @@ def configure(keymap):
     for key, func in {
         "R" : reload_config,
         "E" : keymap.command_EditConfig,
-        "G" : open_gist,
+        "G" : open_github,
         "P" : lambda : paste_string(read_config()),
         "X" : lambda : None,
     }.items():
