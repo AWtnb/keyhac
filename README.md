@@ -1,2 +1,3 @@
-# keyhac
-keyhac custom
+# keyhac customization
+
+keyhac の個人用設定
