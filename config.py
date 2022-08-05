@@ -650,11 +650,10 @@ def configure(keymap):
         def invoke(self) -> callable:
             def _sender() -> None:
                 selection = copy_string()
-                if selection:
-                    if (func := self.mapping.get(selection.strip())):
-                        func()
-                    else:
-                        send_keys("S-Left")
+                if selection and (func := self.mapping.get(selection.strip())):
+                    func()
+                else:
+                    send_keys("S-Left")
             return lazy_call(recover_clipboard(_sender))
 
     keymap_global["U1-X"] = PseudoEspanso().invoke()
