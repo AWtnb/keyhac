@@ -595,7 +595,7 @@ def configure(keymap):
             self.mapping = {}
 
             direct_puncher = KeyPuncher(sleep_sec=0)
-            for trigger, stroke in {
+            for alias, stroke in {
                 "-f": ("\uff0d"),
                 "-h": ("\u2010"),
                 "-m": ("\u2014"),
@@ -633,24 +633,23 @@ def configure(keymap):
                 "xm": (".md"),
                 "xx": (".txt"),
             }.items():
-                self.mapping[trigger] = direct_puncher.invoke(*stroke)
+                self.mapping[alias] = direct_puncher.invoke(*stroke)
 
             indirect_puncher = KeyPuncher(recover_ime=True, sleep_sec=0)
-            for trigger, stroke in {
+            for alias, stroke in {
                 "m1": ("# "),
                 "m2": ("## "),
                 "m3": ("### "),
                 "m4": ("#### "),
                 "m5": ("##### "),
                 "m6": ("###### "),
-                "gt":  ("\u3013\u3013"),
             }.items():
-                self.mapping[trigger] = indirect_puncher.invoke(*stroke)
+                self.mapping[alias] = indirect_puncher.invoke(*stroke)
 
         def invoke(self) -> callable:
             def _sender() -> None:
                 selection = copy_string()
-                if selection and (func := self.mapping.get(selection.strip())):
+                if (func := self.mapping.get(selection.strip())):
                     func()
                 else:
                     send_keys("S-Left")
