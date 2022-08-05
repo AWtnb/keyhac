@@ -651,11 +651,11 @@ def configure(keymap):
                 selection = copy_string()
                 if (func := self.mapping.get(selection.strip())):
                     func()
-                else:
-                    send_keys("S-Left")
             return lazy_call(recover_clipboard(_sender))
 
+
     keymap_global["U1-X"] = PseudoEspanso().invoke()
+    keymap_global["S-U1-X"] = "S-Left"
 
 
 
