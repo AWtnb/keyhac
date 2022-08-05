@@ -590,7 +590,7 @@ def configure(keymap):
     # pseudo espanso
     ################################
 
-    class PseudoExpanso:
+    class PseudoEspanso:
         def __init__(self) -> None:
             self.mapping = {}
 
@@ -651,10 +651,13 @@ def configure(keymap):
             def _sender() -> None:
                 selection = copy_string()
                 if selection:
-                    self.mapping.get(selection.strip(), lambda : None)()
+                    if (func := self.mapping.get(selection.strip())):
+                        func()
+                    else:
+                        send_keys("S-Left")
             return lazy_call(recover_clipboard(_sender))
 
-    keymap_global["U1-X"] = PseudoExpanso().invoke()
+    keymap_global["U1-X"] = PseudoEspanso().invoke()
 
 
 
