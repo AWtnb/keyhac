@@ -590,134 +590,73 @@ def configure(keymap):
     # pseudo espanso
     ################################
 
-    class PseudoEspanso:
+    class PseudoExpanso:
         def __init__(self) -> None:
-            self.keymap = keymap.defineMultiStrokeKeymap("Pseudo-Espanso:")
+            self.mapping = {}
 
-        def allocate(self, trigger_key:str, prompt:str, key_mapping:dict) -> None:
-            inner_map = keymap.defineMultiStrokeKeymap(prompt)
-            for key, func in key_mapping.items():
-                inner_map[key] = func
-            self.keymap[trigger_key] = inner_map
+            direct_puncher = KeyPuncher(sleep_sec=0)
+            for trigger, stroke in {
+                "-f": ("\uff0d"),
+                "-h": ("\u2010"),
+                "-m": ("\u2014"),
+                "-n": ("\u2013"),
+                "-s": ("\u2212"),
+                "=": ("\u30a0"),
+                "ae": ("\u00e9"),
+                "aE": ("\u00c9"),
+                "aee": ("\u00e8"),
+                "aEE": ("\u00c8"),
+                "md": ("div."),
+                "mp": ("# ///"),
+                "ms": ("span."),
+                "np": ("proofed"),
+                "npa": ("proofed_by_author"),
+                "nsa": ("send_to_author"),
+                "nsp": ("send_to_printshop"),
+                "pa": (resolve_path(r"Dropbox\develop\app_config")),
+                "pc": (resolve_path(r"Dropbox\develop\app_config\IME_google\convertion_dict")),
+                "pcm": (resolve_path(r"Dropbox\develop\app_config\IME_google\convertion_dict\my.txt")),
+                "pd": (resolve_path(r"Desktop")),
+                "px": (resolve_path(r"Dropbox")),
+                "rgbr": (r"[\[［].+?[\]］]"),
+                "rgF": ("(?!)", "Left"),
+                "rgf": ("(?=)", "Left"),
+                "rgP": ("(?<!)", "Left"),
+                "rgp": ("(?<=)", "Left"),
+                "rgpr": (r"[\(（].+?[\)）]"),
+                "uA": ("\u00c4"),
+                "ua": ("\u00e4"),
+                "uO": ("\u00d6"),
+                "uo": ("\u00f6"),
+                "uU": ("\u00dc"),
+                "uu": ("\u00fc"),
+                "xm": (".md"),
+                "xx": (".txt"),
+            }.items():
+                self.mapping[trigger] = direct_puncher.invoke(*stroke)
 
-    PSEUDO_ESPANSO = PseudoEspanso()
+            indirect_puncher = KeyPuncher(recover_ime=True, sleep_sec=0)
+            for trigger, stroke in {
+                "m1": ("# "),
+                "m2": ("## "),
+                "m3": ("### "),
+                "m4": ("#### "),
+                "m5": ("##### "),
+                "m6": ("###### "),
+                "gt":  ("\u3013\u3013"),
+            }.items():
+                self.mapping[trigger] = indirect_puncher.invoke(*stroke)
 
-    # input single line
-    for params in [
-        {
-            "trigger_key": "A",
-            "prompt": "Accent: A/O/U=>umlaut, E=>E-accent-aigue, C-E=>E-accent-grave (capitalise with shift)",
-            "key_mapping": {
-                "A": KeyPuncher().invoke("\u00e4"),
-                "S-A": KeyPuncher().invoke("\u00c4"),
-                "O": KeyPuncher().invoke("\u00f6"),
-                "S-O": KeyPuncher().invoke("\u00d6"),
-                "U": KeyPuncher().invoke("\u00fc"),
-                "S-U": KeyPuncher().invoke("\u00dc"),
-                "E": KeyPuncher().invoke("\u00e9"),
-                "S-E": KeyPuncher().invoke("\u00c9"),
-                "C-E": KeyPuncher().invoke("\u00e8"),
-                "S-C-E": KeyPuncher().invoke("\u00c8"),
-            },
-        },
-        {
-            "trigger_key": "P",
-            "prompt": "LOCALPATH:",
-            "key_mapping": {
-                "A": KeyPuncher().invoke(resolve_path(r"Dropbox\develop\app_config")),
-                "C": KeyPuncher().invoke(resolve_path(r"Dropbox\develop\app_config\IME_google\convertion_dict")),
-                "C-C": KeyPuncher().invoke(resolve_path(r"Dropbox\develop\app_config\IME_google\convertion_dict\my.txt")),
-                "D": KeyPuncher().invoke(resolve_path(r"Desktop")),
-                "S": KeyPuncher().invoke(resolve_path(r"scoop\apps")),
-                "X": KeyPuncher().invoke(resolve_path(r"Dropbox")),
-            },
-        },
-        {
-            "trigger_key": "X",
-            "prompt": "EXTENSION:",
-            "key_mapping": {
-                "T": KeyPuncher().invoke(".txt"),
-                "M": KeyPuncher().invoke(".md"),
-                "C": KeyPuncher().invoke(".css"),
-                "H": KeyPuncher().invoke(".html"),
-                "X": KeyPuncher().invoke(".txt"),
-            },
-        },
-        {
-            "trigger_key": "N",
-            "prompt": "Name-of-folder: P=>proofed, C-P=>proofed_by_author, S=>send_to_author, C-S=>send_to_printshop, J=>project_proposal",
-            "key_mapping": {
-                "J": KeyPuncher().invoke("project_proposal"),
-                "P": KeyPuncher().invoke("proofed"),
-                "C-P": KeyPuncher().invoke("proofed_by_author"),
-                "S": KeyPuncher().invoke("send_to_author"),
-                "C-S": KeyPuncher().invoke("send_to_printshop"),
-                "M": KeyPuncher().invoke("_for_future_reprint.txt"),
-            },
-        },
-        {
-            "trigger_key": "C-R",
-            "prompt": "REGEX: F=>followed-by, P=>preceded-by / Negative-search with Shift",
-            "key_mapping": {
-                "F": KeyPuncher().invoke("(?=)", "Left"),
-                "P": KeyPuncher().invoke("(?<=)", "Left"),
-                "S-F": KeyPuncher().invoke("(?!)", "Left"),
-                "S-P": KeyPuncher().invoke("(?<!)", "Left"),
-            },
-        },
-        {
-            "trigger_key": "R",
-            "prompt": "REGEX: B=>inside-bracket, P=>inside-parenthesis / Only-halfwidth with Shift",
-            "key_mapping": {
-                "P": KeyPuncher().invoke(r"[\(（].+?[\)）]"),
-                "B": KeyPuncher().invoke(r"[\[［].+?[\]］]"),
-                "S-P": KeyPuncher().invoke(r"\(.+?\)"),
-                "S-B": KeyPuncher().invoke(r"\[.+?\]"),
-            },
-        },
-        {
-            "trigger_key": "Minus",
-            "prompt": "Bars: D=>double-hyphen(U+30A0), H=>hyphen(U+2010), M=>em-dash(U+2014), Minus=>minus-sign(U+2212), N=>en-dash(U+2013), S-H=>fullwidth-hyphen(U+FF0D)",
-            "key_mapping": {
-                "D": KeyPuncher().invoke("\u30a0"),
-                "H": KeyPuncher().invoke("\u2010"),
-                "M": KeyPuncher().invoke("\u2014"),
-                "Minus": KeyPuncher().invoke("\u2212"),
-                "N": KeyPuncher().invoke("\u2013"),
-                "S-H": KeyPuncher().invoke("\uff0d"),
-            },
-        },
-        {
-            "trigger_key": "F",
-            "prompt": "Filler: G=>GETA-MARK, 0=>CIRCLE, C-0=>WHITE-CIRCLE, 4=>SQUARE, Caret=>Tilda",
-            "key_mapping": {
-                "G":  KeyPuncher(recover_ime=True).invoke("\u3013\u3013"),
-                "0": KeyPuncher(recover_ime=True).invoke("\u25cf\u25cf"),
-                "C-0": KeyPuncher(recover_ime=True).invoke("\u25cb\u25cb"),
-                "4": KeyPuncher(recover_ime=True).invoke("\u25a0\u25a0"),
-                "Caret": KeyPuncher(recover_ime=True).invoke("\uff5e\uff5e"),
-                "X": KeyPuncher(recover_ime=True).invoke("\u2715\u2715"),
-            },
-        },
-        {
-            "trigger_key": "M",
-            "prompt": "MARKDOWN:",
-            "key_mapping": {
-                "1": KeyPuncher(recover_ime=True).invoke("# "),
-                "2": KeyPuncher(recover_ime=True).invoke("## "),
-                "3": KeyPuncher(recover_ime=True).invoke("### "),
-                "4": KeyPuncher(recover_ime=True).invoke("#### "),
-                "5": KeyPuncher(recover_ime=True).invoke("##### "),
-                "6": KeyPuncher(recover_ime=True).invoke("###### "),
-                "P": KeyPuncher().invoke("# ///"),
-                "D": KeyPuncher().invoke("div."),
-                "S": KeyPuncher().invoke("span."),
-            },
-        },
-    ]:
-        PSEUDO_ESPANSO.allocate(**params)
+        def invoke(self) -> callable:
+            def _sender() -> None:
+                selection = copy_string()
+                if selection:
+                    self.mapping.get(selection.strip(), lambda : None)()
+            return lazy_call(recover_clipboard(_sender))
 
-    keymap_global["U1-X"] = PSEUDO_ESPANSO.keymap
+    keymap_global["U1-X"] = PseudoExpanso().invoke()
+
+
 
     ################################
     # input customize
@@ -1517,8 +1456,8 @@ def configure(keymap):
         "Transform Single Punctuation": [
             (" Colon to double horizontal-bar ", replace_cb(r"\s*[\uff1a\u003a]\s*", "\u2015\u2015") ),
             (" Fix Word Bullet ", replace_cb(r"\uf09f\u0009", "\u30fb") ),
-            (" to Official-style-comma ", replace_cb(r"\u3001", "\uff0c") ),
-            (" to Traditional-style-comma ", replace_cb(r"\uff0c", "\u3001") ),
+            (" to Official-comma ", replace_cb(r"\u3001", "\uff0c") ),
+            (" to Traditional-comma ", replace_cb(r"\uff0c", "\u3001") ),
         ],
         "Transform Paired Punctuation": [
             (" Parenthesis: to FullWidth ", format_cb(CharWidth(True).to_full_width) ),
