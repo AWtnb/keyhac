@@ -590,18 +590,17 @@ def configure(keymap):
     # pseudo espanso
     ################################
 
-    keymap_global["U1-X"] = keymap.defineMultiStrokeKeymap("Pseudo-Espanso:")
+    class PseudoEspanso:
+        def __init__(self) -> None:
+            self.keymap = keymap.defineMultiStrokeKeymap("Pseudo-Espanso:")
 
-    def pseudo_espanso(trigger_key:str, prompt:str, key_mapping:dict) -> None:
-        keymap_global["U1-X"][trigger_key] = keymap.defineMultiStrokeKeymap(prompt)
-        for key, func in key_mapping.items():
-            keymap_global["U1-X"][trigger_key][key] = func
+        def allocate(self, trigger_key:str, prompt:str, key_mapping:dict) -> None:
+            inner_map = keymap.defineMultiStrokeKeymap(prompt)
+            for key, func in key_mapping.items():
+                inner_map[key] = func
+            self.keymap[trigger_key] = inner_map
 
-    class Espanso:
-        def __init__(self, recover_ime:bool=False) -> None:
-            self._recover_ime = recover_ime
-        def get_func(self, *sequence) -> callable:
-            return KeyPuncher(self._recover_ime).invoke(*sequence)
+    PSEUDO_ESPANSO = PseudoEspanso()
 
     # input single line
     for params in [
@@ -609,116 +608,116 @@ def configure(keymap):
             "trigger_key": "A",
             "prompt": "Accent: A/O/U=>umlaut, E=>E-accent-aigue, C-E=>E-accent-grave (capitalise with shift)",
             "key_mapping": {
-                "A": Espanso().get_func("\u00e4"),
-                "S-A": Espanso().get_func("\u00c4"),
-                "O": Espanso().get_func("\u00f6"),
-                "S-O": Espanso().get_func("\u00d6"),
-                "U": Espanso().get_func("\u00fc"),
-                "S-U": Espanso().get_func("\u00dc"),
-                "E": Espanso().get_func("\u00e9"),
-                "S-E": Espanso().get_func("\u00c9"),
-                "C-E": Espanso().get_func("\u00e8"),
-                "S-C-E": Espanso().get_func("\u00c8"),
+                "A": KeyPuncher().invoke("\u00e4"),
+                "S-A": KeyPuncher().invoke("\u00c4"),
+                "O": KeyPuncher().invoke("\u00f6"),
+                "S-O": KeyPuncher().invoke("\u00d6"),
+                "U": KeyPuncher().invoke("\u00fc"),
+                "S-U": KeyPuncher().invoke("\u00dc"),
+                "E": KeyPuncher().invoke("\u00e9"),
+                "S-E": KeyPuncher().invoke("\u00c9"),
+                "C-E": KeyPuncher().invoke("\u00e8"),
+                "S-C-E": KeyPuncher().invoke("\u00c8"),
             },
         },
         {
             "trigger_key": "P",
             "prompt": "LOCALPATH:",
             "key_mapping": {
-                "A": Espanso().get_func(resolve_path(r"Dropbox\develop\app_config")),
-                "C": Espanso().get_func(resolve_path(r"Dropbox\develop\app_config\IME_google\convertion_dict")),
-                "C-C": Espanso().get_func(resolve_path(r"Dropbox\develop\app_config\IME_google\convertion_dict\my.txt")),
-                "D": Espanso().get_func(resolve_path(r"Desktop")),
-                "S": Espanso().get_func(resolve_path(r"scoop\apps")),
-                "X": Espanso().get_func(resolve_path(r"Dropbox")),
+                "A": KeyPuncher().invoke(resolve_path(r"Dropbox\develop\app_config")),
+                "C": KeyPuncher().invoke(resolve_path(r"Dropbox\develop\app_config\IME_google\convertion_dict")),
+                "C-C": KeyPuncher().invoke(resolve_path(r"Dropbox\develop\app_config\IME_google\convertion_dict\my.txt")),
+                "D": KeyPuncher().invoke(resolve_path(r"Desktop")),
+                "S": KeyPuncher().invoke(resolve_path(r"scoop\apps")),
+                "X": KeyPuncher().invoke(resolve_path(r"Dropbox")),
             },
         },
         {
             "trigger_key": "X",
             "prompt": "EXTENSION:",
             "key_mapping": {
-                "T": Espanso().get_func(".txt"),
-                "M": Espanso().get_func(".md"),
-                "C": Espanso().get_func(".css"),
-                "H": Espanso().get_func(".html"),
-                "X": Espanso().get_func(".txt"),
+                "T": KeyPuncher().invoke(".txt"),
+                "M": KeyPuncher().invoke(".md"),
+                "C": KeyPuncher().invoke(".css"),
+                "H": KeyPuncher().invoke(".html"),
+                "X": KeyPuncher().invoke(".txt"),
             },
         },
         {
             "trigger_key": "N",
             "prompt": "Name-of-folder: P=>proofed, C-P=>proofed_by_author, S=>send_to_author, C-S=>send_to_printshop, J=>project_proposal",
             "key_mapping": {
-                "J": Espanso().get_func("project_proposal"),
-                "P": Espanso().get_func("proofed"),
-                "C-P": Espanso().get_func("proofed_by_author"),
-                "S": Espanso().get_func("send_to_author"),
-                "C-S": Espanso().get_func("send_to_printshop"),
-                "M": Espanso().get_func("_for_future_reprint.txt"),
+                "J": KeyPuncher().invoke("project_proposal"),
+                "P": KeyPuncher().invoke("proofed"),
+                "C-P": KeyPuncher().invoke("proofed_by_author"),
+                "S": KeyPuncher().invoke("send_to_author"),
+                "C-S": KeyPuncher().invoke("send_to_printshop"),
+                "M": KeyPuncher().invoke("_for_future_reprint.txt"),
             },
         },
         {
             "trigger_key": "C-R",
             "prompt": "REGEX: F=>followed-by, P=>preceded-by / Negative-search with Shift",
             "key_mapping": {
-                "F": Espanso().get_func("(?=)", "Left"),
-                "P": Espanso().get_func("(?<=)", "Left"),
-                "S-F": Espanso().get_func("(?!)", "Left"),
-                "S-P": Espanso().get_func("(?<!)", "Left"),
+                "F": KeyPuncher().invoke("(?=)", "Left"),
+                "P": KeyPuncher().invoke("(?<=)", "Left"),
+                "S-F": KeyPuncher().invoke("(?!)", "Left"),
+                "S-P": KeyPuncher().invoke("(?<!)", "Left"),
             },
         },
         {
             "trigger_key": "R",
             "prompt": "REGEX: B=>inside-bracket, P=>inside-parenthesis / Only-halfwidth with Shift",
             "key_mapping": {
-                "P": Espanso().get_func(r"[\(（].+?[\)）]"),
-                "B": Espanso().get_func(r"[\[［].+?[\]］]"),
-                "S-P": Espanso().get_func(r"\(.+?\)"),
-                "S-B": Espanso().get_func(r"\[.+?\]"),
+                "P": KeyPuncher().invoke(r"[\(（].+?[\)）]"),
+                "B": KeyPuncher().invoke(r"[\[［].+?[\]］]"),
+                "S-P": KeyPuncher().invoke(r"\(.+?\)"),
+                "S-B": KeyPuncher().invoke(r"\[.+?\]"),
             },
         },
         {
             "trigger_key": "Minus",
             "prompt": "Bars: D=>double-hyphen(U+30A0), H=>hyphen(U+2010), M=>em-dash(U+2014), Minus=>minus-sign(U+2212), N=>en-dash(U+2013), S-H=>fullwidth-hyphen(U+FF0D)",
             "key_mapping": {
-                "D": Espanso().get_func("\u30a0"),
-                "H": Espanso().get_func("\u2010"),
-                "M": Espanso().get_func("\u2014"),
-                "Minus": Espanso().get_func("\u2212"),
-                "N": Espanso().get_func("\u2013"),
-                "S-H": Espanso().get_func("\uff0d"),
+                "D": KeyPuncher().invoke("\u30a0"),
+                "H": KeyPuncher().invoke("\u2010"),
+                "M": KeyPuncher().invoke("\u2014"),
+                "Minus": KeyPuncher().invoke("\u2212"),
+                "N": KeyPuncher().invoke("\u2013"),
+                "S-H": KeyPuncher().invoke("\uff0d"),
             },
         },
         {
             "trigger_key": "F",
             "prompt": "Filler: G=>GETA-MARK, 0=>CIRCLE, C-0=>WHITE-CIRCLE, 4=>SQUARE, Caret=>Tilda",
             "key_mapping": {
-                "G": Espanso(recover_ime=True).get_func("\u3013\u3013"),
-                "0": Espanso(recover_ime=True).get_func("\u25cf\u25cf"),
-                "C-0": Espanso(recover_ime=True).get_func("\u25cb\u25cb"),
-                "4": Espanso(recover_ime=True).get_func("\u25a0\u25a0"),
-                "Caret": Espanso(recover_ime=True).get_func("\uff5e\uff5e"),
-                "X": Espanso(recover_ime=True).get_func("\u2715\u2715"),
+                "G":  KeyPuncher(recover_ime=True).invoke("\u3013\u3013"),
+                "0": KeyPuncher(recover_ime=True).invoke("\u25cf\u25cf"),
+                "C-0": KeyPuncher(recover_ime=True).invoke("\u25cb\u25cb"),
+                "4": KeyPuncher(recover_ime=True).invoke("\u25a0\u25a0"),
+                "Caret": KeyPuncher(recover_ime=True).invoke("\uff5e\uff5e"),
+                "X": KeyPuncher(recover_ime=True).invoke("\u2715\u2715"),
             },
         },
         {
             "trigger_key": "M",
             "prompt": "MARKDOWN:",
             "key_mapping": {
-                "1": Espanso(True).get_func("# "),
-                "2": Espanso(True).get_func("## "),
-                "3": Espanso(True).get_func("### "),
-                "4": Espanso(True).get_func("#### "),
-                "5": Espanso(True).get_func("##### "),
-                "6": Espanso(True).get_func("###### "),
-                "P": Espanso().get_func("# ///"),
-                "C-P": Espanso().get_func("<div class=\"page-separator\"></div>"),
-                "D": Espanso().get_func("div."),
-                "S": Espanso().get_func("span."),
+                "1": KeyPuncher(recover_ime=True).invoke("# "),
+                "2": KeyPuncher(recover_ime=True).invoke("## "),
+                "3": KeyPuncher(recover_ime=True).invoke("### "),
+                "4": KeyPuncher(recover_ime=True).invoke("#### "),
+                "5": KeyPuncher(recover_ime=True).invoke("##### "),
+                "6": KeyPuncher(recover_ime=True).invoke("###### "),
+                "P": KeyPuncher().invoke("# ///"),
+                "D": KeyPuncher().invoke("div."),
+                "S": KeyPuncher().invoke("span."),
             },
         },
     ]:
-        pseudo_espanso(**params)
+        PSEUDO_ESPANSO.allocate(**params)
 
+    keymap_global["U1-X"] = PSEUDO_ESPANSO.keymap
 
     ################################
     # input customize
