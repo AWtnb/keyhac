@@ -304,11 +304,13 @@ def configure(keymap):
     def fix_previous_typo() -> callable:
         typo_map = {
             "/": ".",
+            "m": ",",
             ".": ",",
             ",": ".",
             ":": ";",
             ";": ":",
             "l": ";",
+            "\uff4d": "\u3001",
             "\uff1a": "\uff1b",
             "\uff1b": "\uff1a",
             "\u3001": "\u3002",
