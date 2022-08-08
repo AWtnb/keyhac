@@ -74,7 +74,7 @@ def configure(keymap):
     keymap_global["U1-0"] = keymap.command_RecordClear
 
     # combination with modifier key
-    for mod_mntr in ("", "S-", "C-", "A-", "C-S-", "C-A-", "S-A-", "C-A-S-"):
+    for mod_key in ("", "S-", "C-", "A-", "C-S-", "C-A-", "S-A-", "C-A-S-"):
         for key, value in {
             # move cursor
             "H": "Left",
@@ -87,14 +87,14 @@ def configure(keymap):
             # Enter
             "Space": "Enter",
         }.items():
-            keymap_global[mod_mntr+"U0-"+key] = mod_mntr+value
+            keymap_global[mod_key+"U0-"+key] = mod_key+value
 
         for stat in ("D-", "U-"):
             # ignore capslock
-            keymap_global[mod_mntr+stat+"Capslock"] = lambda : None
+            keymap_global[mod_key+stat+"Capslock"] = lambda : None
             # ignore "katakana-hiragana-romaji key"
             for vk in list(range(124, 136)) + list(range(240, 243)) + list(range(245, 254)):
-                keymap_global[mod_mntr+stat+str(vk)] = lambda : None
+                keymap_global[mod_key+stat+str(vk)] = lambda : None
 
     for key, value in {
     # BackSpace / Delete
@@ -228,13 +228,15 @@ def configure(keymap):
                 setClipboardText(backup)
         return _executer
 
-    def lazy_call(func:callable, delay_msec:int=20) -> callable:
+    def lazy_call(func:callable, delay_msec:int=20, keep_clipboard:bool=False) -> callable:
         def _hook_call() -> None:
             keymap.hookCall(func)
         def _executer() -> None:
             # use delayedCall in ckit => https://github.com/crftwr/ckit/blob/2ea84f986f9b46a3e7f7b20a457d979ec9be2d33/ckitcore/ckitcore.cpp#L1998
             keymap.delayedCall(_hook_call, delay_msec)
             keymap._fixFunnyModifierState()
+        if keep_clipboard:
+            return recover_clipboard(_executer)
         return _executer
 
 
@@ -325,7 +327,7 @@ def configure(keymap):
                 sent = typo_map.get(cb, "")
                 if sent:
                     send_string(typo_map[cb])
-        return lazy_call(recover_clipboard(_fixer))
+        return lazy_call( _fixer, keep_clipboard=True)
     keymap_global["U0-Back"] = fix_previous_typo()
     keymap_global["U0-BackSlash"] = fix_previous_typo()
 
@@ -374,7 +376,7 @@ def configure(keymap):
             set_ime(1)
             send_input(tuple(sequence), 0)
             delay()
-    keymap_global["U1-I"] = lazy_call(recover_clipboard(re_input_with_ime))
+    keymap_global["U1-I"] = lazy_call(re_input_with_ime, keep_clipboard=True)
 
     def moko(search_all:bool=False) -> callable:
         exe_path = resolve_path(r"Dropbox\develop\code\go\moko\src\moko.exe")
@@ -653,7 +655,7 @@ def configure(keymap):
                 selection = copy_string()
                 if (func := self.mapping.get(selection.strip())):
                     func()
-            return lazy_call(recover_clipboard(_sender))
+            return lazy_call(_sender, keep_clipboard=True)
 
 
     keymap_global["U1-X"] = PseudoEspanso().invoke()
