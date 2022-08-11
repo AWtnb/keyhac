@@ -234,7 +234,7 @@ def configure(keymap):
         def _executer() -> None:
             # use delayedCall in ckit => https://github.com/crftwr/ckit/blob/2ea84f986f9b46a3e7f7b20a457d979ec9be2d33/ckitcore/ckitcore.cpp#L1998
             keymap.delayedCall(_hook_call, delay_msec)
-            keymap._fixFunnyModifierState()
+            # keymap._fixFunnyModifierState()
         if keep_clipboard:
             return recover_clipboard(_executer)
         return _executer
@@ -594,73 +594,80 @@ def configure(keymap):
     # pseudo espanso
     ################################
 
+    def combo_mapper(root_map, keys:list, func:callable):
+        if callable(root_map):
+            return root_map
+        if len(keys) == 1:
+            root_map[keys[0]] = func
+            return root_map
+        if len(keys) < 1:
+            return
+        head = keys[0]
+        rest = keys[1:]
+        try:
+            root_map[head] = combo_mapper(root_map[head], rest, func)
+        except:
+            sub_map = keymap.defineMultiStrokeKeymap(head)
+            root_map[head] = combo_mapper(sub_map, rest, func)
+        return root_map
+
     class PseudoEspanso:
         def __init__(self) -> None:
-            self.mapping = {}
+            self.mapping = keymap.defineMultiStrokeKeymap("pseudo-espanso:")
 
             direct_puncher = KeyPuncher(sleep_sec=0)
-            for alias, stroke in {
-                "-f": ("\uff0d"),
-                "-h": ("\u2010"),
-                "-m": ("\u2014"),
-                "-n": ("\u2013"),
-                "-s": ("\u2212"),
-                "=": ("\u30a0"),
-                "ae": ("\u00e9"),
-                "aE": ("\u00c9"),
-                "aee": ("\u00e8"),
-                "aEE": ("\u00c8"),
-                "md": ("div."),
-                "mp": ("# ///"),
-                "ms": ("span."),
-                "np": ("proofed"),
-                "npa": ("proofed_by_author"),
-                "nsa": ("send_to_author"),
-                "nsp": ("send_to_printshop"),
-                "pa": (resolve_path(r"Dropbox\develop\app_config")),
-                "pc": (resolve_path(r"Dropbox\develop\app_config\IME_google\convertion_dict")),
-                "pcm": (resolve_path(r"Dropbox\develop\app_config\IME_google\convertion_dict\my.txt")),
-                "pd": (resolve_path(r"Desktop")),
-                "px": (resolve_path(r"Dropbox")),
-                "rgbr": (r"[\[［].+?[\]］]"),
-                "rgF": ("(?!)", "Left"),
-                "rgf": ("(?=)", "Left"),
-                "rgP": ("(?<!)", "Left"),
-                "rgp": ("(?<=)", "Left"),
-                "rgpr": (r"[\(（].+?[\)）]"),
-                "uA": ("\u00c4"),
-                "ua": ("\u00e4"),
-                "uO": ("\u00d6"),
-                "uo": ("\u00f6"),
-                "uU": ("\u00dc"),
-                "uu": ("\u00fc"),
-                "xm": (".md"),
-                "xx": (".txt"),
+            for combo, stroke in {
+                "X,X": (".txt", "Left"),
+                "X,M": (".md"),
+                "P,A": (resolve_path(r"Dropbox\develop\app_config")),
+                "P,C": (resolve_path(r"Dropbox\develop\app_config\IME_google\convertion_dict")),
+                "P,C-C": (resolve_path(r"Dropbox\develop\app_config\IME_google\convertion_dict\my.txt")),
+                "P,D": (resolve_path(r"Desktop")),
+                "P,X": (resolve_path(r"Dropbox")),
+                "M,P": ("# ///"),
+                "N,P,P": ("proofed"),
+                "N,P,A": ("proofed_by_author"),
+                "N,S,A": ("send_to_author"),
+                "N,S,P": ("send_to_printshop"),
+                "Minus,F": ("\uff0d"),
+                "Minus,H": ("\u2010"),
+                "Minus,M": ("\u2014"),
+                "Minus,N": ("\u2013"),
+                "Minus,S": ("\u2212"),
+                "Minus,D": ("\u30a0"),
+                "R,B": (r"[\[［].+?[\]］]"),
+                "R,P": (r"[\(（].+?[\)）]"),
+                "C-R,S-F": ("(?!)", "Left"),
+                "C-R,F": ("(?=)", "Left"),
+                "C-R,S-P": ("(?<!)", "Left"),
+                "C-R,P": ("(?<=)", "Left"),
+                "A,E": ("\u00e9"),
+                "A,S-E": ("\u00c9"),
+                "C-A,E": ("\u00e8"),
+                "C-A,S-E": ("\u00c8"),
+                "U,S-A": ("\u00c4"),
+                "U,A": ("\u00e4"),
+                "U,S-O": ("\u00d6"),
+                "U,O": ("\u00f6"),
+                "U,S-U": ("\u00dc"),
+                "U,U": ("\u00fc"),
             }.items():
-                self.mapping[alias] = direct_puncher.invoke(*stroke)
+                keys = combo.split(",")
+                self.mapping = combo_mapper(self.mapping, keys, direct_puncher.invoke(*stroke))
 
             indirect_puncher = KeyPuncher(recover_ime=True, sleep_sec=0)
-            for alias, stroke in {
-                "m1": ("# "),
-                "m2": ("## "),
-                "m3": ("### "),
-                "m4": ("#### "),
-                "m5": ("##### "),
-                "m6": ("###### "),
+            for combo, stroke in {
+                "M,1": ("# "),
+                "M,2": ("## "),
+                "M,3": ("### "),
+                "M,4": ("#### "),
+                "M,5": ("##### "),
+                "M,6": ("###### "),
             }.items():
-                self.mapping[alias] = indirect_puncher.invoke(*stroke)
+                keys = combo.split(",")
+                self.mapping = combo_mapper(self.mapping, keys, indirect_puncher.invoke(*stroke))
 
-        def invoke(self) -> callable:
-            def _sender() -> None:
-                selection = copy_string()
-                if (func := self.mapping.get(selection.strip())):
-                    func()
-            return lazy_call(_sender, keep_clipboard=True)
-
-
-    keymap_global["U1-X"] = PseudoEspanso().invoke()
-    keymap_global["S-U1-X"] = "S-Left"
-
+    keymap_global["U1-X"] = PseudoEspanso().mapping
 
 
     ################################
