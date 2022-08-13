@@ -217,6 +217,7 @@ def configure(keymap):
 
     def execute_path(s:str, arg:str=None) -> None:
         if s:
+            s = s.strip()
             if s.startswith("http") or test_path(s):
                 keymap.ShellExecuteCommand(None, s, arg, None)()
 
@@ -611,7 +612,7 @@ def configure(keymap):
             root_map[head] = combo_mapper(sub_map, rest, func)
         return root_map
 
-    class PseudoEspanso:
+    class KeyCombo:
         def __init__(self) -> None:
             self.mapping = keymap.defineMultiStrokeKeymap("pseudo-espanso:")
 
@@ -667,7 +668,7 @@ def configure(keymap):
                 keys = combo.split(",")
                 self.mapping = combo_mapper(self.mapping, keys, indirect_puncher.invoke(*stroke))
 
-    keymap_global["U1-X"] = PseudoEspanso().mapping
+    keymap_global["U1-X"] = KeyCombo().mapping
 
 
     ################################
