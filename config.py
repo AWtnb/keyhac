@@ -376,7 +376,6 @@ def configure(keymap):
             sequence = ["Minus" if c == "-" else c for c in to_non_space(selection)]
             set_ime(1)
             send_input(tuple(sequence), 0)
-            delay()
     keymap_global["U1-I"] = lazy_call(re_input_with_ime, keep_clipboard=True)
 
     def moko(search_all:bool=False) -> callable:
@@ -626,6 +625,8 @@ def configure(keymap):
                 "P,D": (resolve_path(r"Desktop")),
                 "P,X": (resolve_path(r"Dropbox")),
                 "M,P": ("# ///"),
+                "M,D": ("div."),
+                "M,S": ("span."),
                 "N,P,P": ("proofed"),
                 "N,P,A": ("proofed_by_author"),
                 "N,S,A": ("send_to_author"),
@@ -870,9 +871,9 @@ def configure(keymap):
 
         def to_space(self, s:str, strip_hiraganas:bool) -> str:
             fmt = s.translate(str.maketrans(self.punc_dict)).translate(str.maketrans(self.kangxi_dict))
-            if not strip_hiraganas:
-                return fmt
-            return fmt.translate(str.maketrans(self.hiragana_dict))
+            if strip_hiraganas:
+                return fmt.translate(str.maketrans(self.hiragana_dict))
+            return fmt
 
 
     SEARCH_NOISE = SearchNoise()
@@ -884,7 +885,7 @@ def configure(keymap):
             self._sanitize_query(strip_hiragana)
 
         def _set_query(self, s:str) -> str:
-            lines = s.strip().replace("\u200b", "").replace("　", " ").replace("\t", " ").splitlines()
+            lines = s.strip().replace("\u200b", "").replace("\u3000", " ").replace("\t", " ").splitlines()
             self._query = "".join([ line.rstrip("-") for line in lines ])
 
         def _sanitize_query(self, strip_hiragana:bool) -> None:
@@ -897,8 +898,7 @@ def configure(keymap):
             return [w for w in words if w]
 
         def quote_each_word(self) -> None:
-            words = self._get_words()
-            self._query = " ".join(['"{}"'.format(w) for w in words])
+            self._query = " ".join(['"{}"'.format(w) for w in self._get_words()])
 
         def encode(self) -> str:
             return urllib.parse.quote(" ".join(self._get_words()))
