@@ -617,7 +617,7 @@ def configure(keymap):
 
             direct_puncher = KeyPuncher(sleep_sec=0)
             for combo, stroke in {
-                "X,X": (".txt", "Left"),
+                "X,X": (".txt"),
                 "X,M": (".md"),
                 "P,A": (resolve_path(r"Dropbox\develop\app_config")),
                 "P,C": (resolve_path(r"Dropbox\develop\app_config\IME_google\convertion_dict")),
