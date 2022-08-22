@@ -269,6 +269,9 @@ def configure(keymap):
     # ime dict tool
     keymap_global["C-F7"] = lazy_call(lambda : execute_path(r"C:\Program Files (x86)\Google\Google Japanese Input\GoogleIMEJaTool.exe", "--mode=word_register_dialog"))
 
+    # screen sketch
+    keymap_global["C-U1-S"] = lazy_call(lambda : execute_path(r"cmd.exe", "/c Start ms-screensketch:"))
+
     # listup Window
     keymap_global["U0-W"] = lazy_call(lambda : send_keys("LCtrl-LAlt-Tab"))
 
@@ -555,7 +558,6 @@ def configure(keymap):
 
     keymap_global["U1-M"] = keymap.defineMultiStrokeKeymap("snap window position with key input!")
     keymap_global["U1-M"]["X"] = lazy_call(lambda : keymap.getTopLevelWindow().maximize())
-    keymap_global["U1-M"]["F"] = "LWin-Home" #focus on current window
 
     for mod_mntr, mntr_idx in {
         "": 0,
@@ -627,6 +629,7 @@ def configure(keymap):
                 "M,P": ("# ///"),
                 "M,D": ("div."),
                 "M,S": ("span."),
+                "N,0": ("0_plain"),
                 "N,P,P": ("proofed"),
                 "N,P,A": ("proofed_by_author"),
                 "N,S,A": ("send_to_author"),
@@ -659,6 +662,7 @@ def configure(keymap):
 
             indirect_puncher = KeyPuncher(recover_ime=True, sleep_sec=0)
             for combo, stroke in {
+                "F,G": ("\u3013\u3013"),
                 "M,1": ("# "),
                 "M,2": ("## "),
                 "M,3": ("### "),
@@ -1128,7 +1132,7 @@ def configure(keymap):
         "LC-U1-N": (
             "notepad.exe",
             "Notepad",
-            r"C:\Windows\System32\notepad.exe"
+            r"notepad.exe"
         ),
         "C-U1-W": (
             "WindowsTerminal.exe",
