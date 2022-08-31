@@ -10,7 +10,6 @@ from winreg import HKEY_CURRENT_USER, HKEY_CLASSES_ROOT, OpenKey, QueryValueEx
 import pyauto
 from keyhac import *
 
-
 def configure(keymap):
 
     ################################
@@ -168,7 +167,7 @@ def configure(keymap):
     def get_current_clipboard() -> str:
         return getClipboardText() or ""
 
-    def to_non_space(s:str) -> str:
+    def remove_white(s:str) -> str:
         return s.strip().translate(str.maketrans("", "", "\u200b\u3000\u0009\u0020"))
 
     def send_keys(*keys:str) -> None:
@@ -270,7 +269,7 @@ def configure(keymap):
     keymap_global["C-F7"] = lazy_call(lambda : execute_path(r"C:\Program Files (x86)\Google\Google Japanese Input\GoogleIMEJaTool.exe", "--mode=word_register_dialog"))
 
     # screen sketch
-    keymap_global["C-U1-S"] = lazy_call(lambda : execute_path(r"cmd.exe", "/c Start ms-screensketch:"))
+    keymap_global["C-U1-S"] = lazy_call(lambda : execute_path(r"C:\Windows\System32\cmd.exe", "/c Start ms-screensketch:"))
 
     # listup Window
     keymap_global["U0-W"] = lazy_call(lambda : send_keys("LCtrl-LAlt-Tab"))
@@ -282,8 +281,8 @@ def configure(keymap):
     keymap_global["S-U1-J"] = lambda : set_ime(0)
 
     # paste as plaintext
-    keymap_global["U0-V"] = lazy_call(lambda : paste_string(get_current_clipboard().strip()))
-    keymap_global["U1-V"] = lazy_call(lambda : paste_string(to_non_space(get_current_clipboard())))
+    keymap_global["U0-V"] = lazy_call(lambda : paste_string(get_current_clipboard().strip("\uf09f\u0009").strip()))
+    keymap_global["U1-V"] = lazy_call(lambda : paste_string(remove_white(get_current_clipboard())))
 
     # select last word with ime
     def select_last_word() -> None:
@@ -341,7 +340,7 @@ def configure(keymap):
         if cb:
             total = len(cb)
             lines = len(cb.strip().splitlines())
-            net = len(to_non_space(cb.strip()))
+            net = len(remove_white(cb.strip()))
             t = "total: {}(lines: {}), net: {}".format(total, lines, net)
             keymap.popBalloon("", t, 5000)
     keymap_global["LC-U1-C"] = lazy_call(count_chars)
@@ -376,7 +375,7 @@ def configure(keymap):
     def re_input_with_ime() -> None:
         selection = copy_string()
         if selection:
-            sequence = ["Minus" if c == "-" else c for c in to_non_space(selection)]
+            sequence = ["Minus" if c == "-" else c for c in remove_white(selection)]
             set_ime(1)
             send_input(tuple(sequence), 0)
     keymap_global["U1-I"] = lazy_call(re_input_with_ime, keep_clipboard=True)
@@ -630,8 +629,9 @@ def configure(keymap):
                 "M,D": ("div."),
                 "M,S": ("span."),
                 "N,0": ("0_plain"),
-                "N,P,P": ("proofed"),
                 "N,P,A": ("proofed_by_author"),
+                "N,P,J": ("project_proposal"),
+                "N,P,P": ("proofed"),
                 "N,S,A": ("send_to_author"),
                 "N,S,P": ("send_to_printshop"),
                 "Minus,F": ("\uff0d"),
@@ -925,6 +925,7 @@ def configure(keymap):
         keymap_global[mdf+"U0-S"] = keymap.defineMultiStrokeKeymap("quote-each:{} / strip-hiragana:{}".format(*params))
         for key, uri in {
             "A": "https://www.amazon.co.jp/s?i=stripbooks&k={}",
+            "B": "https://www.google.com/search?q=site%3Abooks.or.jp%20{}",
             "C": "https://ci.nii.ac.jp/books/search?q={}",
             "D": "https://duckduckgo.com/?q={}",
             "E": "http://webcatplus.nii.ac.jp/pro/?q={}",
@@ -1106,7 +1107,7 @@ def configure(keymap):
         "X": (
             "explorer.exe",
             "CabinetWClass",
-            r"C:\Windows\explorer.exe"
+            r"explorer.exe"
         )
     }.items():
         keymap_global["U1-C"][key] = pseudo_cuteExec(*params)
@@ -1132,7 +1133,7 @@ def configure(keymap):
         "LC-U1-N": (
             "notepad.exe",
             "Notepad",
-            r"notepad.exe"
+            r"C:\Windows\System32\notepad.exe"
         ),
         "C-U1-W": (
             "WindowsTerminal.exe",
@@ -1143,16 +1144,6 @@ def configure(keymap):
         keymap_global[key] = pseudo_cuteExec(*params)
 
     keymap_global["U1-M"]["U1-M"] = pseudo_cuteExec("Mery.exe", "TChildForm", None)
-
-    # def check_window_class() -> None:
-    #     print("process name:")
-    #     print("    - {}".format(keymap.getWindow().getProcessName()))
-    #     print("window class:")
-    #     print("    - current: {}".format(keymap.getWindow().getClassName()))
-    #     print("    - toplevel: {}".format(keymap.getTopLevelWindow().getClassName()))
-    #     print("window text:")
-    #     print("    - {}".format(keymap.getWindow().getText() or ""))
-    # keymap_global["LC-U1-F1"] = check_window_class
 
     # invoke specific filer
     def invoke_filer(dir_path:str) -> callable:
@@ -1256,24 +1247,23 @@ def configure(keymap):
         "L": ["C-Tab"],
         "H": ["C-S-Tab"],
     }.items():
-        # seq = ["Esc"] + seq
         keymap_sumatra_view[key] = KeyPuncher(sleep_sec=0.05).invoke(*seq)
 
     # word
     keymap_word = keymap.defineWindowKeymap(exe_name="WINWORD.EXE")
-    keymap_word["F11"] = KeyPuncher().invoke("A-T", "P", "A-N")
+    keymap_word["F11"] = "A-F", "E", "P", "A"
     keymap_word["C-G"] = KeyPuncher().invoke("C-G")
     keymap_word["LC-Q"] = "A-F4"
     keymap_word["O-LShift"] = "C-F"
 
     # powerpoint
     keymap_ppt = keymap.defineWindowKeymap(exe_name="powerpnt.exe")
-    keymap_ppt["F11"] = KeyPuncher().invoke("A-T", "Down", "Home")
+    keymap_ppt["F11"] = "A-F", "E", "P", "A"
 
     # excel
     keymap_excel = keymap.defineWindowKeymap(exe_name="excel.exe")
     keymap_excel["U0-M"] = "Enter", "Enter"
-    keymap_excel["F11"] = KeyPuncher().invoke("A-T", "P", "A-N")
+    keymap_excel["F11"] = "A-F", "E", "P", "A"
     keymap_excel["LC-Q"] = "A-F4"
     keymap_excel["O-LShift"] = "C-F"
 
@@ -1293,6 +1283,8 @@ def configure(keymap):
     keymap_tb = keymap.defineWindowKeymap(exe_name="thunderbird.exe")
     keymap_tb["C-S-V"] = "A-S", "Tab", "C-V", "C-Home", "S-End"
     keymap_tb["C-S-S"] = "C-X", "Delete", "A-S", "C-V"
+    keymap_tb["F6"] = "C-K", "S-F6", "End", "Apps"
+    keymap_tb["F4"] = "C-K", "S-F6", "Home", "Down"
 
     # filer
     keymap_filer = keymap.defineWindowKeymap(check_func=lambda wnd : wnd.getProcessName() in ("explorer.exe", "TE64.exe"))
