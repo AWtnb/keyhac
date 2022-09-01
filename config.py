@@ -167,7 +167,7 @@ def configure(keymap):
     def get_current_clipboard() -> str:
         return getClipboardText() or ""
 
-    def remove_white(s:str) -> str:
+    def prune_white(s:str) -> str:
         return s.strip().translate(str.maketrans("", "", "\u200b\u3000\u0009\u0020"))
 
     def send_keys(*keys:str) -> None:
@@ -282,7 +282,7 @@ def configure(keymap):
 
     # paste as plaintext
     keymap_global["U0-V"] = lazy_call(lambda : paste_string(get_current_clipboard().strip("\uf09f\u0009").strip()))
-    keymap_global["U1-V"] = lazy_call(lambda : paste_string(remove_white(get_current_clipboard())))
+    keymap_global["U1-V"] = lazy_call(lambda : paste_string(prune_white(get_current_clipboard())))
 
     # select last word with ime
     def select_last_word() -> None:
@@ -340,7 +340,7 @@ def configure(keymap):
         if cb:
             total = len(cb)
             lines = len(cb.strip().splitlines())
-            net = len(remove_white(cb.strip()))
+            net = len(prune_white(cb.strip()))
             t = "total: {}(lines: {}), net: {}".format(total, lines, net)
             keymap.popBalloon("", t, 5000)
     keymap_global["LC-U1-C"] = lazy_call(count_chars)
@@ -375,7 +375,7 @@ def configure(keymap):
     def re_input_with_ime() -> None:
         selection = copy_string()
         if selection:
-            sequence = ["Minus" if c == "-" else c for c in remove_white(selection)]
+            sequence = ["Minus" if c == "-" else c for c in prune_white(selection)]
             set_ime(1)
             send_input(tuple(sequence), 0)
     keymap_global["U1-I"] = lazy_call(re_input_with_ime, keep_clipboard=True)
@@ -625,7 +625,7 @@ def configure(keymap):
                 "P,C-C": (resolve_path(r"Dropbox\develop\app_config\IME_google\convertion_dict\my.txt")),
                 "P,D": (resolve_path(r"Desktop")),
                 "P,X": (resolve_path(r"Dropbox")),
-                "M,P": ("# ///"),
+                "M,P": ("# ==="),
                 "M,D": ("div."),
                 "M,S": ("span."),
                 "N,0": ("0_plain"),
