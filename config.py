@@ -325,7 +325,6 @@ def configure(keymap):
                 if sent:
                     send_string(typo_map[cb])
         return LazyFunc().defer(_fixer)
-    keymap_global["U0-Back"] = fix_previous_typo()
     keymap_global["U0-BackSlash"] = fix_previous_typo()
 
     # count chars
@@ -945,34 +944,36 @@ def configure(keymap):
 
     class SystemBrowser:
         def __init__(self) -> None:
-            self.prog_id = self._get_prog_id()
-            self.commandline = self._get_commandline()
-            self.exe_path = self._get_exe_path()
-            self.exe_name = self._get_exe_name()
-            self.wnd_class = self._get_wnd_class()
 
-        def _get_prog_id(self) -> str:
-            register_path = r'Software\Microsoft\Windows\Shell\Associations\UrlAssociations\https\UserChoice'
-            with OpenKey(HKEY_CURRENT_USER, register_path) as key:
-                return str(QueryValueEx(key, "ProgId")[0])
+            def _get_prog_id() -> str:
+                register_path = r'Software\Microsoft\Windows\Shell\Associations\UrlAssociations\https\UserChoice'
+                with OpenKey(HKEY_CURRENT_USER, register_path) as key:
+                    return str(QueryValueEx(key, "ProgId")[0])
+            self._prog_id = _get_prog_id()
 
-        def _get_commandline(self) -> str:
-            register_path = r'{}\shell\open\command'.format(self.prog_id)
-            with OpenKey(HKEY_CLASSES_ROOT, register_path) as key:
-                return str(QueryValueEx(key, "")[0])
+            def _get_commandline() -> str:
+                register_path = r'{}\shell\open\command'.format(self._prog_id)
+                with OpenKey(HKEY_CLASSES_ROOT, register_path) as key:
+                    return str(QueryValueEx(key, "")[0])
+            self._commandline = _get_commandline()
 
-        def _get_exe_path(self) -> str:
-            return re.sub(r"(^.+\.exe)(.*)", r"\1", self.commandline).replace('"', "")
-
-        def _get_exe_name(self) -> str:
-            return Path(self._get_exe_path()).name
-
-        def _get_wnd_class(self) -> str:
-            return {
+            self._exe_path = re.sub(r"(^.+\.exe)(.*)", r"\1", self._commandline).replace('"', "")
+            self._exe_name = Path(self._exe_path).name
+            self._wnd_class = {
                 "chrome.exe": "Chrome_WidgetWin_1",
                 "vivaldi.exe": "Chrome_WidgetWin_1",
                 "firefox.exe": "MozillaWindowClass",
-            }.get(self._get_exe_name(), "Chrome_WidgetWin_1")
+            }.get(self._exe_name, "Chrome_WidgetWin_1")
+
+        def get_exe_path(self)  -> str:
+            return self._exe_path
+
+        def get_exe_name(self)  -> str:
+            return self._exe_name
+
+        def get_wnd_class(self)  -> str:
+            return self._wnd_class
+
 
     DEFAULT_BROWSER = SystemBrowser()
 
@@ -1029,9 +1030,9 @@ def configure(keymap):
     keymap_global["U1-C"] = keymap.defineMultiStrokeKeymap()
     for key, params in {
         "Space": (
-            DEFAULT_BROWSER.exe_name,
-            DEFAULT_BROWSER.wnd_class,
-            DEFAULT_BROWSER.exe_path
+            DEFAULT_BROWSER.get_exe_name(),
+            DEFAULT_BROWSER.get_wnd_class(),
+            DEFAULT_BROWSER.get_exe_path()
         ),
         "C": (
             "chrome.exe",
@@ -1163,10 +1164,10 @@ def configure(keymap):
 
     def search_on_browser() -> callable:
         def _invoker() -> None:
-            if keymap.getWindow().getProcessName() == DEFAULT_BROWSER.exe_name:
+            if keymap.getWindow().getProcessName() == DEFAULT_BROWSER.get_exe_name():
                 send_keys("C-T")
             else:
-                w = PyWnd(DEFAULT_BROWSER.exe_name, DEFAULT_BROWSER.wnd_class)
+                w = PyWnd(DEFAULT_BROWSER.get_exe_name(), DEFAULT_BROWSER.get_wnd_class())
                 if w.target:
                     if w.activate():
                         delay()
