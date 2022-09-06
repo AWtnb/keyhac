@@ -222,16 +222,16 @@ def configure(keymap):
 
 
     class LazyFunc:
-        def __init__(self, delay_msec:int=20) -> None:
-            self._delay_msec = delay_msec
-
-        def defer(self, func:callable) -> callable:
-            def __wrapper() -> None:
+        def __init__(self, func:callable) -> None:
+            def _wrapper() -> None:
                 keymap.hookCall(func)
-            def __executer() -> None:
+            self._func = _wrapper
+
+        def defer(self, msec:int=20) -> callable:
+            def _executer() -> None:
                 # use delayedCall in ckit => https://github.com/crftwr/ckit/blob/2ea84f986f9b46a3e7f7b20a457d979ec9be2d33/ckitcore/ckitcore.cpp#L1998
-                keymap.delayedCall(__wrapper, self._delay_msec)
-            return __executer
+                keymap.delayedCall(self._func, msec)
+            return _executer
 
 
     class KeyPuncher:
@@ -245,7 +245,7 @@ def configure(keymap):
                 send_input(sequence, self._sleep)
                 if self._recover_ime:
                     set_ime(1)
-            return LazyFunc(self._delay_msec).defer(_input)
+            return LazyFunc(_input).defer(self._delay_msec)
 
     ################################
     # release CapsLock on reload
@@ -260,13 +260,13 @@ def configure(keymap):
     ################################
 
     # ime dict tool
-    keymap_global["C-F7"] = LazyFunc().defer(lambda : execute_path(r"C:\Program Files (x86)\Google\Google Japanese Input\GoogleIMEJaTool.exe", "--mode=word_register_dialog"))
+    keymap_global["C-F7"] = LazyFunc(lambda : execute_path(r"C:\Program Files (x86)\Google\Google Japanese Input\GoogleIMEJaTool.exe", "--mode=word_register_dialog")).defer()
 
     # screen sketch
-    keymap_global["C-U1-S"] = LazyFunc().defer(lambda : execute_path(r"C:\Windows\System32\cmd.exe", "/c Start ms-screensketch:"))
+    keymap_global["C-U1-S"] = LazyFunc(lambda : execute_path(r"C:\Windows\System32\cmd.exe", "/c Start ms-screensketch:")).defer()
 
     # listup Window
-    keymap_global["U0-W"] = LazyFunc().defer(lambda : send_keys("LCtrl-LAlt-Tab"))
+    keymap_global["U0-W"] = LazyFunc(lambda : send_keys("LCtrl-LAlt-Tab")).defer()
 
     # ime: Japanese / Foreign
     keymap_global["U1-J"] = lambda : set_ime(1)
@@ -275,8 +275,8 @@ def configure(keymap):
     keymap_global["S-U1-J"] = lambda : set_ime(0)
 
     # paste as plaintext
-    keymap_global["U0-V"] = LazyFunc().defer(lambda : paste_string(get_current_clipboard().strip("\uf09f\u0009").strip()))
-    keymap_global["U1-V"] = LazyFunc().defer(lambda : paste_string(prune_white(get_current_clipboard())))
+    keymap_global["U0-V"] = LazyFunc(lambda : paste_string(get_current_clipboard().strip("\uf09f\u0009").strip())).defer()
+    keymap_global["U1-V"] = LazyFunc(lambda : paste_string(prune_white(get_current_clipboard()))).defer()
 
     # select last word with ime
     def select_last_word() -> None:
@@ -324,7 +324,7 @@ def configure(keymap):
                 sent = typo_map.get(cb, "")
                 if sent:
                     send_string(typo_map[cb])
-        return LazyFunc().defer(_fixer)
+        return LazyFunc(_fixer).defer()
     keymap_global["U0-BackSlash"] = fix_previous_typo()
 
     # count chars
@@ -336,14 +336,14 @@ def configure(keymap):
             net = len(prune_white(cb.strip()))
             t = "total: {}(lines: {}), net: {}".format(total, lines, net)
             keymap.popBalloon("", t, 5000)
-    keymap_global["LC-U1-C"] = LazyFunc().defer(count_chars)
+    keymap_global["LC-U1-C"] = LazyFunc(count_chars).defer()
 
     # wrap with quote mark
     def quote_selection() -> None:
         cb = copy_string()
         if cb:
             paste_string(' "{}" '.format(cb.strip()))
-    keymap_global["LC-U0-Q"] = LazyFunc().defer(quote_selection)
+    keymap_global["LC-U0-Q"] = LazyFunc(quote_selection).defer()
 
     # paste with quote mark
     def paste_with_anchor(skip_blank:bool=False) -> callable:
@@ -357,12 +357,12 @@ def configure(keymap):
                 else:
                     quoted.append("> " + line)
             paste_string(os.linesep.join(quoted))
-        return LazyFunc().defer(_paster)
+        return LazyFunc(_paster).defer()
     keymap_global["U1-Q"] = paste_with_anchor(False)
     keymap_global["C-U1-Q"] = paste_with_anchor(True)
 
     # open url in browser
-    keymap_global["C-U0-O"] = LazyFunc().defer(lambda : execute_path(copy_string().strip()))
+    keymap_global["C-U0-O"] = LazyFunc(lambda : execute_path(copy_string().strip())).defer()
 
     # re-input selected string with ime
     def re_input_with_ime() -> None:
@@ -371,13 +371,13 @@ def configure(keymap):
             sequence = ["Minus" if c == "-" else c for c in prune_white(selection)]
             set_ime(1)
             send_input(tuple(sequence), 0)
-    keymap_global["U1-I"] = LazyFunc().defer(re_input_with_ime)
+    keymap_global["U1-I"] = LazyFunc(re_input_with_ime).defer()
 
     def moko(search_all:bool=False) -> callable:
         exe_path = resolve_path(r"Dropbox\develop\code\go\moko\src\moko.exe")
         def _launcher() -> None:
             execute_path(exe_path, "-src={} -filer={} -all={} -exclude=_obsolete".format(r"C:\Personal\launch.yaml", get_filer_path(), search_all))
-        return LazyFunc().defer(_launcher)
+        return LazyFunc(_launcher).defer()
     keymap_global["U1-Z"] = moko(False)
     keymap_global["LC-U1-Z"] = moko(True)
 
@@ -409,7 +409,7 @@ def configure(keymap):
         "P" : lambda : paste_string(read_config()),
         "X" : lambda : None,
     }.items():
-        keymap_global["LC-U0-X"][key] = LazyFunc().defer(func)
+        keymap_global["LC-U0-X"][key] = LazyFunc(func).defer()
 
 
     ################################
@@ -549,7 +549,7 @@ def configure(keymap):
     keymap_global["U1-H"] = "LWin-Left"
 
     keymap_global["U1-M"] = keymap.defineMultiStrokeKeymap("snap window position with key input!")
-    keymap_global["U1-M"]["X"] = LazyFunc().defer(lambda : keymap.getTopLevelWindow().maximize())
+    keymap_global["U1-M"]["X"] = LazyFunc(lambda : keymap.getTopLevelWindow().maximize()).defer()
 
     for mod_mntr, mntr_idx in {
         "": 0,
@@ -569,14 +569,14 @@ def configure(keymap):
             }.items():
                 if mntr_idx < len(KEYMAP_MONITORS):
                     snapper = KEYMAP_MONITORS[mntr_idx].area_map[pos][size].snap_func
-                    keymap_global["U1-M"][mod_mntr+mod_area+key] = LazyFunc().defer(snapper)
+                    keymap_global["U1-M"][mod_mntr+mod_area+key] = LazyFunc(snapper).defer()
 
     def snap_and_maximize(towards="Left") -> callable:
         def _snap() -> None:
             send_keys("LShift-LWin-"+towards)
             delay()
             keymap.getTopLevelWindow().maximize()
-        return LazyFunc().defer(_snap)
+        return LazyFunc(_snap).defer()
     keymap_global["LC-U1-L"] = snap_and_maximize("Right")
     keymap_global["LC-U1-H"] = snap_and_maximize("Left")
 
@@ -805,7 +805,7 @@ def configure(keymap):
             send_input([c for c in d.strftime(fmt)], 0)
             if recover_ime:
                 set_ime(1)
-        return LazyFunc().defer(_input)
+        return LazyFunc(_input).defer()
 
     keymap_global["U1-D"] = keymap.defineMultiStrokeKeymap("Delimiter: D(1)=>YMD, S(2)=>Y/M/D, P(3)=>Y.M.D, H(4)=>Y-M-D, J(5)=>Y年M月D日")
     for key, params in {
@@ -907,7 +907,7 @@ def configure(keymap):
             if quote_each:
                 q.quote_each_word()
             execute_path(uri.format(q.encode()))
-        return LazyFunc().defer(_search)
+        return LazyFunc(_search).defer()
 
     for mdf, params in {
         "": (False, False),
@@ -1025,7 +1025,7 @@ def configure(keymap):
                     send_keys("LCtrl-LAlt-Tab")
             else:
                 execute_path(exe_path)
-        return LazyFunc(0).defer(_executer)
+        return LazyFunc(_executer).defer(0)
 
     keymap_global["U1-C"] = keymap.defineMultiStrokeKeymap()
     for key, params in {
@@ -1146,7 +1146,7 @@ def configure(keymap):
         if test_path(dir_path):
             def _invoker() -> None:
                 execute_path(filer_path, dir_path)
-            return LazyFunc().defer(_invoker)
+            return LazyFunc(_invoker).defer()
         else:
             return lambda : None
     keymap_global["U1-F"] = keymap.defineMultiStrokeKeymap("invoke directory on filer:")
@@ -1160,7 +1160,7 @@ def configure(keymap):
         else:
             cmder_path = resolve_path(r"scoop\apps\cmder\current\Cmder.exe")
             execute_path(cmder_path)
-    keymap_global["LC-AtMark"] = LazyFunc().defer(invoke_cmder)
+    keymap_global["LC-AtMark"] = LazyFunc(invoke_cmder).defer()
 
     def search_on_browser() -> callable:
         def _invoker() -> None:
@@ -1176,7 +1176,7 @@ def configure(keymap):
                         send_keys("LCtrl-LAlt-Tab")
                 else:
                     execute_path("https://duckduckgo.com")
-        return LazyFunc(100).defer(_invoker)
+        return LazyFunc(_invoker).defer(100)
     keymap_global["U0-Q"] =search_on_browser()
 
     ################################
