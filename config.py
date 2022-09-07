@@ -628,7 +628,7 @@ def configure(keymap):
                 "P,C-C": (resolve_path(r"Dropbox\develop\app_config\IME_google\convertion_dict\my.txt")),
                 "P,D": (resolve_path(r"Desktop")),
                 "P,X": (resolve_path(r"Dropbox")),
-                "M,P": ("# ==="),
+                "M,P": ("=============================="),
                 "M,D": ("div."),
                 "M,S": ("span."),
                 "N,0": ("0_plain"),
