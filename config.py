@@ -348,10 +348,11 @@ def configure(keymap):
     def as_html_tag() -> None:
         cb = copy_string()
         if cb:
+            set_ime(0)
             tag_name = cb.strip()
             fmt = "<{tag}></{tag}>".format(tag=tag_name)
             sent = [fmt] + ["Left"]*(len(tag_name) + 3)
-            KeyPuncher(sleep_sec=0).invoke(*sent)()
+            send_input(tuple(sent), 0)
     keymap_global["U0-T"] = LazyFunc(as_html_tag).defer()
 
     # paste with quote mark
