@@ -260,7 +260,7 @@ def configure(keymap):
     ################################
 
     # ime dict tool
-    keymap_global["C-F7"] = LazyFunc(lambda : execute_path(r"C:\Program Files (x86)\Google\Google Japanese Input\GoogleIMEJaTool.exe", "--mode=word_register_dialog")).defer()
+    keymap_global["U0-F7"] = LazyFunc(lambda : execute_path(r"C:\Program Files (x86)\Google\Google Japanese Input\GoogleIMEJaTool.exe", "--mode=word_register_dialog")).defer()
 
     # screen sketch
     keymap_global["C-U1-S"] = LazyFunc(lambda : execute_path(r"C:\Windows\System32\cmd.exe", "/c Start ms-screensketch:")).defer()
@@ -344,6 +344,15 @@ def configure(keymap):
         if cb:
             paste_string(' "{}" '.format(cb.strip()))
     keymap_global["LC-U0-Q"] = LazyFunc(quote_selection).defer()
+
+    def as_html_tag() -> None:
+        cb = copy_string()
+        if cb:
+            tag_name = cb.strip()
+            fmt = "<{tag}></{tag}>".format(tag=tag_name)
+            sent = [fmt] + ["Left"]*(len(tag_name) + 3)
+            KeyPuncher(sleep_sec=0).invoke(*sent)()
+    keymap_global["U0-T"] = LazyFunc(as_html_tag).defer()
 
     # paste with quote mark
     def paste_with_anchor(skip_blank:bool=False) -> callable:
@@ -684,7 +693,6 @@ def configure(keymap):
         "U0-CloseBracket": ["[", "]"],
         "U1-9": ["(", ")"],
         "U1-CloseBracket": ["{", "}"],
-        "U0-T": ["<", "></>"],
         "U0-Caret": ["~~", "~~"],
     }.items():
         prefix, suffix = pair
