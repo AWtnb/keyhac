@@ -1302,8 +1302,9 @@ def configure(keymap):
     keymap_filer["C"] = "C-C"
     keymap_filer["J"] = "Down"
     keymap_filer["K"] = "Up"
-    # keymap_filer["H"] = "C-S-Tab"
-    # keymap_filer["L"] = "C-Tab"
+    keymap_filer["C-H"] = "Apps", "H"
+    keymap_filer["H"] = "C-S-Tab"
+    keymap_filer["L"] = "C-Tab"
     keymap_filer["N"] = "F2"
     keymap_filer["R"] = "F5"
     keymap_filer["U"] = "Alt-Up"
@@ -1474,8 +1475,8 @@ def configure(keymap):
             (" Remove: - blank line ", format_cb(skip_blank_line) ),
             ("         - inside parenthesis ", replace_cb(r"[\uff08\u0028].+?[\uff09\u0029]", "") ),
             ("         - quote mark ", replace_cb(r"[\u0022\u0027]", "") ),
-            ("         - whitespace totally ", replace_cb(r"\s", "") ),
-            (" to single-line ", replace_cb(r"\r?\n", "") ),
+            ("         - whitespace (including line break) ", replace_cb(r"\s", "") ),
+            (" unify lines ", replace_cb(r"\r?\n", "") ),
         ],
         "Transform Alphabet / Punctuation": [
             (" A-Z0-9: - FullWidth ", format_cb(CharWidth().to_full_width) ),
