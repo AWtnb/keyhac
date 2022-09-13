@@ -1292,13 +1292,13 @@ def configure(keymap):
     keymap_tb["F4"] = "C-K", "S-F6", "Home", "Down"
 
     # filer
-    def is_filer_viewmode(wnd:pyauto.Window) -> bool:
+    def is_fileviewer(wnd:pyauto.Window) -> bool:
         if wnd.getProcessName() == "explorer.exe":
-            return wnd.getClassName() != "Edit"
+            return wnd.getClassName() not in ("Edit", "LauncherTipWnd")
         if wnd.getProcessName() == "TE64.exe":
             return wnd.getClassName() == "SysListView32"
         return False
-    keymap_filer = keymap.defineWindowKeymap(check_func=is_filer_viewmode)
+    keymap_filer = keymap.defineWindowKeymap(check_func=is_fileviewer)
     keymap_filer["C"] = "C-C"
     keymap_filer["J"] = "Down"
     keymap_filer["K"] = "Up"
