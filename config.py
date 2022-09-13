@@ -1294,7 +1294,7 @@ def configure(keymap):
     # filer
     def is_fileviewer(wnd:pyauto.Window) -> bool:
         if wnd.getProcessName() == "explorer.exe":
-            return wnd.getClassName() not in ("Edit", "LauncherTipWnd")
+            return wnd.getClassName() not in ("Edit", "LauncherTipWnd", "Windows.UI.Input.InputSite.WindowClass")
         if wnd.getProcessName() == "TE64.exe":
             return wnd.getClassName() == "SysListView32"
         return False
