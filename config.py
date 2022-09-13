@@ -1300,13 +1300,16 @@ def configure(keymap):
         return False
     keymap_filer = keymap.defineWindowKeymap(check_func=is_filer_viewmode)
     keymap_filer["C"] = "C-C"
-    keymap_filer["X"] = "C-X"
-    keymap_filer["V"] = "C-V"
-    keymap_filer["N"] = "F2"
-    keymap_filer["W"] = "C-W"
-    keymap_filer["U"] = "Alt-Up"
     keymap_filer["J"] = "Down"
     keymap_filer["K"] = "Up"
+    # keymap_filer["H"] = "C-S-Tab"
+    # keymap_filer["L"] = "C-Tab"
+    keymap_filer["N"] = "F2"
+    keymap_filer["R"] = "F5"
+    keymap_filer["U"] = "Alt-Up"
+    keymap_filer["V"] = "C-V"
+    keymap_filer["W"] = "C-W"
+    keymap_filer["X"] = "C-X"
     keymap_filer["Space"] = "Enter"
     keymap_filer["C-S-C"] = "C-Add"
     keymap_filer["C-L"] = "A-D", "C-C"
@@ -1468,45 +1471,38 @@ def configure(keymap):
 
     for title, menu in {
         "Noise-Reduction": [
-            (" Remove blank line ", format_cb(skip_blank_line) ),
-            (" Remove inside parenthesis ", replace_cb(r"[\uff08\u0028].+?[\uff09\u0029]", "") ),
-            (" Remove quote mark ", replace_cb(r"[\u0022\u0027]", "") ),
+            (" Remove: - blank line ", format_cb(skip_blank_line) ),
+            ("         - inside parenthesis ", replace_cb(r"[\uff08\u0028].+?[\uff09\u0029]", "") ),
+            ("         - quote mark ", replace_cb(r"[\u0022\u0027]", "") ),
+            ("         - whitespace totally ", replace_cb(r"\s", "") ),
             (" to single-line ", replace_cb(r"\r?\n", "") ),
-            (" to single-line without whitespace ", replace_cb(r"\s", "") ),
         ],
-        "Transform Alphabet": [
-            (" to FullWidth ", format_cb(CharWidth().to_full_width) ),
-            (" to HalfWidth ", format_cb(CharWidth().to_half_width) ),
-            (" to lowercase ", lambda : get_current_clipboard().lower() ),
-            (" to UPPERCASE ", lambda : get_current_clipboard().upper() ),
-            (" to Title Case ", format_cb(to_smart_title_case) ),
+        "Transform Alphabet / Punctuation": [
+            (" A-Z0-9: - FullWidth ", format_cb(CharWidth().to_full_width) ),
+            ("         - HalfWidth ", format_cb(CharWidth().to_half_width) ),
+            ("         - lowercase ", lambda : get_current_clipboard().lower() ),
+            ("         - UPPERCASE ", lambda : get_current_clipboard().upper() ),
+            ("         - Title Case ", format_cb(to_smart_title_case) ),
+            (" Comma: - Curly ", replace_cb(r"\u3001", "\uff0c") ),
+            ("        - Straight ", replace_cb(r"\uff0c", "\u3001") ),
+            (" Fix: - MSWord-Bullet ", replace_cb(r"\uf09f\u0009", "\u30fb") ),
+            ("      - KANGXI RADICALS ", format_cb(format_kangxi_radicals) ),
         ],
-        "Transform Single Punctuation": [
-            (" Colon to double horizontal-bar ", replace_cb(r"\s*[\uff1a\u003a]\s*", "\u2015\u2015") ),
-            (" Fix Word Bullet ", replace_cb(r"\uf09f\u0009", "\u30fb") ),
-            (" to Official-comma ", replace_cb(r"\u3001", "\uff0c") ),
-            (" to Traditional-comma ", replace_cb(r"\uff0c", "\u3001") ),
-        ],
-        "Transform Paired Punctuation": [
-            (" Parenthesis: to FullWidth ", format_cb(CharWidth(True).to_full_width) ),
-            (" Parenthesis: to HalfWidth ", format_cb(CharWidth(True).to_half_width) ),
-            (" Parenthesis: to Tortoise ", format_cb(to_tortoise) ),
-            (" Quotation: fix Dumb ", format_cb(fix_dumb_quotation) ),
-            (" Quotation: Escape ", replace_cb(r'"', r'\"')),
-            (" Quotation: to Double ", format_cb(to_double)),
-            (" Quotation: to Single ", format_cb(to_single) ),
-        ],
-        "URL Format": [
-            (" Decode URL ", format_cb(decode_url) ),
-            (" Embed Youtube-Movie (Native) ", replace_cb(r"^.+\.youtube\.com/watch\?v=(.{11}).*", r'<div class="youtube"><iframe loading="lazy" src="https://www.youtube.com/embed/\1?mute=1&rel=0" frameborder="0" allowfullscreen></iframe></div>') ),
-            (" Embed Youtube-Movie (Lite) ", replace_cb(r"^.+\.youtube\.com/watch\?v=(.{11}).*", r'<lite-youtube videoid="\1" playlabel="" params="controls=1&rel=0&mute=1"></lite-youtube>') ),
-            (" Shorten Amazon-URL ", replace_cb(r"^.+amazon\.co\.jp/.+dp/(.{10}).*", r"https://www.amazon.jp/dp/\1") ),
+        "Transform Paired-Punctuation": [
+            (" Parenthesis to: - FullWidth ", format_cb(CharWidth(True).to_full_width) ),
+            ("                 - HalfWidth ", format_cb(CharWidth(True).to_half_width) ),
+            ("                 - Tortoise ", format_cb(to_tortoise) ),
+            (" Quotation: - fix Dumb ", format_cb(fix_dumb_quotation) ),
+            ("            - Escape ", replace_cb(r'"', r'\"')),
+            ("            - to Double ", format_cb(to_double)),
+            ("            - to Single ", format_cb(to_single) ),
         ],
         "Others": [
-            (" Insert blank-line ", replace_cb(r"(\r?\n)+", os.linesep * 2) ),
             (" Cat local file ", format_cb(catanate_file_content) ),
-            (" Fix KANGXI RADICALS ", format_cb(format_kangxi_radicals) ),
+            (" Insert blank-line ", replace_cb(r"(\r?\n)+", os.linesep * 2) ),
             (" Trim postalcode from address ", format_cb(strip_postalcode_from_address) ),
+            (" URL: - Decode ", format_cb(decode_url) ),
+            ("      - Shorten Amazon ", replace_cb(r"^.+amazon\.co\.jp/.+dp/(.{10}).*", r"https://www.amazon.jp/dp/\1") ),
             (" Zoom invitation ", format_cb(format_zoom_invitation) ),
         ]
     }.items():
