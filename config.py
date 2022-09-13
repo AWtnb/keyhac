@@ -996,13 +996,14 @@ def configure(keymap):
 
         def _find(self) -> pyauto.Window:
             # https://github.com/crftwr/keyhac/blob/master/keyhac_keymap.py
-            def __hop_to_next(wnd:pyauto.Window, arg) -> bool:
+            def __hop_wnd(wnd:pyauto.Window, arg) -> bool:
                 if not wnd.isVisible() : return True
+                if not wnd.isEnabled() : return True
                 if not fnmatch.fnmatch(wnd.getProcessName(), self.exe_name) : return True
                 if self.class_name and not fnmatch.fnmatch(wnd.getClassName(), self.class_name) : return True
                 self.target = wnd.getLastActivePopup()
                 return False
-            pyauto.Window.enum(__hop_to_next, None)
+            pyauto.Window.enum(__hop_wnd, None)
 
         def activate(self) -> bool:
             if not self.target:
@@ -1339,16 +1340,15 @@ def configure(keymap):
 
     class TitleCase:
         def __init__(self, s:str) -> None:
-            self.text = s[0].upper() + s[1:]
-            self.fix_space()
-            self.fix_colon()
-        def fix_space(self) -> None:
-            self.text = re.sub(r"\s+", " ", self.text)
-        def fix_colon(self) -> None:
-            s = self.text.replace(" :", ":")
+            lower = s.lower()
+            self.text = lower[0].upper() + lower[1:]
+        def _preformat(self) -> None:
+            s = re.sub(r"\s+", " ", self.text)
+            s = s.replace(" :", ":")
             self.text = re.sub(r":(?! )", ": ", s)
         def format(self) -> str:
-            reg = re.compile(r"[- ][a-z]")
+            self._preformat()
+            reg = re.compile(r"(?<=[- ])[a-z]")
             def _replacer(mo:re.Match) -> str:
                 return mo.group(0).upper()
             return reg.sub(_replacer, self.text)
@@ -1357,7 +1357,7 @@ def configure(keymap):
         title_cased = TitleCase(s).format()
         words = title_cased.split(" ")
         stack = [words[0]]
-        lower_list = ["A", "About", "Aboard", "Above", "Across", "After", "Against", "Along", "Alongside", "Amid", "Among", "An", "And", "Anti", "Around", "As", "At", "Bar", "Before", "Behind", "Below", "Beneath", "Beside", "Besides", "Between", "Beyond", "But", "By", "Considering", "Despite", "Down", "During", "Except", "For", "From", "In", "Inside", "Into", "Less", "Like", "Minus", "Near", "Notwithstanding", "Of", "Off", "On", "Onto", "Or", "Opposite", "Out", "Outside", "Over", "Pace", "Past", "Pending", "Per", "Plus", "Re", "Regarding", "Round", "Save", "Saving", "Since", "Than", "The", "Through", "Throughout", "Till", "To", "Touching", "Toward", "Under", "Underneath", "Unless", "Unlike", "Until", "Up", "Versus", "Via", "Vice", "With", "Within", "Without"]
+        lower_list = ["A", "About", "Aboard", "Above", "Across", "After", "Against", "Along", "Alongside", "Am", "Amid", "Among", "An", "And", "Anti", "Are", "Around", "As", "At", "Bar", "Before", "Behind", "Below", "Beneath", "Beside", "Besides", "Between", "Beyond", "But", "By", "Considering", "Despite", "Down", "During", "Except", "For", "From", "In", "Inside", "Into", "Is", "Less", "Like", "Minus", "Near", "Notwithstanding", "Of", "Off", "On", "Onto", "Or", "Opposite", "Out", "Outside", "Over", "Pace", "Past", "Pending", "Per", "Plus", "Re", "Regarding", "Round", "Save", "Saving", "Since", "Than", "The", "Through", "Throughout", "Till", "To", "Touching", "Toward", "Under", "Underneath", "Unless", "Unlike", "Until", "Up", "Versus", "Via", "Vice", "With", "Within", "Without"]
         for word in words[1:]:
             if (word in lower_list) and (not stack[-1].endswith(":")):
                 stack.append(word.lower())
