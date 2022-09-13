@@ -1292,7 +1292,22 @@ def configure(keymap):
     keymap_tb["F4"] = "C-K", "S-F6", "Home", "Down"
 
     # filer
-    keymap_filer = keymap.defineWindowKeymap(check_func=lambda wnd : wnd.getProcessName() in ("explorer.exe", "TE64.exe"))
+    def is_filer_viewmode(wnd:pyauto.Window) -> bool:
+        if wnd.getProcessName() == "explorer.exe":
+            return wnd.getClassName() != "Edit"
+        if wnd.getProcessName() == "TE64.exe":
+            return wnd.getClassName() == "SysListView32"
+        return False
+    keymap_filer = keymap.defineWindowKeymap(check_func=is_filer_viewmode)
+    keymap_filer["C"] = "C-C"
+    keymap_filer["X"] = "C-X"
+    keymap_filer["V"] = "C-V"
+    keymap_filer["N"] = "F2"
+    keymap_filer["W"] = "C-W"
+    keymap_filer["U"] = "Alt-Up"
+    keymap_filer["J"] = "Down"
+    keymap_filer["K"] = "Up"
+    keymap_filer["Space"] = "Enter"
     keymap_filer["C-S-C"] = "C-Add"
     keymap_filer["C-L"] = "A-D", "C-C"
     keymap_filer["A-K"] = "A-Up"
