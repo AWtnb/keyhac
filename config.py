@@ -154,8 +154,6 @@ def configure(keymap):
     }.items():
         keymap_global[key] = value
 
-    # for key in "123456789":
-    #     keymap_global["D-LWin-"+key] = "LWin-"+key
 
     ################################
     # functions for custom hotkey
@@ -163,9 +161,6 @@ def configure(keymap):
 
     def delay(sec:float=0.05) -> None:
         time.sleep(sec)
-
-    def get_current_clipboard() -> str:
-        return getClipboardText() or ""
 
     def prune_white(s:str) -> str:
         return s.strip().translate(str.maketrans("", "", "\u200b\u3000\u0009\u0020"))
@@ -196,23 +191,32 @@ def configure(keymap):
             send_keys("(243)")
             delay(0.01)
 
+    class keyhaclip:
+        @staticmethod
+        def get_string() -> str:
+            return getClipboardText() or ""
+        @staticmethod
+        def set_string(s:str) -> None:
+            return setClipboardText(str(s))
+        @staticmethod
+        def paste(s:str) -> None:
+            keyhaclip.set_string(s)
+            send_keys("S-Insert")
+
+
     def copy_string() -> str:
-        setClipboardText("")
+        keyhaclip.set_string("")
         send_keys("C-Insert")
         timeout = 0.2
         retry_time = 0.01
         cb = ""
         while timeout > 0.0:
-            if s := getClipboardText():
+            if s := keyhaclip.get_string():
                 cb = s
                 break
             delay(retry_time)
             timeout -= retry_time
         return cb
-
-    def paste_string(s:str) -> None:
-        setClipboardText(s)
-        send_keys("S-Insert")
 
     def execute_path(s:str, arg:str=None) -> None:
         if s:
@@ -275,8 +279,8 @@ def configure(keymap):
     keymap_global["S-U1-J"] = lambda : set_ime(0)
 
     # paste as plaintext
-    keymap_global["U0-V"] = LazyFunc(lambda : paste_string(get_current_clipboard().strip("\uf09f\u0009").strip())).defer()
-    keymap_global["U1-V"] = LazyFunc(lambda : paste_string(prune_white(get_current_clipboard()))).defer()
+    keymap_global["U0-V"] = LazyFunc(lambda : keyhaclip.paste(keyhaclip.get_string().strip("\uf09f\u0009").strip())).defer()
+    keymap_global["U1-V"] = LazyFunc(lambda : keyhaclip.paste(prune_white(keyhaclip.get_string()))).defer()
 
     # select last word with ime
     def select_last_word() -> None:
@@ -342,7 +346,7 @@ def configure(keymap):
     def quote_selection() -> None:
         cb = copy_string()
         if cb:
-            paste_string(' "{}" '.format(cb.strip()))
+            keyhaclip.paste(' "{}" '.format(cb.strip()))
     keymap_global["LC-U0-Q"] = LazyFunc(quote_selection).defer()
 
     def as_html_tag() -> None:
@@ -358,7 +362,7 @@ def configure(keymap):
     # paste with quote mark
     def paste_with_anchor(skip_blank:bool=False) -> callable:
         def _paster() -> None:
-            cb = get_current_clipboard()
+            cb = keyhaclip.get_string()
             lines = cb.strip().splitlines()
             quoted = []
             for line in lines:
@@ -366,7 +370,7 @@ def configure(keymap):
                     quoted.append(line)
                 else:
                     quoted.append("> " + line)
-            paste_string(os.linesep.join(quoted))
+            keyhaclip.paste(os.linesep.join(quoted))
         return LazyFunc(_paster).defer()
     keymap_global["U1-Q"] = paste_with_anchor(False)
     keymap_global["C-U1-Q"] = paste_with_anchor(True)
@@ -402,7 +406,7 @@ def configure(keymap):
 
     def open_github() -> None:
         repo = "https://github.com/AWtnb/keyhac/edit/main/config.py"
-        setClipboardText(read_config())
+        keyhaclip.set_string(read_config())
         execute_path(repo)
 
     def reload_config() -> None:
@@ -416,7 +420,7 @@ def configure(keymap):
         "R" : reload_config,
         "E" : keymap.command_EditConfig,
         "G" : open_github,
-        "P" : lambda : paste_string(read_config()),
+        "P" : lambda : keyhaclip.paste(read_config()),
         "X" : lambda : None,
     }.items():
         keymap_global["LC-U0-X"][key] = LazyFunc(func).defer()
@@ -1333,14 +1337,14 @@ def configure(keymap):
     # enclosing functions for pop-up menu
     def format_cb(func:callable) -> callable:
         def _formatter() -> str:
-            cb = get_current_clipboard()
+            cb = keyhaclip.get_string()
             if cb:
                 return func(cb)
         return _formatter
     def replace_cb(search:str, replace_to:str) -> callable:
         reg = re.compile(search)
         def _replacer() -> str:
-            cb = get_current_clipboard()
+            cb = keyhaclip.get_string()
             if cb:
                 return reg.sub(replace_to, cb)
         return _replacer
@@ -1491,8 +1495,8 @@ def configure(keymap):
         "Transform Alphabet / Punctuation": [
             (" A-Z0-9: - FullWidth ", format_cb(CharWidth().to_full_width) ),
             ("         - HalfWidth ", format_cb(CharWidth().to_half_width) ),
-            ("         - lowercase ", lambda : get_current_clipboard().lower() ),
-            ("         - UPPERCASE ", lambda : get_current_clipboard().upper() ),
+            ("         - lowercase ", lambda : keyhaclip.get_string().lower() ),
+            ("         - UPPERCASE ", lambda : keyhaclip.get_string().upper() ),
             ("         - Title Case ", format_cb(to_smart_title_case) ),
             (" Comma: - Curly ", replace_cb(r"\u3001", "\uff0c") ),
             ("        - Straight ", replace_cb(r"\uff0c", "\u3001") ),
