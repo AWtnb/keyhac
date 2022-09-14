@@ -235,9 +235,9 @@ def configure(keymap):
 
 
     class KeyPuncher:
-        def __init__(self, recover_ime:bool=False, sleep_sec:float=0.01, delay_msec:int=20) -> None:
+        def __init__(self, recover_ime:bool=False, sleep_msec:int=10, delay_msec:int=20) -> None:
             self._recover_ime = recover_ime
-            self._sleep = sleep_sec
+            self._sleep = sleep_msec / 1000
             self._delay_msec = delay_msec
         def invoke(self, *sequence) -> callable:
             def _input() -> None:
@@ -619,7 +619,7 @@ def configure(keymap):
         def __init__(self) -> None:
             self.mapping = keymap.defineMultiStrokeKeymap("pseudo-espanso:")
 
-            direct_puncher = KeyPuncher(sleep_sec=0)
+            direct_puncher = KeyPuncher(sleep_msec=0)
             for combo, stroke in {
                 "X,X": (".txt"),
                 "X,M": (".md"),
@@ -663,7 +663,7 @@ def configure(keymap):
                 keys = combo.split(",")
                 self.mapping = combo_mapper(self.mapping, keys, direct_puncher.invoke(*stroke))
 
-            indirect_puncher = KeyPuncher(recover_ime=True, sleep_sec=0)
+            indirect_puncher = KeyPuncher(recover_ime=True, sleep_msec=0)
             for combo, stroke in {
                 "F,G": ("\u3013\u3013"),
                 "M,1": ("# "),
@@ -1252,7 +1252,7 @@ def configure(keymap):
         "L": ["C-Tab"],
         "H": ["C-S-Tab"],
     }.items():
-        keymap_sumatra_view[key] = KeyPuncher(sleep_sec=0.05).invoke(*seq)
+        keymap_sumatra_view[key] = KeyPuncher(sleep_msec=50).invoke(*seq)
 
     # word
     keymap_word = keymap.defineWindowKeymap(exe_name="WINWORD.EXE")
@@ -1299,22 +1299,32 @@ def configure(keymap):
             return wnd.getClassName() == "SysListView32"
         return False
     keymap_filer = keymap.defineWindowKeymap(check_func=is_fileviewer)
-    keymap_filer["C"] = "C-C"
-    keymap_filer["J"] = "Down"
-    keymap_filer["K"] = "Up"
-    keymap_filer["C-H"] = "Apps", "H"
-    keymap_filer["H"] = "C-S-Tab"
-    keymap_filer["L"] = "C-Tab"
-    keymap_filer["N"] = "F2"
-    keymap_filer["R"] = "F5"
-    keymap_filer["U"] = "Alt-Up"
-    keymap_filer["V"] = "C-V"
-    keymap_filer["W"] = "C-W"
-    keymap_filer["X"] = "C-X"
-    keymap_filer["Space"] = "Enter"
-    keymap_filer["C-S-C"] = "C-Add"
-    keymap_filer["C-L"] = "A-D", "C-C"
-    keymap_filer["A-K"] = "A-Up"
+    for key, value in {
+        "A": ("Home"),
+        "E": ("End"),
+        "C": ("C-C"),
+        "J": ("Down"),
+        "K": ("Up"),
+        "C-H": ("Apps", "H"),
+        "H": ("C-S-Tab"),
+        "L": ("C-Tab"),
+        "N": ("F2"),
+        "R": ("F5"),
+        "U": ("Alt-Up"),
+        "V": ("C-V"),
+        "W": ("C-W"),
+        "X": ("C-X"),
+        "Space": ("Enter"),
+        "C-S-C": ("C-Add"),
+        "C-L": ("A-D", "C-C"),
+        "A-K": ("A-Up"),
+    }.items():
+        keymap_filer[key] = value
+
+    keymap_filer["LC-K"] = keymap.defineMultiStrokeKeymap("Focus on:")
+    keymap_filer["LC-K"]["BackSlash"] = KeyPuncher().invoke("S-BackSlash")
+    for simple_key in "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789":
+        keymap_filer["LC-K"][simple_key] = KeyPuncher().invoke(simple_key)
 
     ################################
     # popup clipboard menu
