@@ -239,7 +239,7 @@ def configure(keymap):
 
 
     class KeyPuncher:
-        def __init__(self, recover_ime:bool=False, sleep_msec:int=10, delay_msec:int=20) -> None:
+        def __init__(self, recover_ime:bool=False, sleep_msec:int=0, delay_msec:int=0) -> None:
             self._recover_ime = recover_ime
             self._sleep_msec = sleep_msec
             self._delay_msec = delay_msec
@@ -623,7 +623,7 @@ def configure(keymap):
         def __init__(self) -> None:
             self.mapping = keymap.defineMultiStrokeKeymap("pseudo-espanso:")
 
-            direct_puncher = KeyPuncher(sleep_msec=0)
+            direct_puncher = KeyPuncher()
             for combo, stroke in {
                 "X,X": (".txt"),
                 "X,M": (".md"),
@@ -667,7 +667,7 @@ def configure(keymap):
                 keys = combo.split(",")
                 self.mapping = combo_mapper(self.mapping, keys, direct_puncher.invoke(*stroke))
 
-            indirect_puncher = KeyPuncher(recover_ime=True, sleep_msec=0)
+            indirect_puncher = KeyPuncher(recover_ime=True)
             for combo, stroke in {
                 "F,G": ("\u3013\u3013"),
                 "M,1": ("# "),
@@ -1237,7 +1237,7 @@ def configure(keymap):
     keymap_sumatra["C-OpenBracket"] = "S-F3"
     keymap_sumatra["C-CloseBracket"] = "F3"
 
-    keymap_sumatra["O-LShift"] = KeyPuncher(recover_ime=True, delay_msec=0).invoke("Esc", "C-Home", "C-F")
+    keymap_sumatra["O-LShift"] = KeyPuncher(recover_ime=True).invoke("Esc", "C-Home", "C-F")
 
     # sumatra PDF when focus out from textbox
     keymap_sumatra_view = keymap.defineWindowKeymap(check_func=lambda wnd : wnd.getProcessName() == "SumatraPDF.exe" and wnd.getClassName() != "Edit")
