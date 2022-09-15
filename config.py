@@ -1304,27 +1304,27 @@ def configure(keymap):
         return False
     keymap_filer = keymap.defineWindowKeymap(check_func=is_fileviewer)
     for key, value in {
-        "A": ("Home"),
-        "E": ("End"),
-        "C": ("C-C"),
-        "J": ("Down"),
-        "K": ("Up"),
-        "C-H": ("Apps", "H"),
-        "H": ("C-S-Tab"),
-        "L": ("C-Tab"),
-        "N": ("F2"),
-        "R": ("F5"),
-        "U": ("Alt-Up"),
-        "V": ("C-V"),
-        "W": ("C-W"),
-        "X": ("C-X"),
-        "Space": ("Enter"),
-        "LS-Space": ("LS-Enter"),
-        "C-S-C": ("C-Add"),
-        "C-L": ("A-D", "C-C"),
-        "A-K": ("A-Up"),
+        "A": ["Home"],
+        "E": ["End"],
+        "C": ["C-C"],
+        "J": ["Down"],
+        "K": ["Up"],
+        "C-H": ["Apps", "H"],
+        "H": ["C-S-Tab"],
+        "L": ["C-Tab"],
+        "N": ["F2"],
+        "R": ["F5"],
+        "U": ["Alt-Up"],
+        "V": ["C-V"],
+        "W": ["C-W"],
+        "X": ["C-X"],
+        "Space": ["Enter"],
+        "LS-Space": ["LS-Enter"],
+        "C-S-C": ["C-Add"],
+        "C-L": ["A-D", "C-C"],
+        "A-K": ["A-Up"],
     }.items():
-        keymap_filer[key] = value
+        keymap_filer[key] = KeyPuncher().invoke(*value)
 
     keymap_filer["LC-K"] = keymap.defineMultiStrokeKeymap("Focus on:")
     keymap_filer["LC-K"]["BackSlash"] = KeyPuncher().invoke("S-BackSlash")
