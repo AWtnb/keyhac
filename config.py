@@ -159,8 +159,8 @@ def configure(keymap):
     # functions for custom hotkey
     ################################
 
-    def delay(sec:float=0.05) -> None:
-        time.sleep(sec)
+    def delay(msec:int=5) -> None:
+        time.sleep(msec / 1000)
 
     def prune_white(s:str) -> str:
         return s.strip().translate(str.maketrans("", "", "\u200b\u3000\u0009\u0020"))
@@ -178,9 +178,9 @@ def configure(keymap):
             keymap.input_seq.append(pyauto.Char(c))
         keymap.endInput()
 
-    def send_input(sequence:tuple, sleep:float=0.01) -> None:
+    def send_input(sequence:tuple, sleep_msec:int=10) -> None:
         for elem in sequence:
-            delay(sleep)
+            delay(sleep_msec)
             try:
                 send_keys(elem)
             except:
@@ -189,7 +189,7 @@ def configure(keymap):
     def set_ime(mode:int) -> None:
         if keymap.getWindow().getImeStatus() != mode:
             send_keys("(243)")
-            delay(0.01)
+            delay(10)
 
     class keyhaclip:
         @staticmethod
@@ -207,15 +207,15 @@ def configure(keymap):
     def copy_string() -> str:
         keyhaclip.set_string("")
         send_keys("C-Insert")
-        timeout = 0.2
-        retry_time = 0.01
+        interval = 10
+        timeout = interval * 20
         cb = ""
-        while timeout > 0.0:
+        while timeout > 0:
             if s := keyhaclip.get_string():
                 cb = s
                 break
-            delay(retry_time)
-            timeout -= retry_time
+            delay(interval)
+            timeout -= interval
         return cb
 
     def execute_path(s:str, arg:str=None) -> None:
@@ -241,12 +241,12 @@ def configure(keymap):
     class KeyPuncher:
         def __init__(self, recover_ime:bool=False, sleep_msec:int=10, delay_msec:int=20) -> None:
             self._recover_ime = recover_ime
-            self._sleep = sleep_msec / 1000
+            self._sleep_msec = sleep_msec
             self._delay_msec = delay_msec
         def invoke(self, *sequence) -> callable:
             def _input() -> None:
                 set_ime(0)
-                send_input(sequence, self._sleep)
+                send_input(sequence, self._sleep_msec)
                 if self._recover_ime:
                     set_ime(1)
             return LazyFunc(_input).defer(self._delay_msec)
@@ -1014,9 +1014,9 @@ def configure(keymap):
                 return False
             if self.target.isMinimized():
                 self.target.restore()
-            timeout = 0.25
-            retry_time = 0.01
-            while timeout > 0.0:
+            interval = 10
+            timeout = interval * 25
+            while timeout > 0:
                 try:
                     self.target.setForeground()
                     if pyauto.Window.getForeground() == self.target:
@@ -1025,8 +1025,8 @@ def configure(keymap):
                         return True
                 except:
                     return False
-                delay(retry_time)
-                timeout -= retry_time
+                delay(interval)
+                timeout -= interval
             return False
 
 
@@ -1319,6 +1319,7 @@ def configure(keymap):
         "W": ("C-W"),
         "X": ("C-X"),
         "Space": ("Enter"),
+        "LS-Space": ("LS-Enter"),
         "C-S-C": ("C-Add"),
         "C-L": ("A-D", "C-C"),
         "A-K": ("A-Up"),
