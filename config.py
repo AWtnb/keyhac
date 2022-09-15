@@ -159,7 +159,7 @@ def configure(keymap):
     # functions for custom hotkey
     ################################
 
-    def delay(msec:int=5) -> None:
+    def delay(msec:int=50) -> None:
         time.sleep(msec / 1000)
 
     def prune_white(s:str) -> str:
