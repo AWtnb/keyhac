@@ -995,19 +995,20 @@ def configure(keymap):
         def __init__(self, exe_name:str, class_name:str) -> None:
             self.exe_name = exe_name
             self.class_name = class_name
-            self.target = None
-            self._find()
+            self.target = self._find()
 
         def _find(self) -> pyauto.Window:
-            # https://github.com/crftwr/keyhac/blob/master/keyhac_keymap.py
-            def __hop_wnd(wnd:pyauto.Window, arg) -> bool:
+            found = [None]
+            def _search_next_wnd(wnd:pyauto.Window, _) -> bool:
                 if not wnd.isVisible() : return True
                 if not wnd.isEnabled() : return True
                 if not fnmatch.fnmatch(wnd.getProcessName(), self.exe_name) : return True
-                if self.class_name and not fnmatch.fnmatch(wnd.getClassName(), self.class_name) : return True
-                self.target = wnd.getLastActivePopup()
+                if self.class_name:
+                    if not fnmatch.fnmatch(wnd.getClassName(), self.class_name) : return True
+                found[0] = wnd.getLastActivePopup()
                 return False
-            pyauto.Window.enum(__hop_wnd, None)
+            pyauto.Window.enum(_search_next_wnd, None)
+            return found[0]
 
         def activate(self) -> bool:
             if not self.target:
@@ -1020,7 +1021,6 @@ def configure(keymap):
                 try:
                     self.target.setForeground()
                     if pyauto.Window.getForeground() == self.target:
-                        delay()
                         self.target.setForeground(True)
                         return True
                 except:
@@ -1039,7 +1039,7 @@ def configure(keymap):
                     send_keys("LCtrl-LAlt-Tab")
             else:
                 execute_path(exe_path)
-        return LazyFunc(_executer).defer(0)
+        return LazyFunc(_executer).defer()
 
     keymap_global["U1-C"] = keymap.defineMultiStrokeKeymap()
     for key, params in {
