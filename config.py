@@ -957,35 +957,27 @@ def configure(keymap):
 
     class SystemBrowser:
         def __init__(self) -> None:
+            register_path = r'Software\Microsoft\Windows\Shell\Associations\UrlAssociations\https\UserChoice'
+            with OpenKey(HKEY_CURRENT_USER, register_path) as key:
+                self._prog_id = str(QueryValueEx(key, "ProgId")[0])
 
-            def _get_prog_id() -> str:
-                register_path = r'Software\Microsoft\Windows\Shell\Associations\UrlAssociations\https\UserChoice'
-                with OpenKey(HKEY_CURRENT_USER, register_path) as key:
-                    return str(QueryValueEx(key, "ProgId")[0])
-            self._prog_id = _get_prog_id()
+        def get_commandline(self) -> str:
+            register_path = r'{}\shell\open\command'.format(self._prog_id)
+            with OpenKey(HKEY_CLASSES_ROOT, register_path) as key:
+                return str(QueryValueEx(key, "")[0])
 
-            def _get_commandline() -> str:
-                register_path = r'{}\shell\open\command'.format(self._prog_id)
-                with OpenKey(HKEY_CLASSES_ROOT, register_path) as key:
-                    return str(QueryValueEx(key, "")[0])
-            self._commandline = _get_commandline()
+        def get_exe_path(self)  -> str:
+            return re.sub(r"(^.+\.exe)(.*)", r"\1", self.get_commandline()).replace('"', "")
 
-            self._exe_path = re.sub(r"(^.+\.exe)(.*)", r"\1", self._commandline).replace('"', "")
-            self._exe_name = Path(self._exe_path).name
-            self._wnd_class = {
+        def get_exe_name(self)  -> str:
+            return Path(self.get_exe_path()).name
+
+        def get_wnd_class(self)  -> str:
+            return {
                 "chrome.exe": "Chrome_WidgetWin_1",
                 "vivaldi.exe": "Chrome_WidgetWin_1",
                 "firefox.exe": "MozillaWindowClass",
-            }.get(self._exe_name, "Chrome_WidgetWin_1")
-
-        def get_exe_path(self)  -> str:
-            return self._exe_path
-
-        def get_exe_name(self)  -> str:
-            return self._exe_name
-
-        def get_wnd_class(self)  -> str:
-            return self._wnd_class
+            }.get(self.get_exe_name(), "Chrome_WidgetWin_1")
 
 
     DEFAULT_BROWSER = SystemBrowser()
@@ -1016,7 +1008,7 @@ def configure(keymap):
             if self.target.isMinimized():
                 self.target.restore()
             interval = 10
-            timeout = interval * 25
+            timeout = interval * 10
             while timeout > 0:
                 try:
                     self.target.setForeground()
@@ -1150,7 +1142,7 @@ def configure(keymap):
             None
         )
     }.items():
-        keymap_global[key] = pseudo_cuteExec(*params)
+        keymap_global["D-"+key] = pseudo_cuteExec(*params)
 
     keymap_global["U1-M"]["U1-M"] = pseudo_cuteExec("Mery.exe", "TChildForm", None)
 
