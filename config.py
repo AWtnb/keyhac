@@ -1031,7 +1031,7 @@ def configure(keymap):
                     send_keys("LCtrl-LAlt-Tab")
             else:
                 execute_path(exe_path)
-        return LazyFunc(_executer).defer()
+        return LazyFunc(_executer).defer(40)
 
     keymap_global["U1-C"] = keymap.defineMultiStrokeKeymap()
     for key, params in {
