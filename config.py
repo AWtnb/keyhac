@@ -415,7 +415,7 @@ def configure(keymap):
         ts = datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S")
         print("\n{} reloaded config.py\n".format(ts))
 
-    keymap_global["LC-U0-X"] = keymap.defineMultiStrokeKeymap("config.py: R=>reload, E=>Edit, G=>Gist, P=>Paste")
+    keymap_global["LC-U0-X"] = keymap.defineMultiStrokeKeymap("config.py: R=>reload, E=>Edit, G=>Github, P=>Paste")
     for key, func in {
         "R" : reload_config,
         "E" : keymap.command_EditConfig,
@@ -1031,7 +1031,7 @@ def configure(keymap):
                     send_keys("LCtrl-LAlt-Tab")
             else:
                 execute_path(exe_path)
-        return LazyFunc(_executer).defer(40)
+        return LazyFunc(_executer).defer(80)
 
     keymap_global["U1-C"] = keymap.defineMultiStrokeKeymap()
     for key, params in {
@@ -1162,7 +1162,8 @@ def configure(keymap):
     def invoke_cmder() -> None:
         wnd = PyWnd("ConEmu64.exe", "VirtualConsoleClass")
         if wnd.target:
-            send_keys("C-AtMark")
+            if not wnd.activate():
+                send_keys("C-AtMark")
         else:
             cmder_path = resolve_path(r"scoop\apps\cmder\current\Cmder.exe")
             execute_path(cmder_path)
@@ -1483,14 +1484,14 @@ def configure(keymap):
             ("         - inside parenthesis ", replace_cb(r"[\uff08\u0028].+?[\uff09\u0029]", "") ),
             ("         - quote mark ", replace_cb(r"[\u0022\u0027]", "") ),
             ("         - whitespace (including line break) ", replace_cb(r"\s", "") ),
-            (" unify lines ", replace_cb(r"\r?\n", "") ),
+            (" to single line ", replace_cb(r"\r?\n", "") ),
         ],
         "Transform Alphabet / Punctuation": [
-            (" A-Z0-9: - FullWidth ", format_cb(CharWidth().to_full_width) ),
-            ("         - HalfWidth ", format_cb(CharWidth().to_half_width) ),
-            ("         - lowercase ", lambda : keyhaclip.get_string().lower() ),
-            ("         - UPPERCASE ", lambda : keyhaclip.get_string().upper() ),
-            ("         - Title Case ", format_cb(to_smart_title_case) ),
+            (" A-Z/0-9: - FullWidth ", format_cb(CharWidth().to_full_width) ),
+            ("          - HalfWidth ", format_cb(CharWidth().to_half_width) ),
+            ("          - lowercase ", lambda : keyhaclip.get_string().lower() ),
+            ("          - UPPERCASE ", lambda : keyhaclip.get_string().upper() ),
+            ("          - Title Case ", format_cb(to_smart_title_case) ),
             (" Comma: - Curly ", replace_cb(r"\u3001", "\uff0c") ),
             ("        - Straight ", replace_cb(r"\uff0c", "\u3001") ),
             (" Fix: - MSWord-Bullet ", replace_cb(r"\uf09f\u0009", "\u30fb") ),
