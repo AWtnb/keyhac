@@ -1161,8 +1161,7 @@ def configure(keymap):
 
     def invoke_cmder() -> None:
         wnd = PyWnd("ConEmu64.exe", "VirtualConsoleClass")
-        if wnd.target:
-            if not wnd.activate():
+        if wnd.target and not wnd.activate():
                 send_keys("C-AtMark")
         else:
             cmder_path = resolve_path(r"scoop\apps\cmder\current\Cmder.exe")
