@@ -349,28 +349,17 @@ def configure(keymap):
             keyhaclip.paste(' "{}" '.format(cb.strip()))
     keymap_global["LC-U0-Q"] = LazyFunc(quote_selection).defer()
 
-    def as_html_tag() -> None:
-        cb = copy_string()
-        if cb:
-            set_ime(0)
-            tag_name = cb.strip()
-            fmt = "<{tag}></{tag}>".format(tag=tag_name)
-            sent = [fmt] + ["Left"]*(len(tag_name) + 3)
-            send_input(tuple(sent), 0)
-    keymap_global["U0-T"] = LazyFunc(as_html_tag).defer()
 
     # paste with quote mark
-    def paste_with_anchor(skip_blank:bool=False) -> callable:
+    def paste_with_anchor(join_lines:bool=False) -> callable:
         def _paster() -> None:
             cb = keyhaclip.get_string()
             lines = cb.strip().splitlines()
-            quoted = []
-            for line in lines:
-                if skip_blank and len(line.strip()) < 1:
-                    quoted.append(line)
-                else:
-                    quoted.append("> " + line)
-            keyhaclip.paste(os.linesep.join(quoted))
+            if join_lines:
+                quoted = "> " + "".join([line.strip() for line in lines])
+            else:
+                quoted = os.linesep.join(["> " + line for line in lines])
+            keyhaclip.paste(quoted)
         return LazyFunc(_paster).defer()
     keymap_global["U1-Q"] = paste_with_anchor(False)
     keymap_global["C-U1-Q"] = paste_with_anchor(True)
@@ -688,6 +677,16 @@ def configure(keymap):
     ################################
 
     keymap_global["U1-W"] = keymap.defineMultiStrokeKeymap("Wrap with parenthesis:")
+
+    def as_html_tag() -> None:
+        cb = copy_string()
+        if cb:
+            set_ime(0)
+            tag_name = cb.strip()
+            fmt = "<{tag}></{tag}>".format(tag=tag_name)
+            sent = [fmt] + ["Left"]*(len(tag_name) + 3)
+            send_input(tuple(sent), 0)
+    keymap_global["U1-W"]["T"] = LazyFunc(as_html_tag).defer()
 
     # surround with brackets
     for key, pair in {
