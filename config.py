@@ -1148,15 +1148,13 @@ def configure(keymap):
     # invoke specific filer
     def invoke_filer(dir_path:str) -> callable:
         filer_path = get_filer_path()
-        if test_path(dir_path):
-            def _invoker() -> None:
+        def _invoker() -> None:
+            if test_path(dir_path):
                 execute_path(filer_path, dir_path)
-            return LazyFunc(_invoker).defer()
-        else:
-            return lambda : None
+        return LazyFunc(_invoker).defer()
     keymap_global["U1-F"] = keymap.defineMultiStrokeKeymap("invoke directory on filer:")
     keymap_global["U1-F"]["D"] = invoke_filer(resolve_path(r"Desktop"))
-    keymap_global["U1-F"]["S"] = invoke_filer(resolve_path(r"Desktop\scan"))
+    keymap_global["U1-F"]["S"] = invoke_filer(r"X:\scan")
 
     def invoke_cmder() -> None:
         wnd = PyWnd("ConEmu64.exe", "VirtualConsoleClass")
