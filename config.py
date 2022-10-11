@@ -1479,9 +1479,11 @@ def configure(keymap):
         "Noise-Reduction": [
             (" Remove: - blank line ", format_cb(skip_blank_line) ),
             ("         - inside parenthesis ", replace_cb(r"[\uff08\u0028].+?[\uff09\u0029]", "") ),
+            ("         - line break ", replace_cb(r"\r?\n", "") ),
             ("         - quote mark ", replace_cb(r"[\u0022\u0027]", "") ),
-            ("         - whitespace (including line break) ", replace_cb(r"\s", "") ),
-            (" to single line ", replace_cb(r"\r?\n", "") ),
+            ("         - whole whitespace ", replace_cb(r"\s", "") ),
+            (" Fix: - MSWord-Bullet ", replace_cb(r"\uf09f\u0009", "\u30fb") ),
+            ("      - KANGXI RADICALS ", format_cb(format_kangxi_radicals) ),
         ],
         "Transform Alphabet / Punctuation": [
             (" A-Z/0-9: - FullWidth ", format_cb(CharWidth().to_full_width) ),
@@ -1491,8 +1493,6 @@ def configure(keymap):
             ("          - Title Case ", format_cb(to_smart_title_case) ),
             (" Comma: - Curly ", replace_cb(r"\u3001", "\uff0c") ),
             ("        - Straight ", replace_cb(r"\uff0c", "\u3001") ),
-            (" Fix: - MSWord-Bullet ", replace_cb(r"\uf09f\u0009", "\u30fb") ),
-            ("      - KANGXI RADICALS ", format_cb(format_kangxi_radicals) ),
         ],
         "Transform Paired-Punctuation": [
             (" Parenthesis to: - FullWidth ", format_cb(CharWidth(True).to_full_width) ),
@@ -1505,7 +1505,6 @@ def configure(keymap):
         ],
         "Others": [
             (" Cat local file ", format_cb(catanate_file_content) ),
-            (" Insert blank-line ", replace_cb(r"(\r?\n)+", os.linesep * 2) ),
             (" Trim postalcode from address ", format_cb(strip_postalcode_from_address) ),
             (" URL: - Decode ", format_cb(decode_url) ),
             ("      - Shorten Amazon ", replace_cb(r"^.+amazon\.co\.jp/.+dp/(.{10}).*", r"https://www.amazon.jp/dp/\1") ),
