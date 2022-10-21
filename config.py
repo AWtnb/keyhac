@@ -618,7 +618,7 @@ def configure(keymap):
                 "X,M": (".md"),
                 "P,A": (resolve_path(r"Dropbox\develop\app_config")),
                 "P,C": (resolve_path(r"Dropbox\develop\app_config\IME_google\convertion_dict")),
-                "P,C-C": (resolve_path(r"Dropbox\develop\app_config\IME_google\convertion_dict\my.txt")),
+                "P,M": (resolve_path(r"Dropbox\develop\app_config\IME_google\convertion_dict\my.txt")),
                 "P,D": (resolve_path(r"Desktop")),
                 "P,X": (resolve_path(r"Dropbox")),
                 "M,P": ("=============================="),
@@ -1194,7 +1194,7 @@ def configure(keymap):
     keymap_browser["LC-Q"] = "A-F4"
 
     # intra
-    keymap_intra = keymap.defineWindowKeymap(exe_name="APARClient.exe")
+    keymap_intra = keymap.defineWindowKeymap(exe_name="APARClientAWS.exe")
     keymap_intra["O-(235)"] = lambda : None
 
     # slack
