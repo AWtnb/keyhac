@@ -472,9 +472,10 @@ def configure(keymap):
             for pos in ("left", "right"):
                 d = {}
                 for size,px in self.possible_width.items():
-                    lx = self.left
                     if pos == "right":
                         lx = self.right - px
+                    else:
+                        lx = self.left
                     d[size] = WndRect([lx, self.top, lx + px, self.bottom])
                 self.area_map[pos] = d
 
@@ -482,9 +483,10 @@ def configure(keymap):
             for pos in ("top", "bottom"):
                 d = {}
                 for size,px in self.possible_height.items():
-                    ty = self.top
                     if pos == "bottom":
                         ty = self.bottom - px
+                    else:
+                        ty = self.top
                     d[size] = WndRect([self.left, ty, self.right, ty + px])
                 self.area_map[pos] = d
 
@@ -568,6 +570,10 @@ def configure(keymap):
                 "L": "right",
                 "J": "bottom",
                 "K": "top",
+                "Left": "left",
+                "Right": "right",
+                "Down": "bottom",
+                "Up": "top",
                 "M": "center",
             }.items():
                 if mntr_idx < len(KEYMAP_MONITORS):
