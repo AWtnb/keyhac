@@ -114,6 +114,9 @@ def configure(keymap):
         # line selection
         "U1-A": ("End", "S-Home"),
 
+        # quick window switcher
+        "U1-Tab": ("A-Esc"),
+        "U1-S-Tab": ("A-S-Esc"),
 
         # punctuation
         "U0-Enter": ("Period"),
@@ -1452,6 +1455,9 @@ def configure(keymap):
             return "\u3015"
         return reg.sub(_replacer, s)
 
+    def capitalize_name_parts(s:str) -> str:
+        return " ".join([(c[0].upper() + ".") for c in re.sub(r"[\s\-]+", " ", s.strip()).split(" ")])
+
     def format_zoom_invitation(s:str) -> str:
         def _format_time(mo:re.Match) -> str:
             d = mo.group(1).strip()
@@ -1509,7 +1515,8 @@ def configure(keymap):
         ],
         "Others": [
             (" Cat local file ", format_cb(catanate_file_content) ),
-            (" Postalcode|TAB|Address ", format_cb(postalcode_TAB_address) ),
+            (" First- Middle- Name Capitalize ", format_cb(capitalize_name_parts) ),
+            (" Postalcode|Address ", format_cb(postalcode_TAB_address) ),
             (" URL: - Decode ", format_cb(decode_url) ),
             ("      - Shorten Amazon ", replace_cb(r"^.+amazon\.co\.jp/.+dp/(.{10}).*", r"https://www.amazon.jp/dp/\1") ),
             (" Zoom invitation ", format_cb(format_zoom_invitation) ),
