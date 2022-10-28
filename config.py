@@ -190,6 +190,9 @@ def configure(keymap):
             send_keys("(243)")
             delay(10)
 
+    def get_key_state(vk:int) -> bool:
+        return pyauto.Input.getKeyState(vk)
+
     class keyhaclip:
         @staticmethod
         def get_string() -> str:
@@ -254,7 +257,7 @@ def configure(keymap):
     # release CapsLock on reload
     ################################
 
-    if pyauto.Input.getKeyState(VK_CAPITAL):
+    if get_key_state(VK_CAPITAL):
         send_keys("LS-CapsLock")
         print("released CapsLock.")
 
@@ -280,19 +283,6 @@ def configure(keymap):
     # paste as plaintext
     keymap_global["U0-V"] = LazyFunc(lambda : keyhaclip.paste(keyhaclip.get_string().strip("\uf09f\u0009").strip())).defer()
     keymap_global["U1-V"] = LazyFunc(lambda : keyhaclip.paste(prune_white(keyhaclip.get_string()))).defer()
-
-    # window switcher without lag
-    def alttab(backword:bool=False) -> callable:
-        def _switcher() -> None:
-            delay(20)
-            if backword:
-                send_keys("S-Alt-Tab")
-            else:
-                send_keys("Alt-Tab")
-            delay(20)
-        return _switcher
-    keymap_global["A-Tab"]: LazyFunc(alttab(False)).defer()
-    keymap_global["S-A-Tab"]: LazyFunc(alttab(True)).defer()
 
     # select last word with ime
     def select_last_word() -> None:
