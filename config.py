@@ -114,10 +114,6 @@ def configure(keymap):
         # line selection
         "U1-A": ("End", "S-Home"),
 
-        # quick window switcher
-        "U1-Tab": ("A-Esc"),
-        "U1-S-Tab": ("A-S-Esc"),
-
         # punctuation
         "U0-Enter": ("Period"),
         "LS-U0-Enter": ("Comma"),
@@ -284,6 +280,19 @@ def configure(keymap):
     # paste as plaintext
     keymap_global["U0-V"] = LazyFunc(lambda : keyhaclip.paste(keyhaclip.get_string().strip("\uf09f\u0009").strip())).defer()
     keymap_global["U1-V"] = LazyFunc(lambda : keyhaclip.paste(prune_white(keyhaclip.get_string()))).defer()
+
+    # window switcher without lag
+    def alttab(backword:bool=False) -> callable:
+        def _switcher() -> None:
+            delay(20)
+            if backword:
+                send_keys("S-Alt-Tab")
+            else:
+                send_keys("Alt-Tab")
+            delay(20)
+        return _switcher
+    keymap_global["A-Tab"]: LazyFunc(alttab(False)).defer()
+    keymap_global["S-A-Tab"]: LazyFunc(alttab(True)).defer()
 
     # select last word with ime
     def select_last_word() -> None:
