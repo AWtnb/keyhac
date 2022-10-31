@@ -108,6 +108,11 @@ def configure(keymap):
         "O-(235)": ("Esc"),
         "U0-X": ("Esc"),
 
+        # switch window
+        "U1-Tab": ("Alt-Esc"),
+        "S-U1-Tab": ("S-Alt-Esc"),
+
+
         # select first suggestion
         "U0-Tab": ("Down", "Enter"),
 
@@ -667,12 +672,12 @@ def configure(keymap):
             indirect_puncher = KeyPuncher(recover_ime=True)
             for combo, stroke in {
                 "F,G": ("\u3013\u3013"),
-                "M,1": ("# "),
-                "M,2": ("## "),
-                "M,3": ("### "),
-                "M,4": ("#### "),
-                "M,5": ("##### "),
-                "M,6": ("###### "),
+                "M,3,1": ("# "),
+                "M,3,2": ("## "),
+                "M,3,3": ("### "),
+                "M,3,4": ("#### "),
+                "M,3,5": ("##### "),
+                "M,3,6": ("###### "),
             }.items():
                 keys = combo.split(",")
                 self.mapping = combo_mapper(self.mapping, keys, indirect_puncher.invoke(*stroke))
@@ -1486,11 +1491,11 @@ def configure(keymap):
 
     for title, menu in {
         "Noise-Reduction": [
-            (" Remove: - blank line ", format_cb(skip_blank_line) ),
-            ("         - inside parenthesis ", replace_cb(r"[\uff08\u0028].+?[\uff09\u0029]", "") ),
-            ("         - line break ", replace_cb(r"\r?\n", "") ),
-            ("         - quote mark ", replace_cb(r"[\u0022\u0027]", "") ),
-            ("         - whole whitespace ", replace_cb(r"\s", "") ),
+            (" Remove: - [\\(\uff08].+?[\\)\uff09] ", replace_cb(r"[\uff08\u0028].+?[\uff09\u0029]", "") ),
+            ("         - [\\t\\n\\r\\f\\v] ", replace_cb(r"\s", "") ),
+            ("         - [\u0022\u0027\u201c\u201d\u2018\u2019] ", replace_cb(r"[\u0022\u0027\u201c\u201d\u2018\u2019]", "") ),
+            ("         - \\r?\\n ", replace_cb(r"\r?\n", "") ),
+            ("         - ^[ \u3000]+$ ", format_cb(skip_blank_line) ),
             (" Fix: - MSWord-Bullet ", replace_cb(r"\uf09f\u0009", "\u30fb") ),
             ("      - KANGXI RADICALS ", format_cb(format_kangxi_radicals) ),
         ],
@@ -1500,8 +1505,8 @@ def configure(keymap):
             ("          - lowercase ", lambda : keyhaclip.get_string().lower() ),
             ("          - UPPERCASE ", lambda : keyhaclip.get_string().upper() ),
             ("          - Title Case ", format_cb(to_smart_title_case) ),
-            (" Comma: - Curly ", replace_cb(r"\u3001", "\uff0c") ),
-            ("        - Straight ", replace_cb(r"\uff0c", "\u3001") ),
+            (" Comma: - Curly (\uff0c) ", replace_cb(r"\u3001", "\uff0c") ),
+            ("        - Straight (\u3001) ", replace_cb(r"\uff0c", "\u3001") ),
         ],
         "Transform Paired-Punctuation": [
             (" Parenthesis to: - FullWidth ", format_cb(CharWidth(True).to_full_width) ),
