@@ -109,8 +109,8 @@ def configure(keymap):
         "U0-X": ("Esc"),
 
         # switch window
-        "U1-Tab": ("Alt-Esc"),
-        "S-U1-Tab": ("S-Alt-Esc"),
+        "U1-Tab": ("Alt-Tab"),
+        "S-U1-Tab": ("S-Alt-Tab"),
 
 
         # select first suggestion
@@ -633,6 +633,7 @@ def configure(keymap):
                 "P,C": (resolve_path(r"Dropbox\develop\app_config\IME_google\convertion_dict")),
                 "P,M": (resolve_path(r"Dropbox\develop\app_config\IME_google\convertion_dict\my.txt")),
                 "P,D": (resolve_path(r"Desktop")),
+                "P,P": (resolve_path(r"Dropbox\develop\app_config\IME_google\convertion_dict\psydict")),
                 "P,X": (resolve_path(r"Dropbox")),
                 "M,P": ("=============================="),
                 "M,D": ("div."),
