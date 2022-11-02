@@ -1293,7 +1293,7 @@ def configure(keymap):
     keymap_excel["LC-U0-N"] = select_cell_content
 
     # Thunderbird
-    keymap_tb = keymap.defineWindowKeymap(exe_name="thunderbird.exe")
+    keymap_tb = keymap.defineWindowKeymap(exe_name="thunderbird.exe", check_func=lambda  wnd : wnd.getText().startswith("作成: (件名なし)"))
     keymap_tb["C-S-V"] = "A-S", "Tab", "C-V", "C-Home", "S-End"
     keymap_tb["C-S-S"] = "C-X", "Delete", "A-S", "C-V"
 
@@ -1362,17 +1362,19 @@ def configure(keymap):
         return os.linesep.join([l for l in lines if l.strip()])
 
     class CharWidth:
-        def __init__(self, focus_punctuation:bool=False) -> None:
-            if focus_punctuation:
-                self.full_letters = "\uff08\uff09\uff3b\uff3d"
-                self.half_letters = "()[]"
-            else:
-                self.full_letters = "\uff41\uff42\uff43\uff44\uff45\uff46\uff47\uff48\uff49\uff4a\uff4b\uff4c\uff4d\uff4e\uff4f\uff50\uff51\uff52\uff53\uff54\uff55\uff56\uff57\uff58\uff59\uff5a\uff21\uff22\uff23\uff24\uff25\uff26\uff27\uff28\uff29\uff2a\uff2b\uff2c\uff2d\uff2e\uff2f\uff30\uff31\uff32\uff33\uff34\uff35\uff36\uff37\uff38\uff39\uff3a\uff10\uff11\uff12\uff13\uff14\uff15\uff16\uff17\uff18\uff19\uff0d"
-                self.half_letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-"
-        def to_half_width(self, s:str) -> str:
+        def __init__(self) -> None:
+            self.full_pairs = "\uff08\uff09\uff3b\uff3d"
+            self.half_pairs = "()[]"
+            self.full_letters = "\uff41\uff42\uff43\uff44\uff45\uff46\uff47\uff48\uff49\uff4a\uff4b\uff4c\uff4d\uff4e\uff4f\uff50\uff51\uff52\uff53\uff54\uff55\uff56\uff57\uff58\uff59\uff5a\uff21\uff22\uff23\uff24\uff25\uff26\uff27\uff28\uff29\uff2a\uff2b\uff2c\uff2d\uff2e\uff2f\uff30\uff31\uff32\uff33\uff34\uff35\uff36\uff37\uff38\uff39\uff3a\uff10\uff11\uff12\uff13\uff14\uff15\uff16\uff17\uff18\uff19\uff0d"
+            self.half_letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-"
+        def to_half_letter(self, s:str) -> str:
             return s.translate(str.maketrans(self.full_letters, self.half_letters))
-        def to_full_width(self, s:str) -> str:
+        def to_full_letter(self, s:str) -> str:
             return s.translate(str.maketrans(self.half_letters, self.full_letters))
+        def to_half_pair(self, s:str) -> str:
+            return s.translate(str.maketrans(self.full_pairs, self.half_pairs))
+        def to_full_pair(self, s:str) -> str:
+            return s.translate(str.maketrans(self.half_pairs, self.full_pairs))
 
     class TitleCase:
         def __init__(self, s:str) -> None:
@@ -1407,7 +1409,7 @@ def configure(keymap):
 
     def postalcode_TAB_address(s:str) -> str:
         reg = re.compile(r"(\d{3}).(\d{4})[\s\r\n]*(.+$)")
-        hankaku = CharWidth().to_half_width(s.strip().strip("\u3012"))
+        hankaku = CharWidth().to_half_letter(s.strip().strip("\u3012"))
         m = reg.match(hankaku)
         if m:
             return "{}-{}\t{}".format(m.group(1), m.group(2), m.group(3))
@@ -1493,30 +1495,29 @@ def configure(keymap):
     for title, menu in {
         "Noise-Reduction": [
             (" Remove: - [\\(\uff08].+?[\\)\uff09] ", replace_cb(r"[\uff08\u0028].+?[\uff09\u0029]", "") ),
-            ("         - [\\t\\n\\r\\f\\v] ", replace_cb(r"\s", "") ),
-            ("         - [\u0022\u0027\u201c\u201d\u2018\u2019] ", replace_cb(r"[\u0022\u0027\u201c\u201d\u2018\u2019]", "") ),
+            ("         - [\\s] ", replace_cb(r"\s", "") ),
+            ("         - [\u0022\u0027] ", replace_cb(r"[\u0022\u0027]", "") ),
             ("         - \\r?\\n ", replace_cb(r"\r?\n", "") ),
             ("         - ^[ \u3000]+$ ", format_cb(skip_blank_line) ),
-            (" Fix: - MSWord-Bullet ", replace_cb(r"\uf09f\u0009", "\u30fb") ),
+            (" Fix: - Dumb Quotation ", format_cb(fix_dumb_quotation) ),
+            ("      - MSWord-Bullet ", replace_cb(r"\uf09f\u0009", "\u30fb") ),
             ("      - KANGXI RADICALS ", format_cb(format_kangxi_radicals) ),
         ],
         "Transform Alphabet / Punctuation": [
-            (" A-Z/0-9: - FullWidth ", format_cb(CharWidth().to_full_width) ),
-            ("          - HalfWidth ", format_cb(CharWidth().to_half_width) ),
-            ("          - lowercase ", lambda : keyhaclip.get_string().lower() ),
-            ("          - UPPERCASE ", lambda : keyhaclip.get_string().upper() ),
-            ("          - Title Case ", format_cb(to_smart_title_case) ),
+            (" Transform: - A-Z/0-9 => \uff21-\uff3a/\uff10-\uff19 ", format_cb(CharWidth().to_full_letter) ),
+            ("            - \uff21-\uff3a/\uff10-\uff19 => A-Z/0-9 ", format_cb(CharWidth().to_half_letter) ),
+            ("            - ABC => abc ", lambda : keyhaclip.get_string().lower() ),
+            ("            - abc => ABC ", lambda : keyhaclip.get_string().upper() ),
+            ("            - ab CD eF => Ab Cd Ef ", format_cb(to_smart_title_case) ),
             (" Comma: - Curly (\uff0c) ", replace_cb(r"\u3001", "\uff0c") ),
             ("        - Straight (\u3001) ", replace_cb(r"\uff0c", "\u3001") ),
         ],
         "Transform Paired-Punctuation": [
-            (" Parenthesis to: - FullWidth ", format_cb(CharWidth(True).to_full_width) ),
-            ("                 - HalfWidth ", format_cb(CharWidth(True).to_half_width) ),
-            ("                 - Tortoise ", format_cb(to_tortoise) ),
-            (" Quotation: - fix Dumb ", format_cb(fix_dumb_quotation) ),
-            ("            - Escape ", replace_cb(r'"', r'\"')),
-            ("            - to Double ", format_cb(to_double)),
-            ("            - to Single ", format_cb(to_single) ),
+            (" Pair: - ()[] => \uff08\uff09\uff3b\uff3d ", format_cb(CharWidth().to_full_pair) ),
+            ("       - \uff08\uff09\uff3b\uff3d => ()[] ", format_cb(CharWidth().to_half_pair) ),
+            ("       - \uff08\uff09 => \u3014\u3015 ", format_cb(to_tortoise) ),
+            (" Quotation: - \u300c\u300d\u2018\u2019'' => \u300e\u300f\u201c\u201d\"\" ", format_cb(to_double)),
+            ("            - \u300e\u300f\u201c\u201d\"\" => \u300c\u300d\u2018\u2019'' ", format_cb(to_single) ),
         ],
         "Others": [
             (" Cat local file ", format_cb(catanate_file_content) ),
@@ -1527,7 +1528,7 @@ def configure(keymap):
             (" Zoom invitation ", format_cb(format_zoom_invitation) ),
         ]
     }.items():
-        m = menu + [("--------------- EXIT ---------------", lambda : None)]
+        m = menu + [("---------------- EXIT ----------------", lambda : None)]
         keymap.cblisters += [(title, cblister_FixedPhrase(m))]
 
 
