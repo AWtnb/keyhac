@@ -108,11 +108,6 @@ def configure(keymap):
         "O-(235)": ("Esc"),
         "U0-X": ("Esc"),
 
-        # switch window
-        "U1-Tab": ("Alt-Tab"),
-        "S-U1-Tab": ("S-Alt-Tab"),
-
-
         # select first suggestion
         "U0-Tab": ("Down", "Enter"),
 
@@ -269,6 +264,9 @@ def configure(keymap):
     ################################
     # custom hotkey
     ################################
+
+    # switch window
+    keymap_global["U1-Tab"] = KeyPuncher(delay_msec=40).invoke("Alt-Tab")
 
     # ime dict tool
     keymap_global["U0-F7"] = LazyFunc(lambda : execute_path(r"C:\Program Files (x86)\Google\Google Japanese Input\GoogleIMEJaTool.exe", "--mode=word_register_dialog")).defer()
@@ -631,7 +629,7 @@ def configure(keymap):
                 "X,M": (".md"),
                 "P,A": (resolve_path(r"Dropbox\develop\app_config")),
                 "P,C": (resolve_path(r"Dropbox\develop\app_config\IME_google\convertion_dict")),
-                "P,M": (resolve_path(r"Dropbox\develop\app_config\IME_google\convertion_dict\my.txt")),
+                "P,M": (resolve_path(r"Dropbox\develop\app_config\IME_google\convertion_dict\main.txt")),
                 "P,D": (resolve_path(r"Desktop")),
                 "P,P": (resolve_path(r"Dropbox\develop\app_config\IME_google\convertion_dict\psydict")),
                 "P,X": (resolve_path(r"Dropbox")),
@@ -1267,7 +1265,6 @@ def configure(keymap):
     keymap_word["F11"] = "A-F", "E", "P", "A"
     keymap_word["C-G"] = KeyPuncher().invoke("C-G")
     keymap_word["LC-Q"] = "A-F4"
-    keymap_word["O-LShift"] = "C-F"
 
     # powerpoint
     keymap_ppt = keymap.defineWindowKeymap(exe_name="powerpnt.exe")
@@ -1278,7 +1275,6 @@ def configure(keymap):
     keymap_excel["U0-M"] = "Enter", "Enter"
     keymap_excel["F11"] = "A-F", "E", "P", "A"
     keymap_excel["LC-Q"] = "A-F4"
-    keymap_excel["O-LShift"] = "C-F"
 
     def select_all() -> None:
         if keymap.getWindow().getClassName() == "EXCEL6":
@@ -1504,20 +1500,20 @@ def configure(keymap):
             ("      - KANGXI RADICALS ", format_cb(format_kangxi_radicals) ),
         ],
         "Transform Alphabet / Punctuation": [
-            (" Transform: - A-Z/0-9 => \uff21-\uff3a/\uff10-\uff19 ", format_cb(CharWidth().to_full_letter) ),
-            ("            - \uff21-\uff3a/\uff10-\uff19 => A-Z/0-9 ", format_cb(CharWidth().to_half_letter) ),
-            ("            - ABC => abc ", lambda : keyhaclip.get_string().lower() ),
-            ("            - abc => ABC ", lambda : keyhaclip.get_string().upper() ),
-            ("            - ab CD eF => Ab Cd Ef ", format_cb(to_smart_title_case) ),
+            (" Transform: => \uff21-\uff3a/\uff10-\uff19 ", format_cb(CharWidth().to_full_letter) ),
+            ("            => A-Z/0-9 ", format_cb(CharWidth().to_half_letter) ),
+            ("            => abc ", lambda : keyhaclip.get_string().lower() ),
+            ("            => ABC ", lambda : keyhaclip.get_string().upper() ),
+            ("            => Ab Cd Ef ", format_cb(to_smart_title_case) ),
             (" Comma: - Curly (\uff0c) ", replace_cb(r"\u3001", "\uff0c") ),
             ("        - Straight (\u3001) ", replace_cb(r"\uff0c", "\u3001") ),
         ],
         "Transform Paired-Punctuation": [
-            (" Pair: - ()[] => \uff08\uff09\uff3b\uff3d ", format_cb(CharWidth().to_full_pair) ),
-            ("       - \uff08\uff09\uff3b\uff3d => ()[] ", format_cb(CharWidth().to_half_pair) ),
-            ("       - \uff08\uff09 => \u3014\u3015 ", format_cb(to_tortoise) ),
-            (" Quotation: - \u300c\u300d\u2018\u2019'' => \u300e\u300f\u201c\u201d\"\" ", format_cb(to_double)),
-            ("            - \u300e\u300f\u201c\u201d\"\" => \u300c\u300d\u2018\u2019'' ", format_cb(to_single) ),
+            (" Pair: => \uff08\uff09\uff3b\uff3d ", format_cb(CharWidth().to_full_pair) ),
+            ("       => ()[] ", format_cb(CharWidth().to_half_pair) ),
+            ("       => \u3014\u3015 ", format_cb(to_tortoise) ),
+            (" Quotation: => \u300e\u300f\u201c\u201d\"\" ", format_cb(to_double)),
+            ("            => \u300c\u300d\u2018\u2019'' ", format_cb(to_single) ),
         ],
         "Others": [
             (" Cat local file ", format_cb(catanate_file_content) ),
