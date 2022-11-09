@@ -671,12 +671,12 @@ def configure(keymap):
             indirect_puncher = KeyPuncher(recover_ime=True)
             for combo, stroke in {
                 "F,G": ("\u3013\u3013"),
-                "M,3,1": ("# "),
-                "M,3,2": ("## "),
-                "M,3,3": ("### "),
-                "M,3,4": ("#### "),
-                "M,3,5": ("##### "),
-                "M,3,6": ("###### "),
+                "M,H,1": ("# "),
+                "M,H,2": ("## "),
+                "M,H,3": ("### "),
+                "M,H,4": ("#### "),
+                "M,H,5": ("##### "),
+                "M,H,6": ("###### "),
             }.items():
                 keys = combo.split(",")
                 self.mapping = combo_mapper(self.mapping, keys, indirect_puncher.invoke(*stroke))
