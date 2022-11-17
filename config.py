@@ -531,20 +531,26 @@ def configure(keymap):
         def __init__(self) -> None:
             self.pos = []
             for monitor in KEYMAP_MONITORS:
-                y = int(monitor.max_height / 2)
                 for i in (1, 3):
+                    y = monitor.top + int(monitor.max_height / 2)
                     x = monitor.left + int(monitor.max_width / 4) * i
                     self.pos.append([x, y])
 
+        def get_position_index(self, x, y) -> int:
+            for i, p in enumerate(self.pos):
+                if p[0] == x and p[1] == y:
+                    return i
+            return -1
+
         def get_snap_func(self) -> callable:
-            xs = [p[0] for p in self.pos]
             def _snap() -> None:
-                x, _ = pyauto.Input.getCursorPos()
-                if x not in xs:
+                x, y = pyauto.Input.getCursorPos()
+                idx = self.get_position_index(x, y)
+                if idx < 0 or idx == len(self.pos):
                     set_cursor_pos(*self.pos[0])
                 else:
-                    next_pos = self.pos[(xs.index(x)+1) % len(xs)]
-                    set_cursor_pos(*next_pos)
+                    next_idx = (idx+1) % len(self.pos)
+                    set_cursor_pos(*self.pos[next_idx])
             return _snap
 
     keymap_global["O-RCtrl"] = CursorPos().get_snap_func()
