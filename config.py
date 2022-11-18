@@ -546,11 +546,10 @@ def configure(keymap):
             def _snap() -> None:
                 x, y = pyauto.Input.getCursorPos()
                 idx = self.get_position_index(x, y)
-                if idx < 0 or idx == len(self.pos):
+                if idx < 0 or idx == len(self.pos) - 1:
                     set_cursor_pos(*self.pos[0])
                 else:
-                    next_idx = (idx+1) % len(self.pos)
-                    set_cursor_pos(*self.pos[next_idx])
+                    set_cursor_pos(*self.pos[idx+1])
             return _snap
 
     keymap_global["O-RCtrl"] = CursorPos().get_snap_func()
