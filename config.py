@@ -597,10 +597,14 @@ def configure(keymap):
             keymap.getTopLevelWindow().maximize()
         return LazyFunc(_snap).defer()
     keymap_global["LC-U1-L"] = snap_and_maximize("Right")
+    keymap_global["LC-U1-J"] = snap_and_maximize("Right")
     keymap_global["LC-U1-H"] = snap_and_maximize("Left")
+    keymap_global["LC-U1-K"] = snap_and_maximize("Left")
 
     keymap_global["U1-M"]["U0-L"] = snap_and_maximize("Right")
+    keymap_global["U1-M"]["U0-J"] = snap_and_maximize("Right")
     keymap_global["U1-M"]["U0-H"] = snap_and_maximize("Left")
+    keymap_global["U1-M"]["U0-K"] = snap_and_maximize("Left")
 
 
     ################################
