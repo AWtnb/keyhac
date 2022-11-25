@@ -508,7 +508,7 @@ def configure(keymap):
                     return
                 if wnd.isMaximized():
                     wnd.restore()
-                    return
+                    delay()
                 wnd.setRect([l, wnd_top, r, wnd_bottom])
             return _snap
 
@@ -525,7 +525,7 @@ def configure(keymap):
                     return
                 if wnd.isMaximized():
                     wnd.restore()
-                    return
+                    delay()
                 wnd.setRect([wnd_left, t, wnd_right, b])
             return _snap
 
