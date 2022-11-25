@@ -444,41 +444,6 @@ def configure(keymap):
                     trial_limit -= 1
             self.snap_func = _snapper
 
-    class WndResizer:
-
-        @staticmethod
-        def to_half_width(to_left:bool=True) -> callable:
-            def _snap() -> None:
-                wnd = keymap.getTopLevelWindow()
-                wnd_left, wnd_top, wnd_right, wnd_bottom = wnd.getRect()
-                if to_left:
-                    l, r = [wnd_left, int((wnd_right + wnd_left) / 2)]
-                else:
-                    l, r = [int((wnd_right + wnd_left) / 2), wnd_right]
-                if abs(r - l) < 400:
-                    return
-                if wnd.isMaximized():
-                    wnd.restore()
-                    return
-                wnd.setRect([l, wnd_top, r, wnd_bottom])
-            return _snap
-
-        @staticmethod
-        def to_half_height(to_upper:bool=True) -> callable:
-            def _snap() -> None:
-                wnd = keymap.getTopLevelWindow()
-                wnd_left, wnd_top, wnd_right, wnd_bottom = wnd.getRect()
-                if to_upper:
-                    t, b = [wnd_top, int((wnd_bottom + wnd_top) / 2)]
-                else:
-                    t, b = [int((wnd_bottom + wnd_top) / 2), wnd_bottom]
-                if abs(b - t) < 400:
-                    return
-                if wnd.isMaximized():
-                    wnd.restore()
-                    return
-                wnd.setRect([wnd_left, t, wnd_right, b])
-            return _snap
 
     class MonitorRect:
         def __init__(self, rect:list, idx:int) -> None:
@@ -529,6 +494,40 @@ def configure(keymap):
                         ty = self.top
                     d[size] = WndRect(self.left, ty, self.right, ty + px)
                 self.area_map[pos] = d
+
+        @staticmethod
+        def to_half_width(to_left:bool=True) -> callable:
+            def _snap() -> None:
+                wnd = keymap.getTopLevelWindow()
+                wnd_left, wnd_top, wnd_right, wnd_bottom = wnd.getRect()
+                if to_left:
+                    l, r = [wnd_left, int((wnd_right + wnd_left) / 2)]
+                else:
+                    l, r = [int((wnd_right + wnd_left) / 2), wnd_right]
+                if abs(r - l) < 400:
+                    return
+                if wnd.isMaximized():
+                    wnd.restore()
+                    return
+                wnd.setRect([l, wnd_top, r, wnd_bottom])
+            return _snap
+
+        @staticmethod
+        def to_half_height(to_upper:bool=True) -> callable:
+            def _snap() -> None:
+                wnd = keymap.getTopLevelWindow()
+                wnd_left, wnd_top, wnd_right, wnd_bottom = wnd.getRect()
+                if to_upper:
+                    t, b = [wnd_top, int((wnd_bottom + wnd_top) / 2)]
+                else:
+                    t, b = [int((wnd_bottom + wnd_top) / 2), wnd_bottom]
+                if abs(b - t) < 400:
+                    return
+                if wnd.isMaximized():
+                    wnd.restore()
+                    return
+                wnd.setRect([wnd_left, t, wnd_right, b])
+            return _snap
 
 
     def get_monitors() -> list:
@@ -641,10 +640,10 @@ def configure(keymap):
     keymap_global["U1-M"]["U0-H"] = snap_and_maximize("Left")
     keymap_global["U1-M"]["U0-K"] = snap_and_maximize("Left")
 
-    keymap_global["U1-M"]["U0-Left"] = WndResizer.to_half_width(True)
-    keymap_global["U1-M"]["U0-Right"] = WndResizer.to_half_width(False)
-    keymap_global["U1-M"]["U0-Up"] = WndResizer.to_half_height(True)
-    keymap_global["U1-M"]["U0-Down"] = WndResizer.to_half_height(False)
+    keymap_global["U1-M"]["U0-Left"] = MonitorRect.to_half_width(True)
+    keymap_global["U1-M"]["U0-Right"] = MonitorRect.to_half_width(False)
+    keymap_global["U1-M"]["U0-Up"] = MonitorRect.to_half_height(True)
+    keymap_global["U1-M"]["U0-Down"] = MonitorRect.to_half_height(False)
 
 
     ################################
