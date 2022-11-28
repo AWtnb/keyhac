@@ -510,7 +510,7 @@ def configure(keymap):
                     wnd.restore()
                     delay()
                 wnd.setRect([l, wnd_top, r, wnd_bottom])
-            return _snap
+            return LazyFunc(_snap).defer()
 
         @staticmethod
         def to_half_height(to_upper:bool=True) -> callable:
@@ -527,7 +527,7 @@ def configure(keymap):
                     wnd.restore()
                     delay()
                 wnd.setRect([wnd_left, t, wnd_right, b])
-            return _snap
+            return LazyFunc(_snap).defer()
 
 
     def get_monitors() -> list:
