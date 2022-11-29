@@ -16,24 +16,29 @@ def configure(keymap):
     # general setting
     ################################
 
-    def resolve_path(rel:str, root:str=None) -> str:
-        if not root:
-            root = os.environ.get("USERPROFILE")
-        return str(Path(root, rel))
-
     def test_path(s:str) -> bool:
         return Path(s).exists()
 
-    def get_filer_path() -> str:
-        if test_path(tablacus_path := resolve_path(r"Dropbox\portable_apps\tablacus\TE64.exe")):
-            return tablacus_path
-        return "explorer.exe"
+    class UserPath:
+        def __init__(self) -> None:
+            self.user_prof = os.environ.get("USERPROFILE")
 
-    def get_editor_path() -> str:
-        if test_path(vscode_path := resolve_path(r"scoop\apps\vscode\current\Code.exe")):
-            return vscode_path
-        return "notepad.exe"
-    keymap.editor = get_editor_path()
+        def resolve(self, rel:str="") -> str:
+            return str(Path(self.user_prof, rel))
+
+        def get_filer(self) -> str:
+            tablacus = self.resolve(r"Dropbox\portable_apps\tablacus\TE64.exe")
+            if test_path(tablacus):
+                return tablacus
+            return "explorer.exe"
+
+        def get_editor(self) -> str:
+            vscode = self.resolve(r"scoop\apps\vscode\current\Code.exe")
+            if test_path(vscode):
+                return vscode
+            return "notepad.exe"
+
+    keymap.editor = UserPath().get_editor()
 
     # console theme
     keymap.setFont("HackGen", 16)
@@ -382,9 +387,9 @@ def configure(keymap):
     keymap_global["U1-I"] = LazyFunc(re_input_with_ime).defer()
 
     def moko(search_all:bool=False) -> callable:
-        exe_path = resolve_path(r"Dropbox\develop\code\go\moko\src\moko.exe")
+        exe_path = UserPath().resolve(r"Dropbox\develop\code\go\moko\src\moko.exe")
         def _launcher() -> None:
-            execute_path(exe_path, "-src={} -filer={} -all={} -exclude=_obsolete".format(r"C:\Personal\launch.yaml", get_filer_path(), search_all))
+            execute_path(exe_path, "-src={} -filer={} -all={} -exclude=_obsolete".format(r"C:\Personal\launch.yaml", UserPath().get_filer(), search_all))
         return LazyFunc(_launcher).defer()
     keymap_global["U1-Z"] = moko(False)
     keymap_global["LC-U1-Z"] = moko(True)
@@ -670,17 +675,17 @@ def configure(keymap):
     class KeyCombo:
         def __init__(self) -> None:
             self.mapping = keymap.defineMultiStrokeKeymap("pseudo-espanso:")
-
+            ep = UserPath()
             direct_puncher = KeyPuncher()
             for combo, stroke in {
                 "X,X": (".txt"),
                 "X,M": (".md"),
-                "P,A": (resolve_path(r"Dropbox\develop\app_config")),
-                "P,C": (resolve_path(r"Dropbox\develop\app_config\IME_google\convertion_dict")),
-                "P,M": (resolve_path(r"Dropbox\develop\app_config\IME_google\convertion_dict\main.txt")),
-                "P,D": (resolve_path(r"Desktop")),
-                "P,P": (resolve_path(r"Dropbox\develop\app_config\IME_google\convertion_dict\psydict")),
-                "P,X": (resolve_path(r"Dropbox")),
+                "P,A": (ep.resolve(r"Dropbox\develop\app_config")),
+                "P,C": (ep.resolve(r"Dropbox\develop\app_config\IME_google\convertion_dict")),
+                "P,M": (ep.resolve(r"Dropbox\develop\app_config\IME_google\convertion_dict\main.txt")),
+                "P,D": (ep.resolve(r"Desktop")),
+                "P,P": (ep.resolve(r"Dropbox\develop\app_config\IME_google\convertion_dict\psydict")),
+                "P,X": (ep.resolve(r"Dropbox")),
                 "M,P": ("=============================="),
                 "M,D": ("div."),
                 "M,S": ("span."),
@@ -1108,7 +1113,7 @@ def configure(keymap):
         "S": (
             "slack.exe",
             "Chrome_WidgetWin_1",
-            resolve_path(r"AppData\Local\slack\slack.exe")
+            UserPath().resolve(r"AppData\Local\slack\slack.exe")
         ),
         "F": (
             "firefox.exe",
@@ -1148,7 +1153,7 @@ def configure(keymap):
         "V": (
             "Code.exe",
             "Chrome_WidgetWin_1",
-            resolve_path(r"scoop\apps\vscode\current\Code.exe")
+            UserPath().resolve(r"scoop\apps\vscode\current\Code.exe")
         ),
         "C-V": (
             "vivaldi.exe",
@@ -1158,12 +1163,12 @@ def configure(keymap):
         "T": (
             "TE64.exe",
             "TablacusExplorer",
-            resolve_path(r"Dropbox\portable_apps\tablacus\TE64.exe")
+            UserPath().resolve(r"Dropbox\portable_apps\tablacus\TE64.exe")
         ),
         "M": (
             "Mery.exe",
             "TChildForm",
-            resolve_path(r"AppData\Local\Programs\Mery\Mery.exe")
+            UserPath().resolve(r"AppData\Local\Programs\Mery\Mery.exe")
         ),
         "X": (
             "explorer.exe",
@@ -1189,7 +1194,7 @@ def configure(keymap):
         "LC-U1-M": (
             "Mery.exe",
             "TChildForm",
-            resolve_path(r"AppData\Local\Programs\Mery\Mery.exe")
+            UserPath().resolve(r"AppData\Local\Programs\Mery\Mery.exe")
         ),
         "LC-U1-N": (
             "notepad.exe",
@@ -1208,13 +1213,13 @@ def configure(keymap):
 
     # invoke specific filer
     def invoke_filer(dir_path:str) -> callable:
-        filer_path = get_filer_path()
+        filer_path = UserPath().get_filer()
         def _invoker() -> None:
             if test_path(dir_path):
                 execute_path(filer_path, dir_path)
         return LazyFunc(_invoker).defer()
     keymap_global["U1-F"] = keymap.defineMultiStrokeKeymap("invoke directory on filer:")
-    keymap_global["U1-F"]["D"] = invoke_filer(resolve_path(r"Desktop"))
+    keymap_global["U1-F"]["D"] = invoke_filer(UserPath().resolve(r"Desktop"))
     keymap_global["U1-F"]["S"] = invoke_filer(r"X:\scan")
 
     def invoke_cmder() -> None:
@@ -1223,7 +1228,7 @@ def configure(keymap):
             if not wnd.activate():
                 send_keys("C-AtMark")
         else:
-            cmder_path = resolve_path(r"scoop\apps\cmder\current\Cmder.exe")
+            cmder_path = UserPath().resolve(r"scoop\apps\cmder\current\Cmder.exe")
             execute_path(cmder_path)
     keymap_global["LC-AtMark"] = LazyFunc(invoke_cmder).defer()
 
