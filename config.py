@@ -675,17 +675,17 @@ def configure(keymap):
     class KeyCombo:
         def __init__(self) -> None:
             self.mapping = keymap.defineMultiStrokeKeymap("pseudo-espanso:")
-            ep = UserPath()
+            user_path = UserPath()
             direct_puncher = KeyPuncher()
             for combo, stroke in {
                 "X,X": (".txt"),
                 "X,M": (".md"),
-                "P,A": (ep.resolve(r"Dropbox\develop\app_config")),
-                "P,C": (ep.resolve(r"Dropbox\develop\app_config\IME_google\convertion_dict")),
-                "P,M": (ep.resolve(r"Dropbox\develop\app_config\IME_google\convertion_dict\main.txt")),
-                "P,D": (ep.resolve(r"Desktop")),
-                "P,P": (ep.resolve(r"Dropbox\develop\app_config\IME_google\convertion_dict\psydict")),
-                "P,X": (ep.resolve(r"Dropbox")),
+                "P,A": (user_path.resolve(r"Dropbox\develop\app_config")),
+                "P,C": (user_path.resolve(r"Dropbox\develop\app_config\IME_google\convertion_dict")),
+                "P,M": (user_path.resolve(r"Dropbox\develop\app_config\IME_google\convertion_dict\main.txt")),
+                "P,D": (user_path.resolve(r"Desktop")),
+                "P,P": (user_path.resolve(r"Dropbox\develop\app_config\IME_google\convertion_dict\psydict")),
+                "P,X": (user_path.resolve(r"Dropbox")),
                 "M,P": ("=============================="),
                 "M,D": ("div."),
                 "M,S": ("span."),
@@ -724,12 +724,12 @@ def configure(keymap):
             indirect_puncher = KeyPuncher(recover_ime=True)
             for combo, stroke in {
                 "F,G": ("\u3013\u3013"),
-                "M,H,1": ("# "),
-                "M,H,2": ("## "),
-                "M,H,3": ("### "),
-                "M,H,4": ("#### "),
-                "M,H,5": ("##### "),
-                "M,H,6": ("###### "),
+                "M,1": ("# "),
+                "M,2": ("## "),
+                "M,3": ("### "),
+                "M,4": ("#### "),
+                "M,5": ("##### "),
+                "M,6": ("###### "),
             }.items():
                 keys = combo.split(",")
                 self.mapping = combo_mapper(self.mapping, keys, indirect_puncher.invoke(*stroke))
@@ -1293,14 +1293,13 @@ def configure(keymap):
     keymap_sumatra["C-OpenBracket"] = "S-F3"
     keymap_sumatra["C-CloseBracket"] = "F3"
 
-    keymap_sumatra["O-LShift"] = KeyPuncher(recover_ime=True).invoke("Esc", "C-Home", "C-F")
+    keymap_sumatra["O-LShift"] = KeyPuncher(recover_ime=True, delay_msec=50).invoke("Esc", "C-Home", "C-F")
+    keymap_sumatra["F4"] = KeyPuncher(recover_ime=False, delay_msec=50).invoke("Esc", "C-G")
 
     # sumatra PDF when focus out from textbox
     keymap_sumatra_view = keymap.defineWindowKeymap(check_func=lambda wnd : wnd.getProcessName() == "SumatraPDF.exe" and wnd.getClassName() != "Edit")
 
     for key, seq in {
-        "F": ["C-F"],
-        "G": ["C-G"],
         "C": ["C"],
         "Z": ["Z"],
         "J": ["J"],
