@@ -1293,14 +1293,16 @@ def configure(keymap):
     keymap_sumatra["C-OpenBracket"] = "S-F3"
     keymap_sumatra["C-CloseBracket"] = "F3"
 
-    keymap_sumatra["O-LShift"] = KeyPuncher(recover_ime=True, delay_msec=50).invoke("Esc", "C-Home", "C-F")
-    keymap_sumatra["F4"] = KeyPuncher(recover_ime=False, delay_msec=50).invoke("Esc", "C-G")
+    keymap_sumatra["O-LShift"] = KeyPuncher(recover_ime=True).invoke("F6", "C-Home", "C-F")
+    keymap_sumatra["F4"] = KeyPuncher(recover_ime=False, delay_msec=50).invoke("F6", "C-G")
 
     # sumatra PDF when focus out from textbox
     keymap_sumatra_view = keymap.defineWindowKeymap(check_func=lambda wnd : wnd.getProcessName() == "SumatraPDF.exe" and wnd.getClassName() != "Edit")
 
     for key, seq in {
         "C": ["C"],
+        "G": ["C-G"],
+        "C-G": ["C-G"],
         "Z": ["Z"],
         "J": ["J"],
         "K": ["K"],
@@ -1412,18 +1414,12 @@ def configure(keymap):
 
     class CharWidth:
         def __init__(self) -> None:
-            self.full_pairs = "\uff08\uff09\uff3b\uff3d"
-            self.half_pairs = "()[]"
             self.full_letters = "\uff41\uff42\uff43\uff44\uff45\uff46\uff47\uff48\uff49\uff4a\uff4b\uff4c\uff4d\uff4e\uff4f\uff50\uff51\uff52\uff53\uff54\uff55\uff56\uff57\uff58\uff59\uff5a\uff21\uff22\uff23\uff24\uff25\uff26\uff27\uff28\uff29\uff2a\uff2b\uff2c\uff2d\uff2e\uff2f\uff30\uff31\uff32\uff33\uff34\uff35\uff36\uff37\uff38\uff39\uff3a\uff10\uff11\uff12\uff13\uff14\uff15\uff16\uff17\uff18\uff19\uff0d"
             self.half_letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-"
         def to_half_letter(self, s:str) -> str:
             return s.translate(str.maketrans(self.full_letters, self.half_letters))
         def to_full_letter(self, s:str) -> str:
             return s.translate(str.maketrans(self.half_letters, self.full_letters))
-        def to_half_pair(self, s:str) -> str:
-            return s.translate(str.maketrans(self.full_pairs, self.half_pairs))
-        def to_full_pair(self, s:str) -> str:
-            return s.translate(str.maketrans(self.half_pairs, self.full_pairs))
 
     class SmartTitleCase:
         def __init__(self, s:str) -> None:
@@ -1437,7 +1433,7 @@ def configure(keymap):
         def _format_elems(self) -> list:
             words = []
             for i, word in enumerate(self.title_cased_elems):
-                if i > 0 and self.title_cased_elems[i - 1].endswith(":"):
+                if i == 0 or self.title_cased_elems[i - 1].endswith(":"):
                     words.append(word)
                     continue
                 if word in self.black_list:
@@ -1479,45 +1475,6 @@ def configure(keymap):
 
     def decode_url(s:str) -> str:
         return urllib.parse.unquote(s)
-
-    def to_double(s:str) -> str:
-        symbol_map = {
-            "\u300c": "\u300e",
-            "\u300d": "\u300f",
-            "\u2018": "\u201c",
-            "\u2019": "\u201d",
-            "'": '"',
-        }
-        # target: 「」‘’'
-        reg = re.compile(r"[\u300c\u300d\u2018\u2019\u0027]")
-        def _replacer(mo:re.Match) -> str:
-            return symbol_map[mo.group(0)]
-        return reg.sub(_replacer, s)
-
-    def to_single(s:str) -> str:
-        symbol_map = {
-            "\u300e": "\u300c",
-            "\u300f": "\u300d",
-            "\u201c": "\u2018",
-            "\u201d": "\u2019",
-            '"': "'",
-        }
-        # target: 『』“”"
-        reg = re.compile(r'[\u300e\u300f\u201c\u201d\u0022]')
-        def _replacer(mo:re.Match) -> str:
-            return symbol_map[mo.group(0)]
-        return reg.sub(_replacer, s)
-
-    def to_tortoise(s:str) -> str:
-        reg = re.compile(r"[\u0028\u0029\uff08\uff09]")
-        def _replacer(mo:re.Match) -> str:
-            if mo.group(0) in ("\uff08", "\u0028"):
-                return "\u3014"
-            return "\u3015"
-        return reg.sub(_replacer, s)
-
-    def capitalize_name_parts(s:str) -> str:
-        return " ".join([(c[0].upper() + ".") for c in re.sub(r"[\s\-]+", " ", s.strip()).split(" ")])
 
     def format_zoom_invitation(s:str) -> str:
         def _format_time(mo:re.Match) -> str:
@@ -1566,16 +1523,8 @@ def configure(keymap):
             (" Comma: - Curly (\uff0c) ", replace_cb(r"\u3001", "\uff0c") ),
             ("        - Straight (\u3001) ", replace_cb(r"\uff0c", "\u3001") ),
         ],
-        "Transform Paired-Punctuation": [
-            (" Pair: => \uff08\uff09\uff3b\uff3d ", format_cb(CharWidth().to_full_pair) ),
-            ("       => ()[] ", format_cb(CharWidth().to_half_pair) ),
-            ("       => \u3014\u3015 ", format_cb(to_tortoise) ),
-            (" Quotation: => \u300e\u300f\u201c\u201d\"\" ", format_cb(to_double)),
-            ("            => \u300c\u300d\u2018\u2019'' ", format_cb(to_single) ),
-        ],
         "Others": [
             (" Cat local file ", format_cb(catanate_file_content) ),
-            (" First- Middle- Name Capitalize ", format_cb(capitalize_name_parts) ),
             (" Postalcode|Address ", format_cb(postalcode_TAB_address) ),
             (" URL: - Decode ", format_cb(decode_url) ),
             ("      - Shorten Amazon ", replace_cb(r"^.+amazon\.co\.jp/.+dp/(.{10}).*", r"https://www.amazon.jp/dp/\1") ),
