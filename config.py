@@ -431,7 +431,11 @@ def configure(keymap):
 
     class WndRect:
         def __init__(self, left:int, top:int, right:int, bottom:int) -> None:
-            self._rect = [left, top, right, bottom]
+            self._left = left
+            self._top = top
+            self._right = right
+            self._bottom = bottom
+            self._rect = self._adjust_rect()
 
             def _snapper() -> None:
                 wnd = keymap.getTopLevelWindow()
@@ -449,6 +453,8 @@ def configure(keymap):
                     trial_limit -= 1
             self.snap_func = _snapper
 
+        def _adjust_rect(self) -> list:
+            return [self._left - 4, self._top, self._right + 4, self._bottom + 4]
 
     class MonitorRect:
         def __init__(self, rect:list, idx:int) -> None:
