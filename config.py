@@ -422,7 +422,7 @@ def configure(keymap):
         "P" : lambda : keyhaclip.paste(read_config()),
         "X" : lambda : None,
     }.items():
-        keymap_global["LC-U0-X"][key] = LazyFunc(func).defer()
+        keymap_global["LC-U0-X"][key] = func
 
 
     ################################
