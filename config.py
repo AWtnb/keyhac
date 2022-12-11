@@ -416,7 +416,7 @@ def configure(keymap):
 
     keymap_global["U0-F12"] = reload_config
 
-    keymap_global["LC-U0-X"] = keymap.defineMultiStrokeKeymap("config.py: R=>reload, E=>Edit, G=>Github, P=>Paste")
+    keymap_global["LC-U0-X"] = keymap.defineMultiStrokeKeymap()
     for key, func in {
         "R" : reload_config,
         "E" : keymap.command_EditConfig,
@@ -610,7 +610,7 @@ def configure(keymap):
     keymap_global["U1-L"] = "LWin-Right"
     keymap_global["U1-H"] = "LWin-Left"
 
-    keymap_global["U1-M"] = keymap.defineMultiStrokeKeymap("snap window position with key input!")
+    keymap_global["U1-M"] = keymap.defineMultiStrokeKeymap()
     keymap_global["U1-M"]["X"] = LazyFunc(lambda : keymap.getTopLevelWindow().maximize()).defer()
 
     for mod_mntr, mntr_idx in {
@@ -676,13 +676,13 @@ def configure(keymap):
         try:
             root_map[head] = combo_mapper(root_map[head], rest, func)
         except:
-            sub_map = keymap.defineMultiStrokeKeymap(head)
+            sub_map = keymap.defineMultiStrokeKeymap()
             root_map[head] = combo_mapper(sub_map, rest, func)
         return root_map
 
     class KeyCombo:
         def __init__(self) -> None:
-            self.mapping = keymap.defineMultiStrokeKeymap("pseudo-espanso:")
+            self.mapping = keymap.defineMultiStrokeKeymap()
             user_path = UserPath()
             direct_puncher = KeyPuncher()
             for combo, stroke in {
@@ -751,7 +751,7 @@ def configure(keymap):
     # input customize
     ################################
 
-    keymap_global["U1-W"] = keymap.defineMultiStrokeKeymap("Wrap with parenthesis:")
+    keymap_global["U1-W"] = keymap.defineMultiStrokeKeymap()
 
     def as_html_tag() -> None:
         cb = copy_string()
@@ -895,7 +895,7 @@ def configure(keymap):
                 set_ime(1)
         return LazyFunc(_input).defer()
 
-    keymap_global["U1-D"] = keymap.defineMultiStrokeKeymap("Delimiter: D(1)=>YMD, S(2)=>Y/M/D, P(3)=>Y.M.D, H(4)=>Y-M-D, J(5)=>Y年M月D日")
+    keymap_global["U1-D"] = keymap.defineMultiStrokeKeymap()
     for key, params in {
         "1": ("%Y%m%d", False),
         "2": ("%Y/%m/%d", False),
@@ -1003,7 +1003,7 @@ def configure(keymap):
         "C-": (False, True),
         "S-C-": (True, True),
     }.items():
-        keymap_global[mdf+"U0-S"] = keymap.defineMultiStrokeKeymap("quote-each:{} / strip-hiragana:{}".format(*params))
+        keymap_global[mdf+"U0-S"] = keymap.defineMultiStrokeKeymap()
         for key, uri in {
             "A": "https://www.amazon.co.jp/s?i=stripbooks&k={}",
             "B": "https://www.google.com/search?q=site%3Abooks.or.jp%20{}",
@@ -1228,7 +1228,7 @@ def configure(keymap):
             if test_path(dir_path):
                 execute_path(filer_path, dir_path)
         return LazyFunc(_invoker).defer()
-    keymap_global["U1-F"] = keymap.defineMultiStrokeKeymap("invoke directory on filer:")
+    keymap_global["U1-F"] = keymap.defineMultiStrokeKeymap()
     keymap_global["U1-F"]["D"] = invoke_filer(UserPath().resolve(r"Desktop"))
     keymap_global["U1-F"]["S"] = invoke_filer(r"X:\scan")
 
@@ -1389,7 +1389,7 @@ def configure(keymap):
     }.items():
         keymap_filer[key] = KeyPuncher().invoke(*value)
 
-    keymap_filer["LC-K"] = keymap.defineMultiStrokeKeymap("Focus on:")
+    keymap_filer["LC-K"] = keymap.defineMultiStrokeKeymap()
     keymap_filer["LC-K"]["BackSlash"] = KeyPuncher().invoke("S-BackSlash")
     for simple_key in "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789":
         keymap_filer["LC-K"][simple_key] = KeyPuncher().invoke(simple_key)
