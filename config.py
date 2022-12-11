@@ -414,6 +414,8 @@ def configure(keymap):
         ts = datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S")
         print("\n{} reloaded config.py\n".format(ts))
 
+    keymap_global["U0-F12"] = reload_config
+
     keymap_global["LC-U0-X"] = keymap.defineMultiStrokeKeymap("config.py: R=>reload, E=>Edit, G=>Github, P=>Paste")
     for key, func in {
         "R" : reload_config,
