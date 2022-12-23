@@ -290,8 +290,8 @@ def configure(keymap):
 
     # paste as plaintext
     keymap_global["U0-V"] = LazyFunc(lambda : keyhaclip.paste(keyhaclip.get_string())).defer()
-    keymap_global["LC-U0-V"] = LazyFunc(lambda : keyhaclip.paste(keyhaclip.get_string().strip("\uf09f\u0009").strip())).defer()
-    keymap_global["U1-V"] = LazyFunc(lambda : keyhaclip.paste(prune_white(keyhaclip.get_string()))).defer()
+    keymap_global["U1-V"] = LazyFunc(lambda : keyhaclip.paste(keyhaclip.get_string().strip("\uf09f\u0009").strip())).defer() # trim space
+    keymap_global["LC-U1-V"] = LazyFunc(lambda : keyhaclip.paste(prune_white(keyhaclip.get_string()))).defer() # remove all space
 
     # select last word with ime
     def select_last_word() -> None:
@@ -425,7 +425,7 @@ def configure(keymap):
         "P" : lambda : keyhaclip.paste(read_config()),
         "X" : lambda : None,
     }.items():
-        keymap_global["LC-U0-X"][key] = func
+        keymap_global["LC-U0-X"][key] = LazyFunc(func).defer()
 
 
     ################################
@@ -689,12 +689,10 @@ def configure(keymap):
             for combo, stroke in {
                 "X,X": (".txt"),
                 "X,M": (".md"),
-                "P,A": (user_path.resolve(r"Dropbox\develop\app_config")),
-                "P,C": (user_path.resolve(r"Dropbox\develop\app_config\IME_google\convertion_dict")),
                 "P,M": (user_path.resolve(r"Dropbox\develop\app_config\IME_google\convertion_dict\main.txt")),
-                "P,D": (user_path.resolve(r"Desktop")),
-                "P,P": (user_path.resolve(r"Dropbox\develop\app_config\IME_google\convertion_dict\psydict")),
-                "P,X": (user_path.resolve(r"Dropbox")),
+                "P,A": (user_path.resolve(r"Dropbox\develop\app_config") + "\\"),
+                "P,D": (user_path.resolve(r"Desktop") + "\\"),
+                "P,X": (user_path.resolve(r"Dropbox") + "\\"),
                 "M,P": ("=============================="),
                 "M,D": ("div."),
                 "M,S": ("span."),
