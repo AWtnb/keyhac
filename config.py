@@ -1487,11 +1487,10 @@ def configure(keymap):
 
     for title, menu in {
         "Noise-Reduction": [
-            (" Remove: - [\\(\uff08].+?[\\)\uff09] ", replace_cb(r"[\uff08\u0028].+?[\uff09\u0029]", "") ),
-            ("         - [\\s] ", replace_cb(r"\s", "") ),
-            ("         - [\u0022\u0027] ", replace_cb(r"[\u0022\u0027]", "") ),
-            ("         - \\r?\\n ", replace_cb(r"\r?\n", "") ),
-            ("         - ^[ \u3000]+$ ", format_cb(skip_blank_line) ),
+            (" Remove: - Blank lines ", format_cb(skip_blank_line) ),
+            ("         - Inside Paren ", replace_cb(r"[\uff08\u0028].+?[\uff09\u0029]", "") ),
+            ("         - Line-break ", replace_cb(r"\r?\n", "") ),
+            ("         - Quotations ", replace_cb(r"[\u0022\u0027]", "") ),
             (" Fix: - Dumb Quotation ", format_cb(fix_dumb_quotation) ),
             ("      - MSWord-Bullet ", replace_cb(r"\uf09f\u0009", "\u30fb") ),
             ("      - KANGXI RADICALS ", format_cb(KangxiRadicals().fix) ),
