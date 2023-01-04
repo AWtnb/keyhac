@@ -1483,7 +1483,7 @@ def configure(keymap):
             "------------------------------",
         ])
 
-    keymap_global[ "LC-LS-X" ] = keymap.command_ClipboardList
+    keymap_global[ "LC-LS-X" ] = LazyFunc(keymap.command_ClipboardList).defer()
 
     for title, menu in {
         "Noise-Reduction": [
