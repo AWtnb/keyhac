@@ -281,7 +281,7 @@ def configure(keymap):
     keymap_global["U0-F7"] = LazyFunc(lambda : execute_path(r"C:\Program Files (x86)\Google\Google Japanese Input\GoogleIMEJaTool.exe", "--mode=word_register_dialog")).defer()
 
     # screen sketch
-    keymap_global["C-U1-S"] = LazyFunc(lambda : execute_path(r"C:\Windows\System32\cmd.exe", "/c Start ms-screensketch:")).defer()
+    keymap_global["C-U1-S"] = LazyFunc(keymap.ShellExecuteCommand(None, "ms-screensketch:", None, None)).defer()
 
     # listup Window
     keymap_global["U0-W"] = LazyFunc(lambda : send_keys("LCtrl-LAlt-Tab")).defer()
