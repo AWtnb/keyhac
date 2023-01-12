@@ -689,7 +689,7 @@ def configure(keymap):
         def __init__(self) -> None:
             self.mapping = keymap.defineMultiStrokeKeymap()
             user_path = UserPath()
-            direct_puncher = KeyPuncher()
+            direct_puncher = KeyPuncher(delay_msec=50)
             for combo, stroke in {
                 "X,X": (".txt"),
                 "X,M": (".md"),
@@ -714,8 +714,6 @@ def configure(keymap):
                 "Minus,D": ("\u30a0"),
                 "R,B": (r"[\[［].+?[\]］]"),
                 "R,P": (r"[\(（].+?[\)）]"),
-                "R,U": (r"(https?|ftp)(:\/\/[\w\/:%#\$&\?\(\)~\.=\+\-]+)"),
-                "R,SPACE": (r"(?<![\u0020-\u007e]) | (?![\u0020-\u007e])"),
                 "C-R,S-F": ("(?!)", "Left"),
                 "C-R,F": ("(?=)", "Left"),
                 "C-R,S-P": ("(?<!)", "Left"),
@@ -734,7 +732,7 @@ def configure(keymap):
                 keys = combo.split(",")
                 self.mapping = combo_mapper(self.mapping, keys, direct_puncher.invoke(*stroke))
 
-            indirect_puncher = KeyPuncher(recover_ime=True)
+            indirect_puncher = KeyPuncher(recover_ime=True, delay_msec=50)
             for combo, stroke in {
                 "F,G": ("\u3013\u3013"),
                 "M,1": ("# "),
