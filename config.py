@@ -1141,6 +1141,11 @@ def configure(keymap):
             "MozillaWindowClass",
             r"C:\Program Files (x86)\Mozilla Thunderbird\thunderbird.exe"
         ),
+        "K": (
+            "ksnip.exe",
+            "Qt5152QWindowIcon",
+            UserPath().resolve(r"scoop\apps\ksnip\current\ksnip.exe")
+        ),
         "O": (
             "Obsidian.exe",
             "Chrome_WidgetWin_1",
