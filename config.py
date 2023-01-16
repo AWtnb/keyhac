@@ -864,7 +864,7 @@ def configure(keymap):
         "U1-Enter": "<br />",
         "U1-E": "S-Minus",
         "U1-Minus": "Minus",
-        "U0-SemiColon": "SemiColon",
+        "LC-U0-SemiColon": "SemiColon",
     }.items():
         keymap_global[key] = KeyPuncher().invoke(send)
 
@@ -878,7 +878,7 @@ def configure(keymap):
         "S-U0-U": "S-BackSlash",
         "U0-Minus": "\u2015\u2015", # HORIZONTAL BAR * 2
         "U0-P": "\u30fb", # KATAKANA MIDDLE DOT
-        "S-U0-SemiColon": "+ ",
+        "U0-SemiColon": "+ ",
         "S-U0-8": "+ ",
         "U1-1": "1. ",
         "S-U0-7": "1. ",
@@ -1068,20 +1068,22 @@ def configure(keymap):
         def __init__(self, exe_name:str, class_name:str) -> None:
             self.exe_name = exe_name
             self.class_name = class_name
-            self.target = self._find()
 
-        def _find(self) -> pyauto.Window:
-            found = [None]
-            def _search_next_wnd(wnd:pyauto.Window, _) -> bool:
-                if not wnd.isVisible() : return True
-                if not wnd.isEnabled() : return True
-                if not fnmatch.fnmatch(wnd.getProcessName(), self.exe_name) : return True
-                if self.class_name:
-                    if not fnmatch.fnmatch(wnd.getClassName(), self.class_name) : return True
-                found[0] = wnd.getLastActivePopup()
-                return False
-            pyauto.Window.enum(_search_next_wnd, None)
-            return found[0]
+            def _scan_wnd() -> pyauto.Window:
+                found = [None]
+                def _callback(wnd:pyauto.Window, _) -> bool:
+                    if not wnd.isVisible() : return True
+                    if not wnd.isEnabled() : return True
+                    if not fnmatch.fnmatch(wnd.getProcessName(), self.exe_name) : return True
+                    if self.class_name:
+                        if not fnmatch.fnmatch(wnd.getClassName(), self.class_name) : return True
+                    found[0] = wnd.getLastActivePopup()
+                    return False
+                pyauto.Window.enum(_callback, None)
+                return found[0]
+
+            self.target = _scan_wnd()
+
 
         def activate(self) -> bool:
             if not self.target:
