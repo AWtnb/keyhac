@@ -1463,6 +1463,15 @@ def configure(keymap):
     def decode_url(s:str) -> str:
         return urllib.parse.unquote(s)
 
+    def outdent_markdown_heading(s:str) -> str:
+        lines = []
+        for line in s.splitlines():
+            if line.startswith("##"):
+                lines.append(line[1:])
+            else:
+                lines.append(line)
+        return os.linesep.join(lines)
+
     def format_zoom_invitation(s:str) -> str:
         def _format_time(mo:re.Match) -> str:
             d = mo.group(1).strip()
@@ -1511,6 +1520,7 @@ def configure(keymap):
         "Others": [
             (" Cat local file ", format_cb(catanate_file_content) ),
             (" Mask USERNAME ", format_cb(UserPath().mask_user_name) ),
+            (" Outdent markdown-heading ", format_cb(outdent_markdown_heading) ),
             (" Postalcode | Address ", format_cb(split_postalcode) ),
             (" URL: - Decode ", format_cb(decode_url) ),
             ("      - Shorten Amazon ", replace_cb(r"^.+amazon\.co\.jp/.+dp/(.{10}).*", r"https://www.amazon.jp/dp/\1") ),
