@@ -294,8 +294,27 @@ def configure(keymap):
 
     # paste as plaintext
     keymap_global["U0-V"] = LazyFunc(lambda : keyhaclip.paste(keyhaclip.get_string())).defer()
-    keymap_global["U1-V"] = LazyFunc(lambda : keyhaclip.paste(keyhaclip.get_string().strip("\uf09f\u0009").strip())).defer() # trim space
-    keymap_global["LC-U1-V"] = LazyFunc(lambda : keyhaclip.paste(prune_white(keyhaclip.get_string()))).defer() # remove all space
+
+    # paste as plaintext (with trimming removable whitespaces)
+    def trim_and_paste(remove_white:bool=False, include_linebreak:bool=False) -> callable:
+        def _paster() -> None:
+            s = keyhaclip.get_string().strip()
+            if remove_white:
+                s = prune_white(s)
+            if include_linebreak:
+                s = "".join(s.splitlines())
+            keyhaclip.paste(s)
+        return LazyFunc(_paster).defer()
+
+    for mod_ctrl, remove_white in {
+        "": False,
+        "LC-": True,
+    }.items():
+        for mod_shift, include_linebreak in {
+            "": False,
+            "LS-": True,
+        }.items():
+            keymap_global[mod_ctrl+mod_shift+"U1-V"] = trim_and_paste(remove_white, include_linebreak)
 
     # select last word with ime
     def select_last_word() -> None:
@@ -394,7 +413,7 @@ def configure(keymap):
     def moko(search_all:bool=False) -> callable:
         exe_path = UserPath().resolve(r"Dropbox\develop\code\go\moko\src\moko.exe")
         def _launcher() -> None:
-            execute_path(exe_path, "-src={} -filer={} -all={} -exclude=_obsolete".format(r"C:\Personal\launch.yaml", UserPath().get_filer(), search_all))
+            execute_path(exe_path, "-src={} -filer={} -all={} -exclude=_obsolete,node_modules".format(r"C:\Personal\launch.yaml", UserPath().get_filer(), search_all))
         return LazyFunc(_launcher).defer()
     keymap_global["U1-Z"] = moko(False)
     keymap_global["LC-U1-Z"] = moko(True)
@@ -1463,15 +1482,6 @@ def configure(keymap):
     def decode_url(s:str) -> str:
         return urllib.parse.unquote(s)
 
-    def outdent_markdown_heading(s:str) -> str:
-        lines = []
-        for line in s.splitlines():
-            if line.startswith("##"):
-                lines.append(line[1:])
-            else:
-                lines.append(line)
-        return os.linesep.join(lines)
-
     def format_zoom_invitation(s:str) -> str:
         def _format_time(mo:re.Match) -> str:
             d = mo.group(1).strip()
@@ -1520,7 +1530,6 @@ def configure(keymap):
         "Others": [
             (" Cat local file ", format_cb(catanate_file_content) ),
             (" Mask USERNAME ", format_cb(UserPath().mask_user_name) ),
-            (" Outdent markdown-heading ", format_cb(outdent_markdown_heading) ),
             (" Postalcode | Address ", format_cb(split_postalcode) ),
             (" URL: - Decode ", format_cb(decode_url) ),
             ("      - Shorten Amazon ", replace_cb(r"^.+amazon\.co\.jp/.+dp/(.{10}).*", r"https://www.amazon.jp/dp/\1") ),
