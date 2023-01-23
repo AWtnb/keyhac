@@ -209,11 +209,10 @@ def configure(keymap):
         @staticmethod
         def set_string(s:str) -> None:
             return setClipboardText(str(s))
-        @staticmethod
-        def paste(s:str) -> None:
-            keyhaclip.set_string(s)
-            send_keys("S-Insert")
 
+    def paste_string(s:str) -> None:
+        keyhaclip.set_string(s)
+        send_keys("S-Insert")
 
     def copy_string() -> str:
         keyhaclip.set_string("")
@@ -293,7 +292,7 @@ def configure(keymap):
     keymap_global["S-U1-J"] = lambda : set_ime(0)
 
     # paste as plaintext
-    keymap_global["U0-V"] = LazyFunc(lambda : keyhaclip.paste(keyhaclip.get_string())).defer()
+    keymap_global["U0-V"] = LazyFunc(lambda : paste_string(keyhaclip.get_string())).defer()
 
     # paste as plaintext (with trimming removable whitespaces)
     def trim_and_paste(remove_white:bool=False, include_linebreak:bool=False) -> callable:
@@ -303,7 +302,7 @@ def configure(keymap):
                 s = prune_white(s)
             if include_linebreak:
                 s = "".join(s.splitlines())
-            keyhaclip.paste(s)
+            paste_string(s)
         return LazyFunc(_paster).defer()
 
     for mod_ctrl, remove_white in {
@@ -380,7 +379,7 @@ def configure(keymap):
     def quote_selection() -> None:
         cb = copy_string()
         if cb:
-            keyhaclip.paste(' "{}" '.format(cb.strip()))
+            paste_string(' "{}" '.format(cb.strip()))
     keymap_global["LC-U0-Q"] = LazyFunc(quote_selection).defer()
 
 
@@ -393,7 +392,7 @@ def configure(keymap):
                 quoted = "> " + "".join([line.strip() for line in lines])
             else:
                 quoted = os.linesep.join(["> " + line for line in lines])
-            keyhaclip.paste(quoted)
+            paste_string(quoted)
         return LazyFunc(_paster).defer()
     keymap_global["U1-Q"] = paste_with_anchor(False)
     keymap_global["C-U1-Q"] = paste_with_anchor(True)
@@ -445,7 +444,7 @@ def configure(keymap):
         "R" : reload_config,
         "E" : keymap.command_EditConfig,
         "G" : open_github,
-        "P" : lambda : keyhaclip.paste(read_config()),
+        "P" : lambda : paste_string(read_config()),
         "X" : lambda : None,
     }.items():
         keymap_global["LC-U0-X"][key] = LazyFunc(func).defer()
