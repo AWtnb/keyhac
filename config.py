@@ -128,8 +128,6 @@ def configure(keymap):
         "LS-U0-Enter": ("Comma"),
         "LC-U0-Enter": ("Slash"),
         "U1-S": ("Slash"),
-        "U1-B": ("Minus"),
-        "U0-O": ("Minus"),
 
         # Re-convert
         "U0-R": ("LWin-Slash"),
@@ -750,6 +748,11 @@ def configure(keymap):
                 keys = combo.split(",")
                 self.mapping = combo_mapper(self.mapping, keys, direct_puncher.invoke(*stroke))
 
+            for i in "0123456789":
+                keys = ("I", "S", i)
+                s = chr(0x2080 + int(i))
+                self.mapping = combo_mapper(self.mapping, keys, direct_puncher.invoke(s))
+
             indirect_puncher = KeyPuncher(recover_ime=True, delay_msec=50)
             for combo, stroke in {
                 "F,G": ("\u3013\u3013"),
@@ -882,7 +885,7 @@ def configure(keymap):
         "U1-Enter": "<br />",
         "U1-E": "S-Minus",
         "U1-Minus": "Minus",
-        "LC-U0-SemiColon": "SemiColon",
+        "LS-U0-SemiColon": "SemiColon",
     }.items():
         keymap_global[key] = KeyPuncher().invoke(send)
 
@@ -897,6 +900,7 @@ def configure(keymap):
         "U0-Minus": "\u2015\u2015", # HORIZONTAL BAR * 2
         "U0-P": "\u30fb", # KATAKANA MIDDLE DOT
         "U0-SemiColon": "+ ",
+        "LS-0": "- ",
         "S-U0-8": "+ ",
         "U1-1": "1. ",
         "S-U0-7": "1. ",
@@ -1041,6 +1045,7 @@ def configure(keymap):
             "K": "https://www.kinokuniya.co.jp/disp/CSfDispListPage_001.jsp?qs=true&ptk=01&q={}",
             "M": "https://www.google.co.jp/maps/search/{}",
             "N": "https://iss.ndl.go.jp/books?any={}",
+            "O": "https://honto.jp/netstore/search_10{}",
             "P": "https://wordpress.org/openverse/search/?q={}",
             "R": "https://researchmap.jp/researchers?q={}",
             "S": "https://scholar.google.co.jp/scholar?q={}",
