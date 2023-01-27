@@ -479,55 +479,55 @@ def configure(keymap):
         def _adjust_rect(self) -> list:
             return [self._left, self._top, self._right + 2, self._bottom + 2]
 
+    class SizeMenu:
+        def __init__(self, max:int) -> None:
+            self.dict = {
+                "small": int(max / 3),
+                "middle": int(max / 2),
+                "large": int(max * 2 / 3),
+            }
+
+        def iterate(self) -> list:
+            return self.dict.items()
+
     class MonitorRect:
         def __init__(self, rect:list, idx:int) -> None:
             self.idx= idx
             self.left, self.top, self.right, self.bottom = rect
             self.max_width = self.right - self.left
             self.max_height = self.bottom - self.top
+            self.possible_width = SizeMenu(self.max_width)
+            self.possible_height = SizeMenu(self.max_height)
+            self.area_mapping = {}
 
-            def _size_dict(max:int) -> dict:
-                return {
-                    "small": int(max / 3),
-                    "middle": int(max / 2),
-                    "large": int(max * 2 / 3),
-                }
-            self.possible_width = _size_dict(self.max_width)
-            self.possible_height = _size_dict(self.max_height)
-
-            self.area_map = {}
-            self._set_center_rect()
-            self._set_horizontal_rect()
-            self._set_vertical_rect()
-
-        def _set_center_rect(self) -> None:
+        def set_center_rect(self) -> None:
             d = {}
-            for size,px in self.possible_width.items():
+            for size,px in self.possible_width.iterate():
                 lx = self.left + int((self.max_width - px) / 2)
                 d[size] = WndRect(lx, self.top, lx + px, self.bottom)
-            self.area_map["center"] = d
+            self.area_mapping["center"] = d
 
-        def _set_horizontal_rect(self) -> None:
+        def set_horizontal_rect(self) -> None:
             for pos in ("left", "right"):
                 d = {}
-                for size,px in self.possible_width.items():
+                for size,px in self.possible_width.iterate():
                     if pos == "right":
                         lx = self.right - px
                     else:
                         lx = self.left
                     d[size] = WndRect(lx, self.top, lx + px, self.bottom)
-                self.area_map[pos] = d
+                self.area_mapping[pos] = d
 
-        def _set_vertical_rect(self) -> None:
+        def set_vertical_rect(self) -> None:
             for pos in ("top", "bottom"):
                 d = {}
-                for size,px in self.possible_height.items():
+                for size,px in self.possible_height.iterate():
                     if pos == "bottom":
                         ty = self.bottom - px
                     else:
                         ty = self.top
                     d[size] = WndRect(self.left, ty, self.right, ty + px)
-                self.area_map[pos] = d
+                self.area_mapping[pos] = d
 
         @staticmethod
         def to_half_width(to_left:bool=True) -> callable:
@@ -565,7 +565,13 @@ def configure(keymap):
 
 
     def get_monitors() -> list:
-        monitors = [ MonitorRect(rect=m[1], idx=m[2]) for m in pyauto.Window.getMonitorInfo() ]
+        monitors = []
+        for mi in pyauto.Window.getMonitorInfo():
+            mr = MonitorRect(rect=mi[1], idx=mi[2])
+            mr.set_center_rect()
+            mr.set_horizontal_rect()
+            mr.set_vertical_rect()
+            monitors.append(mr)
         max_widths = [m.max_width for m in monitors]
         if len(set(max_widths)) == 1:
             return sorted(monitors, key=lambda x : x.idx, reverse=True)
@@ -655,7 +661,7 @@ def configure(keymap):
                 "M": "center",
             }.items():
                 if mntr_idx < len(KEYMAP_MONITORS):
-                    snapper = KEYMAP_MONITORS[mntr_idx].area_map[pos][size].snap_func
+                    snapper = KEYMAP_MONITORS[mntr_idx].area_mapping[pos][size].snap_func
                     keymap_global["U1-M"][mod_mntr+mod_area+key] = LazyFunc(snapper).defer()
 
     def snap_and_maximize(towards="Left") -> callable:
