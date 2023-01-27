@@ -477,7 +477,7 @@ def configure(keymap):
             self.snap_func = _snapper
 
         def _adjust_rect(self) -> list:
-            return [self._left - 4, self._top, self._right + 4, self._bottom + 4]
+            return [self._left, self._top, self._right + 2, self._bottom + 2]
 
     class MonitorRect:
         def __init__(self, rect:list, idx:int) -> None:
@@ -756,6 +756,8 @@ def configure(keymap):
             indirect_puncher = KeyPuncher(recover_ime=True, delay_msec=50)
             for combo, stroke in {
                 "F,G": ("\u3013\u3013"),
+                "F,0": ("●●"),
+                "F,4": ("■■"),
                 "M,1": ("# "),
                 "M,2": ("## "),
                 "M,3": ("### "),
@@ -1045,7 +1047,6 @@ def configure(keymap):
             "K": "https://www.kinokuniya.co.jp/disp/CSfDispListPage_001.jsp?qs=true&ptk=01&q={}",
             "M": "https://www.google.co.jp/maps/search/{}",
             "N": "https://iss.ndl.go.jp/books?any={}",
-            "O": "https://honto.jp/netstore/search_10{}",
             "P": "https://wordpress.org/openverse/search/?q={}",
             "R": "https://researchmap.jp/researchers?q={}",
             "S": "https://scholar.google.co.jp/scholar?q={}",
