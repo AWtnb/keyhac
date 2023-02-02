@@ -128,6 +128,7 @@ def configure(keymap):
         "LS-U0-Enter": ("Comma"),
         "LC-U0-Enter": ("Slash"),
         "U1-S": ("Slash"),
+        "U1-B": ("Minus"),
 
         # Re-convert
         "U0-R": ("LWin-Slash"),
