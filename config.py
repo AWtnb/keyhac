@@ -672,9 +672,7 @@ def configure(keymap):
             keymap.getTopLevelWindow().maximize()
         return LazyFunc(_snap).defer()
     keymap_global["LC-U1-L"] = snap_and_maximize("Right")
-    keymap_global["LC-U1-J"] = snap_and_maximize("Right")
     keymap_global["LC-U1-H"] = snap_and_maximize("Left")
-    keymap_global["LC-U1-K"] = snap_and_maximize("Left")
 
     keymap_global["U1-M"]["U0-L"] = snap_and_maximize("Right")
     keymap_global["U1-M"]["U0-J"] = snap_and_maximize("Right")
@@ -816,7 +814,8 @@ def configure(keymap):
         "U0-OpenBracket": ["\u300c", "\u300d"], # CORNER BRACKET 「」
         "U0-Y": ["\u300a", "\u300b"], # DOUBLE ANGLE BRACKET 《》
         "U1-2": ["\u201c", "\u201d"], # DOUBLE QUOTATION MARK “”
-        "U1-7": ["\u3014", "\u3015"], # TORTOISE SHELL BRACKET 〔〕
+        "U1-7": ["\u2018", "\u2019"], # SINGLE QUOTATION MARK ‘’
+        "U1-K": ["\u3014", "\u3015"], # TORTOISE SHELL BRACKET 〔〕
         "U1-8": ["\uff08", "\uff09"], # FULLWIDTH PARENTHESIS （）
         "U1-OpenBracket": ["\uff3b", "\uff3d"], # FULLWIDTH SQUARE BRACKET ［］
         "U1-Y": ["\u3008", "\u3009"], # ANGLE BRACKET 〈〉
