@@ -335,33 +335,33 @@ def configure(keymap):
     keymap_global["U1-N"] = as_alphabet(False)
     keymap_global["S-U1-N"] = as_alphabet(True)
 
-    # fix typo
-    def fix_previous_typo() -> callable:
-        typo_map = {
-            "/": ".",
-            "m": ",",
-            ".": ",",
-            ",": ".",
-            ":": ";",
-            ";": ":",
-            "l": ";",
-            "\uff4d": "\u3001",
-            "\uff1a": "\uff1b",
-            "\uff1b": "\uff1a",
-            "\u3001": "\u3002",
-            "\u3002": "\u3001",
-            "\uff01": "\uff1f",
-            "\uff1f": "\uff01",
-        }
-        def _fixer() -> None:
-            send_keys("S-Left")
-            cb = copy_string()
-            if cb:
-                sent = typo_map.get(cb, "")
-                if sent:
-                    send_string(typo_map[cb])
-        return LazyFunc(_fixer).defer()
-    keymap_global["U0-BackSlash"] = fix_previous_typo()
+    # # fix typo
+    # def fix_previous_typo() -> callable:
+    #     typo_map = {
+    #         "/": ".",
+    #         "m": ",",
+    #         ".": ",",
+    #         ",": ".",
+    #         ":": ";",
+    #         ";": ":",
+    #         "l": ";",
+    #         "\uff4d": "\u3001",
+    #         "\uff1a": "\uff1b",
+    #         "\uff1b": "\uff1a",
+    #         "\u3001": "\u3002",
+    #         "\u3002": "\u3001",
+    #         "\uff01": "\uff1f",
+    #         "\uff1f": "\uff01",
+    #     }
+    #     def _fixer() -> None:
+    #         send_keys("S-Left")
+    #         cb = copy_string()
+    #         if cb:
+    #             sent = typo_map.get(cb, "")
+    #             if sent:
+    #                 send_string(typo_map[cb])
+    #     return LazyFunc(_fixer).defer()
+    # keymap_global["U0-BackSlash"] = fix_previous_typo()
 
     # count chars
     def count_chars() -> None:
@@ -780,6 +780,8 @@ def configure(keymap):
     # input customize
     ################################
 
+    keymap_global["U0-Yen"] = KeyPuncher().invoke("S-Yen", "Left")
+
     keymap_global["U1-W"] = keymap.defineMultiStrokeKeymap()
 
     def as_html_tag() -> None:
@@ -815,7 +817,7 @@ def configure(keymap):
         "U0-Y": ["\u300a", "\u300b"], # DOUBLE ANGLE BRACKET 《》
         "U1-2": ["\u201c", "\u201d"], # DOUBLE QUOTATION MARK “”
         "U1-7": ["\u2018", "\u2019"], # SINGLE QUOTATION MARK ‘’
-        "U1-K": ["\u3014", "\u3015"], # TORTOISE SHELL BRACKET 〔〕
+        "U0-T": ["\u3014", "\u3015"], # TORTOISE SHELL BRACKET 〔〕
         "U1-8": ["\uff08", "\uff09"], # FULLWIDTH PARENTHESIS （）
         "U1-OpenBracket": ["\uff3b", "\uff3d"], # FULLWIDTH SQUARE BRACKET ［］
         "U1-Y": ["\u3008", "\u3009"], # ANGLE BRACKET 〈〉
@@ -876,15 +878,10 @@ def configure(keymap):
 
     # input punctuation marks directly and set ime mode
 
-    for key, seq in {
-        "U0-4": ["S-4", "S-BackSlash"],
-        "U0-Yen": ["S-Yen", "Left"],
-        "U1-4": ["S-4", "S-BackSlash", "Period"],
-    }.items():
-        keymap_global[key] = KeyPuncher().invoke(*seq)
-
     for key, send in {
         "U0-1": "S-1",
+        "U0-4": "$_",
+        "U1-4": "$_.",
         "U0-Colon": "Colon",
         "U0-Comma": "Comma",
         "U0-Period": "Period",
