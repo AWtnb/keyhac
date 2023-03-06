@@ -722,6 +722,7 @@ def configure(keymap):
                 "M,D": ("div."),
                 "M,S": ("span."),
                 "N,0": ("0_plain"),
+                "N,P,L": ("plain"),
                 "N,P,A": ("proofed_by_author"),
                 "N,P,J": ("project_proposal"),
                 "N,P,P": ("proofed"),
@@ -888,7 +889,6 @@ def configure(keymap):
         "U0-Slash": "Slash",
         "U0-U": "S-BackSlash",
         "U1-Enter": "<br />",
-        "U1-E": "S-Minus",
         "U1-Minus": "Minus",
         "LS-U0-SemiColon": "SemiColon",
     }.items():
