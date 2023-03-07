@@ -1342,9 +1342,7 @@ def configure(keymap):
     keymap_sumatra["C-J"] = "F3"
     keymap_sumatra["C-OpenBracket"] = "S-F3"
     keymap_sumatra["C-CloseBracket"] = "F3"
-
     keymap_sumatra["O-LShift"] = KeyPuncher(recover_ime=True).invoke("F6", "C-Home", "C-F")
-    keymap_sumatra["F4"] = KeyPuncher(recover_ime=False, delay_msec=50).invoke("F6", "C-G")
 
     # sumatra PDF when focus out from textbox
     keymap_sumatra_view = keymap.defineWindowKeymap(check_func=lambda wnd : wnd.getProcessName() == "SumatraPDF.exe" and wnd.getClassName() != "Edit")
