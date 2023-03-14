@@ -786,8 +786,8 @@ def configure(keymap):
     keymap_global["U1-W"] = keymap.defineMultiStrokeKeymap()
 
     for n in "123456789":
-        key = "LWin-" + n
-        keymap_global[key] = KeyPuncher(delay_msec=100).invoke(key)
+        key = "D-LWin-" + n
+        keymap_global[key] = KeyPuncher(delay_msec=50).invoke(key)
 
     # surround with brackets
     for key, pair in {
