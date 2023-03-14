@@ -785,15 +785,8 @@ def configure(keymap):
 
     keymap_global["U1-W"] = keymap.defineMultiStrokeKeymap()
 
-    def as_html_tag() -> None:
-        cb = copy_string()
-        if cb:
-            set_ime(0)
-            tag_name = cb.strip()
-            fmt = "<{tag}></{tag}>".format(tag=tag_name)
-            sent = [fmt] + ["Left"]*(len(tag_name) + 3)
-            send_input(tuple(sent), 0)
-    keymap_global["U1-W"]["T"] = LazyFunc(as_html_tag).defer()
+    for n in "123456789":
+        keymap_global["LWin-" + n] = KeyPuncher(delay_msec=100).invoke(key)
 
     # surround with brackets
     for key, pair in {
@@ -1513,7 +1506,7 @@ def configure(keymap):
             "------------------------------",
         ])
 
-    keymap_global[ "LC-LS-X" ] = LazyFunc(keymap.command_ClipboardList).defer()
+    keymap_global["LC-LS-X"] = LazyFunc(keymap.command_ClipboardList).defer(msec=100)
 
     for title, menu in {
         "Noise-Reduction": [
