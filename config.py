@@ -1386,9 +1386,19 @@ def configure(keymap):
     keymap_excel["LC-U0-N"] = select_cell_content
 
     # Thunderbird
-    keymap_tb = keymap.defineWindowKeymap(exe_name="thunderbird.exe", check_func=lambda  wnd : wnd.getText().startswith("作成: (件名なし)"))
-    keymap_tb["C-S-V"] = "A-S", "Tab", "C-V", "C-Home", "S-End"
-    keymap_tb["C-S-S"] = "C-X", "Delete", "A-S", "C-V"
+    def thunderbird_new_mail(sequence:list, alt_sequence:list) -> None:
+        def _sender():
+            wnd = keymap.getWindow()
+            if wnd.getProcessName() == "thunderbird.exe":
+                if wnd.getText().startswith("作成: (件名なし)"):
+                    send_keys(*sequence)
+                else:
+                    send_keys(*alt_sequence)
+        return _sender
+
+    keymap_tb = keymap.defineWindowKeymap(exe_name="thunderbird.exe")
+    keymap_tb["C-S-V"] = thunderbird_new_mail(["A-S", "Tab", "C-V", "C-Home", "S-End"], ["C-V"])
+    keymap_tb["C-S-S"] = thunderbird_new_mail(["C-X", "Delete", "A-S", "C-V"], ["A-S"])
 
     # filer
     def is_fileviewer(wnd:pyauto.Window) -> bool:
