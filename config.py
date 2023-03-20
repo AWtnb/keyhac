@@ -161,6 +161,9 @@ def configure(keymap):
     }.items():
         keymap_global[key] = value
 
+    for n in "123456789":
+        key = "LWin-" + n
+        keymap_global[key] = (key, "U-" + key)
 
     ################################
     # functions for custom hotkey
@@ -784,10 +787,6 @@ def configure(keymap):
     keymap_global["U0-Yen"] = KeyPuncher().invoke("S-Yen", "Left")
 
     keymap_global["U1-W"] = keymap.defineMultiStrokeKeymap()
-
-    for n in "123456789":
-        key = "LWin-" + n
-        keymap_global[key] = LazyFunc(lambda k = key: send_keys(k)).defer()
 
     # surround with brackets
     for key, pair in {
