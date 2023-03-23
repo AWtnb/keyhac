@@ -68,13 +68,33 @@ def configure(keymap):
     # key remap
     ################################
 
-    def is_browser_wnd(wnd:pyauto.Window) -> bool:
-        return wnd.getProcessName() in ("chrome.exe", "vivaldi.exe", "firefox.exe")
+    class CheckWnd:
+        def __init__(self) -> None:
+            pass
+
+        @staticmethod
+        def is_global_target(wnd:pyauto.Window) -> bool:
+            return not ( CheckWnd.is_browser(wnd) and wnd.getText().startswith("ESET - ") )
+
+        @staticmethod
+        def is_browser(wnd:pyauto.Window) -> bool:
+            return wnd.getProcessName() in ("chrome.exe", "vivaldi.exe", "firefox.exe")
+
+        @staticmethod
+        def is_sumatra_view(wnd:pyauto.Window) -> bool:
+            return wnd.getProcessName() == "SumatraPDF.exe" and wnd.getClassName() != "Edit"
+
+        @staticmethod
+        def is_fileviewer(wnd:pyauto.Window) -> bool:
+            if wnd.getProcessName() == "explorer.exe":
+                return wnd.getClassName() not in ("Edit", "LauncherTipWnd", "Windows.UI.Input.InputSite.WindowClass")
+            if wnd.getProcessName() == "TE64.exe":
+                return wnd.getClassName() == "SysListView32"
+            return False
+
 
     # keymap working on any window
-    def is_global_target(wnd:pyauto.Window) -> bool:
-        return not ( is_browser_wnd(wnd) and wnd.getText().startswith("ESET - ") )
-    keymap_global = keymap.defineWindowKeymap(check_func=is_global_target)
+    keymap_global = keymap.defineWindowKeymap(check_func=CheckWnd.is_global_target)
 
     # keyboard macro
     keymap_global["U0-Z"] = keymap.command_RecordPlay
@@ -1297,7 +1317,7 @@ def configure(keymap):
     ################################
 
     # browser
-    keymap_browser = keymap.defineWindowKeymap(check_func=is_browser_wnd)
+    keymap_browser = keymap.defineWindowKeymap(check_func=CheckWnd.is_browser)
     keymap_browser["LC-LS-W"] = "A-Left"
     keymap_browser["O-LShift"] = "C-F"
     keymap_browser["LC-Q"] = "A-F4"
@@ -1338,7 +1358,7 @@ def configure(keymap):
     keymap_sumatra["O-LShift"] = KeyPuncher(recover_ime=True).invoke("F6", "C-Home", "C-F")
 
     # sumatra PDF when focus out from textbox
-    keymap_sumatra_view = keymap.defineWindowKeymap(check_func=lambda wnd : wnd.getProcessName() == "SumatraPDF.exe" and wnd.getClassName() != "Edit")
+    keymap_sumatra_view = keymap.defineWindowKeymap(check_func=CheckWnd.is_sumatra_view)
 
     for key, seq in {
         "C": ["C"],
@@ -1400,33 +1420,22 @@ def configure(keymap):
     keymap_tb["C-S-S"] = thunderbird_new_mail(["C-X", "Delete", "A-S", "C-V"], ["A-S"])
 
     # filer
-    def is_fileviewer(wnd:pyauto.Window) -> bool:
-        if wnd.getProcessName() == "explorer.exe":
-            return wnd.getClassName() not in ("Edit", "LauncherTipWnd", "Windows.UI.Input.InputSite.WindowClass")
-        if wnd.getProcessName() == "TE64.exe":
-            return wnd.getClassName() == "SysListView32"
-        return False
-    keymap_filer = keymap.defineWindowKeymap(check_func=is_fileviewer)
+    keymap_filer = keymap.defineWindowKeymap(check_func=CheckWnd.is_fileviewer)
     for key, value in {
         "A": ["Home"],
         "E": ["End"],
         "C": ["C-C"],
         "J": ["Down"],
         "K": ["Up"],
-        "C-H": ["Apps", "H"],
-        "H": ["C-S-Tab"],
-        "L": ["C-Tab"],
         "N": ["F2"],
         "R": ["F5"],
-        "U": ["Alt-Up"],
+        "U": ["LAlt-Up"],
         "V": ["C-V"],
         "W": ["C-W"],
         "X": ["C-X"],
         "Space": ["Enter"],
-        "LS-Space": ["LS-Enter"],
         "C-S-C": ["C-Add"],
         "C-L": ["A-D", "C-C"],
-        "A-K": ["A-Up"],
     }.items():
         keymap_filer[key] = KeyPuncher().invoke(*value)
 
@@ -1434,6 +1443,13 @@ def configure(keymap):
     keymap_filer["LC-K"]["BackSlash"] = KeyPuncher().invoke("S-BackSlash")
     for simple_key in "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789":
         keymap_filer["LC-K"][simple_key] = KeyPuncher().invoke(simple_key)
+
+    keymap_tablacus = keymap.defineWindowKeymap(exe_name="TE64.exe")
+    keymap_tablacus["H"] = "C-S-Tab"
+    keymap_tablacus["L"] = "C-Tab"
+    keymap_tablacus["LS-Space"] = "LS-Enter"
+
+
 
     ################################
     # popup clipboard menu
