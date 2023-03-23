@@ -85,12 +85,16 @@ def configure(keymap):
             return wnd.getProcessName() == "SumatraPDF.exe" and wnd.getClassName() != "Edit"
 
         @staticmethod
-        def is_fileviewer(wnd:pyauto.Window) -> bool:
+        def is_filer_viewmode(wnd:pyauto.Window) -> bool:
             if wnd.getProcessName() == "explorer.exe":
                 return wnd.getClassName() not in ("Edit", "LauncherTipWnd", "Windows.UI.Input.InputSite.WindowClass")
             if wnd.getProcessName() == "TE64.exe":
                 return wnd.getClassName() == "SysListView32"
             return False
+
+        @staticmethod
+        def is_tablacus_viewmode(wnd:pyauto.Window) -> bool:
+            return  wnd.getProcessName() == "TE64.exe" and wnd.getClassName() == "SysListView32"
 
 
     # keymap working on any window
@@ -1420,7 +1424,7 @@ def configure(keymap):
     keymap_tb["C-S-S"] = thunderbird_new_mail(["C-X", "Delete", "A-S", "C-V"], ["A-S"])
 
     # filer
-    keymap_filer = keymap.defineWindowKeymap(check_func=CheckWnd.is_fileviewer)
+    keymap_filer = keymap.defineWindowKeymap(check_func=CheckWnd.is_filer_viewmode)
     for key, value in {
         "A": ["Home"],
         "E": ["End"],
@@ -1444,7 +1448,7 @@ def configure(keymap):
     for simple_key in "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789":
         keymap_filer["LC-K"][simple_key] = KeyPuncher().invoke(simple_key)
 
-    keymap_tablacus = keymap.defineWindowKeymap(exe_name="TE64.exe")
+    keymap_tablacus = keymap.defineWindowKeymap(check_func=CheckWnd.is_tablacus_viewmode)
     keymap_tablacus["H"] = "C-S-Tab"
     keymap_tablacus["L"] = "C-Tab"
     keymap_tablacus["LS-Space"] = "LS-Enter"
