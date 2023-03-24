@@ -1354,29 +1354,17 @@ def configure(keymap):
 
     # sumatra PDF
     keymap_sumatra = keymap.defineWindowKeymap(exe_name="SumatraPDF.exe")
-    keymap_sumatra["C-B"] = "F12"
-    keymap_sumatra["C-K"] = "S-F3"
-    keymap_sumatra["C-J"] = "F3"
-    keymap_sumatra["C-OpenBracket"] = "S-F3"
-    keymap_sumatra["C-CloseBracket"] = "F3"
     keymap_sumatra["O-LShift"] = KeyPuncher(recover_ime=True).invoke("F6", "C-Home", "C-F")
 
     # sumatra PDF when focus out from textbox
     keymap_sumatra_view = keymap.defineWindowKeymap(check_func=CheckWnd.is_sumatra_view)
 
+    for simple_key in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
+        keymap_sumatra_view[simple_key] = KeyPuncher(sleep_msec=50).invoke(simple_key)
+
     for key, seq in {
-        "C": ["C"],
-        "G": ["C-G"],
-        "C-G": ["C-G"],
-        "Z": ["Z"],
-        "J": ["J"],
-        "K": ["K"],
-        "Q": ["Q"],
         "Enter": ["F3"],
         "S-Enter": ["S-F3"],
-        "R": ["C-S-SemiColon"],
-        "L": ["C-Tab"],
-        "H": ["C-S-Tab"],
     }.items():
         keymap_sumatra_view[key] = KeyPuncher(sleep_msec=50).invoke(*seq)
 
