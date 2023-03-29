@@ -261,6 +261,8 @@ def configure(keymap):
             s = s.strip()
             if s.startswith("http") or test_path(s):
                 keymap.ShellExecuteCommand(None, s, arg, None)()
+            else:
+                print("invalid-path!")
 
 
     class LazyFunc:
@@ -410,7 +412,7 @@ def configure(keymap):
     keymap_global["U1-I"] = LazyFunc(re_input_with_ime).defer()
 
     def moko(search_all:bool=False) -> callable:
-        exe_path = UserPath().resolve(r"Dropbox\develop\code\go\moko\src\moko.exe")
+        exe_path = r"C:\Personal\tools\bin\moko.exe"
         def _launcher() -> None:
             execute_path(exe_path, "-src={} -filer={} -all={} -exclude=_obsolete,node_modules".format(r"C:\Personal\launch.yaml", UserPath().get_filer(), search_all))
         return LazyFunc(_launcher).defer()
