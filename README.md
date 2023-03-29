@@ -1,4 +1,6 @@
-# keyhac customization
+keyhac customization
 
-[gist](https://gist.github.com/AWtnb/5a4bcfa1000ff7b793954a241e3ac831) から移行
+Environment:
 
++  [Google 日本語入力](https://www.google.co.jp/ime/)
++ JIS 配列キーボード
