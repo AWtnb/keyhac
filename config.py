@@ -364,34 +364,6 @@ def configure(keymap):
     keymap_global["U1-N"] = as_alphabet(False)
     keymap_global["S-U1-N"] = as_alphabet(True)
 
-    # # fix typo
-    # def fix_previous_typo() -> callable:
-    #     typo_map = {
-    #         "/": ".",
-    #         "m": ",",
-    #         ".": ",",
-    #         ",": ".",
-    #         ":": ";",
-    #         ";": ":",
-    #         "l": ";",
-    #         "\uff4d": "\u3001",
-    #         "\uff1a": "\uff1b",
-    #         "\uff1b": "\uff1a",
-    #         "\u3001": "\u3002",
-    #         "\u3002": "\u3001",
-    #         "\uff01": "\uff1f",
-    #         "\uff1f": "\uff01",
-    #     }
-    #     def _fixer() -> None:
-    #         send_keys("S-Left")
-    #         cb = copy_string()
-    #         if cb:
-    #             sent = typo_map.get(cb, "")
-    #             if sent:
-    #                 send_string(typo_map[cb])
-    #     return LazyFunc(_fixer).defer()
-    # keymap_global["U0-BackSlash"] = fix_previous_typo()
-
     # count chars
     def count_chars() -> None:
         cb = copy_string()
