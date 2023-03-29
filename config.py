@@ -129,7 +129,9 @@ def configure(keymap):
                 keymap_global[mod_key+stat+str(vk)] = lambda : None
 
     for key, value in {
-    # BackSpace / Delete
+        # BackSpace / Delete
+        "U0-Back": ("Back", "Delete"),
+        "U0-Delete": ("Delete", "Back"),
         "U0-D": ("Delete"),
         "U0-B": ("Back"),
         "C-U0-D": ("C-Delete"),
