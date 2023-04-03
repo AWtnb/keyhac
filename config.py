@@ -130,14 +130,14 @@ def configure(keymap):
 
     for key, value in {
         # BackSpace / Delete
-        "U0-Back": ("Back", "Delete"),
-        "U0-Delete": ("Delete", "Back"),
         "U0-D": ("Delete"),
         "U0-B": ("Back"),
         "C-U0-D": ("C-Delete"),
         "C-U0-B": ("C-Back"),
         "S-U0-D": ("S-End", "Delete"),
         "S-U0-B": ("S-Home", "Delete"),
+
+        "LA-U0-B": ("Back", "Delete"),
 
         # escape
         "O-(235)": ("Esc"),
@@ -186,10 +186,6 @@ def configure(keymap):
 
     }.items():
         keymap_global[key] = value
-
-    for n in "123456789":
-        key = "LWin-" + n
-        keymap_global[key] = (key, "U-" + key)
 
     ################################
     # functions for custom hotkey
