@@ -19,7 +19,7 @@ def configure(keymap):
     class PathInfo:
         def __init__(self, path:str) -> None:
             self.path = path
-            self.isAccecible = Path(self.path).exists()
+            self.isAccessible = Path(self.path).exists()
 
     class UserPath:
         def __init__(self) -> None:
@@ -35,13 +35,13 @@ def configure(keymap):
 
         def get_filer(self) -> str:
             tablacus = self.resolve(r"Dropbox\portable_apps\tablacus\TE64.exe")
-            if tablacus.isAccecible:
+            if tablacus.isAccessible:
                 return tablacus.path
             return "explorer.exe"
 
         def get_editor(self) -> str:
             vscode = self.resolve(r"scoop\apps\vscode\current\Code.exe")
-            if vscode.isAccecible:
+            if vscode.isAccessible:
                 return vscode.path
             return "notepad.exe"
 
@@ -259,7 +259,7 @@ def configure(keymap):
     def execute_path(s:str, arg:str=None) -> None:
         if s:
             s = s.strip()
-            if s.startswith("http") or PathInfo(s).isAccecible:
+            if s.startswith("http") or PathInfo(s).isAccessible:
                 keymap.ShellExecuteCommand(None, s, arg, None)()
             else:
                 print("invalid-path!")
@@ -1258,7 +1258,7 @@ def configure(keymap):
     def invoke_filer(dir_path:str) -> callable:
         filer_path = UserPath().get_filer()
         def _invoker() -> None:
-            if PathInfo(dir_path).isAccecible:
+            if PathInfo(dir_path).isAccessible:
                 execute_path(filer_path, dir_path)
         return LazyFunc(_invoker).defer()
     keymap_global["U1-F"] = keymap.defineMultiStrokeKeymap()
@@ -1433,7 +1433,7 @@ def configure(keymap):
         return _replacer
 
     def catanate_file_content(s:str) -> str:
-        if PathInfo(s).isAccecible:
+        if PathInfo(s).isAccessible:
             return Path(s).read_text("utf-8")
         return None
 
