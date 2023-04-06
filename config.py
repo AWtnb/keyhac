@@ -16,31 +16,35 @@ def configure(keymap):
     # general setting
     ################################
 
-    def test_path(s:str) -> bool:
-        return Path(s).exists()
+    class PathInfo:
+        def __init__(self, path:str) -> None:
+            self.path = path
+            self.isAccecible = Path(self.path).exists()
 
     class UserPath:
         def __init__(self) -> None:
             self.user_prof = os.environ.get("USERPROFILE")
 
         def resolve(self, rel:str="") -> str:
-            return str(Path(self.user_prof, rel))
-
-        def get_filer(self) -> str:
-            tablacus = self.resolve(r"Dropbox\portable_apps\tablacus\TE64.exe")
-            if test_path(tablacus):
-                return tablacus
-            return "explorer.exe"
-
-        def get_editor(self) -> str:
-            vscode = self.resolve(r"scoop\apps\vscode\current\Code.exe")
-            if test_path(vscode):
-                return vscode
-            return "notepad.exe"
+            fullpath = str(Path(self.user_prof, rel))
+            return PathInfo(fullpath)
 
         def mask_user_name(self, path:str) -> str:
             masked = str(Path(self.user_prof).parent) + r"\%USERNAME%"
             return path.replace(self.user_prof, masked)
+
+        def get_filer(self) -> str:
+            tablacus = self.resolve(r"Dropbox\portable_apps\tablacus\TE64.exe")
+            if tablacus.isAccecible:
+                return tablacus.path
+            return "explorer.exe"
+
+        def get_editor(self) -> str:
+            vscode = self.resolve(r"scoop\apps\vscode\current\Code.exe")
+            if vscode.isAccecible:
+                return vscode.path
+            return "notepad.exe"
+
 
     keymap.editor = UserPath().get_editor()
 
@@ -137,7 +141,7 @@ def configure(keymap):
         "S-U0-D": ("S-End", "Delete"),
         "S-U0-B": ("S-Home", "Delete"),
 
-        "LA-U0-B": ("Back", "Delete"),
+        "U0-Back": ("Back", "Delete"),
 
         # escape
         "O-(235)": ("Esc"),
@@ -255,7 +259,7 @@ def configure(keymap):
     def execute_path(s:str, arg:str=None) -> None:
         if s:
             s = s.strip()
-            if s.startswith("http") or test_path(s):
+            if s.startswith("http") or PathInfo(s).isAccecible:
                 keymap.ShellExecuteCommand(None, s, arg, None)()
             else:
                 print("invalid-path!")
@@ -713,10 +717,10 @@ def configure(keymap):
             for combo, stroke in {
                 "X,X": (".txt"),
                 "X,M": (".md"),
-                "P,M": (user_path.resolve(r"Dropbox\develop\app_config\IME_google\convertion_dict\main.txt")),
-                "P,A": (user_path.resolve(r"Dropbox\develop\app_config") + "\\"),
-                "P,D": (user_path.resolve(r"Desktop") + "\\"),
-                "P,X": (user_path.resolve(r"Dropbox") + "\\"),
+                "P,M": (user_path.resolve(r"Dropbox\develop\app_config\IME_google\convertion_dict\main.txt").path),
+                "P,A": (user_path.resolve(r"Dropbox\develop\app_config").path + "\\"),
+                "P,D": (user_path.resolve(r"Desktop").path + "\\"),
+                "P,X": (user_path.resolve(r"Dropbox").path + "\\"),
                 "M,P": ("=============================="),
                 "M,D": ("div."),
                 "M,S": ("span."),
@@ -1041,7 +1045,7 @@ def configure(keymap):
             "N": "https://iss.ndl.go.jp/books?any={}",
             "P": "https://wordpress.org/openverse/search/?q={}",
             "R": "https://researchmap.jp/researchers?q={}",
-            "S": "https://scholar.google.co.jp/scholar?q={}",
+            "S": "https://scholar.google.co.jp/scholar?as_vis=1&q={}",
             "T": "https://twitter.com/search?q={}",
             "Y": "http://www.google.co.jp/search?q=site%3Ayuhikaku.co.jp%20{}",
             "W": "https://www.worldcat.org/search?q={}",
@@ -1147,7 +1151,7 @@ def configure(keymap):
         "S": (
             "slack.exe",
             "Chrome_WidgetWin_1",
-            UserPath().resolve(r"AppData\Local\slack\slack.exe")
+            UserPath().resolve(r"AppData\Local\slack\slack.exe").path
         ),
         "F": (
             "firefox.exe",
@@ -1162,7 +1166,7 @@ def configure(keymap):
         "K": (
             "ksnip.exe",
             "Qt5152QWindowIcon",
-            UserPath().resolve(r"scoop\apps\ksnip\current\ksnip.exe")
+            UserPath().resolve(r"scoop\apps\ksnip\current\ksnip.exe").path
         ),
         "O": (
             "Obsidian.exe",
@@ -1192,7 +1196,7 @@ def configure(keymap):
         "V": (
             "Code.exe",
             "Chrome_WidgetWin_1",
-            UserPath().resolve(r"scoop\apps\vscode\current\Code.exe")
+            UserPath().resolve(r"scoop\apps\vscode\current\Code.exe").path
         ),
         "C-V": (
             "vivaldi.exe",
@@ -1202,12 +1206,12 @@ def configure(keymap):
         "T": (
             "TE64.exe",
             "TablacusExplorer",
-            UserPath().resolve(r"Dropbox\portable_apps\tablacus\TE64.exe")
+            UserPath().resolve(r"Dropbox\portable_apps\tablacus\TE64.exe").path
         ),
         "M": (
             "Mery.exe",
             "TChildForm",
-            UserPath().resolve(r"AppData\Local\Programs\Mery\Mery.exe")
+            UserPath().resolve(r"AppData\Local\Programs\Mery\Mery.exe").path
         ),
         "X": (
             "explorer.exe",
@@ -1233,7 +1237,7 @@ def configure(keymap):
         "LC-U1-M": (
             "Mery.exe",
             "TChildForm",
-            UserPath().resolve(r"AppData\Local\Programs\Mery\Mery.exe")
+            UserPath().resolve(r"AppData\Local\Programs\Mery\Mery.exe").path
         ),
         "LC-U1-N": (
             "notepad.exe",
@@ -1254,11 +1258,11 @@ def configure(keymap):
     def invoke_filer(dir_path:str) -> callable:
         filer_path = UserPath().get_filer()
         def _invoker() -> None:
-            if test_path(dir_path):
+            if PathInfo(dir_path).isAccecible:
                 execute_path(filer_path, dir_path)
         return LazyFunc(_invoker).defer()
     keymap_global["U1-F"] = keymap.defineMultiStrokeKeymap()
-    keymap_global["U1-F"]["D"] = invoke_filer(UserPath().resolve(r"Desktop"))
+    keymap_global["U1-F"]["D"] = invoke_filer(UserPath().resolve(r"Desktop").path)
     keymap_global["U1-F"]["S"] = invoke_filer(r"X:\scan")
 
     def invoke_cmder() -> None:
@@ -1267,7 +1271,7 @@ def configure(keymap):
             if not wnd.activate():
                 send_keys("C-AtMark")
         else:
-            cmder_path = UserPath().resolve(r"scoop\apps\cmder\current\Cmder.exe")
+            cmder_path = UserPath().resolve(r"scoop\apps\cmder\current\Cmder.exe").path
             execute_path(cmder_path)
     keymap_global["LC-AtMark"] = LazyFunc(invoke_cmder).defer()
 
@@ -1333,12 +1337,6 @@ def configure(keymap):
 
     for simple_key in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
         keymap_sumatra_view[simple_key] = KeyPuncher(sleep_msec=50).invoke(simple_key)
-
-    for key, seq in {
-        "Enter": ["F3"],
-        "S-Enter": ["S-F3"],
-    }.items():
-        keymap_sumatra_view[key] = KeyPuncher(sleep_msec=50).invoke(*seq)
 
     # word
     keymap_word = keymap.defineWindowKeymap(exe_name="WINWORD.EXE")
@@ -1435,7 +1433,7 @@ def configure(keymap):
         return _replacer
 
     def catanate_file_content(s:str) -> str:
-        if test_path(s):
+        if PathInfo(s).isAccecible:
             return Path(s).read_text("utf-8")
         return None
 
