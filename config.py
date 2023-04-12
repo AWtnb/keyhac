@@ -17,9 +17,15 @@ def configure(keymap):
     ################################
 
     class PathInfo:
-        def __init__(self, path:str) -> None:
-            self.path = path
-            self.isAccessible = Path(self.path).exists()
+        def __init__(self, s:str) -> None:
+            self.path = s
+            self.isAccessible = self.path.startswith("http") or Path(self.path).exists()
+
+        def run(self, arg:str="") -> None:
+            if self.isAccessible:
+                keymap.ShellExecuteCommand(None, self.path, arg, None)()
+            else:
+                print("invalid-path!")
 
     class UserPath:
         def __init__(self) -> None:
@@ -256,15 +262,6 @@ def configure(keymap):
             timeout -= interval
         return cb
 
-    def execute_path(s:str, arg:str=None) -> None:
-        if s:
-            s = s.strip()
-            if s.startswith("http") or PathInfo(s).isAccessible:
-                keymap.ShellExecuteCommand(None, s, arg, None)()
-            else:
-                print("invalid-path!")
-
-
     class LazyFunc:
         def __init__(self, func:callable) -> None:
             def _wrapper() -> None:
@@ -307,7 +304,7 @@ def configure(keymap):
     keymap_global["U1-Tab"] = KeyPuncher(delay_msec=40).invoke("Alt-Tab")
 
     # ime dict tool
-    keymap_global["U0-F7"] = LazyFunc(lambda : execute_path(r"C:\Program Files (x86)\Google\Google Japanese Input\GoogleIMEJaTool.exe", "--mode=word_register_dialog")).defer()
+    keymap_global["U0-F7"] = LazyFunc(lambda : PathInfo(r"C:\Program Files (x86)\Google\Google Japanese Input\GoogleIMEJaTool.exe").run("--mode=word_register_dialog")).defer()
 
     # screen sketch
     keymap_global["C-U1-S"] = LazyFunc(keymap.ShellExecuteCommand(None, "ms-screensketch:", None, None)).defer()
@@ -400,7 +397,7 @@ def configure(keymap):
     keymap_global["C-U1-Q"] = paste_with_anchor(True)
 
     # open url in browser
-    keymap_global["C-U0-O"] = LazyFunc(lambda : execute_path(copy_string().strip())).defer()
+    keymap_global["C-U0-O"] = LazyFunc(lambda : PathInfo(copy_string().strip()).run()).defer()
 
     # re-input selected string with ime
     def re_input_with_ime() -> None:
@@ -414,7 +411,7 @@ def configure(keymap):
     def moko(search_all:bool=False) -> callable:
         exe_path = r"C:\Personal\tools\bin\moko.exe"
         def _launcher() -> None:
-            execute_path(exe_path, "-src={} -filer={} -all={} -exclude=_obsolete,node_modules".format(r"C:\Personal\launch.yaml", UserPath().get_filer(), search_all))
+            PathInfo(exe_path).run("-src={} -filer={} -all={} -exclude=_obsolete,node_modules".format(r"C:\Personal\launch.yaml", UserPath().get_filer(), search_all))
         return LazyFunc(_launcher).defer()
     keymap_global["U1-Z"] = moko(False)
     keymap_global["LC-U1-Z"] = moko(True)
@@ -431,7 +428,7 @@ def configure(keymap):
     def open_github() -> None:
         repo = "https://github.com/AWtnb/keyhac/edit/main/config.py"
         keyhaclip.set_string(read_config())
-        execute_path(repo)
+        PathInfo(repo).run()
 
     def reload_config() -> None:
         keymap.configure()
@@ -1020,7 +1017,7 @@ def configure(keymap):
             query.remove_honorific()
             if strip_hiragana:
                 query.remove_hiragana()
-            execute_path(uri.format(query.encode(strict)))
+            PathInfo(uri.format(query.encode(strict))).run()
         return LazyFunc(_search).defer()
 
     for mdf, params in {
@@ -1133,7 +1130,7 @@ def configure(keymap):
                 if keymap.getWindow() == w.target or not w.activate():
                     send_keys("LCtrl-LAlt-Tab")
             else:
-                execute_path(exe_path)
+                PathInfo(exe_path).run()
         return LazyFunc(_executer).defer(80)
 
     keymap_global["U1-C"] = keymap.defineMultiStrokeKeymap()
@@ -1259,7 +1256,7 @@ def configure(keymap):
         filer_path = UserPath().get_filer()
         def _invoker() -> None:
             if PathInfo(dir_path).isAccessible:
-                execute_path(filer_path, dir_path)
+                PathInfo(filer_path).run(dir_path)
         return LazyFunc(_invoker).defer()
     keymap_global["U1-F"] = keymap.defineMultiStrokeKeymap()
     keymap_global["U1-F"]["D"] = invoke_filer(UserPath().resolve(r"Desktop").path)
@@ -1272,7 +1269,7 @@ def configure(keymap):
                 send_keys("C-AtMark")
         else:
             cmder_path = UserPath().resolve(r"scoop\apps\cmder\current\Cmder.exe").path
-            execute_path(cmder_path)
+            PathInfo(cmder_path).run()
     keymap_global["LC-AtMark"] = LazyFunc(invoke_cmder).defer()
 
     def search_on_browser() -> callable:
@@ -1288,7 +1285,7 @@ def configure(keymap):
                     else:
                         send_keys("LCtrl-LAlt-Tab")
                 else:
-                    execute_path("https://duckduckgo.com")
+                    PathInfo("https://duckduckgo.com").run()
         return LazyFunc(_invoker).defer(100)
     keymap_global["U0-Q"] =search_on_browser()
 
