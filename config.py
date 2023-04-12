@@ -21,17 +21,18 @@ def configure(keymap):
             self.path = s
             self.isAccessible = self.path.startswith("http") or Path(self.path).exists()
 
-        def run(self, arg:str="") -> None:
+        def run(self, arg:str="") -> bool:
             if self.isAccessible:
                 keymap.ShellExecuteCommand(None, self.path, arg, None)()
-            else:
-                print("invalid-path!")
+                return True
+            print("invalid-path:", self.path)
+            return False
 
     class UserPath:
         def __init__(self) -> None:
             self.user_prof = os.environ.get("USERPROFILE")
 
-        def resolve(self, rel:str="") -> str:
+        def resolve(self, rel:str="") -> PathInfo:
             fullpath = str(Path(self.user_prof, rel))
             return PathInfo(fullpath)
 
@@ -416,6 +417,11 @@ def configure(keymap):
     keymap_global["U1-Z"] = moko(False)
     keymap_global["LC-U1-Z"] = moko(True)
 
+
+    def screenshot() -> None:
+        if not UserPath().resolve(r"scoop\apps\ksnip\current\ksnip.exe").run():
+            send_keys("Lwin-S-S")
+    keymap_global["LWin-U0-S"] = screenshot
 
 
     ################################
