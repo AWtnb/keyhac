@@ -1091,22 +1091,20 @@ def configure(keymap):
         def __init__(self, exe_name:str, class_name:str) -> None:
             self.exe_name = exe_name
             self.class_name = class_name
+            self.target = None
 
-            def _scan_wnd() -> pyauto.Window:
-                found = [None]
-                def _callback(wnd:pyauto.Window, _) -> bool:
-                    if not wnd.isVisible() : return True
-                    if not wnd.isEnabled() : return True
-                    if not fnmatch.fnmatch(wnd.getProcessName(), self.exe_name) : return True
-                    if self.class_name:
-                        if not fnmatch.fnmatch(wnd.getClassName(), self.class_name) : return True
-                    found[0] = wnd.getLastActivePopup()
-                    return False
-                pyauto.Window.enum(_callback, None)
-                return found[0]
-
-            self.target = _scan_wnd()
-
+        def scan(self) -> None:
+            found = [None]
+            def _callback(wnd:pyauto.Window, _) -> bool:
+                if not wnd.isVisible() : return True
+                if not wnd.isEnabled() : return True
+                if not fnmatch.fnmatch(wnd.getProcessName(), self.exe_name) : return True
+                if self.class_name:
+                    if not fnmatch.fnmatch(wnd.getClassName(), self.class_name) : return True
+                found[0] = wnd.getLastActivePopup()
+                return False
+            pyauto.Window.enum(_callback, None)
+            self.target = found[0]
 
         def activate(self) -> bool:
             if not self.target:
@@ -1132,6 +1130,7 @@ def configure(keymap):
     def pseudo_cuteExec(exe_name:str, class_name:str, exe_path:str) -> callable:
         def _executer() -> None:
             w = PyWnd(exe_name, class_name)
+            w.scan()
             if w.target:
                 if keymap.getWindow() == w.target or not w.activate():
                     send_keys("LCtrl-LAlt-Tab")
@@ -1149,7 +1148,7 @@ def configure(keymap):
         "C": (
             "chrome.exe",
             "Chrome_WidgetWin_1",
-            r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
+            r"C:\Program Files\Google\Chrome\Application\chrome.exe"
         ),
         "S": (
             "slack.exe",
@@ -1174,27 +1173,27 @@ def configure(keymap):
         "O": (
             "Obsidian.exe",
             "Chrome_WidgetWin_1",
-            None
+            ""
         ),
         "P": (
             "SumatraPDF.exe",
             "SUMATRA_PDF_FRAME",
-            None
+            ""
         ),
         "C-P": (
             "powerpnt.exe",
             "PPTFrameClass",
-            None
+            ""
         ),
         "E": (
             "EXCEL.EXE",
             "XLMAIN",
-            None
+            ""
         ),
         "W": (
             "WINWORD.EXE",
             "OpusApp",
-            None
+            ""
         ),
         "V": (
             "Code.exe",
@@ -1204,7 +1203,7 @@ def configure(keymap):
         "C-V": (
             "vivaldi.exe",
             "Chrome_WidgetWin_1",
-            None
+            ""
         ),
         "T": (
             "TE64.exe",
@@ -1230,12 +1229,12 @@ def configure(keymap):
         "U1-T": (
             "TE64.exe",
             "TablacusExplorer",
-            None
+            ""
         ),
         "U1-P": (
             "SumatraPDF.exe",
             "SUMATRA_PDF_FRAME",
-            None
+            ""
         ),
         "LC-U1-M": (
             "Mery.exe",
@@ -1250,7 +1249,7 @@ def configure(keymap):
         "C-U1-W": (
             "WindowsTerminal.exe",
             "CASCADIA_HOSTING_WINDOW_CLASS",
-            None
+            ""
         )
     }.items():
         keymap_global["D-"+key] = pseudo_cuteExec(*params)
@@ -1270,6 +1269,7 @@ def configure(keymap):
 
     def invoke_cmder() -> None:
         wnd = PyWnd("ConEmu64.exe", "VirtualConsoleClass")
+        wnd.scan()
         if wnd.target:
             if not wnd.activate():
                 send_keys("C-AtMark")
@@ -1284,6 +1284,7 @@ def configure(keymap):
                 send_keys("C-T")
             else:
                 w = PyWnd(DEFAULT_BROWSER.get_exe_name(), DEFAULT_BROWSER.get_wnd_class())
+                w.scan()
                 if w.target:
                     if w.activate():
                         delay()
@@ -1438,7 +1439,7 @@ def configure(keymap):
     def catanate_file_content(s:str) -> str:
         if PathInfo(s).isAccessible:
             return Path(s).read_text("utf-8")
-        return None
+        return ""
 
     def skip_blank_line(s:str) -> str:
         lines = s.strip().splitlines()
