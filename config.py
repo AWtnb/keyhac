@@ -4,6 +4,7 @@ import fnmatch
 import re
 import time
 import urllib.parse
+from typing import Union, Callable
 from pathlib import Path
 from winreg import HKEY_CURRENT_USER, HKEY_CLASSES_ROOT, OpenKey, QueryValueEx
 
@@ -243,7 +244,7 @@ def configure(keymap):
             return getClipboardText() or ""
         @staticmethod
         def set_string(s:str) -> None:
-            return setClipboardText(str(s))
+            setClipboardText(str(s))
 
     def paste_string(s:str) -> None:
         keyhaclip.set_string(s)
@@ -269,7 +270,7 @@ def configure(keymap):
                 keymap.hookCall(func)
             self._func = _wrapper
 
-        def defer(self, msec:int=20) -> callable:
+        def defer(self, msec:int=20) -> Callable:
             def _executer() -> None:
                 # use delayedCall in ckit => https://github.com/crftwr/ckit/blob/2ea84f986f9b46a3e7f7b20a457d979ec9be2d33/ckitcore/ckitcore.cpp#L1998
                 keymap.delayedCall(self._func, msec)
@@ -281,7 +282,7 @@ def configure(keymap):
             self._recover_ime = recover_ime
             self._sleep_msec = sleep_msec
             self._delay_msec = delay_msec
-        def invoke(self, *sequence) -> callable:
+        def invoke(self, *sequence) -> Callable:
             def _input() -> None:
                 set_ime(0)
                 send_input(sequence, self._sleep_msec)
@@ -323,7 +324,7 @@ def configure(keymap):
     keymap_global["U0-V"] = LazyFunc(lambda : paste_string(keyhaclip.get_string())).defer()
 
     # paste as plaintext (with trimming removable whitespaces)
-    def trim_and_paste(remove_white:bool=False, include_linebreak:bool=False) -> callable:
+    def trim_and_paste(remove_white:bool=False, include_linebreak:bool=False) -> Callable:
         def _paster() -> None:
             s = keyhaclip.get_string().strip()
             if remove_white:
@@ -350,7 +351,7 @@ def configure(keymap):
     keymap_global["U1-Space"] = select_last_word
 
     # Non-convert
-    def as_alphabet(recover_ime:bool=False) -> callable:
+    def as_alphabet(recover_ime:bool=False) -> Callable:
         keys = ["F10"]
         if recover_ime:
             keys.append("Enter")
@@ -384,7 +385,7 @@ def configure(keymap):
 
 
     # paste with quote mark
-    def paste_with_anchor(join_lines:bool=False) -> callable:
+    def paste_with_anchor(join_lines:bool=False) -> Callable:
         def _paster() -> None:
             cb = keyhaclip.get_string()
             lines = cb.strip().splitlines()
@@ -409,7 +410,7 @@ def configure(keymap):
             send_input(tuple(sequence), 0)
     keymap_global["U1-I"] = LazyFunc(re_input_with_ime).defer()
 
-    def moko(search_all:bool=False) -> callable:
+    def moko(search_all:bool=False) -> Callable:
         exe_path = r"C:\Personal\tools\bin\moko.exe"
         def _launcher() -> None:
             PathInfo(exe_path).run("-src={} -filer={} -all={} -exclude=_obsolete,node_modules".format(r"C:\Personal\launch.yaml", UserPath().get_filer(), search_all))
@@ -537,7 +538,7 @@ def configure(keymap):
                 self.area_mapping[pos] = d
 
         @staticmethod
-        def to_half_width(to_left:bool=True) -> callable:
+        def to_half_width(to_left:bool=True) -> Callable:
             def _snap() -> None:
                 wnd = keymap.getTopLevelWindow()
                 wnd_left, wnd_top, wnd_right, wnd_bottom = wnd.getRect()
@@ -554,7 +555,7 @@ def configure(keymap):
             return LazyFunc(_snap).defer()
 
         @staticmethod
-        def to_half_height(to_upper:bool=True) -> callable:
+        def to_half_height(to_upper:bool=True) -> Callable:
             def _snap() -> None:
                 wnd = keymap.getTopLevelWindow()
                 wnd_left, wnd_top, wnd_right, wnd_bottom = wnd.getRect()
@@ -623,7 +624,7 @@ def configure(keymap):
                     return i
             return -1
 
-        def get_snap_func(self) -> callable:
+        def get_snap_func(self) -> Callable:
             def _snap() -> None:
                 x, y = pyauto.Input.getCursorPos()
                 idx = self.get_position_index(x, y)
@@ -671,7 +672,7 @@ def configure(keymap):
                     snapper = KEYMAP_MONITORS[mntr_idx].area_mapping[pos][size].snap_func
                     keymap_global["U1-M"][mod_mntr+mod_area+key] = LazyFunc(snapper).defer()
 
-    def snap_and_maximize(towards="Left") -> callable:
+    def snap_and_maximize(towards="Left") -> Callable:
         def _snap() -> None:
             send_keys("LShift-LWin-"+towards)
             delay()
@@ -695,14 +696,14 @@ def configure(keymap):
     # pseudo espanso
     ################################
 
-    def combo_mapper(root_map, keys:list, func:callable):
+    def combo_mapper(root_map:Union[Callable, dict], keys:list, func:Callable) -> Union[Callable, dict, None]:
         if callable(root_map):
             return root_map
         if len(keys) == 1:
             root_map[keys[0]] = func
             return root_map
         if len(keys) < 1:
-            return
+            return None
         head = keys[0]
         rest = keys[1:]
         try:
@@ -826,7 +827,7 @@ def configure(keymap):
         keymap_global["U1-W"][key] = KeyPuncher(recover_ime=True, delay_msec=50).invoke("C-Insert", prefix, "S-Insert", suffix)
 
     # input string without conversion even when ime is turned on
-    def direct_input(key:str, turnoff_ime_later:bool=False) -> callable:
+    def direct_input(key:str, turnoff_ime_later:bool=False) -> Callable:
         finish_keys = ["C-M"]
         if turnoff_ime_later:
             finish_keys.append("(243)")
@@ -910,7 +911,7 @@ def configure(keymap):
 
 
     # input and format date string
-    def input_date(fmt:str, recover_ime:bool=False) -> callable:
+    def input_date(fmt:str, recover_ime:bool=False) -> Callable:
         def _input() -> None:
             d = datetime.datetime.today()
             set_ime(0)
@@ -1014,7 +1015,7 @@ def configure(keymap):
                         words.append(word)
             return urllib.parse.quote(" ".join(words))
 
-    def search_on_web(uri:str, strict:bool=False, strip_hiragana:bool=False) -> callable:
+    def search_on_web(uri:str, strict:bool=False, strip_hiragana:bool=False) -> Callable:
         def _search() -> None:
             s = copy_string()
             query = SearchQuery(s)
@@ -1070,13 +1071,13 @@ def configure(keymap):
             with OpenKey(HKEY_CLASSES_ROOT, register_path) as key:
                 return str(QueryValueEx(key, "")[0])
 
-        def get_exe_path(self)  -> str:
+        def get_exe_path(self) -> str:
             return re.sub(r"(^.+\.exe)(.*)", r"\1", self.get_commandline()).replace('"', "")
 
-        def get_exe_name(self)  -> str:
+        def get_exe_name(self) -> str:
             return Path(self.get_exe_path()).name
 
-        def get_wnd_class(self)  -> str:
+        def get_wnd_class(self) -> str:
             return {
                 "chrome.exe": "Chrome_WidgetWin_1",
                 "vivaldi.exe": "Chrome_WidgetWin_1",
@@ -1087,52 +1088,47 @@ def configure(keymap):
     DEFAULT_BROWSER = SystemBrowser()
 
 
-    class PyWnd:
+    class WndScanner:
         def __init__(self, exe_name:str, class_name:str) -> None:
             self.exe_name = exe_name
             self.class_name = class_name
-            self.target = None
 
-        def scan(self) -> None:
+        def scan(self) -> Union[pyauto.Window, None]:
             found = [None]
             def _callback(wnd:pyauto.Window, _) -> bool:
                 if not wnd.isVisible() : return True
                 if not wnd.isEnabled() : return True
                 if not fnmatch.fnmatch(wnd.getProcessName(), self.exe_name) : return True
-                if self.class_name:
-                    if not fnmatch.fnmatch(wnd.getClassName(), self.class_name) : return True
+                if self.class_name and not fnmatch.fnmatch(wnd.getClassName(), self.class_name) : return True
                 found[0] = wnd.getLastActivePopup()
                 return False
             pyauto.Window.enum(_callback, None)
-            self.target = found[0]
+            return found[0]
 
-        def activate(self) -> bool:
-            if not self.target:
-                return False
-            if self.target.isMinimized():
-                self.target.restore()
-            interval = 10
-            timeout = interval * 10
-            while timeout > 0:
-                try:
-                    self.target.setForeground()
-                    if pyauto.Window.getForeground() == self.target:
-                        self.target.setForeground(True)
-                        return True
-                except:
-                    return False
-                delay(interval)
-                timeout -= interval
+    def activate_wnd(target:pyauto.Window) -> bool:
+        if keymap.getWindow() == target:
             return False
+        if target.isMinimized():
+            target.restore()
+        interval = 10
+        timeout = interval * 10
+        while timeout > 0:
+            try:
+                target.setForeground()
+                if pyauto.Window.getForeground() == target:
+                    target.setForeground(True)
+                    return True
+            except:
+                return False
+            delay(interval)
+            timeout -= interval
+        return False
 
-
-
-    def pseudo_cuteExec(exe_name:str, class_name:str, exe_path:str) -> callable:
+    def pseudo_cuteExec(exe_name:str, class_name:str, exe_path:str) -> Callable:
+        scanner = WndScanner(exe_name, class_name)
         def _executer() -> None:
-            w = PyWnd(exe_name, class_name)
-            w.scan()
-            if w.target:
-                if keymap.getWindow() == w.target or not w.activate():
+            if found := scanner.scan():
+                if not activate_wnd(found):
                     send_keys("LCtrl-LAlt-Tab")
             else:
                 if exe_path:
@@ -1258,7 +1254,7 @@ def configure(keymap):
     keymap_global["U1-M"]["U1-M"] = pseudo_cuteExec("Mery.exe", "TChildForm", None)
 
     # invoke specific filer
-    def invoke_filer(dir_path:str) -> callable:
+    def invoke_filer(dir_path:str) -> Callable:
         filer_path = UserPath().get_filer()
         def _invoker() -> None:
             if PathInfo(dir_path).isAccessible:
@@ -1269,33 +1265,29 @@ def configure(keymap):
     keymap_global["U1-F"]["S"] = invoke_filer(r"X:\scan")
 
     def invoke_cmder() -> None:
-        wnd = PyWnd("ConEmu64.exe", "VirtualConsoleClass")
-        wnd.scan()
-        if wnd.target:
-            if not wnd.activate():
+        scanner = WndScanner("ConEmu64.exe", "VirtualConsoleClass")
+        if found := scanner.scan():
+            if not activate_wnd(found):
                 send_keys("C-AtMark")
         else:
             cmder_path = UserPath().resolve(r"scoop\apps\cmder\current\Cmder.exe").path
             PathInfo(cmder_path).run()
     keymap_global["LC-AtMark"] = LazyFunc(invoke_cmder).defer()
 
-    def search_on_browser() -> callable:
-        def _invoker() -> None:
-            if keymap.getWindow().getProcessName() == DEFAULT_BROWSER.get_exe_name():
-                send_keys("C-T")
-            else:
-                w = PyWnd(DEFAULT_BROWSER.get_exe_name(), DEFAULT_BROWSER.get_wnd_class())
-                w.scan()
-                if w.target:
-                    if w.activate():
-                        delay()
-                        send_keys("C-T")
-                    else:
-                        send_keys("LCtrl-LAlt-Tab")
+    def search_on_browser() -> None:
+        if keymap.getWindow().getProcessName() == DEFAULT_BROWSER.get_exe_name():
+            send_keys("C-T")
+        else:
+            scanner = WndScanner(DEFAULT_BROWSER.get_exe_name(), DEFAULT_BROWSER.get_wnd_class())
+            if found := scanner.scan():
+                if activate_wnd(found):
+                    delay()
+                    send_keys("C-T")
                 else:
-                    PathInfo("https://duckduckgo.com").run()
-        return LazyFunc(_invoker).defer(100)
-    keymap_global["U0-Q"] =search_on_browser()
+                    send_keys("LCtrl-LAlt-Tab")
+            else:
+                PathInfo("https://duckduckgo.com").run()
+    keymap_global["U0-Q"] = LazyFunc(search_on_browser).defer(100)
 
     ################################
     # application based remap
@@ -1372,7 +1364,7 @@ def configure(keymap):
     keymap_excel["LC-U0-N"] = select_cell_content
 
     # Thunderbird
-    def thunderbird_new_mail(sequence:list, alt_sequence:list) -> None:
+    def thunderbird_new_mail(sequence:list, alt_sequence:list) -> Callable:
         def _sender():
             wnd = keymap.getWindow()
             if wnd.getProcessName() == "thunderbird.exe":
@@ -1423,13 +1415,13 @@ def configure(keymap):
     ################################
 
     # enclosing functions for pop-up menu
-    def format_cb(func:callable) -> callable:
+    def format_cb(func:callable) -> Callable:
         def _formatter() -> str:
             cb = keyhaclip.get_string()
             if cb:
                 return func(cb)
         return _formatter
-    def replace_cb(search:str, replace_to:str) -> callable:
+    def replace_cb(search:str, replace_to:str) -> Callable:
         reg = re.compile(search)
         def _replacer() -> str:
             cb = keyhaclip.get_string()
