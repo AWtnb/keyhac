@@ -1135,7 +1135,8 @@ def configure(keymap):
                 if keymap.getWindow() == w.target or not w.activate():
                     send_keys("LCtrl-LAlt-Tab")
             else:
-                PathInfo(exe_path).run()
+                if exe_path:
+                    PathInfo(exe_path).run()
         return LazyFunc(_executer).defer(80)
 
     keymap_global["U1-C"] = keymap.defineMultiStrokeKeymap()
