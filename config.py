@@ -255,14 +255,12 @@ def configure(keymap):
         send_keys("C-Insert")
         interval = 10
         timeout = interval * 20
-        cb = ""
         while timeout > 0:
             if s := keyhaclip.get_string():
-                cb = s
-                break
+                return s
             delay(interval)
             timeout -= interval
-        return cb
+        return ""
 
     class LazyFunc:
         def __init__(self, func:Callable) -> None:
