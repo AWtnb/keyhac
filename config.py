@@ -265,7 +265,7 @@ def configure(keymap):
         return cb
 
     class LazyFunc:
-        def __init__(self, func:callable) -> None:
+        def __init__(self, func:Callable) -> None:
             def _wrapper() -> None:
                 keymap.hookCall(func)
             self._func = _wrapper
@@ -1335,6 +1335,18 @@ def configure(keymap):
     for simple_key in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
         keymap_sumatra_view[simple_key] = KeyPuncher(sleep_msec=50).invoke(simple_key)
 
+    def sumatra_tab(backward:bool) -> Callable:
+        key = "C-Tab"
+        if backward:
+            key = "S-" + key
+        def _changer() -> None:
+            send_keys(*[key])
+        return LazyFunc(_changer).defer()
+
+    keymap_sumatra_view["H"] = sumatra_tab(True)
+    keymap_sumatra_view["L"] = sumatra_tab(False)
+
+
     # word
     keymap_word = keymap.defineWindowKeymap(exe_name="WINWORD.EXE")
     keymap_word["F11"] = "A-F", "E", "P", "A"
@@ -1415,7 +1427,7 @@ def configure(keymap):
     ################################
 
     # enclosing functions for pop-up menu
-    def format_cb(func:callable) -> Callable:
+    def format_cb(func:Callable) -> Callable:
         def _formatter() -> str:
             cb = keyhaclip.get_string()
             if cb:
