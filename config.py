@@ -1331,20 +1331,26 @@ def configure(keymap):
             send_keys(*keys)
         return _sender
 
-    for k in ["C-Tab", "C-S-Tab"]:
-        keymap_sumatra[k] = sumatra_view_control(k)
+    for key in ["C-Tab", "C-S-Tab"]:
+        keymap_sumatra[key] = sumatra_view_control(key)
 
-    def sumatra_tab(backward:bool) -> Callable:
+    def sumatra_tab(org_key:str, backward:bool) -> Callable:
         key = "C-Tab"
         if backward:
             key = "S-" + key
         def _changer() -> None:
+            if keymap.getWindow().getClassName() == "Edit":
+                send_keys(org_key)
+                return
             send_keys(*[key])
-        return LazyFunc(_changer).defer()
+        return _changer
 
+    for key, backward in {
+        "L": False,
+        "H": True
+    }.items():
+        keymap_sumatra[key] = sumatra_tab(key, backward)
 
-    keymap_sumatra["H"] = sumatra_tab(True)
-    keymap_sumatra["L"] = sumatra_tab(False)
 
     # word
     keymap_word = keymap.defineWindowKeymap(exe_name="WINWORD.EXE")
