@@ -93,10 +93,6 @@ def configure(keymap):
             return wnd.getProcessName() in ("chrome.exe", "vivaldi.exe", "firefox.exe")
 
         @staticmethod
-        def is_sumatra_view(wnd:pyauto.Window) -> bool:
-            return wnd.getProcessName() == "SumatraPDF.exe" and wnd.getClassName() != "Edit"
-
-        @staticmethod
         def is_filer_viewmode(wnd:pyauto.Window) -> bool:
             if wnd.getProcessName() == "explorer.exe":
                 return wnd.getClassName() not in ("Edit", "LauncherTipWnd", "Windows.UI.Input.InputSite.WindowClass")
@@ -900,7 +896,7 @@ def configure(keymap):
         "U0-Minus": "\u2015\u2015", # HORIZONTAL BAR * 2
         "U0-P": "\u30fb", # KATAKANA MIDDLE DOT
         "U0-SemiColon": "+ ",
-        "LS-0": "- ",
+        "LC-U1-B": "- ",
         "S-U0-8": "+ ",
         "U1-1": "1. ",
         "S-U0-7": "1. ",
@@ -1327,11 +1323,16 @@ def configure(keymap):
     keymap_sumatra = keymap.defineWindowKeymap(exe_name="SumatraPDF.exe")
     keymap_sumatra["O-LShift"] = KeyPuncher(recover_ime=True).invoke("F6", "C-Home", "C-F")
 
-    # sumatra PDF when focus out from textbox
-    keymap_sumatra_view = keymap.defineWindowKeymap(check_func=CheckWnd.is_sumatra_view)
+    def sumatra_view_control(key:str) -> Callable:
+        def _sender() -> None:
+            keys = ["F6", key]
+            if keymap.getWindow().getClassName() != "Edit":
+                keys.pop(0)
+            send_keys(*keys)
+        return _sender
 
-    for simple_key in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
-        keymap_sumatra_view[simple_key] = KeyPuncher(sleep_msec=50).invoke(simple_key)
+    for k in ["C-Tab", "C-S-Tab"]:
+        keymap_sumatra[k] = sumatra_view_control(k)
 
     def sumatra_tab(backward:bool) -> Callable:
         key = "C-Tab"
@@ -1341,9 +1342,9 @@ def configure(keymap):
             send_keys(*[key])
         return LazyFunc(_changer).defer()
 
-    keymap_sumatra_view["H"] = sumatra_tab(True)
-    keymap_sumatra_view["L"] = sumatra_tab(False)
 
+    keymap_sumatra["H"] = sumatra_tab(True)
+    keymap_sumatra["L"] = sumatra_tab(False)
 
     # word
     keymap_word = keymap.defineWindowKeymap(exe_name="WINWORD.EXE")
@@ -1409,14 +1410,12 @@ def configure(keymap):
         keymap_filer[key] = KeyPuncher().invoke(*value)
 
     keymap_filer["LC-K"] = keymap.defineMultiStrokeKeymap()
-    keymap_filer["LC-K"]["BackSlash"] = KeyPuncher().invoke("S-BackSlash")
     for simple_key in "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789":
         keymap_filer["LC-K"][simple_key] = KeyPuncher().invoke(simple_key)
 
     keymap_tablacus = keymap.defineWindowKeymap(check_func=CheckWnd.is_tablacus_viewmode)
     keymap_tablacus["H"] = "C-S-Tab"
     keymap_tablacus["L"] = "C-Tab"
-    keymap_tablacus["LS-Space"] = "LS-Enter"
 
 
 
