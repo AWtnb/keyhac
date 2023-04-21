@@ -205,30 +205,43 @@ def configure(keymap):
     def prune_white(s:str) -> str:
         return s.strip().translate(str.maketrans("", "", "\u200b\u3000\u0009\u0020"))
 
-    def send_keys(*keys:str) -> None:
-        keymap.beginInput()
-        for key in keys:
-            keymap.setInput_FromString(str(key))
-        keymap.endInput()
 
-    def send_string(s:str) -> None:
-        keymap.beginInput()
-        keymap.setInput_Modifier(0)
-        for c in str(s):
-            keymap.input_seq.append(pyauto.Char(c))
-        keymap.endInput()
+    class VirtualFinger:
+        def __init__(self, sleep_msec:int=10) -> None:
+            self.sleep_msec = sleep_msec
 
-    def send_input(sequence:tuple, sleep_msec:int=10) -> None:
-        for elem in sequence:
-            delay(sleep_msec)
-            try:
-                send_keys(elem)
-            except:
-                send_string(elem)
+        def _execute(self, func:Callable) -> None:
+            keymap.beginInput()
+            func()
+            keymap.endInput()
+
+        def type_keys(self, *keys) -> None:
+            def _func() -> None:
+                for key in keys:
+                    keymap.setInput_FromString(str(key))
+            self._execute(_func)
+
+        def type_text(self, s:str) -> None:
+            def _func() -> None:
+                keymap.setInput_Modifier(0)
+                for c in str(s):
+                    keymap.input_seq.append(pyauto.Char(c))
+            self._execute(_func)
+
+        def type_smart(self, *sequence) -> None:
+            for elem in sequence:
+                delay(self.sleep_msec)
+                try:
+                    self.type_keys(elem)
+                except:
+                    self.type_text(elem)
+
+    VIRTUAL_FINGER = VirtualFinger(10)
+    VIRTUAL_FINGER_QUICK = VirtualFinger(0)
 
     def set_ime(mode:int) -> None:
         if keymap.getWindow().getImeStatus() != mode:
-            send_keys("(243)")
+            VIRTUAL_FINGER_QUICK.type_keys("(243)")
             delay(10)
 
     def get_key_state(vk:int) -> bool:
@@ -244,11 +257,11 @@ def configure(keymap):
 
     def paste_string(s:str) -> None:
         keyhaclip.set_string(s)
-        send_keys("S-Insert")
+        VIRTUAL_FINGER_QUICK.type_keys("S-Insert")
 
     def copy_string() -> str:
         keyhaclip.set_string("")
-        send_keys("C-Insert")
+        VIRTUAL_FINGER_QUICK.type_keys("C-Insert")
         interval = 10
         timeout = interval * 20
         while timeout > 0:
@@ -277,9 +290,10 @@ def configure(keymap):
             self._sleep_msec = sleep_msec
             self._delay_msec = delay_msec
         def invoke(self, *sequence) -> Callable:
+            vf = VirtualFinger(self._sleep_msec)
             def _input() -> None:
                 set_ime(0)
-                send_input(sequence, self._sleep_msec)
+                vf.type_smart(*sequence)
                 if self._recover_ime:
                     set_ime(1)
             return LazyFunc(_input).defer(self._delay_msec)
@@ -289,7 +303,7 @@ def configure(keymap):
     ################################
 
     if get_key_state(VK_CAPITAL):
-        send_keys("LS-CapsLock")
+        VIRTUAL_FINGER_QUICK.type_keys("LS-CapsLock")
         print("released CapsLock.")
 
     ################################
@@ -306,7 +320,7 @@ def configure(keymap):
     keymap_global["C-U1-S"] = LazyFunc(keymap.ShellExecuteCommand(None, "ms-screensketch:", None, None)).defer()
 
     # listup Window
-    keymap_global["U0-W"] = LazyFunc(lambda : send_keys("LCtrl-LAlt-Tab")).defer()
+    keymap_global["U0-W"] = LazyFunc(lambda : VIRTUAL_FINGER_QUICK.type_keys("LCtrl-LAlt-Tab")).defer()
 
     # ime: Japanese / Foreign
     keymap_global["U1-J"] = lambda : set_ime(1)
@@ -340,7 +354,7 @@ def configure(keymap):
 
     # select last word with ime
     def select_last_word() -> None:
-        send_keys("C-S-Left")
+        VIRTUAL_FINGER.type_keys("C-S-Left")
         set_ime(1)
     keymap_global["U1-Space"] = select_last_word
 
@@ -353,7 +367,7 @@ def configure(keymap):
             keys.append("(243)")
         def _sender():
             if keymap.getWindow().getImeStatus() == 1:
-                send_keys(*keys)
+                VIRTUAL_FINGER.type_keys(*keys)
         return _sender
 
     keymap_global["U1-N"] = as_alphabet(False)
@@ -401,7 +415,7 @@ def configure(keymap):
         if selection:
             sequence = ["Minus" if c == "-" else c for c in prune_white(selection)]
             set_ime(1)
-            send_input(tuple(sequence), 0)
+            VIRTUAL_FINGER_QUICK.type_smart(*sequence)
     keymap_global["U1-I"] = LazyFunc(re_input_with_ime).defer()
 
     def moko(search_all:bool=False) -> Callable:
@@ -415,7 +429,7 @@ def configure(keymap):
 
     def screenshot() -> None:
         if not UserPath().resolve(r"scoop\apps\ksnip\current\ksnip.exe").run():
-            send_keys("Lwin-S-S")
+            VIRTUAL_FINGER.type_keys("Lwin-S-S")
     keymap_global["LWin-U0-S"] = screenshot
 
 
@@ -668,7 +682,7 @@ def configure(keymap):
 
     def snap_and_maximize(towards="Left") -> Callable:
         def _snap() -> None:
-            send_keys("LShift-LWin-"+towards)
+            VIRTUAL_FINGER.type_keys("LShift-LWin-"+towards)
             delay()
             keymap.getTopLevelWindow().maximize()
         return LazyFunc(_snap).defer()
@@ -826,9 +840,9 @@ def configure(keymap):
         if turnoff_ime_later:
             finish_keys.append("(243)")
         def _input() -> None:
-            send_keys(key)
+            VIRTUAL_FINGER.type_keys(key)
             if keymap.getWindow().getImeStatus():
-                send_keys(*finish_keys)
+                VIRTUAL_FINGER.type_keys(*finish_keys)
         return _input
 
     keymap_global["BackSlash"] = direct_input("S-BackSlash", False)
@@ -909,7 +923,8 @@ def configure(keymap):
         def _input() -> None:
             d = datetime.datetime.today()
             set_ime(0)
-            send_input([c for c in d.strftime(fmt)], 0)
+            seq = [c for c in d.strftime(fmt)]
+            VIRTUAL_FINGER_QUICK.type_smart(*seq)
             if recover_ime:
                 set_ime(1)
         return LazyFunc(_input).defer()
@@ -1123,7 +1138,7 @@ def configure(keymap):
         def _executer() -> None:
             if found := scanner.scan():
                 if not activate_wnd(found):
-                    send_keys("LCtrl-LAlt-Tab")
+                    VIRTUAL_FINGER.type_keys("LCtrl-LAlt-Tab")
             else:
                 if exe_path:
                     PathInfo(exe_path).run()
@@ -1262,7 +1277,7 @@ def configure(keymap):
         scanner = WndScanner("ConEmu64.exe", "VirtualConsoleClass")
         if found := scanner.scan():
             if not activate_wnd(found):
-                send_keys("C-AtMark")
+                VIRTUAL_FINGER.type_keys("C-AtMark")
         else:
             cmder_path = UserPath().resolve(r"scoop\apps\cmder\current\Cmder.exe").path
             PathInfo(cmder_path).run()
@@ -1270,15 +1285,15 @@ def configure(keymap):
 
     def search_on_browser() -> None:
         if keymap.getWindow().getProcessName() == DEFAULT_BROWSER.get_exe_name():
-            send_keys("C-T")
+            VIRTUAL_FINGER.type_keys("C-T")
         else:
             scanner = WndScanner(DEFAULT_BROWSER.get_exe_name(), DEFAULT_BROWSER.get_wnd_class())
             if found := scanner.scan():
                 if activate_wnd(found):
                     delay()
-                    send_keys("C-T")
+                    VIRTUAL_FINGER.type_keys("C-T")
                 else:
-                    send_keys("LCtrl-LAlt-Tab")
+                    VIRTUAL_FINGER.type_keys("LCtrl-LAlt-Tab")
             else:
                 PathInfo("https://duckduckgo.com").run()
     keymap_global["U0-Q"] = LazyFunc(search_on_browser).defer(100)
@@ -1328,7 +1343,7 @@ def configure(keymap):
             keys = ["F6", key]
             if keymap.getWindow().getClassName() != "Edit":
                 keys.pop(0)
-            send_keys(*keys)
+            VIRTUAL_FINGER.type_keys(*keys)
         return _switcher
 
     for key in ["C-Tab", "C-S-Tab"]:
@@ -1338,18 +1353,18 @@ def configure(keymap):
         def _sender() -> None:
             if keymap.getWindow().getClassName() != "Edit":
                 set_ime(0)
-            send_keys(key)
+            VIRTUAL_FINGER.type_keys(key)
         return _sender
 
     for key in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
         keymap_sumatra[key] = sumatra_view_control(key)
 
-    def sumatra_tab_key(key:str, seq:tuple) -> Callable:
+    def sumatra_tab_key(key:str, *seq) -> Callable:
         def _changer() -> None:
             if keymap.getWindow().getClassName() == "Edit":
-                send_keys(key)
+                VIRTUAL_FINGER.type_keys(key)
             else:
-                send_keys(*seq)
+                VIRTUAL_FINGER.type_keys(*seq)
         return _changer
 
     for key, seq in {
@@ -1377,14 +1392,14 @@ def configure(keymap):
 
     def select_all() -> None:
         if keymap.getWindow().getClassName() == "EXCEL6":
-            send_keys("C-End", "C-S-Home")
+            VIRTUAL_FINGER.type_keys("C-End", "C-S-Home")
         else:
-            send_keys("C-A")
+            VIRTUAL_FINGER.type_keys("C-A")
     keymap_excel["C-A"] = select_all
 
     def select_cell_content() -> None:
         if keymap.getWindow().getClassName() == "EXCEL7":
-            send_keys("F2", "C-S-Home")
+            VIRTUAL_FINGER.type_keys("F2", "C-S-Home")
     keymap_excel["LC-U0-N"] = select_cell_content
 
     # Thunderbird
@@ -1393,9 +1408,9 @@ def configure(keymap):
             wnd = keymap.getWindow()
             if wnd.getProcessName() == "thunderbird.exe":
                 if wnd.getText().startswith("作成: (件名なし)"):
-                    send_keys(*sequence)
+                    VIRTUAL_FINGER.type_keys(*sequence)
                 else:
-                    send_keys(*alt_sequence)
+                    VIRTUAL_FINGER.type_keys(*alt_sequence)
         return _sender
 
     keymap_tb = keymap.defineWindowKeymap(exe_name="thunderbird.exe")
