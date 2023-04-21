@@ -1323,33 +1323,40 @@ def configure(keymap):
     keymap_sumatra = keymap.defineWindowKeymap(exe_name="SumatraPDF.exe")
     keymap_sumatra["O-LShift"] = KeyPuncher(recover_ime=True).invoke("F6", "C-Home", "C-F")
 
-    def sumatra_view_control(key:str) -> Callable:
-        def _sender() -> None:
+    def sumatra_tab(key:str) -> Callable:
+        def _switcher() -> None:
             keys = ["F6", key]
             if keymap.getWindow().getClassName() != "Edit":
                 keys.pop(0)
             send_keys(*keys)
-        return _sender
+        return _switcher
 
     for key in ["C-Tab", "C-S-Tab"]:
+        keymap_sumatra[key] = sumatra_tab(key)
+
+    def sumatra_view_control(key:str) -> Callable:
+        def _sender() -> None:
+            if keymap.getWindow().getClassName() != "Edit":
+                set_ime(0)
+            send_keys(key)
+        return _sender
+
+    for key in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
         keymap_sumatra[key] = sumatra_view_control(key)
 
-    def sumatra_tab(org_key:str, backward:bool) -> Callable:
-        key = "C-Tab"
-        if backward:
-            key = "S-" + key
+    def sumatra_tab_key(key:str, seq:tuple) -> Callable:
         def _changer() -> None:
             if keymap.getWindow().getClassName() == "Edit":
-                send_keys(org_key)
-                return
-            send_keys(*[key])
+                send_keys(key)
+            else:
+                send_keys(*seq)
         return _changer
 
-    for key, backward in {
-        "L": False,
-        "H": True
+    for key, seq in {
+        "L": ("C-Tab"),
+        "H": ("C-S-Tab"),
     }.items():
-        keymap_sumatra[key] = sumatra_tab(key, backward)
+        keymap_sumatra[key] = sumatra_tab_key(key, seq)
 
 
     # word
