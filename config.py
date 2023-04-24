@@ -743,7 +743,6 @@ def configure(keymap):
                 "N,P,P": ("proofed"),
                 "N,S,A": ("send_to_author"),
                 "N,S,P": ("send_to_printshop"),
-                "Minus,F": ("\uff0d"),
                 "Minus,H": ("\u2010"),
                 "Minus,M": ("\u2014"),
                 "Minus,N": ("\u2013"),
@@ -776,6 +775,7 @@ def configure(keymap):
 
             indirect_puncher = KeyPuncher(recover_ime=True, delay_msec=50)
             for combo, stroke in {
+                "Minus,F": ("\uff0d"),
                 "F,G": ("\u3013\u3013"),
                 "F,0": ("●●"),
                 "F,4": ("■■"),
@@ -910,8 +910,7 @@ def configure(keymap):
         "U0-Minus": "\u2015\u2015", # HORIZONTAL BAR * 2
         "U0-P": "\u30fb", # KATAKANA MIDDLE DOT
         "U0-SemiColon": "+ ",
-        "LC-U1-B": "- ",
-        "S-U0-8": "+ ",
+        "S-U0-8": "- ",
         "U1-1": "1. ",
         "S-U0-7": "1. ",
     }.items():
