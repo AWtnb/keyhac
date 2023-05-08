@@ -161,7 +161,6 @@ def configure(keymap):
         "U0-Enter": ("Period"),
         "LS-U0-Enter": ("Comma"),
         "LC-U0-Enter": ("Slash"),
-        "U1-S": ("Slash"),
         "U1-B": ("Minus"),
 
         # Re-convert
@@ -207,8 +206,8 @@ def configure(keymap):
 
 
     class VirtualFinger:
-        def __init__(self, sleep_msec:int=10) -> None:
-            self.sleep_msec = sleep_msec
+        def __init__(self, prepare_msec:int=10) -> None:
+            self.prepare_msec = prepare_msec
 
         def _execute(self, func:Callable) -> None:
             keymap.beginInput()
@@ -230,7 +229,7 @@ def configure(keymap):
 
         def type_smart(self, *sequence) -> None:
             for elem in sequence:
-                delay(self.sleep_msec)
+                delay(self.prepare_msec)
                 try:
                     self.type_keys(elem)
                 except:
@@ -244,8 +243,6 @@ def configure(keymap):
             VIRTUAL_FINGER_QUICK.type_keys("(243)")
             delay(10)
 
-    def get_key_state(vk:int) -> bool:
-        return pyauto.Input.getKeyState(vk)
 
     class keyhaclip:
         @staticmethod
@@ -285,24 +282,24 @@ def configure(keymap):
 
 
     class KeyPuncher:
-        def __init__(self, recover_ime:bool=False, sleep_msec:int=0, delay_msec:int=0) -> None:
+        def __init__(self, recover_ime:bool=False, prepare_msec:int=0, defer_msec:int=0) -> None:
             self._recover_ime = recover_ime
-            self._sleep_msec = sleep_msec
-            self._delay_msec = delay_msec
+            self._prepare_msec = prepare_msec
+            self._defer_msec = defer_msec
         def invoke(self, *sequence) -> Callable:
-            vf = VirtualFinger(self._sleep_msec)
+            vf = VirtualFinger(self._prepare_msec)
             def _input() -> None:
                 set_ime(0)
                 vf.type_smart(*sequence)
                 if self._recover_ime:
                     set_ime(1)
-            return LazyFunc(_input).defer(self._delay_msec)
+            return LazyFunc(_input).defer(self._defer_msec)
 
     ################################
     # release CapsLock on reload
     ################################
 
-    if get_key_state(VK_CAPITAL):
+    if pyauto.Input.getKeyState(VK_CAPITAL):
         VIRTUAL_FINGER_QUICK.type_keys("LS-CapsLock")
         print("released CapsLock.")
 
@@ -311,7 +308,7 @@ def configure(keymap):
     ################################
 
     # switch window
-    keymap_global["U1-Tab"] = KeyPuncher(delay_msec=40).invoke("Alt-Tab")
+    keymap_global["U1-Tab"] = KeyPuncher(defer_msec=40).invoke("Alt-Tab")
 
     # ime dict tool
     keymap_global["U0-F7"] = LazyFunc(lambda : PathInfo(r"C:\Program Files (x86)\Google\Google Japanese Input\GoogleIMEJaTool.exe").run("--mode=word_register_dialog")).defer()
@@ -725,7 +722,7 @@ def configure(keymap):
         def __init__(self) -> None:
             self.mapping = keymap.defineMultiStrokeKeymap()
             user_path = UserPath()
-            direct_puncher = KeyPuncher(delay_msec=50)
+            direct_puncher = KeyPuncher(defer_msec=50)
             for combo, stroke in {
                 "X,X": (".txt"),
                 "X,M": (".md"),
@@ -773,7 +770,7 @@ def configure(keymap):
                 s = chr(0x2080 + int(i))
                 self.mapping = combo_mapper(self.mapping, keys, direct_puncher.invoke(s))
 
-            indirect_puncher = KeyPuncher(recover_ime=True, delay_msec=50)
+            indirect_puncher = KeyPuncher(recover_ime=True, defer_msec=50)
             for combo, stroke in {
                 "Minus,F": ("\uff0d"),
                 "F,G": ("\u3013\u3013"),
@@ -797,6 +794,7 @@ def configure(keymap):
     ################################
 
     keymap_global["U0-Yen"] = KeyPuncher().invoke("S-Yen", "Left")
+    keymap_global["U1-S"] = KeyPuncher().invoke("Slash")
 
     keymap_global["U1-W"] = keymap.defineMultiStrokeKeymap()
 
@@ -814,7 +812,7 @@ def configure(keymap):
         prefix, suffix = pair
         sent = pair + ["Left"]*len(suffix)
         keymap_global[key] = KeyPuncher().invoke(*sent)
-        keymap_global["U1-W"][key] = KeyPuncher(delay_msec=50).invoke("C-Insert", prefix, "S-Insert", suffix)
+        keymap_global["U1-W"][key] = KeyPuncher(defer_msec=50).invoke("C-Insert", prefix, "S-Insert", suffix)
 
     for key, pair in {
         "U0-8": ["\u300e", "\u300f"], # WHITE CORNER BRACKET 『』
@@ -832,7 +830,7 @@ def configure(keymap):
         prefix, suffix = pair
         sent = pair + ["Left"]*len(suffix)
         keymap_global[key] = KeyPuncher(recover_ime=True).invoke(*sent)
-        keymap_global["U1-W"][key] = KeyPuncher(recover_ime=True, delay_msec=50).invoke("C-Insert", prefix, "S-Insert", suffix)
+        keymap_global["U1-W"][key] = KeyPuncher(recover_ime=True, defer_msec=50).invoke("C-Insert", prefix, "S-Insert", suffix)
 
     # input string without conversion even when ime is turned on
     def direct_input(key:str, turnoff_ime_later:bool=False) -> Callable:
@@ -911,6 +909,7 @@ def configure(keymap):
         "U0-P": "\u30fb", # KATAKANA MIDDLE DOT
         "U0-SemiColon": "+ ",
         "S-U0-8": "- ",
+        "LC-U1-B": "- ",
         "U1-1": "1. ",
         "S-U0-7": "1. ",
     }.items():
