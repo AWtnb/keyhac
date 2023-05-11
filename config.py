@@ -467,30 +467,28 @@ def configure(keymap):
 
     class WndRect:
         def __init__(self, left:int, top:int, right:int, bottom:int) -> None:
-            self._left = left
-            self._top = top
-            self._right = right
-            self._bottom = bottom
-            self._rect = self._adjust_rect()
+            self._rect = [left, top, right, bottom]
 
+        def check_rect(self, wnd:pyauto.Window) -> bool:
+            return list(wnd.getRect()) == self._rect
+
+        def get_snap_func(self) -> Callable:
             def _snapper() -> None:
                 wnd = keymap.getTopLevelWindow()
-                if list(wnd.getRect()) == self._rect:
+                if self.check_rect(wnd):
                     wnd.maximize()
-                else:
-                    if wnd.isMaximized():
-                        wnd.restore()
-                        delay()
+                    return
+                if wnd.isMaximized():
+                    wnd.restore()
+                    delay()
                 trial_limit = 2
                 while trial_limit > 0:
                     wnd.setRect(self._rect)
-                    if list(wnd.getRect()) == self._rect:
+                    if self.check_rect(wnd):
                         return
                     trial_limit -= 1
-            self.snap_func = _snapper
+            return _snapper
 
-        def _adjust_rect(self) -> list:
-            return [self._left, self._top, self._right + 2, self._bottom + 2]
 
     class SizeMenu:
         def __init__(self, max:int) -> None:
@@ -504,8 +502,8 @@ def configure(keymap):
             return self.dict.items()
 
     class MonitorRect:
-        def __init__(self, rect:list, idx:int) -> None:
-            self.idx= idx
+        def __init__(self, rect:list, is_primary:int) -> None:
+            self.is_primary = is_primary # 0 or 1
             self.left, self.top, self.right, self.bottom = rect
             self.max_width = self.right - self.left
             self.max_height = self.bottom - self.top
@@ -580,14 +578,14 @@ def configure(keymap):
     def get_monitors() -> list:
         monitors = []
         for mi in pyauto.Window.getMonitorInfo():
-            mr = MonitorRect(rect=mi[1], idx=mi[2])
+            mr = MonitorRect(rect=mi[1], is_primary=mi[2])
             mr.set_center_rect()
             mr.set_horizontal_rect()
             mr.set_vertical_rect()
             monitors.append(mr)
         max_widths = [m.max_width for m in monitors]
         if len(set(max_widths)) == 1:
-            return sorted(monitors, key=lambda x : x.idx, reverse=True)
+            return sorted(monitors, key=lambda x : x.is_primary, reverse=True)
         return sorted(monitors, key=lambda x : x.max_width, reverse=True)
 
     KEYMAP_MONITORS = get_monitors()
@@ -674,8 +672,8 @@ def configure(keymap):
                 "M": "center",
             }.items():
                 if mntr_idx < len(KEYMAP_MONITORS):
-                    snapper = KEYMAP_MONITORS[mntr_idx].area_mapping[pos][size].snap_func
-                    keymap_global["U1-M"][mod_mntr+mod_area+key] = LazyFunc(snapper).defer()
+                    wnd_rect = KEYMAP_MONITORS[mntr_idx].area_mapping[pos][size]
+                    keymap_global["U1-M"][mod_mntr+mod_area+key] = LazyFunc(wnd_rect.get_snap_func()).defer()
 
     def snap_and_maximize(towards="Left") -> Callable:
         def _snap() -> None:
