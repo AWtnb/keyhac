@@ -1503,13 +1503,13 @@ def configure(keymap):
         def __init__(self) -> None:
             def _format_time(mo:re.Match) -> str:
                 d = mo.group(1).strip().strip("時間:：日")
-                ymd = [int(s) for s in re.split("[年月日]", d)]
+                ymd = [int(s) for s in re.split("[年月]", d)]
                 week = "（{}）".format("月火水木金土日"[datetime.date(*ymd).weekday()])
                 t = mo.group(2)
                 if t.endswith("PM"):
                     h = int(t[:2]) + 12
                     m = t[3:5]
-                    return "{d}{week} {h}:{m}～".format(d=d, week=week, h=h, m=m)
+                    return "{d}日{week} {h}:{m}～".format(d=d, week=week, h=h, m=m)
                 return d + week + " AM " + t[:5] + "～"
             self.time_formatter = _format_time
 
