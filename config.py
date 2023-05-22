@@ -207,21 +207,20 @@ def configure(keymap):
         def __init__(self, prepare_msec:int=10) -> None:
             self.prepare_msec = prepare_msec
 
-        def type_keys(self, *keys) -> None:
+        def _execute(self, func:Callable) -> None:
             delay(self.prepare_msec)
             keymap.setInput_Modifier(0)
             keymap.beginInput()
-            for key in keys:
-                keymap.setInput_FromString(str(key))
+            func()
             keymap.endInput()
 
+        def type_keys(self, *keys) -> None:
+            func = lambda : [ keymap.setInput_FromString(str(key)) for key in keys ]
+            self._execute(func)
+
         def type_text(self, s:str) -> None:
-            delay(self.prepare_msec)
-            keymap.setInput_Modifier(0)
-            keymap.beginInput()
-            for c in str(s):
-                keymap.input_seq.append(pyauto.Char(c))
-            keymap.endInput()
+            func = lambda : [ keymap.input_seq.append(pyauto.Char(c)) for c in str(s) ]
+            self._execute(func)
 
         def type_smart(self, *sequence) -> None:
             for elem in sequence:
