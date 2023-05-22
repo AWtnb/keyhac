@@ -145,8 +145,6 @@ def configure(keymap):
         "S-U0-D": ("S-End", "Delete"),
         "S-U0-B": ("S-Home", "Delete"),
 
-        "U0-Back": ("Back", "Delete"),
-
         # escape
         "O-(235)": ("Esc"),
         "U0-X": ("Esc"),
@@ -209,27 +207,24 @@ def configure(keymap):
         def __init__(self, prepare_msec:int=10) -> None:
             self.prepare_msec = prepare_msec
 
-        def _execute(self, func:Callable) -> None:
+        def type_keys(self, *keys) -> None:
+            delay(self.prepare_msec)
+            keymap.setInput_Modifier(0)
             keymap.beginInput()
-            func()
+            for key in keys:
+                keymap.setInput_FromString(str(key))
             keymap.endInput()
 
-        def type_keys(self, *keys) -> None:
-            def _func() -> None:
-                for key in keys:
-                    keymap.setInput_FromString(str(key))
-            self._execute(_func)
-
         def type_text(self, s:str) -> None:
-            def _func() -> None:
-                keymap.setInput_Modifier(0)
-                for c in str(s):
-                    keymap.input_seq.append(pyauto.Char(c))
-            self._execute(_func)
+            delay(self.prepare_msec)
+            keymap.setInput_Modifier(0)
+            keymap.beginInput()
+            for c in str(s):
+                keymap.input_seq.append(pyauto.Char(c))
+            keymap.endInput()
 
         def type_smart(self, *sequence) -> None:
             for elem in sequence:
-                delay(self.prepare_msec)
                 try:
                     self.type_keys(elem)
                 except:
@@ -573,7 +568,6 @@ def configure(keymap):
                     delay()
                 wnd.setRect([wnd_left, t, wnd_right, b])
             return LazyFunc(_snap).defer()
-
 
     def get_monitors() -> list:
         monitors = []
