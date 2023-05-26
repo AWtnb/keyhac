@@ -1513,7 +1513,7 @@ def configure(keymap):
             datetime_str = re.sub(r" 大阪.+$|^時間：", "", s)
             datetime_obj = datetime.datetime.strptime(datetime_str, "%Y年%m月%d日 %I:%M %p")
             week = self.table[datetime_obj.strftime("%a")]
-            return (datetime_obj.strftime("%Y年%m月%d日（{}） %H:%M～")).format(week)
+            return (datetime_obj.strftime("%Y年%m月%d日（{}） %p %I:%M～")).format(week)
 
         def format(self) -> str:
             return os.linesep.join([
