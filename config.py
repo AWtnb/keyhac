@@ -1509,9 +1509,12 @@ def configure(keymap):
         def get_time(self) -> str:
             s = self.lines[3]
             datetime_str = re.sub(r" 大阪.+$|^時間：", "", s)
-            datetime_obj = datetime.datetime.strptime(datetime_str, "%Y年%m月%d日 %I:%M %p")
-            week = self.table[datetime_obj.strftime("%a")]
-            return (datetime_obj.strftime("%Y年%m月%d日（{}） %p %I:%M～")).format(week)
+            try:
+                datetime_obj = datetime.datetime.strptime(datetime_str, "%Y年%m月%d日 %I:%M %p")
+                week = self.table[datetime_obj.strftime("%a")]
+                return (datetime_obj.strftime("%Y年%m月%d日（{}） %p %I:%M～")).format(week)
+            except:
+                return ""
 
         def format(self) -> str:
             if len(self.lines) < 9:
