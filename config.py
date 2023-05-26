@@ -1492,30 +1492,39 @@ def configure(keymap):
     def decode_url(s:str) -> str:
         return urllib.parse.unquote(s)
 
-    def zoom_invitation(s:str) -> str:
-        def _format_time(mo:re.Match) -> str:
-            d = mo.group(1).strip().strip("時間：日")
-            ymd = [int(s) for s in re.split("[年月]", d)]
-            week = "（{}）".format("月火水木金土日"[datetime.date(*ymd).weekday()])
-            t = mo.group(2)
-            if t.endswith("PM"):
-                h = int(t[:2]) + 12
-                m = t[3:5]
-                return "{d}日{week} {h}:{m}～".format(d=d, week=week, h=h, m=m)
-            return d + "日" + week + " AM " + t[:5] + "～"
-        lines = s.replace(": ", "\uff1a").strip().splitlines()
-        if len(lines) < 9:
-            return ""
-        due = re.sub(r"^(.+日 )(.+[AP]M).+$", _format_time, lines[3])
-        return os.linesep.join([
-            "------------------------------",
-            lines[2],
-            due,
-            lines[6],
-            lines[8],
-            lines[9],
-            "------------------------------",
-        ])
+
+    class Zoom:
+        def __init__(self, s:str) -> None:
+            self.lines = s.replace(": ", "\uff1a").strip().splitlines()
+            self.table = {
+                "Mon": "月",
+                "Tue": "火",
+                "Wed": "水",
+                "Thu": "木",
+                "Fri": "金",
+                "Sat": "土",
+                "Sun": "日",
+            }
+
+        def get_time(self) -> str:
+            if len(self.lines) < 9:
+                return ""
+            s = self.lines[3]
+            datetime_str = re.sub(r" 大阪.+$|^時間：", "", s)
+            datetime_obj = datetime.datetime.strptime(datetime_str, "%Y年%m月%d日 %I:%M %p")
+            week = self.table[datetime_obj.strftime("%a")]
+            return (datetime_obj.strftime("%Y年%m月%d日（{}） %H:%M～")).format(week)
+
+        def format(self) -> str:
+            return os.linesep.join([
+                "------------------------------",
+                self.lines[2],
+                self.get_time(),
+                self.lines[6],
+                self.lines[8],
+                self.lines[9],
+                "------------------------------",
+            ])
 
     keymap_global["LC-LS-X"] = LazyFunc(keymap.command_ClipboardList).defer(msec=100)
 
@@ -1543,7 +1552,7 @@ def configure(keymap):
             (" Postalcode | Address ", format_cb(split_postalcode) ),
             (" URL: - Decode ", format_cb(decode_url) ),
             ("      - Shorten Amazon ", replace_cb(r"^.+amazon\.co\.jp/.+dp/(.{10}).*", r"https://www.amazon.jp/dp/\1") ),
-            (" Zoom invitation ", format_cb(zoom_invitation) ),
+            (" Zoom invitation ", format_cb(lambda s: Zoom(s).format()) ),
         ]
     }.items():
         m = menu + [("---------------- EXIT ----------------", lambda : None)]
