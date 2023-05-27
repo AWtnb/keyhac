@@ -1496,33 +1496,27 @@ def configure(keymap):
     class Zoom:
         def __init__(self, s:str) -> None:
             self.lines = s.replace(": ", "\uff1a").strip().splitlines()
-            self.table = {
-                "Mon": "月",
-                "Tue": "火",
-                "Wed": "水",
-                "Thu": "木",
-                "Fri": "金",
-                "Sat": "土",
-                "Sun": "日",
-            }
 
         def get_time(self) -> str:
+            if len(self.lines) < 9:
+                return ""
             s = self.lines[3]
-            datetime_str = re.sub(r" 大阪.+$|^時間：", "", s)
+            d_str = re.sub(r" 大阪.+$|^時間：", "", s)
             try:
-                datetime_obj = datetime.datetime.strptime(datetime_str, "%Y年%m月%d日 %I:%M %p")
-                week = self.table[datetime_obj.strftime("%a")]
-                return (datetime_obj.strftime("%Y年%m月%d日（{}） %p %I:%M～")).format(week)
+                d = datetime.datetime.strptime(d_str, "%Y年%m月%d日 %I:%M %p")
+                week = "月火水木金土日"[d.weekday()]
+                return (d.strftime("%Y年%m月%d日（{}） %p %I:%M～")).format(week)
             except:
                 return ""
 
         def format(self) -> str:
-            if len(self.lines) < 9:
+            due = self.get_time()
+            if len(self.lines) < 9 or len(due) < 1:
                 return ""
             return os.linesep.join([
                 "------------------------------",
                 self.lines[2],
-                self.get_time(),
+                due,
                 self.lines[6],
                 self.lines[8],
                 self.lines[9],
