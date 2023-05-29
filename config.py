@@ -22,17 +22,14 @@ def configure(keymap):
             self.path = s
             self.isAccessible = self.path.startswith("http") or Path(self.path).exists()
 
-        def run(self, arg:str="") -> bool:
+        def run(self, arg:str="") -> None:
             if self.isAccessible:
                 keymap.ShellExecuteCommand(None, self.path, arg, None)()
-                return True
-            print("invalid-path:", self.path)
-            return False
+            else:
+                print("invalid-path:", self.path)
 
     class UserPath:
         user_prof = os.environ.get("USERPROFILE")
-        def __init__(self) -> None:
-            pass
 
         @classmethod
         def resolve(cls, rel:str="") -> PathInfo:
@@ -86,8 +83,6 @@ def configure(keymap):
     ################################
 
     class CheckWnd:
-        def __init__(self) -> None:
-            pass
 
         @staticmethod
         def is_global_target(wnd:pyauto.Window) -> bool:
@@ -424,7 +419,10 @@ def configure(keymap):
 
 
     def screenshot() -> None:
-        if not UserPath().resolve(r"scoop\apps\ksnip\current\ksnip.exe").run():
+        ksnip_path = UserPath().resolve(r"scoop\apps\ksnip\current\ksnip.exe")
+        if ksnip_path.isAccessible:
+            ksnip_path.run()
+        else:
             VIRTUAL_FINGER.type_keys("Lwin-S-S")
     keymap_global["LWin-U0-S"] = screenshot
 
