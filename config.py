@@ -204,11 +204,11 @@ def configure(keymap):
 
 
     class VirtualFinger:
-        def __init__(self, prepare_msec:int=10) -> None:
-            self.prepare_msec = prepare_msec
+        def __init__(self, inter_stroke_pause:int=10) -> None:
+            self.inter_stroke_pause = inter_stroke_pause
 
         def _execute(self, func:Callable) -> None:
-            delay(self.prepare_msec)
+            delay(self.inter_stroke_pause)
             keymap.setInput_Modifier(0)
             keymap.beginInput()
             func()
@@ -276,12 +276,12 @@ def configure(keymap):
 
 
     class KeyPuncher:
-        def __init__(self, recover_ime:bool=False, prepare_msec:int=0, defer_msec:int=0) -> None:
+        def __init__(self, recover_ime:bool=False, inter_stroke_pause:int=0, defer_msec:int=0) -> None:
             self._recover_ime = recover_ime
-            self._prepare_msec = prepare_msec
+            self._inter_stroke_pause = inter_stroke_pause
             self._defer_msec = defer_msec
         def invoke(self, *sequence) -> Callable:
-            vf = VirtualFinger(self._prepare_msec)
+            vf = VirtualFinger(self._inter_stroke_pause)
             def _input() -> None:
                 set_ime(0)
                 vf.type_smart(*sequence)
@@ -803,7 +803,7 @@ def configure(keymap):
         prefix, suffix = pair
         sent = pair + ["Left"]*len(suffix)
         keymap_global[key] = KeyPuncher().invoke(*sent)
-        keymap_global["U1-W"][key] = KeyPuncher(defer_msec=50).invoke("C-Insert", prefix, "S-Insert", suffix)
+        keymap_global["U1-W"][key] = KeyPuncher(defer_msec=50, inter_stroke_pause=20).invoke("C-Insert", prefix, "S-Insert", suffix)
 
     for key, pair in {
         "U0-8": ["\u300e", "\u300f"], # WHITE CORNER BRACKET 『』
@@ -821,7 +821,7 @@ def configure(keymap):
         prefix, suffix = pair
         sent = pair + ["Left"]*len(suffix)
         keymap_global[key] = KeyPuncher(recover_ime=True).invoke(*sent)
-        keymap_global["U1-W"][key] = KeyPuncher(recover_ime=True, defer_msec=50).invoke("C-Insert", prefix, "S-Insert", suffix)
+        keymap_global["U1-W"][key] = KeyPuncher(recover_ime=True, defer_msec=50, inter_stroke_pause=20).invoke("C-Insert", prefix, "S-Insert", suffix)
 
     # input string without conversion even when ime is turned on
     def direct_input(key:str, turnoff_ime_later:bool=False) -> Callable:
