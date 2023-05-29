@@ -30,25 +30,30 @@ def configure(keymap):
             return False
 
     class UserPath:
+        user_prof = os.environ.get("USERPROFILE")
         def __init__(self) -> None:
-            self.user_prof = os.environ.get("USERPROFILE")
+            pass
 
-        def resolve(self, rel:str="") -> PathInfo:
-            fullpath = str(Path(self.user_prof, rel))
+        @classmethod
+        def resolve(cls, rel:str="") -> PathInfo:
+            fullpath = str(Path(cls.user_prof, rel))
             return PathInfo(fullpath)
 
-        def mask_user_name(self, path:str) -> str:
-            masked = str(Path(self.user_prof).parent) + r"\%USERNAME%"
-            return path.replace(self.user_prof, masked)
+        @classmethod
+        def mask_user_name(cls, path:str) -> str:
+            masked = str(Path(cls.user_prof).parent) + r"\%USERNAME%"
+            return masked + path[len(cls.user_prof):]
 
-        def get_filer(self) -> str:
-            tablacus = self.resolve(r"Dropbox\portable_apps\tablacus\TE64.exe")
+        @classmethod
+        def get_filer(cls) -> str:
+            tablacus = cls.resolve(r"Dropbox\portable_apps\tablacus\TE64.exe")
             if tablacus.isAccessible:
                 return tablacus.path
             return "explorer.exe"
 
-        def get_editor(self) -> str:
-            vscode = self.resolve(r"scoop\apps\vscode\current\Code.exe")
+        @classmethod
+        def get_editor(cls) -> str:
+            vscode = cls.resolve(r"scoop\apps\vscode\current\Code.exe")
             if vscode.isAccessible:
                 return vscode.path
             return "notepad.exe"
@@ -939,59 +944,68 @@ def configure(keymap):
     ################################
 
     class KangxiRadicals:
-        def __init__(self) -> None:
-            self.mapping = { "\u2f00":"\u4e00", "\u2f01":"\u4e28", "\u2f02":"\u4e36", "\u2f03":"\u4e3f", "\u2f04":"\u4e59", "\u2f05":"\u4e85", "\u2f06":"\u4e8c", "\u2f07":"\u4ea0", "\u2f08":"\u4eba", "\u2f09":"\u513f", "\u2f0a":"\u5165", "\u2f0b":"\u516b", "\u2f0c":"\u5182", "\u2f0d":"\u5196", "\u2f0e":"\u51ab", "\u2f0f":"\u51e0", "\u2f10":"\u51f5", "\u2f11":"\u5200", "\u2f12":"\u529b", "\u2f13":"\u52f9", "\u2f14":"\u5315", "\u2f15":"\u531a", "\u2f16":"\u5338", "\u2f17":"\u5341", "\u2f18":"\u535c", "\u2f19":"\u5369", "\u2f1a":"\u5382", "\u2f1b":"\u53b6", "\u2f1c":"\u53c8", "\u2f1d":"\u53e3", "\u2f1e":"\u56d7", "\u2f1f":"\u571f", "\u2f20":"\u58eb", "\u2f21":"\u5902", "\u2f22":"\u590a", "\u2f23":"\u5915", "\u2f24":"\u5927", "\u2f25":"\u5973", "\u2f26":"\u5b50", "\u2f27":"\u5b80", "\u2f28":"\u5bf8", "\u2f29":"\u5c0f", "\u2f2a":"\u5c22", "\u2f2b":"\u5c38", "\u2f2c":"\u5c6e", "\u2f2d":"\u5c71", "\u2f2e":"\u5ddb", "\u2f2f":"\u5de5", "\u2f30":"\u5df1", "\u2f31":"\u5dfe", "\u2f32":"\u5e72", "\u2f33":"\u5e7a", "\u2f34":"\u5e7f", "\u2f35":"\u5ef4", "\u2f36":"\u5efe", "\u2f37":"\u5f0b", "\u2f38":"\u5f13", "\u2f39":"\u5f50", "\u2f3a":"\u5f61", "\u2f3b":"\u5f73", "\u2f3c":"\u5fc3", "\u2f3d":"\u6208", "\u2f3e":"\u6238", "\u2f3f":"\u624b", "\u2f40":"\u652f", "\u2f41":"\u6534", "\u2f42":"\u6587", "\u2f43":"\u6597", "\u2f44":"\u65a4", "\u2f45":"\u65b9", "\u2f46":"\u65e0", "\u2f47":"\u65e5", "\u2f48":"\u66f0", "\u2f49":"\u6708", "\u2f4a":"\u6728", "\u2f4b":"\u6b20", "\u2f4c":"\u6b62", "\u2f4d":"\u6b79", "\u2f4e":"\u6bb3", "\u2f4f":"\u6bcb", "\u2f50":"\u6bd4", "\u2f51":"\u6bdb", "\u2f52":"\u6c0f", "\u2f53":"\u6c14", "\u2f54":"\u6c34", "\u2f55":"\u706b", "\u2f56":"\u722a", "\u2f57":"\u7236", "\u2f58":"\u723b", "\u2f59":"\u723f", "\u2f5a":"\u7247", "\u2f5b":"\u7259", "\u2f5c":"\u725b", "\u2f5d":"\u72ac", "\u2f5e":"\u7384", "\u2f5f":"\u7389", "\u2f60":"\u74dc", "\u2f61":"\u74e6", "\u2f62":"\u7518", "\u2f63":"\u751f", "\u2f64":"\u7528", "\u2f65":"\u7530", "\u2f66":"\u758b", "\u2f67":"\u7592", "\u2f68":"\u7676", "\u2f69":"\u767d", "\u2f6a":"\u76ae", "\u2f6b":"\u76bf", "\u2f6c":"\u76ee", "\u2f6d":"\u77db", "\u2f6e":"\u77e2", "\u2f6f":"\u77f3", "\u2f70":"\u793a", "\u2f71":"\u79b8", "\u2f72":"\u79be", "\u2f73":"\u7a74", "\u2f74":"\u7acb", "\u2f75":"\u7af9", "\u2f76":"\u7c73", "\u2f77":"\u7cf8", "\u2f78":"\u7f36", "\u2f79":"\u7f51", "\u2f7a":"\u7f8a", "\u2f7b":"\u7fbd", "\u2f7c":"\u8001", "\u2f7d":"\u800c", "\u2f7e":"\u8012", "\u2f7f":"\u8033", "\u2f80":"\u807f", "\u2f81":"\u8089", "\u2f82":"\u81e3", "\u2f83":"\u81ea", "\u2f84":"\u81f3", "\u2f85":"\u81fc", "\u2f86":"\u820c", "\u2f87":"\u821b", "\u2f88":"\u821f", "\u2f89":"\u826e", "\u2f8a":"\u8272", "\u2f8b":"\u8278", "\u2f8c":"\u864d", "\u2f8d":"\u866b", "\u2f8e":"\u8840", "\u2f8f":"\u884c", "\u2f90":"\u8863", "\u2f91":"\u897e", "\u2f92":"\u898b", "\u2f93":"\u89d2", "\u2f94":"\u8a00", "\u2f95":"\u8c37", "\u2f96":"\u8c46", "\u2f97":"\u8c55", "\u2f98":"\u8c78", "\u2f99":"\u8c9d", "\u2f9a":"\u8d64", "\u2f9b":"\u8d70", "\u2f9c":"\u8db3", "\u2f9d":"\u8eab", "\u2f9e":"\u8eca", "\u2f9f":"\u8f9b", "\u2fa0":"\u8fb0", "\u2fa1":"\u8fb5", "\u2fa2":"\u9091", "\u2fa3":"\u9149", "\u2fa4":"\u91c6", "\u2fa5":"\u91cc", "\u2fa6":"\u91d1", "\u2fa7":"\u9577", "\u2fa8":"\u9580", "\u2fa9":"\u961c", "\u2faa":"\u96b6", "\u2fab":"\u96b9", "\u2fac":"\u96e8", "\u2fad":"\u9751", "\u2fae":"\u975e", "\u2faf":"\u9762", "\u2fb0":"\u9769", "\u2fb1":"\u97cb", "\u2fb2":"\u97ed", "\u2fb3":"\u97f3", "\u2fb4":"\u9801", "\u2fb5":"\u98a8", "\u2fb6":"\u98db", "\u2fb7":"\u98df", "\u2fb8":"\u9996", "\u2fb9":"\u9999", "\u2fba":"\u99ac", "\u2fbb":"\u9aa8", "\u2fbc":"\u9ad8", "\u2fbd":"\u9adf", "\u2fbe":"\u9b25", "\u2fbf":"\u9b2f", "\u2fc0":"\u9b32", "\u2fc1":"\u9b3c", "\u2fc2":"\u9b5a", "\u2fc3":"\u9ce5", "\u2fc4":"\u9e75", "\u2fc5":"\u9e7f", "\u2fc6":"\u9ea5", "\u2fc7":"\u9ebb", "\u2fc8":"\u9ec3", "\u2fc9":"\u9ecd", "\u2fca":"\u9ed2", "\u2fcb":"\u9ef9", "\u2fcc":"\u9efd", "\u2fcd":"\u9f0e", "\u2fce":"\u9f13", "\u2fcf":"\u9f20", "\u2fd0":"\u9f3b", "\u2fd1":"\u9f4a", "\u2fd2":"\u9f52", "\u2fd3":"\u9f8d", "\u2fd4":"\u9f9c", "\u2fd5":"\u9fa0" }
+        mapping = { "\u2f00":"\u4e00", "\u2f01":"\u4e28", "\u2f02":"\u4e36", "\u2f03":"\u4e3f", "\u2f04":"\u4e59", "\u2f05":"\u4e85", "\u2f06":"\u4e8c", "\u2f07":"\u4ea0", "\u2f08":"\u4eba", "\u2f09":"\u513f", "\u2f0a":"\u5165", "\u2f0b":"\u516b", "\u2f0c":"\u5182", "\u2f0d":"\u5196", "\u2f0e":"\u51ab", "\u2f0f":"\u51e0", "\u2f10":"\u51f5", "\u2f11":"\u5200", "\u2f12":"\u529b", "\u2f13":"\u52f9", "\u2f14":"\u5315", "\u2f15":"\u531a", "\u2f16":"\u5338", "\u2f17":"\u5341", "\u2f18":"\u535c", "\u2f19":"\u5369", "\u2f1a":"\u5382", "\u2f1b":"\u53b6", "\u2f1c":"\u53c8", "\u2f1d":"\u53e3", "\u2f1e":"\u56d7", "\u2f1f":"\u571f", "\u2f20":"\u58eb", "\u2f21":"\u5902", "\u2f22":"\u590a", "\u2f23":"\u5915", "\u2f24":"\u5927", "\u2f25":"\u5973", "\u2f26":"\u5b50", "\u2f27":"\u5b80", "\u2f28":"\u5bf8", "\u2f29":"\u5c0f", "\u2f2a":"\u5c22", "\u2f2b":"\u5c38", "\u2f2c":"\u5c6e", "\u2f2d":"\u5c71", "\u2f2e":"\u5ddb", "\u2f2f":"\u5de5", "\u2f30":"\u5df1", "\u2f31":"\u5dfe", "\u2f32":"\u5e72", "\u2f33":"\u5e7a", "\u2f34":"\u5e7f", "\u2f35":"\u5ef4", "\u2f36":"\u5efe", "\u2f37":"\u5f0b", "\u2f38":"\u5f13", "\u2f39":"\u5f50", "\u2f3a":"\u5f61", "\u2f3b":"\u5f73", "\u2f3c":"\u5fc3", "\u2f3d":"\u6208", "\u2f3e":"\u6238", "\u2f3f":"\u624b", "\u2f40":"\u652f", "\u2f41":"\u6534", "\u2f42":"\u6587", "\u2f43":"\u6597", "\u2f44":"\u65a4", "\u2f45":"\u65b9", "\u2f46":"\u65e0", "\u2f47":"\u65e5", "\u2f48":"\u66f0", "\u2f49":"\u6708", "\u2f4a":"\u6728", "\u2f4b":"\u6b20", "\u2f4c":"\u6b62", "\u2f4d":"\u6b79", "\u2f4e":"\u6bb3", "\u2f4f":"\u6bcb", "\u2f50":"\u6bd4", "\u2f51":"\u6bdb", "\u2f52":"\u6c0f", "\u2f53":"\u6c14", "\u2f54":"\u6c34", "\u2f55":"\u706b", "\u2f56":"\u722a", "\u2f57":"\u7236", "\u2f58":"\u723b", "\u2f59":"\u723f", "\u2f5a":"\u7247", "\u2f5b":"\u7259", "\u2f5c":"\u725b", "\u2f5d":"\u72ac", "\u2f5e":"\u7384", "\u2f5f":"\u7389", "\u2f60":"\u74dc", "\u2f61":"\u74e6", "\u2f62":"\u7518", "\u2f63":"\u751f", "\u2f64":"\u7528", "\u2f65":"\u7530", "\u2f66":"\u758b", "\u2f67":"\u7592", "\u2f68":"\u7676", "\u2f69":"\u767d", "\u2f6a":"\u76ae", "\u2f6b":"\u76bf", "\u2f6c":"\u76ee", "\u2f6d":"\u77db", "\u2f6e":"\u77e2", "\u2f6f":"\u77f3", "\u2f70":"\u793a", "\u2f71":"\u79b8", "\u2f72":"\u79be", "\u2f73":"\u7a74", "\u2f74":"\u7acb", "\u2f75":"\u7af9", "\u2f76":"\u7c73", "\u2f77":"\u7cf8", "\u2f78":"\u7f36", "\u2f79":"\u7f51", "\u2f7a":"\u7f8a", "\u2f7b":"\u7fbd", "\u2f7c":"\u8001", "\u2f7d":"\u800c", "\u2f7e":"\u8012", "\u2f7f":"\u8033", "\u2f80":"\u807f", "\u2f81":"\u8089", "\u2f82":"\u81e3", "\u2f83":"\u81ea", "\u2f84":"\u81f3", "\u2f85":"\u81fc", "\u2f86":"\u820c", "\u2f87":"\u821b", "\u2f88":"\u821f", "\u2f89":"\u826e", "\u2f8a":"\u8272", "\u2f8b":"\u8278", "\u2f8c":"\u864d", "\u2f8d":"\u866b", "\u2f8e":"\u8840", "\u2f8f":"\u884c", "\u2f90":"\u8863", "\u2f91":"\u897e", "\u2f92":"\u898b", "\u2f93":"\u89d2", "\u2f94":"\u8a00", "\u2f95":"\u8c37", "\u2f96":"\u8c46", "\u2f97":"\u8c55", "\u2f98":"\u8c78", "\u2f99":"\u8c9d", "\u2f9a":"\u8d64", "\u2f9b":"\u8d70", "\u2f9c":"\u8db3", "\u2f9d":"\u8eab", "\u2f9e":"\u8eca", "\u2f9f":"\u8f9b", "\u2fa0":"\u8fb0", "\u2fa1":"\u8fb5", "\u2fa2":"\u9091", "\u2fa3":"\u9149", "\u2fa4":"\u91c6", "\u2fa5":"\u91cc", "\u2fa6":"\u91d1", "\u2fa7":"\u9577", "\u2fa8":"\u9580", "\u2fa9":"\u961c", "\u2faa":"\u96b6", "\u2fab":"\u96b9", "\u2fac":"\u96e8", "\u2fad":"\u9751", "\u2fae":"\u975e", "\u2faf":"\u9762", "\u2fb0":"\u9769", "\u2fb1":"\u97cb", "\u2fb2":"\u97ed", "\u2fb3":"\u97f3", "\u2fb4":"\u9801", "\u2fb5":"\u98a8", "\u2fb6":"\u98db", "\u2fb7":"\u98df", "\u2fb8":"\u9996", "\u2fb9":"\u9999", "\u2fba":"\u99ac", "\u2fbb":"\u9aa8", "\u2fbc":"\u9ad8", "\u2fbd":"\u9adf", "\u2fbe":"\u9b25", "\u2fbf":"\u9b2f", "\u2fc0":"\u9b32", "\u2fc1":"\u9b3c", "\u2fc2":"\u9b5a", "\u2fc3":"\u9ce5", "\u2fc4":"\u9e75", "\u2fc5":"\u9e7f", "\u2fc6":"\u9ea5", "\u2fc7":"\u9ebb", "\u2fc8":"\u9ec3", "\u2fc9":"\u9ecd", "\u2fca":"\u9ed2", "\u2fcb":"\u9ef9", "\u2fcc":"\u9efd", "\u2fcd":"\u9f0e", "\u2fce":"\u9f13", "\u2fcf":"\u9f20", "\u2fd0":"\u9f3b", "\u2fd1":"\u9f4a", "\u2fd2":"\u9f52", "\u2fd3":"\u9f8d", "\u2fd4":"\u9f9c", "\u2fd5":"\u9fa0" }
 
-        def fix(self, s:str) -> str:
-            return s.translate(str.maketrans(self.mapping))
+        @classmethod
+        def fix(cls, s:str) -> str:
+            return s.translate(str.maketrans(cls.mapping))
 
     class SearchNoise:
-        def __init__(self) -> None:
-            self.space = ord(" ")
+        space = ord(" ")
+        punc_dict = { int("30FB",16): space }
+        for noise_range in [
+            ["0021", "002F"],
+            ["003A", "0040"],
+            ["005B", "0060"],
+            ["007B", "007E"],
+            # quotation marks
+            ["2018", "201F"],
+            # horizontal bars
+            ["2010", "2017"],
+            ["2500", "2501"],
+            ["2E3A", "2E3B"],
+            # fullwidth symbols
+            ["25A0", "25EF"],
+            ["3000", "3004"],
+            ["3008", "3040"],
+            ["3097", "30A0"],
+            ["3097", "30A0"],
+            ["30FD", "30FF"],
+            ["FF01", "FF0F"],
+            ["FF1A", "FF20"],
+            ["FF3B", "FF40"],
+            ["FF5B", "FF65"],
+            # CJK Radicals
+            ["2E80", "2EF3"],
+        ]:
+            f, t = noise_range
+            for i in range(int(f,16), int(t,16)+1):
+                punc_dict[i] = space
 
-            self.punc_dict = { int("30FB",16): self.space }
-            for noise_range in [
-                ["0021", "002F"],
-                ["003A", "0040"],
-                ["005B", "0060"],
-                ["007B", "007E"],
-                # quotation marks
-                ["2018", "201F"],
-                # horizontal bars
-                ["2010", "2017"],
-                ["2500", "2501"],
-                ["2E3A", "2E3B"],
-                # fullwidth symbols
-                ["25A0", "25EF"],
-                ["3000", "3004"],
-                ["3008", "3040"],
-                ["3097", "30A0"],
-                ["3097", "30A0"],
-                ["30FD", "30FF"],
-                ["FF01", "FF0F"],
-                ["FF1A", "FF20"],
-                ["FF3B", "FF40"],
-                ["FF5B", "FF65"],
-                # CJK Radicals
-                ["2E80", "2EF3"],
-            ]:
-                f, t = noise_range
-                for i in range(int(f,16), int(t,16)+1):
-                    self.punc_dict[i] = self.space
-
-        def to_space(self, s:str) -> str:
-            return s.translate(str.maketrans(self.punc_dict))
+        @classmethod
+        def to_space(cls, s:str) -> str:
+            return s.translate(str.maketrans(cls.punc_dict))
 
 
     SEARCH_NOISE = SearchNoise()
 
+    class QueryLine:
+        def __init__(self, line) -> None:
+            self.line = line
+
+        def format_right(self) -> str:
+            if self.line.endswith("-"):
+                return self.line.rstrip("-")
+            if len(self.line.strip()):
+                if self.line[-1].encode("utf-8").isalnum():
+                    return self.line + " "
+                return self.line.rstrip()
+            return ""
+
     class SearchQuery:
         def __init__(self, query:str) -> None:
-            self._query = query
-
-        def to_single_line(self) -> None:
-            lines = self._query.strip().replace("\u200b", "").replace("\u3000", " ").replace("\t", " ").splitlines()
-            self._query = "".join([ line.rstrip("-") for line in lines ])
+            lines = query.strip().replace("\u200b", "").replace("\u3000", " ").replace("\t", " ").splitlines()
+            self._query = "".join([ QueryLine(line).format_right() for line in lines ])
 
         def fix_kangxi(self) -> None:
             self._query = KangxiRadicals().fix(self._query)
@@ -1001,7 +1015,7 @@ def configure(keymap):
                 self._query = self._query.replace(honor, " ")
 
         def remove_editorial_style(self) -> None:
-            for honor in ["監修", "共著", "編著", "共編著", "共編", "et al."]:
+            for honor in ["監修", "共著", "編著", "共編著", "共編", "分担執筆", "et al."]:
                 self._query = self._query.replace(honor, " ")
 
         def remove_hiragana(self) -> None:
@@ -1021,7 +1035,6 @@ def configure(keymap):
         def _search() -> None:
             s = copy_string()
             query = SearchQuery(s)
-            query.to_single_line()
             query.fix_kangxi()
             query.remove_honorific()
             query.remove_editorial_style()
@@ -1064,28 +1077,32 @@ def configure(keymap):
     ################################
 
     class SystemBrowser:
-        def __init__(self) -> None:
-            register_path = r'Software\Microsoft\Windows\Shell\Associations\UrlAssociations\https\UserChoice'
-            with OpenKey(HKEY_CURRENT_USER, register_path) as key:
-                self._prog_id = str(QueryValueEx(key, "ProgId")[0])
+        register_path = r'Software\Microsoft\Windows\Shell\Associations\UrlAssociations\https\UserChoice'
+        prog_id = ""
+        with OpenKey(HKEY_CURRENT_USER, register_path) as key:
+            prog_id = str(QueryValueEx(key, "ProgId")[0])
 
-        def get_commandline(self) -> str:
-            register_path = r'{}\shell\open\command'.format(self._prog_id)
+        @classmethod
+        def get_commandline(cls) -> str:
+            register_path = r'{}\shell\open\command'.format(cls.prog_id)
             with OpenKey(HKEY_CLASSES_ROOT, register_path) as key:
                 return str(QueryValueEx(key, "")[0])
 
-        def get_exe_path(self) -> str:
-            return re.sub(r"(^.+\.exe)(.*)", r"\1", self.get_commandline()).replace('"', "")
+        @classmethod
+        def get_exe_path(cls) -> str:
+            return re.sub(r"(^.+\.exe)(.*)", r"\1", cls.get_commandline()).replace('"', "")
 
-        def get_exe_name(self) -> str:
-            return Path(self.get_exe_path()).name
+        @classmethod
+        def get_exe_name(cls) -> str:
+            return Path(cls.get_exe_path()).name
 
-        def get_wnd_class(self) -> str:
+        @classmethod
+        def get_wnd_class(cls) -> str:
             return {
                 "chrome.exe": "Chrome_WidgetWin_1",
                 "vivaldi.exe": "Chrome_WidgetWin_1",
                 "firefox.exe": "MozillaWindowClass",
-            }.get(self.get_exe_name(), "Chrome_WidgetWin_1")
+            }.get(cls.get_exe_name(), "Chrome_WidgetWin_1")
 
 
     DEFAULT_BROWSER = SystemBrowser()
@@ -1470,13 +1487,16 @@ def configure(keymap):
         return os.linesep.join([l for l in lines if l.strip()])
 
     class CharWidth:
-        def __init__(self) -> None:
-            self.full_letters = "\uff41\uff42\uff43\uff44\uff45\uff46\uff47\uff48\uff49\uff4a\uff4b\uff4c\uff4d\uff4e\uff4f\uff50\uff51\uff52\uff53\uff54\uff55\uff56\uff57\uff58\uff59\uff5a\uff21\uff22\uff23\uff24\uff25\uff26\uff27\uff28\uff29\uff2a\uff2b\uff2c\uff2d\uff2e\uff2f\uff30\uff31\uff32\uff33\uff34\uff35\uff36\uff37\uff38\uff39\uff3a\uff10\uff11\uff12\uff13\uff14\uff15\uff16\uff17\uff18\uff19\uff0d"
-            self.half_letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-"
-        def to_half_letter(self, s:str) -> str:
-            return s.translate(str.maketrans(self.full_letters, self.half_letters))
-        def to_full_letter(self, s:str) -> str:
-            return s.translate(str.maketrans(self.half_letters, self.full_letters))
+        full_letters = "\uff41\uff42\uff43\uff44\uff45\uff46\uff47\uff48\uff49\uff4a\uff4b\uff4c\uff4d\uff4e\uff4f\uff50\uff51\uff52\uff53\uff54\uff55\uff56\uff57\uff58\uff59\uff5a\uff21\uff22\uff23\uff24\uff25\uff26\uff27\uff28\uff29\uff2a\uff2b\uff2c\uff2d\uff2e\uff2f\uff30\uff31\uff32\uff33\uff34\uff35\uff36\uff37\uff38\uff39\uff3a\uff10\uff11\uff12\uff13\uff14\uff15\uff16\uff17\uff18\uff19\uff0d"
+        half_letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-"
+
+        @classmethod
+        def to_half_letter(cls, s:str) -> str:
+            return s.translate(str.maketrans(cls.full_letters, cls.half_letters))
+
+        @classmethod
+        def to_full_letter(cls, s:str) -> str:
+            return s.translate(str.maketrans(cls.half_letters, cls.full_letters))
 
     def split_postalcode(s:str) -> str:
         reg = re.compile(r"(\d{3}).(\d{4})[\s\r\n]*(.+$)")
