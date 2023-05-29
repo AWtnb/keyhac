@@ -803,7 +803,7 @@ def configure(keymap):
         prefix, suffix = pair
         sent = pair + ["Left"]*len(suffix)
         keymap_global[key] = KeyPuncher().invoke(*sent)
-        keymap_global["U1-W"][key] = KeyPuncher(defer_msec=50, inter_stroke_pause=20).invoke("C-Insert", prefix, "S-Insert", suffix)
+        keymap_global["U1-W"][key] = KeyPuncher(defer_msec=50, inter_stroke_pause=10).invoke("C-Insert", prefix, "S-Insert", suffix)
 
     for key, pair in {
         "U0-8": ["\u300e", "\u300f"], # WHITE CORNER BRACKET 『』
@@ -821,7 +821,7 @@ def configure(keymap):
         prefix, suffix = pair
         sent = pair + ["Left"]*len(suffix)
         keymap_global[key] = KeyPuncher(recover_ime=True).invoke(*sent)
-        keymap_global["U1-W"][key] = KeyPuncher(recover_ime=True, defer_msec=50, inter_stroke_pause=20).invoke("C-Insert", prefix, "S-Insert", suffix)
+        keymap_global["U1-W"][key] = KeyPuncher(recover_ime=True, defer_msec=50, inter_stroke_pause=10).invoke("C-Insert", prefix, "S-Insert", suffix)
 
     # input string without conversion even when ime is turned on
     def direct_input(key:str, turnoff_ime_later:bool=False) -> Callable:
@@ -989,18 +989,22 @@ def configure(keymap):
         def __init__(self, query:str) -> None:
             self._query = query
 
-        def to_single_line(self)  -> None:
+        def to_single_line(self) -> None:
             lines = self._query.strip().replace("\u200b", "").replace("\u3000", " ").replace("\t", " ").splitlines()
             self._query = "".join([ line.rstrip("-") for line in lines ])
 
-        def fix_kangxi(self)  -> None:
+        def fix_kangxi(self) -> None:
             self._query = KangxiRadicals().fix(self._query)
 
-        def remove_honorific(self)  -> None:
-            for honor in ["先生", "様", "監修", "et al."]:
+        def remove_honorific(self) -> None:
+            for honor in ["先生", "様"]:
                 self._query = self._query.replace(honor, " ")
 
-        def remove_hiragana(self)  -> None:
+        def remove_editorial_style(self) -> None:
+            for honor in ["監修", "共著", "編著", "共編著", "共編", "et al."]:
+                self._query = self._query.replace(honor, " ")
+
+        def remove_hiragana(self) -> None:
             self._query = re.sub(r"[\u3041-\u3093]", " ", self._query)
 
         def encode(self, strict:bool=False) -> str:
@@ -1020,6 +1024,7 @@ def configure(keymap):
             query.to_single_line()
             query.fix_kangxi()
             query.remove_honorific()
+            query.remove_editorial_style()
             if strip_hiragana:
                 query.remove_hiragana()
             PathInfo(uri.format(query.encode(strict))).run()
