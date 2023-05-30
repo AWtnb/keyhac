@@ -424,7 +424,7 @@ def configure(keymap):
             ksnip_path.run()
         else:
             VIRTUAL_FINGER.type_keys("Lwin-S-S")
-    keymap_global["LWin-U0-S"] = screenshot
+    keymap_global["U0-PrintScreen"] = screenshot
 
 
     ################################
