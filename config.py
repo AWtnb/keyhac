@@ -85,12 +85,12 @@ def configure(keymap):
     class CheckWnd:
 
         @staticmethod
-        def is_global_target(wnd:pyauto.Window) -> bool:
-            return not ( CheckWnd.is_browser(wnd) and wnd.getText().startswith("ESET - ") )
-
-        @staticmethod
         def is_browser(wnd:pyauto.Window) -> bool:
             return wnd.getProcessName() in ("chrome.exe", "vivaldi.exe", "firefox.exe")
+
+        @classmethod
+        def is_global_target(cls, wnd:pyauto.Window) -> bool:
+            return not ( cls.is_browser(wnd) and wnd.getText().startswith("ESET - ") )
 
         @staticmethod
         def is_filer_viewmode(wnd:pyauto.Window) -> bool:
@@ -102,7 +102,19 @@ def configure(keymap):
 
         @staticmethod
         def is_tablacus_viewmode(wnd:pyauto.Window) -> bool:
-            return  wnd.getProcessName() == "TE64.exe" and wnd.getClassName() == "SysListView32"
+            return wnd.getProcessName() == "TE64.exe" and wnd.getClassName() == "SysListView32"
+
+        @staticmethod
+        def is_sumatra(wnd:pyauto.Window) -> bool:
+            return wnd.getProcessName() == "SumatraPDF.exe"
+
+        @classmethod
+        def is_sumatra_viewmode(cls, wnd:pyauto.Window) -> bool:
+            return cls.is_sumatra(wnd) and wnd.getClassName() != "Edit"
+
+        @classmethod
+        def is_sumatra_inputmode(cls, wnd:pyauto.Window) -> bool:
+            return cls.is_sumatra(wnd) and wnd.getClassName() == "Edit"
 
 
     # keymap working on any window
@@ -1344,43 +1356,19 @@ def configure(keymap):
     keymap_cmder["C-W"] = lambda : None
 
     # sumatra PDF
-    keymap_sumatra = keymap.defineWindowKeymap(exe_name="SumatraPDF.exe")
+    keymap_sumatra = keymap.defineWindowKeymap(check_func=CheckWnd.is_sumatra)
     keymap_sumatra["O-LShift"] = KeyPuncher(recover_ime=True).invoke("F6", "C-Home", "C-F")
 
-    def sumatra_tab(key:str) -> Callable:
-        def _switcher() -> None:
-            keys = ["F6", key]
-            if keymap.getWindow().getClassName() != "Edit":
-                keys.pop(0)
-            VIRTUAL_FINGER.type_keys(*keys)
-        return _switcher
-
+    keymap_sumatra_inputmode = keymap.defineWindowKeymap(check_func=CheckWnd.is_sumatra_inputmode)
     for key in ["C-Tab", "C-S-Tab"]:
-        keymap_sumatra[key] = sumatra_tab(key)
+        keymap_sumatra_inputmode[key] = "Esc", key
 
-    def sumatra_view_control(key:str) -> Callable:
-        def _sender() -> None:
-            if keymap.getWindow().getClassName() != "Edit":
-                set_ime(0)
-            VIRTUAL_FINGER.type_keys(key)
-        return _sender
-
+    keymap_sumatra_viewmode = keymap.defineWindowKeymap(check_func=CheckWnd.is_sumatra_viewmode)
     for key in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
-        keymap_sumatra[key] = sumatra_view_control(key)
-
-    def sumatra_tab_key(key:str, *seq) -> Callable:
-        def _changer() -> None:
-            if keymap.getWindow().getClassName() == "Edit":
-                VIRTUAL_FINGER.type_keys(key)
-            else:
-                VIRTUAL_FINGER.type_keys(*seq)
-        return _changer
-
-    for key, seq in {
-        "L": ("C-Tab"),
-        "H": ("C-S-Tab"),
-    }.items():
-        keymap_sumatra[key] = sumatra_tab_key(key, seq)
+        keymap_sumatra_viewmode[key] = KeyPuncher().invoke(key)
+    keymap_sumatra_viewmode["F"] = KeyPuncher(recover_ime=True).invoke("C-F")
+    keymap_sumatra_viewmode["H"] = "C-S-Tab"
+    keymap_sumatra_viewmode["L"] = "C-Tab"
 
 
     # word
