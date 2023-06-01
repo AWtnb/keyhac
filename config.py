@@ -1329,6 +1329,11 @@ def configure(keymap):
     keymap_browser["O-LShift"] = "C-F"
     keymap_browser["LC-Q"] = "A-F4"
 
+    def focus_chrome_content() -> None:
+        if keymap.getWindow().getProcessName() == "chrome.exe":
+            VIRTUAL_FINGER.type_keys("S-A-B", "F6")
+    keymap_browser["U0-F6"] = focus_chrome_content
+
     # intra
     keymap_intra = keymap.defineWindowKeymap(exe_name="APARClientAWS.exe")
     keymap_intra["O-(235)"] = lambda : None
