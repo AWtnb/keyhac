@@ -436,7 +436,7 @@ def configure(keymap):
             ksnip_path.run()
         else:
             VIRTUAL_FINGER.type_keys("Lwin-S-S")
-    keymap_global["U0-PrintScreen"] = screenshot
+    keymap_global["U1-PrintScreen"] = screenshot
 
 
     ################################
@@ -1332,7 +1332,7 @@ def configure(keymap):
     def focus_chrome_content() -> None:
         if keymap.getWindow().getProcessName() == "chrome.exe":
             VIRTUAL_FINGER.type_keys("S-A-B", "F6")
-    keymap_browser["U0-F6"] = focus_chrome_content
+    keymap_browser["C-U0-C"] = focus_chrome_content
 
     # intra
     keymap_intra = keymap.defineWindowKeymap(exe_name="APARClientAWS.exe")
@@ -1423,26 +1423,26 @@ def configure(keymap):
     # filer
     keymap_filer = keymap.defineWindowKeymap(check_func=CheckWnd.is_filer_viewmode)
     for key, value in {
-        "A": ["Home"],
-        "E": ["End"],
-        "C": ["C-C"],
-        "J": ["Down"],
-        "K": ["Up"],
-        "N": ["F2"],
-        "R": ["F5"],
-        "U": ["LAlt-Up"],
-        "V": ["C-V"],
-        "W": ["C-W"],
-        "X": ["C-X"],
-        "Space": ["Enter"],
-        "C-S-C": ["C-Add"],
-        "C-L": ["A-D", "C-C"],
+        "A": ("Home"),
+        "E": ("End"),
+        "C": ("C-C"),
+        "J": ("Down"),
+        "K": ("Up"),
+        "N": ("F2"),
+        "R": ("F5"),
+        "U": ("LAlt-Up"),
+        "V": ("C-V"),
+        "W": ("C-W"),
+        "X": ("C-X"),
+        "Space": ("Enter"),
+        "C-S-C": ("C-Add"),
+        "C-L": ("A-D", "C-C"),
     }.items():
-        keymap_filer[key] = KeyPuncher().invoke(*value)
+        keymap_filer[key] = value
 
     keymap_filer["LC-K"] = keymap.defineMultiStrokeKeymap()
     for simple_key in "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789":
-        keymap_filer["LC-K"][simple_key] = KeyPuncher().invoke(simple_key)
+        keymap_filer["LC-K"][simple_key] = simple_key
 
     keymap_tablacus = keymap.defineWindowKeymap(check_func=CheckWnd.is_tablacus_viewmode)
     keymap_tablacus["H"] = "C-S-Tab"
