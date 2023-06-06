@@ -1330,8 +1330,11 @@ def configure(keymap):
     keymap_browser["LC-Q"] = "A-F4"
 
     def focus_chrome_content() -> None:
-        if keymap.getWindow().getProcessName() == "chrome.exe":
+        wnd = keymap.getWindow()
+        if wnd.getProcessName() == "chrome.exe":
             VIRTUAL_FINGER.type_keys("S-A-B", "F6")
+        elif wnd.getProcessName() == "firefox.exe":
+            VIRTUAL_FINGER.type_keys("C-L", "F6")
     keymap_browser["C-U0-C"] = focus_chrome_content
 
     # intra
