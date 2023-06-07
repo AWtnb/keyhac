@@ -1357,6 +1357,8 @@ def configure(keymap):
     keymap_mery["LA-U0-K"] = "A-OpenBracket"
     keymap_mery["LA-LS-U0-J"] = "A-S-CloseBracket"
     keymap_mery["LA-LS-U0-k"] = "A-S-OpenBracket"
+    keymap_mery["LA-LC-U0-J"] = "C-S-Down"
+    keymap_mery["LA-LC-U0-k"] = "C-S-Up"
 
     # cmder
     keymap_cmder = keymap.defineWindowKeymap(class_name="VirtualConsoleClass")
