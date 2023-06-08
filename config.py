@@ -126,29 +126,54 @@ def configure(keymap):
     keymap_global["U1-0"] = keymap.command_RecordClear
 
     # combination with modifier key
-    for mod_key in ("", "S-", "C-", "A-", "C-S-", "C-A-", "S-A-", "C-A-S-"):
-        for key, value in {
-            # move cursor
-            "H": "Left",
-            "J": "Down",
-            "K": "Up",
-            "L": "Right",
-            # Home / End
-            "A": "Home",
-            "E": "End",
-            # Enter
-            "Space": "Enter",
-        }.items():
-            keymap_global[mod_key+"U0-"+key] = mod_key+value
+    class CoreKeys:
+        mod_keys = ("", "S-", "C-", "A-", "C-S-", "C-A-", "S-A-", "C-A-S-")
+        key_status = ("D-", "U-")
 
-        for stat in ("D-", "U-"):
-            # ignore capslock
-            keymap_global[mod_key+stat+"Capslock"] = lambda : None
-            # ignore "katakana-hiragana-romaji key"
-            for vk in list(range(124, 136)) + list(range(240, 243)) + list(range(245, 254)):
-                keymap_global[mod_key+stat+str(vk)] = lambda : None
+        @classmethod
+        def cursor_keys(cls, km:Keymap) -> None:
+            for mod_key in cls.mod_keys:
+                for key, value in {
+                    # move cursor
+                    "H": "Left",
+                    "J": "Down",
+                    "K": "Up",
+                    "L": "Right",
+                    # Home / End
+                    "A": "Home",
+                    "E": "End",
+                    # Enter
+                    "Space": "Enter",
+                }.items():
+                    km[mod_key+"U0-"+key] = mod_key+value
 
-    for key, value in {
+        @classmethod
+        def ignore_capslock(cls, km:Keymap) -> None:
+            for stat in cls.key_status:
+                for mod_key in cls.mod_keys:
+                    km[mod_key+stat+"Capslock"] = lambda : None
+
+        @classmethod
+        def ignore_kanakey(cls, km:Keymap) -> None:
+            for stat in cls.key_status:
+                for mod_key in cls.mod_keys:
+                    for vk in list(range(124, 136)) + list(range(240, 243)) + list(range(245, 254)):
+                        km[mod_key+stat+str(vk)] = lambda : None
+
+    CoreKeys().cursor_keys(keymap_global)
+    CoreKeys().ignore_capslock(keymap_global)
+    CoreKeys().ignore_kanakey(keymap_global)
+
+
+    class KeyAllocator:
+        def __init__(self, mapping_dict:dict) -> None:
+            self.dict = mapping_dict
+
+        def alloc(self, km:Keymap):
+            for key, value in self.dict.items():
+                km[key] = value
+
+    KeyAllocator({
         # BackSpace / Delete
         "U0-D": ("Delete"),
         "U0-B": ("Back"),
@@ -201,8 +226,8 @@ def configure(keymap):
 
         "Insert": (lambda : None),
 
-    }.items():
-        keymap_global[key] = value
+    }).alloc(keymap_global)
+
 
     ################################
     # functions for custom hotkey
@@ -443,31 +468,42 @@ def configure(keymap):
     # config menu
     ################################
 
-    def read_config() -> str:
-        return Path(getAppExePath(), "config.py").read_text("utf-8")
+    class ConfigMenu:
+        def __init__(self) -> None:
+            pass
 
-    def open_github() -> None:
-        repo = "https://github.com/AWtnb/keyhac/edit/main/config.py"
-        keyhaclip.set_string(read_config())
-        PathInfo(repo).run()
+        @classmethod
+        def read_config(cls) -> str:
+            return Path(getAppExePath(), "config.py").read_text("utf-8")
 
-    def reload_config() -> None:
-        keymap.configure()
-        keymap.updateKeymap()
-        ts = datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S")
-        print("\n{} reloaded config.py\n".format(ts))
+        @classmethod
+        def open_github(cls) -> None:
+            repo = "https://github.com/AWtnb/keyhac/edit/main/config.py"
+            keyhaclip.set_string(cls.read_config())
+            PathInfo(repo).run()
 
-    keymap_global["U1-F12"] = reload_config
+        @classmethod
+        def reload_config(cls) -> None:
+            keymap.configure()
+            keymap.updateKeymap()
+            ts = datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S")
+            print("\n{} reloaded config.py\n".format(ts))
 
-    keymap_global["LC-U0-X"] = keymap.defineMultiStrokeKeymap()
-    for key, func in {
-        "R" : reload_config,
-        "E" : keymap.command_EditConfig,
-        "G" : open_github,
-        "P" : lambda : paste_string(read_config()),
-        "X" : lambda : None,
-    }.items():
-        keymap_global["LC-U0-X"][key] = LazyFunc(func).defer()
+        @classmethod
+        def apply(cls) -> None:
+            keymap_global["LC-U0-X"] = keymap.defineMultiStrokeKeymap()
+            for key, func in {
+                "R" : cls.reload_config,
+                "E" : keymap.command_EditConfig,
+                "G" : cls.open_github,
+                "P" : lambda : paste_string(cls.read_config()),
+                "X" : lambda : None,
+            }.items():
+                keymap_global["LC-U0-X"][key] = LazyFunc(func).defer()
+
+    ConfigMenu().apply()
+
+    keymap_global["U1-F12"] = ConfigMenu.reload_config
 
 
     ################################
@@ -659,29 +695,39 @@ def configure(keymap):
     keymap_global["U1-M"] = keymap.defineMultiStrokeKeymap()
     keymap_global["U1-M"]["X"] = LazyFunc(lambda : keymap.getTopLevelWindow().maximize()).defer()
 
-    for mod_mntr, mntr_idx in {
-        "": 0,
-        "A-": 1,
-    }.items():
-        for mod_area, size in {
+    class WndPosAllocator:
+        monitor_dict = {
+            "": 0,
+            "A-": 1,
+        }
+        size_dict = {
             "": "middle",
             "S-": "large",
             "C-": "small",
-        }.items():
-            for key, pos in {
-                "H": "left",
-                "L": "right",
-                "J": "bottom",
-                "K": "top",
-                "Left": "left",
-                "Right": "right",
-                "Down": "bottom",
-                "Up": "top",
-                "M": "center",
-            }.items():
-                if mntr_idx < len(KEYMAP_MONITORS):
-                    wnd_rect = KEYMAP_MONITORS[mntr_idx].area_mapping[pos][size]
-                    keymap_global["U1-M"][mod_mntr+mod_area+key] = LazyFunc(wnd_rect.get_snap_func()).defer()
+        }
+        snap_key_dict = {
+            "H": "left",
+            "L": "right",
+            "J": "bottom",
+            "K": "top",
+            "Left": "left",
+            "Right": "right",
+            "Down": "bottom",
+            "Up": "top",
+            "M": "center",
+        }
+
+        @classmethod
+        def alloc(cls, km:Keymap) -> None:
+            for mod_mntr, mntr_idx in cls.monitor_dict.items():
+                for mod_area, size in cls.size_dict.items():
+                    for key, pos in cls.snap_key_dict.items():
+                        if mntr_idx < len(KEYMAP_MONITORS):
+                            wnd_rect = KEYMAP_MONITORS[mntr_idx].area_mapping[pos][size]
+                            km["U1-M"][mod_mntr+mod_area+key] = LazyFunc(wnd_rect.get_snap_func()).defer()
+
+    WndPosAllocator().alloc(keymap_global)
+
 
     def snap_and_maximize(towards="Left") -> Callable:
         def _snap() -> None:
@@ -802,151 +848,198 @@ def configure(keymap):
     keymap_global["U0-Yen"] = KeyPuncher().invoke("S-Yen", "Left")
     keymap_global["U1-S"] = KeyPuncher().invoke("Slash")
 
+    class PuncsRemap:
+        @staticmethod
+        def without_ime(km:Keymap) -> None:
+            for key, send in {
+                "U0-1": "S-1",
+                "U0-4": "$_",
+                "U1-4": "$_.",
+                "U0-Colon": "Colon",
+                "U0-Comma": "Comma",
+                "U0-Period": "Period",
+                "U0-Slash": "Slash",
+                "U0-U": "S-BackSlash",
+                "U1-Enter": "<br />",
+                "U1-Minus": "Minus",
+                "LS-U0-SemiColon": "SemiColon",
+            }.items():
+                km[key] = KeyPuncher().invoke(send)
+
+        @staticmethod
+        def with_ime(km:Keymap) -> None:
+            for key, send in {
+                "S-U0-Colon": "\uff1a", # FULLWIDTH COLON
+                "S-U0-Comma": "\uff0c", # FULLWIDTH COMMA
+                "S-U0-Minus": "\u3000\u2015\u2015",
+                "S-U0-Period": "\uff0e", # FULLWIDTH FULL STOP
+                "S-U0-U": "S-BackSlash",
+                "U0-Minus": "\u2015\u2015", # HORIZONTAL BAR * 2
+                "U0-P": "\u30fb", # KATAKANA MIDDLE DOT
+                "U0-SemiColon": "+ ",
+                "S-U0-8": "- ",
+                "LC-U1-B": "- ",
+                "U1-1": "1. ",
+                "S-U0-7": "1. ",
+            }.items():
+                km[key] = KeyPuncher(recover_ime=True).invoke(send)
+
+    PuncsRemap.without_ime(keymap_global)
+    PuncsRemap.with_ime(keymap_global)
+
+
+
+    class PairedPuncs:
+        half_pairs = {
+            "U0-2": ['"', '"'],
+            "U0-7": ["'", "'"],
+            "U0-AtMark": ["`", "`"],
+            "U1-AtMark": [" `", "` "],
+            "U0-CloseBracket": ["[", "]"],
+            "U1-9": ["(", ")"],
+            "U1-CloseBracket": ["{", "}"],
+            "U0-Caret": ["~~", "~~"],
+        }
+        full_pairs = {
+            "U0-8": ["\u300e", "\u300f"], # WHITE CORNER BRACKET 『』
+            "U0-9": ["\u3010", "\u3011"], # BLACK LENTICULAR BRACKET 【】
+            "U0-OpenBracket": ["\u300c", "\u300d"], # CORNER BRACKET 「」
+            "U0-Y": ["\u300a", "\u300b"], # DOUBLE ANGLE BRACKET 《》
+            "U1-2": ["\u201c", "\u201d"], # DOUBLE QUOTATION MARK “”
+            "U1-7": ["\u2018", "\u2019"], # SINGLE QUOTATION MARK ‘’
+            "U0-T": ["\u3014", "\u3015"], # TORTOISE SHELL BRACKET 〔〕
+            "U1-8": ["\uff08", "\uff09"], # FULLWIDTH PARENTHESIS （）
+            "U1-OpenBracket": ["\uff3b", "\uff3d"], # FULLWIDTH SQUARE BRACKET ［］
+            "U1-Y": ["\u3008", "\u3009"], # ANGLE BRACKET 〈〉
+            "C-U0-Caret": ["\u300c", "\u300d\uff1f"],
+        }
+
+        @classmethod
+        def invoke_half_brakcet_sender(cls, km:Keymap) -> None:
+            for key, pair in cls.half_pairs.items():
+                sent = pair + ["Left"]*len(pair[-1])
+                km[key] = KeyPuncher().invoke(*sent)
+
+        @classmethod
+        def invoke_full_bracket_sender(cls, km:Keymap) -> None:
+            for key, pair in cls.full_pairs.items():
+                sent = pair + ["Left"]*len(pair[-1])
+                km[key] = KeyPuncher(recover_ime=True).invoke(*sent)
+
+        @classmethod
+        def invoke_half_bracket_wrapper(cls, km:Keymap) -> None:
+            for key, pair in cls.half_pairs.items():
+                prefix, suffix = pair
+                km[key] = KeyPuncher(defer_msec=50, inter_stroke_pause=10).invoke("C-Insert", prefix, "S-Insert", suffix)
+
+        @classmethod
+        def invoke_full_bracket_wrapper(cls, km:Keymap) -> None:
+            for key, pair in cls.full_pairs.items():
+                prefix, suffix = pair
+                km[key] = KeyPuncher(recover_ime=True, defer_msec=50, inter_stroke_pause=10).invoke("C-Insert", prefix, "S-Insert", suffix)
+
+    PairedPuncs().invoke_full_bracket_sender(keymap_global)
+    PairedPuncs().invoke_half_brakcet_sender(keymap_global)
+
     keymap_global["U1-W"] = keymap.defineMultiStrokeKeymap()
-
-    # surround with brackets
-    for key, pair in {
-        "U0-2": ['"', '"'],
-        "U0-7": ["'", "'"],
-        "U0-AtMark": ["`", "`"],
-        "U1-AtMark": [" `", "` "],
-        "U0-CloseBracket": ["[", "]"],
-        "U1-9": ["(", ")"],
-        "U1-CloseBracket": ["{", "}"],
-        "U0-Caret": ["~~", "~~"],
-    }.items():
-        prefix, suffix = pair
-        sent = pair + ["Left"]*len(suffix)
-        keymap_global[key] = KeyPuncher().invoke(*sent)
-        keymap_global["U1-W"][key] = KeyPuncher(defer_msec=50, inter_stroke_pause=10).invoke("C-Insert", prefix, "S-Insert", suffix)
-
-    for key, pair in {
-        "U0-8": ["\u300e", "\u300f"], # WHITE CORNER BRACKET 『』
-        "U0-9": ["\u3010", "\u3011"], # BLACK LENTICULAR BRACKET 【】
-        "U0-OpenBracket": ["\u300c", "\u300d"], # CORNER BRACKET 「」
-        "U0-Y": ["\u300a", "\u300b"], # DOUBLE ANGLE BRACKET 《》
-        "U1-2": ["\u201c", "\u201d"], # DOUBLE QUOTATION MARK “”
-        "U1-7": ["\u2018", "\u2019"], # SINGLE QUOTATION MARK ‘’
-        "U0-T": ["\u3014", "\u3015"], # TORTOISE SHELL BRACKET 〔〕
-        "U1-8": ["\uff08", "\uff09"], # FULLWIDTH PARENTHESIS （）
-        "U1-OpenBracket": ["\uff3b", "\uff3d"], # FULLWIDTH SQUARE BRACKET ［］
-        "U1-Y": ["\u3008", "\u3009"], # ANGLE BRACKET 〈〉
-        "C-U0-Caret": ["\u300c", "\u300d\uff1f"],
-    }.items():
-        prefix, suffix = pair
-        sent = pair + ["Left"]*len(suffix)
-        keymap_global[key] = KeyPuncher(recover_ime=True).invoke(*sent)
-        keymap_global["U1-W"][key] = KeyPuncher(recover_ime=True, defer_msec=50, inter_stroke_pause=10).invoke("C-Insert", prefix, "S-Insert", suffix)
-
-    # input string without conversion even when ime is turned on
-    def direct_input(key:str, turnoff_ime_later:bool=False) -> Callable:
-        finish_keys = ["C-M"]
-        if turnoff_ime_later:
-            finish_keys.append("(243)")
-        def _input() -> None:
-            VIRTUAL_FINGER.type_keys(key)
-            if keymap.getWindow().getImeStatus():
-                VIRTUAL_FINGER.type_keys(*finish_keys)
-        return _input
-
-    keymap_global["BackSlash"] = direct_input("S-BackSlash", False)
-
-    for key, turnoff_ime in {
-        "AtMark": True,
-        "Caret": False,
-        "CloseBracket": False,
-        "Colon": False,
-        "Comma": False,
-        "LS-AtMark": True,
-        "LS-Caret": False,
-        "LS-Colon": True,
-        "LS-Comma": True,
-        "LS-Minus": False,
-        "LS-Period": True,
-        "LS-SemiColon": False,
-        "LS-Slash": False,
-        "LS-Yen": True,
-        "OpenBracket": False,
-        "Period": False,
-        "SemiColon": False,
-        "Slash": False,
-        "Yen": True,
-    }.items():
-        keymap_global[key] = direct_input(key, turnoff_ime)
-
-    for n in "123456789":
-        key = "LS-" + n
-        turnoff_ime = False
-        if n in ("2", "3", "4"):
-            turnoff_ime = True
-        keymap_global[key] = direct_input(key, turnoff_ime)
-
-    for alphabet in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
-        key = "LS-" + alphabet
-        keymap_global[key] = direct_input(key, True)
+    PairedPuncs().invoke_full_bracket_wrapper(keymap_global["U1-W"])
+    PairedPuncs().invoke_half_bracket_wrapper(keymap_global["U1-W"])
 
 
-    # input punctuation marks directly and set ime mode
+    class DirectInput:
+        @staticmethod
+        def invoke(key:str, turnoff_ime_later:bool=False) -> Callable:
+            finish_keys = ["C-M"]
+            if turnoff_ime_later:
+                finish_keys.append("(243)")
+            def _input() -> None:
+                VIRTUAL_FINGER.type_keys(key)
+                if keymap.getWindow().getImeStatus():
+                    VIRTUAL_FINGER.type_keys(*finish_keys)
+            return _input
 
-    for key, send in {
-        "U0-1": "S-1",
-        "U0-4": "$_",
-        "U1-4": "$_.",
-        "U0-Colon": "Colon",
-        "U0-Comma": "Comma",
-        "U0-Period": "Period",
-        "U0-Slash": "Slash",
-        "U0-U": "S-BackSlash",
-        "U1-Enter": "<br />",
-        "U1-Minus": "Minus",
-        "LS-U0-SemiColon": "SemiColon",
-    }.items():
-        keymap_global[key] = KeyPuncher().invoke(send)
+        @classmethod
+        def invoke_puncs(cls, km:Keymap) -> None:
+            for key, turnoff_ime in {
+                "AtMark": True,
+                "Caret": False,
+                "CloseBracket": False,
+                "Colon": False,
+                "Comma": False,
+                "LS-AtMark": True,
+                "LS-Caret": False,
+                "LS-Colon": True,
+                "LS-Comma": True,
+                "LS-Minus": False,
+                "LS-Period": True,
+                "LS-SemiColon": False,
+                "LS-Slash": False,
+                "LS-Yen": True,
+                "OpenBracket": False,
+                "Period": False,
+                "SemiColon": False,
+                "Slash": False,
+                "Yen": True,
+            }.items():
+                km[key] = cls.invoke(key, turnoff_ime)
 
-    for key, send in {
-        "C-U0-P": "\uff01", # FULLWIDTH EXCLAMATION MARK
-        "S-U0-Colon": "\uff1a", # FULLWIDTH COLON
-        "S-U0-Comma": "\uff0c", # FULLWIDTH COMMA
-        "S-U0-Minus": "\u3000\u2015\u2015",
-        "S-U0-P": "\uff1f", # FULLWIDTH QUESTION MARK
-        "S-U0-Period": "\uff0e", # FULLWIDTH FULL STOP
-        "S-U0-U": "S-BackSlash",
-        "U0-Minus": "\u2015\u2015", # HORIZONTAL BAR * 2
-        "U0-P": "\u30fb", # KATAKANA MIDDLE DOT
-        "U0-SemiColon": "+ ",
-        "S-U0-8": "- ",
-        "LC-U1-B": "- ",
-        "U1-1": "1. ",
-        "S-U0-7": "1. ",
-    }.items():
-        keymap_global[key] = KeyPuncher(recover_ime=True).invoke(send)
+        @classmethod
+        def invoke_alphabets(cls, km:Keymap) -> None:
+            for alphabet in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
+                key = "LS-" + alphabet
+                km[key] = cls.invoke(key, True)
+
+        @classmethod
+        def invoke_shift_numbers(cls, km:Keymap) -> None:
+            for n in "123456789":
+                key = "LS-" + n
+                turnoff_ime = False
+                if n in ("2", "3", "4"):
+                    turnoff_ime = True
+                km[key] = cls.invoke(key, turnoff_ime)
 
 
-    # input and format date string
-    def input_date(fmt:str, recover_ime:bool=False) -> Callable:
-        def _input() -> None:
-            d = datetime.datetime.today()
-            set_ime(0)
-            seq = [c for c in d.strftime(fmt)]
-            VIRTUAL_FINGER_QUICK.type_smart(*seq)
-            if recover_ime:
-                set_ime(1)
-        return LazyFunc(_input).defer()
+    DirectInput().invoke_puncs(keymap_global)
+    DirectInput().invoke_alphabets(keymap_global)
+    DirectInput().invoke_shift_numbers(keymap_global)
+
+    keymap_global["BackSlash"] = DirectInput.invoke("S-BackSlash", False)
+    keymap_global["C-U0-P"] = DirectInput.invoke("S-1", False)
+    keymap_global["S-U0-P"] = DirectInput.invoke("S-Slash", False)
+
+
+
+    class DateInput:
+        @staticmethod
+        def invoke(fmt:str, recover_ime:bool=False) -> Callable:
+            def _input() -> None:
+                d = datetime.datetime.today()
+                set_ime(0)
+                seq = [c for c in d.strftime(fmt)]
+                VIRTUAL_FINGER_QUICK.type_smart(*seq)
+                if recover_ime:
+                    set_ime(1)
+            return LazyFunc(_input).defer()
+
+        @classmethod
+        def apply(cls, km:Keymap) -> None:
+            for key, params in {
+                "1": ("%Y%m%d", False),
+                "2": ("%Y/%m/%d", False),
+                "3": ("%Y.%m.%d", False),
+                "4": ("%Y-%m-%d", False),
+                "5": ("%Y年%#m月%#d日", True),
+                "D": ("%Y%m%d", False),
+                "S": ("%Y/%m/%d", False),
+                "P": ("%Y.%m.%d", False),
+                "H": ("%Y-%m-%d", False),
+                "J": ("%Y年%#m月%#d日", True),
+            }.items():
+                km[key] = cls.invoke(*params)
+
 
     keymap_global["U1-D"] = keymap.defineMultiStrokeKeymap()
-    for key, params in {
-        "1": ("%Y%m%d", False),
-        "2": ("%Y/%m/%d", False),
-        "3": ("%Y.%m.%d", False),
-        "4": ("%Y-%m-%d", False),
-        "5": ("%Y年%#m月%#d日", True),
-        "D": ("%Y%m%d", False),
-        "S": ("%Y/%m/%d", False),
-        "P": ("%Y.%m.%d", False),
-        "H": ("%Y-%m-%d", False),
-        "J": ("%Y年%#m月%#d日", True),
-    }.items():
-        keymap_global["U1-D"][key] = input_date(*params)
+    DateInput().apply(keymap_global["U1-D"])
 
 
     ################################
@@ -1041,26 +1134,28 @@ def configure(keymap):
                         words.append(word)
             return urllib.parse.quote(" ".join(words))
 
-    def search_on_web(uri:str, strict:bool=False, strip_hiragana:bool=False) -> Callable:
-        def _search() -> None:
-            s = copy_string()
-            query = SearchQuery(s)
-            query.fix_kangxi()
-            query.remove_honorific()
-            query.remove_editorial_style()
-            if strip_hiragana:
-                query.remove_hiragana()
-            PathInfo(uri.format(query.encode(strict))).run()
-        return LazyFunc(_search).defer()
 
-    for mdf, params in {
-        "": (False, False),
-        "S-": (True, False),
-        "C-": (False, True),
-        "S-C-": (True, True),
-    }.items():
-        keymap_global[mdf+"U0-S"] = keymap.defineMultiStrokeKeymap()
-        for key, uri in {
+    class WebSearcher:
+        @staticmethod
+        def invoke(uri:str, strict:bool=False, strip_hiragana:bool=False) -> Callable:
+            def _search() -> None:
+                s = copy_string()
+                query = SearchQuery(s)
+                query.fix_kangxi()
+                query.remove_honorific()
+                query.remove_editorial_style()
+                if strip_hiragana:
+                    query.remove_hiragana()
+                PathInfo(uri.format(query.encode(strict))).run()
+            return LazyFunc(_search).defer()
+
+        mod_dict = {
+            "": (False, False),
+            "S-": (True, False),
+            "C-": (False, True),
+            "S-C-": (True, True),
+        }
+        key_uri_dict = {
             "A": "https://www.amazon.co.jp/s?i=stripbooks&k={}",
             "B": "https://www.google.com/search?q=site%3Abooks.or.jp%20{}",
             "C": "https://ci.nii.ac.jp/books/search?q={}",
@@ -1079,8 +1174,17 @@ def configure(keymap):
             "T": "https://twitter.com/search?q={}",
             "Y": "http://www.google.co.jp/search?q=site%3Ayuhikaku.co.jp%20{}",
             "W": "https://www.worldcat.org/search?q={}",
-        }.items():
-            keymap_global[mdf+"U0-S"][key] = search_on_web(uri, *params)
+        }
+
+        @classmethod
+        def apply(cls, km:Keymap) -> None:
+            for mod_key, params in cls.mod_dict.items():
+                km[mod_key+"U0-S"] = keymap.defineMultiStrokeKeymap()
+                for key, uri in cls.key_uri_dict.items():
+                    km[mod_key+"U0-S"][key] = cls.invoke(uri, *params)
+
+    WebSearcher().apply(keymap_global)
+
 
     ################################
     # activate window
@@ -1135,153 +1239,165 @@ def configure(keymap):
             pyauto.Window.enum(_callback, None)
             return found[0]
 
-    def activate_wnd(target:pyauto.Window) -> bool:
-        if keymap.getWindow() == target:
-            return False
-        if target.isMinimized():
-            target.restore()
-        interval = 10
-        timeout = interval * 10
-        while timeout > 0:
-            try:
-                target.setForeground()
-                if pyauto.Window.getForeground() == target:
-                    target.setForeground(True)
-                    return True
-            except:
+
+
+    class PseudoCuteExec:
+        @staticmethod
+        def activate_wnd(target:pyauto.Window) -> bool:
+            if keymap.getWindow() == target:
                 return False
-            delay(interval)
-            timeout -= interval
-        return False
+            if target.isMinimized():
+                target.restore()
+            interval = 10
+            timeout = interval * 10
+            while timeout > 0:
+                try:
+                    target.setForeground()
+                    if pyauto.Window.getForeground() == target:
+                        target.setForeground(True)
+                        return True
+                except:
+                    return False
+                delay(interval)
+                timeout -= interval
+            return False
 
-    def pseudo_cuteExec(exe_name:str, class_name:str, exe_path:str) -> Callable:
-        scanner = WndScanner(exe_name, class_name)
-        def _executer() -> None:
-            if found := scanner.scan():
-                if not activate_wnd(found):
-                    VIRTUAL_FINGER.type_keys("LCtrl-LAlt-Tab")
-            else:
-                if exe_path:
-                    PathInfo(exe_path).run()
-        return LazyFunc(_executer).defer(80)
+        @classmethod
+        def invoke(cls, exe_name:str, class_name:str, exe_path:str) -> Callable:
+            scanner = WndScanner(exe_name, class_name)
+            def _executer() -> None:
+                if found := scanner.scan():
+                    if not cls.activate_wnd(found):
+                        VIRTUAL_FINGER.type_keys("LCtrl-LAlt-Tab")
+                else:
+                    if exe_path:
+                        PathInfo(exe_path).run()
+            return LazyFunc(_executer).defer(80)
 
+        activate_keymap = {
+            "Space": (
+                DEFAULT_BROWSER.get_exe_name(),
+                DEFAULT_BROWSER.get_wnd_class(),
+                DEFAULT_BROWSER.get_exe_path()
+            ),
+            "C": (
+                "chrome.exe",
+                "Chrome_WidgetWin_1",
+                r"C:\Program Files\Google\Chrome\Application\chrome.exe"
+            ),
+            "S": (
+                "slack.exe",
+                "Chrome_WidgetWin_1",
+                UserPath().resolve(r"AppData\Local\slack\slack.exe").path
+            ),
+            "F": (
+                "firefox.exe",
+                "MozillaWindowClass",
+                r"C:\Program Files\Mozilla Firefox\firefox.exe"
+            ),
+            "B": (
+                "thunderbird.exe",
+                "MozillaWindowClass",
+                r"C:\Program Files (x86)\Mozilla Thunderbird\thunderbird.exe"
+            ),
+            "K": (
+                "ksnip.exe",
+                "Qt5152QWindowIcon",
+                UserPath().resolve(r"scoop\apps\ksnip\current\ksnip.exe").path
+            ),
+            "O": (
+                "Obsidian.exe",
+                "Chrome_WidgetWin_1",
+                ""
+            ),
+            "P": (
+                "SumatraPDF.exe",
+                "SUMATRA_PDF_FRAME",
+                ""
+            ),
+            "C-P": (
+                "powerpnt.exe",
+                "PPTFrameClass",
+                ""
+            ),
+            "E": (
+                "EXCEL.EXE",
+                "XLMAIN",
+                ""
+            ),
+            "W": (
+                "WINWORD.EXE",
+                "OpusApp",
+                ""
+            ),
+            "V": (
+                "Code.exe",
+                "Chrome_WidgetWin_1",
+                UserPath().resolve(r"scoop\apps\vscode\current\Code.exe").path
+            ),
+            "C-V": (
+                "vivaldi.exe",
+                "Chrome_WidgetWin_1",
+                ""
+            ),
+            "T": (
+                "TE64.exe",
+                "TablacusExplorer",
+                UserPath().resolve(r"Dropbox\portable_apps\tablacus\TE64.exe").path
+            ),
+            "M": (
+                "Mery.exe",
+                "TChildForm",
+                UserPath().resolve(r"AppData\Local\Programs\Mery\Mery.exe").path
+            ),
+            "X": (
+                "explorer.exe",
+                "CabinetWClass",
+                r"C:\Windows\explorer.exe"
+            )
+        }
+
+        @classmethod
+        def apply_combo(cls, km:Keymap) -> None:
+            for key, params in cls.activate_keymap.items():
+                km[key] = cls.invoke(*params)
+
+        @classmethod
+        def apply_single(cls, km:Keymap) -> None:
+            for key, params in {
+                "U1-T": (
+                    "TE64.exe",
+                    "TablacusExplorer",
+                    ""
+                ),
+                "U1-P": (
+                    "SumatraPDF.exe",
+                    "SUMATRA_PDF_FRAME",
+                    ""
+                ),
+                "LC-U1-M": (
+                    "Mery.exe",
+                    "TChildForm",
+                    UserPath().resolve(r"AppData\Local\Programs\Mery\Mery.exe").path
+                ),
+                "LC-U1-N": (
+                    "notepad.exe",
+                    "Notepad",
+                    r"C:\Windows\System32\notepad.exe"
+                ),
+                "C-U1-W": (
+                    "WindowsTerminal.exe",
+                    "CASCADIA_HOSTING_WINDOW_CLASS",
+                    ""
+                )
+            }.items():
+                km[key] = cls.invoke(*params)
+
+    PseudoCuteExec().apply_single(keymap_global)
     keymap_global["U1-C"] = keymap.defineMultiStrokeKeymap()
-    for key, params in {
-        "Space": (
-            DEFAULT_BROWSER.get_exe_name(),
-            DEFAULT_BROWSER.get_wnd_class(),
-            DEFAULT_BROWSER.get_exe_path()
-        ),
-        "C": (
-            "chrome.exe",
-            "Chrome_WidgetWin_1",
-            r"C:\Program Files\Google\Chrome\Application\chrome.exe"
-        ),
-        "S": (
-            "slack.exe",
-            "Chrome_WidgetWin_1",
-            UserPath().resolve(r"AppData\Local\slack\slack.exe").path
-        ),
-        "F": (
-            "firefox.exe",
-            "MozillaWindowClass",
-            r"C:\Program Files\Mozilla Firefox\firefox.exe"
-        ),
-        "B": (
-            "thunderbird.exe",
-            "MozillaWindowClass",
-            r"C:\Program Files (x86)\Mozilla Thunderbird\thunderbird.exe"
-        ),
-        "K": (
-            "ksnip.exe",
-            "Qt5152QWindowIcon",
-            UserPath().resolve(r"scoop\apps\ksnip\current\ksnip.exe").path
-        ),
-        "O": (
-            "Obsidian.exe",
-            "Chrome_WidgetWin_1",
-            ""
-        ),
-        "P": (
-            "SumatraPDF.exe",
-            "SUMATRA_PDF_FRAME",
-            ""
-        ),
-        "C-P": (
-            "powerpnt.exe",
-            "PPTFrameClass",
-            ""
-        ),
-        "E": (
-            "EXCEL.EXE",
-            "XLMAIN",
-            ""
-        ),
-        "W": (
-            "WINWORD.EXE",
-            "OpusApp",
-            ""
-        ),
-        "V": (
-            "Code.exe",
-            "Chrome_WidgetWin_1",
-            UserPath().resolve(r"scoop\apps\vscode\current\Code.exe").path
-        ),
-        "C-V": (
-            "vivaldi.exe",
-            "Chrome_WidgetWin_1",
-            ""
-        ),
-        "T": (
-            "TE64.exe",
-            "TablacusExplorer",
-            UserPath().resolve(r"Dropbox\portable_apps\tablacus\TE64.exe").path
-        ),
-        "M": (
-            "Mery.exe",
-            "TChildForm",
-            UserPath().resolve(r"AppData\Local\Programs\Mery\Mery.exe").path
-        ),
-        "X": (
-            "explorer.exe",
-            "CabinetWClass",
-            r"C:\Windows\explorer.exe"
-        )
-    }.items():
-        keymap_global["U1-C"][key] = pseudo_cuteExec(*params)
+    PseudoCuteExec().apply_combo(keymap_global["U1-C"])
 
 
-    # activate application
-    for key, params in {
-        "U1-T": (
-            "TE64.exe",
-            "TablacusExplorer",
-            ""
-        ),
-        "U1-P": (
-            "SumatraPDF.exe",
-            "SUMATRA_PDF_FRAME",
-            ""
-        ),
-        "LC-U1-M": (
-            "Mery.exe",
-            "TChildForm",
-            UserPath().resolve(r"AppData\Local\Programs\Mery\Mery.exe").path
-        ),
-        "LC-U1-N": (
-            "notepad.exe",
-            "Notepad",
-            r"C:\Windows\System32\notepad.exe"
-        ),
-        "C-U1-W": (
-            "WindowsTerminal.exe",
-            "CASCADIA_HOSTING_WINDOW_CLASS",
-            ""
-        )
-    }.items():
-        keymap_global["D-"+key] = pseudo_cuteExec(*params)
-
-    keymap_global["U1-M"]["U1-M"] = pseudo_cuteExec("Mery.exe", "TChildForm", None)
 
     # invoke specific filer
     def invoke_filer(dir_path:str) -> Callable:
@@ -1427,7 +1543,7 @@ def configure(keymap):
 
     # filer
     keymap_filer = keymap.defineWindowKeymap(check_func=CheckWnd.is_filer_viewmode)
-    for key, value in {
+    KeyAllocator({
         "A": ("Home"),
         "E": ("End"),
         "C": ("C-C"),
@@ -1442,12 +1558,8 @@ def configure(keymap):
         "Space": ("Enter"),
         "C-S-C": ("C-Add"),
         "C-L": ("A-D", "C-C"),
-    }.items():
-        keymap_filer[key] = value
+    }).alloc(keymap_filer)
 
-    keymap_filer["LC-K"] = keymap.defineMultiStrokeKeymap()
-    for simple_key in "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789":
-        keymap_filer["LC-K"][simple_key] = simple_key
 
     keymap_tablacus = keymap.defineWindowKeymap(check_func=CheckWnd.is_tablacus_viewmode)
     keymap_tablacus["H"] = "C-S-Tab"
@@ -1516,13 +1628,8 @@ def configure(keymap):
 
 
     class Zoom:
-        def __init__(self, s:str) -> None:
-            self.lines = s.replace(": ", "\uff1a").strip().splitlines()
-
-        def get_time(self) -> str:
-            if len(self.lines) < 9:
-                return ""
-            s = self.lines[3]
+        @staticmethod
+        def get_time(s) -> str:
             d_str = re.sub(r" 大阪.+$|^時間：", "", s)
             try:
                 d = datetime.datetime.strptime(d_str, "%Y年%m月%d日 %I:%M %p")
@@ -1531,17 +1638,21 @@ def configure(keymap):
             except:
                 return ""
 
-        def format(self) -> str:
-            due = self.get_time()
-            if len(self.lines) < 9 or len(due) < 1:
+        @classmethod
+        def format(cls, copied:str) -> str:
+            lines = copied.replace(": ", "\uff1a").strip().splitlines()
+            if len(lines) < 9:
+                return ""
+            due = cls.get_time(lines[3])
+            if len(due) < 1:
                 return ""
             return os.linesep.join([
                 "------------------------------",
-                self.lines[2],
+                lines[2],
                 due,
-                self.lines[6],
-                self.lines[8],
-                self.lines[9],
+                lines[6],
+                lines[8],
+                lines[9],
                 "------------------------------",
             ])
 
@@ -1571,7 +1682,7 @@ def configure(keymap):
             (" Postalcode | Address ", format_cb(split_postalcode) ),
             (" URL: - Decode ", format_cb(decode_url) ),
             ("      - Shorten Amazon ", replace_cb(r"^.+amazon\.co\.jp/.+dp/(.{10}).*", r"https://www.amazon.jp/dp/\1") ),
-            (" Zoom invitation ", format_cb(lambda s: Zoom(s).format()) ),
+            (" Zoom invitation ", format_cb(Zoom().format) ),
         ]
     }.items():
         m = menu + [("---------------- EXIT ----------------", lambda : None)]
