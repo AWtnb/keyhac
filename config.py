@@ -1571,30 +1571,6 @@ def configure(keymap):
     # popup clipboard menu
     ################################
 
-    # enclosing functions for pop-up menu
-    def format_cb(func:Callable) -> Callable:
-        def _formatter() -> str:
-            cb = keyhaclip.get_string()
-            if cb:
-                return func(cb)
-        return _formatter
-    def replace_cb(search:str, replace_to:str) -> Callable:
-        reg = re.compile(search)
-        def _replacer() -> str:
-            cb = keyhaclip.get_string()
-            if cb:
-                return reg.sub(replace_to, cb)
-        return _replacer
-
-    def catanate_file_content(s:str) -> str:
-        if PathInfo(s).isAccessible:
-            return Path(s).read_text("utf-8")
-        return ""
-
-    def skip_blank_line(s:str) -> str:
-        lines = s.strip().splitlines()
-        return os.linesep.join([l for l in lines if l.strip()])
-
     class CharWidth:
         full_letters = "\uff41\uff42\uff43\uff44\uff45\uff46\uff47\uff48\uff49\uff4a\uff4b\uff4c\uff4d\uff4e\uff4f\uff50\uff51\uff52\uff53\uff54\uff55\uff56\uff57\uff58\uff59\uff5a\uff21\uff22\uff23\uff24\uff25\uff26\uff27\uff28\uff29\uff2a\uff2b\uff2c\uff2d\uff2e\uff2f\uff30\uff31\uff32\uff33\uff34\uff35\uff36\uff37\uff38\uff39\uff3a\uff10\uff11\uff12\uff13\uff14\uff15\uff16\uff17\uff18\uff19\uff0d"
         half_letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-"
@@ -1606,26 +1582,6 @@ def configure(keymap):
         @classmethod
         def to_full_letter(cls, s:str) -> str:
             return s.translate(str.maketrans(cls.half_letters, cls.full_letters))
-
-    def split_postalcode(s:str) -> str:
-        reg = re.compile(r"(\d{3}).(\d{4})[\s\r\n]*(.+$)")
-        hankaku = CharWidth().to_half_letter(s.strip().strip("\u3012"))
-        m = reg.match(hankaku)
-        if m:
-            return "{}-{}\t{}".format(m.group(1), m.group(2), m.group(3))
-        return s
-
-    def fix_dumb_quotation(s:str) -> str:
-        reg = re.compile(r"\"([^\"]+?)\"|'([^']+?)'")
-        def _replacer(mo:re.Match) -> str:
-            if str(mo.group(0)).startswith('"'):
-                return "\u201c{}\u201d".format(mo.group(1))
-            return "\u2018{}\u2019".format(mo.group(1))
-        return reg.sub(_replacer, s)
-
-    def decode_url(s:str) -> str:
-        return urllib.parse.unquote(s)
-
 
     class Zoom:
         @staticmethod
@@ -1656,36 +1612,100 @@ def configure(keymap):
                 "------------------------------",
             ])
 
+    class ClipboardMenu:
+        @staticmethod
+        def format_cb(func:Callable) -> Callable:
+            def _formatter() -> str:
+                cb = keyhaclip.get_string()
+                if cb:
+                    return func(cb)
+            return _formatter
+
+        @staticmethod
+        def replace_cb(search:str, replace_to:str) -> Callable:
+            reg = re.compile(search)
+            def _replacer() -> str:
+                cb = keyhaclip.get_string()
+                if cb:
+                    return reg.sub(replace_to, cb)
+            return _replacer
+
+        @staticmethod
+        def catanate_file_content(s:str) -> str:
+            if PathInfo(s).isAccessible:
+                return Path(s).read_text("utf-8")
+            return ""
+
+        @staticmethod
+        def skip_blank_line(s:str) -> str:
+            lines = s.strip().splitlines()
+            return os.linesep.join([l for l in lines if l.strip()])
+
+        @staticmethod
+        def split_postalcode(s:str) -> str:
+            reg = re.compile(r"(\d{3}).(\d{4})[\s\r\n]*(.+$)")
+            hankaku = CharWidth().to_half_letter(s.strip().strip("\u3012"))
+            m = reg.match(hankaku)
+            if m:
+                return "{}-{}\t{}".format(m.group(1), m.group(2), m.group(3))
+            return s
+
+        @staticmethod
+        def fix_dumb_quotation(s:str) -> str:
+            reg = re.compile(r"\"([^\"]+?)\"|'([^']+?)'")
+            def _replacer(mo:re.Match) -> str:
+                if str(mo.group(0)).startswith('"'):
+                    return "\u201c{}\u201d".format(mo.group(1))
+                return "\u2018{}\u2019".format(mo.group(1))
+            return reg.sub(_replacer, s)
+
+        @staticmethod
+        def decode_url(s:str) -> str:
+            return urllib.parse.unquote(s)
+
+        @classmethod
+        def get_menu_noise_reduction(cls) -> list:
+            return [
+                (" Remove: - Blank lines ", cls.format_cb(cls.skip_blank_line) ),
+                ("         - Inside Paren ", cls.replace_cb(r"[\uff08\u0028].+?[\uff09\u0029]", "") ),
+                ("         - Line-break ", cls.replace_cb(r"\r?\n", "") ),
+                ("         - Quotations ", cls.replace_cb(r"[\u0022\u0027]", "") ),
+                (" Fix: - Dumb Quotation ", cls.format_cb(cls.fix_dumb_quotation) ),
+                ("      - MSWord-Bullet ", cls.replace_cb(r"\uf09f\u0009", "\u30fb") ),
+                ("      - KANGXI RADICALS ", cls.format_cb(KangxiRadicals().fix) ),
+            ]
+
+        @classmethod
+        def get_menu_transform(cls) -> list:
+            return [
+                (" Transform: => \uff21-\uff3a/\uff10-\uff19 ", cls.format_cb(CharWidth().to_full_letter) ),
+                ("            => A-Z/0-9 ", cls.format_cb(CharWidth().to_half_letter) ),
+                ("            => abc ", lambda : keyhaclip.get_string().lower() ),
+                ("            => ABC ", lambda : keyhaclip.get_string().upper() ),
+                (" Comma: - Curly (\uff0c) ", cls.replace_cb(r"\u3001", "\uff0c") ),
+                ("        - Straight (\u3001) ", cls.replace_cb(r"\uff0c", "\u3001") ),
+            ]
+
+        @classmethod
+        def get_menu_other(cls) -> list:
+            return [
+                (" Cat local file ", cls.format_cb(cls.catanate_file_content) ),
+                (" Mask USERNAME ", cls.format_cb(UserPath().mask_user_name) ),
+                (" Postalcode | Address ", cls.format_cb(cls.split_postalcode) ),
+                (" URL: - Decode ", cls.format_cb(cls.decode_url) ),
+                ("      - Shorten Amazon ", cls.replace_cb(r"^.+amazon\.co\.jp/.+dp/(.{10}).*", r"https://www.amazon.jp/dp/\1") ),
+                (" Zoom invitation ", cls.format_cb(Zoom().format) ),
+            ]
+
+        @classmethod
+        def apply(cls) -> None:
+                for title, menu in {
+                    "Noise-Reduction": cls.get_menu_noise_reduction(),
+                    "Transform Alphabet / Punctuation": cls.get_menu_transform(),
+                    "Others": cls.get_menu_other(),
+                }.items():
+                    m = menu + [("---------------- EXIT ----------------", lambda : None)]
+                    keymap.cblisters += [(title, cblister_FixedPhrase(m))]
+
+    ClipboardMenu().apply()
     keymap_global["LC-LS-X"] = LazyFunc(keymap.command_ClipboardList).defer(msec=100)
-
-    for title, menu in {
-        "Noise-Reduction": [
-            (" Remove: - Blank lines ", format_cb(skip_blank_line) ),
-            ("         - Inside Paren ", replace_cb(r"[\uff08\u0028].+?[\uff09\u0029]", "") ),
-            ("         - Line-break ", replace_cb(r"\r?\n", "") ),
-            ("         - Quotations ", replace_cb(r"[\u0022\u0027]", "") ),
-            (" Fix: - Dumb Quotation ", format_cb(fix_dumb_quotation) ),
-            ("      - MSWord-Bullet ", replace_cb(r"\uf09f\u0009", "\u30fb") ),
-            ("      - KANGXI RADICALS ", format_cb(KangxiRadicals().fix) ),
-        ],
-        "Transform Alphabet / Punctuation": [
-            (" Transform: => \uff21-\uff3a/\uff10-\uff19 ", format_cb(CharWidth().to_full_letter) ),
-            ("            => A-Z/0-9 ", format_cb(CharWidth().to_half_letter) ),
-            ("            => abc ", lambda : keyhaclip.get_string().lower() ),
-            ("            => ABC ", lambda : keyhaclip.get_string().upper() ),
-            (" Comma: - Curly (\uff0c) ", replace_cb(r"\u3001", "\uff0c") ),
-            ("        - Straight (\u3001) ", replace_cb(r"\uff0c", "\u3001") ),
-        ],
-        "Others": [
-            (" Cat local file ", format_cb(catanate_file_content) ),
-            (" Mask USERNAME ", format_cb(UserPath().mask_user_name) ),
-            (" Postalcode | Address ", format_cb(split_postalcode) ),
-            (" URL: - Decode ", format_cb(decode_url) ),
-            ("      - Shorten Amazon ", replace_cb(r"^.+amazon\.co\.jp/.+dp/(.{10}).*", r"https://www.amazon.jp/dp/\1") ),
-            (" Zoom invitation ", format_cb(Zoom().format) ),
-        ]
-    }.items():
-        m = menu + [("---------------- EXIT ----------------", lambda : None)]
-        keymap.cblisters += [(title, cblister_FixedPhrase(m))]
-
-
