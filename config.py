@@ -1413,7 +1413,7 @@ def configure(keymap):
     def invoke_cmder() -> None:
         scanner = WndScanner("ConEmu64.exe", "VirtualConsoleClass")
         if found := scanner.scan():
-            if not activate_wnd(found):
+            if not PseudoCuteExec.activate_wnd(found):
                 VIRTUAL_FINGER.type_keys("C-AtMark")
         else:
             cmder_path = UserPath().resolve(r"scoop\apps\cmder\current\Cmder.exe").path
@@ -1426,7 +1426,7 @@ def configure(keymap):
         else:
             scanner = WndScanner(DEFAULT_BROWSER.get_exe_name(), DEFAULT_BROWSER.get_wnd_class())
             if found := scanner.scan():
-                if activate_wnd(found):
+                if PseudoCuteExec.activate_wnd(found):
                     delay()
                     VIRTUAL_FINGER.type_keys("C-T")
                 else:
