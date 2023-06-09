@@ -1495,24 +1495,20 @@ def configure(keymap):
 
     keymap_sumatra_inputmode = keymap.defineWindowKeymap(check_func=CheckWnd.is_sumatra_inputmode)
 
-    class SumatraChangeTab:
-        @staticmethod
-        def apply(km:Keymap) -> None:
-            for key in ["C-Tab", "C-S-Tab"]:
-                km[key] = "Esc", key
-    SumatraChangeTab.apply(keymap_sumatra_inputmode)
+    def sumatra_change_tab(km:Keymap) -> None:
+        for key in ["C-Tab", "C-S-Tab"]:
+            km[key] = "Esc", key
+    sumatra_change_tab(keymap_sumatra_inputmode)
 
     keymap_sumatra_viewmode = keymap.defineWindowKeymap(check_func=CheckWnd.is_sumatra_viewmode)
     keymap_sumatra_viewmode["F"] = KeyPuncher(recover_ime=True).invoke("C-F")
     keymap_sumatra_viewmode["H"] = "C-S-Tab"
     keymap_sumatra_viewmode["L"] = "C-Tab"
 
-    class SumatraViewKey:
-        @staticmethod
-        def apply(km:Keymap) -> None:
-            for key in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
-                km[key] = KeyPuncher().invoke(key)
-    SumatraViewKey.apply(keymap_sumatra_viewmode)
+    def sumatra_view_key(km:Keymap) -> None:
+        for key in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
+            km[key] = KeyPuncher().invoke(key)
+    sumatra_view_key(keymap_sumatra_viewmode)
 
 
     # word
