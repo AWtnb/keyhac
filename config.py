@@ -236,10 +236,6 @@ def configure(keymap):
     def delay(msec:int=50) -> None:
         time.sleep(msec / 1000)
 
-    def prune_white(s:str) -> str:
-        return s.strip().translate(str.maketrans("", "", "\u200b\u3000\u0009\u0020"))
-
-
     class VirtualFinger:
         def __init__(self, inter_stroke_pause:int=10) -> None:
             self.inter_stroke_pause = inter_stroke_pause
@@ -360,25 +356,36 @@ def configure(keymap):
     keymap_global["U0-V"] = LazyFunc(lambda : paste_string(keyhaclip.get_string())).defer()
 
     # paste as plaintext (with trimming removable whitespaces)
-    def trim_and_paste(remove_white:bool=False, include_linebreak:bool=False) -> Callable:
-        def _paster() -> None:
-            s = keyhaclip.get_string().strip()
-            if remove_white:
-                s = prune_white(s)
-            if include_linebreak:
-                s = "".join(s.splitlines())
-            paste_string(s)
-        return LazyFunc(_paster).defer()
+    class StrCleaner:
+        @staticmethod
+        def clear_space(s:str) -> str:
+            return s.strip().translate(str.maketrans("", "", "\u200b\u3000\u0009\u0020"))
 
-    for mod_ctrl, remove_white in {
-        "": False,
-        "LC-": True,
-    }.items():
-        for mod_shift, include_linebreak in {
-            "": False,
-            "LS-": True,
-        }.items():
-            keymap_global[mod_ctrl+mod_shift+"U1-V"] = trim_and_paste(remove_white, include_linebreak)
+        @classmethod
+        def invoke(cls, remove_white:bool=False, include_linebreak:bool=False) -> Callable:
+            def _paster() -> None:
+                s = keyhaclip.get_string().strip()
+                if remove_white:
+                    s = cls.clear_space(s)
+                if include_linebreak:
+                    s = "".join(s.splitlines())
+                paste_string(s)
+            return LazyFunc(_paster).defer()
+
+        @classmethod
+        def apply(cls, km:Keymap) -> None:
+            for mod_ctrl, remove_white in {
+                "": False,
+                "LC-": True,
+            }.items():
+                for mod_shift, include_linebreak in {
+                    "": False,
+                    "LS-": True,
+                }.items():
+                    km[mod_ctrl+mod_shift+"U1-V"] = cls.invoke(remove_white, include_linebreak)
+
+    StrCleaner().apply(keymap_global)
+
 
     # select last word with ime
     def select_last_word() -> None:
@@ -407,7 +414,7 @@ def configure(keymap):
         if cb:
             total = len(cb)
             lines = len(cb.strip().splitlines())
-            net = len(prune_white(cb.strip()))
+            net = len(StrCleaner.clear_space(cb.strip()))
             t = "total: {}(lines: {}), net: {}".format(total, lines, net)
             keymap.popBalloon("", t, 5000)
     keymap_global["LC-U1-C"] = LazyFunc(count_chars).defer()
@@ -441,7 +448,7 @@ def configure(keymap):
     def re_input_with_ime() -> None:
         selection = copy_string()
         if selection:
-            sequence = ["Minus" if c == "-" else c for c in prune_white(selection)]
+            sequence = ["Minus" if c == "-" else c for c in StrCleaner.clear_space(selection)]
             set_ime(1)
             VIRTUAL_FINGER_QUICK.type_smart(*sequence)
     keymap_global["U1-I"] = LazyFunc(re_input_with_ime).defer()
@@ -1487,15 +1494,25 @@ def configure(keymap):
     keymap_sumatra["C-G"] = KeyPuncher().invoke("C-G")
 
     keymap_sumatra_inputmode = keymap.defineWindowKeymap(check_func=CheckWnd.is_sumatra_inputmode)
-    for key in ["C-Tab", "C-S-Tab"]:
-        keymap_sumatra_inputmode[key] = "Esc", key
+
+    class SumatraChangeTab:
+        @staticmethod
+        def apply(km:Keymap) -> None:
+            for key in ["C-Tab", "C-S-Tab"]:
+                km[key] = "Esc", key
+    SumatraChangeTab.apply(keymap_sumatra_inputmode)
 
     keymap_sumatra_viewmode = keymap.defineWindowKeymap(check_func=CheckWnd.is_sumatra_viewmode)
-    for key in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
-        keymap_sumatra_viewmode[key] = KeyPuncher().invoke(key)
     keymap_sumatra_viewmode["F"] = KeyPuncher(recover_ime=True).invoke("C-F")
     keymap_sumatra_viewmode["H"] = "C-S-Tab"
     keymap_sumatra_viewmode["L"] = "C-Tab"
+
+    class SumatraViewKey:
+        @staticmethod
+        def apply(km:Keymap) -> None:
+            for key in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
+                km[key] = KeyPuncher().invoke(key)
+    SumatraViewKey.apply(keymap_sumatra_viewmode)
 
 
     # word
