@@ -373,7 +373,7 @@ def configure(keymap):
             return LazyFunc(_paster).defer()
 
         @classmethod
-        def apply(cls, km:Keymap) -> None:
+        def apply(cls, km:Keymap, custom_key:str) -> None:
             for mod_ctrl, remove_white in {
                 "": False,
                 "LC-": True,
@@ -382,10 +382,9 @@ def configure(keymap):
                     "": False,
                     "LS-": True,
                 }.items():
-                    km[mod_ctrl+mod_shift+"U1-V"] = cls.invoke(remove_white, include_linebreak)
+                    km[mod_ctrl+mod_shift+custom_key] = cls.invoke(remove_white, include_linebreak)
 
-    StrCleaner().apply(keymap_global)
-
+    StrCleaner().apply(keymap_global, "U1-V")
 
     # select last word with ime
     def select_last_word() -> None:
