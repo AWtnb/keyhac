@@ -476,11 +476,9 @@ def configure(keymap):
     ################################
 
     class ConfigMenu:
-        def __init__(self) -> None:
-            pass
 
-        @classmethod
-        def read_config(cls) -> str:
+        @staticmethod
+        def read_config() -> str:
             return Path(getAppExePath(), "config.py").read_text("utf-8")
 
         @classmethod
@@ -489,8 +487,8 @@ def configure(keymap):
             keyhaclip.set_string(cls.read_config())
             PathInfo(repo).run()
 
-        @classmethod
-        def reload_config(cls) -> None:
+        @staticmethod
+        def reload_config() -> None:
             keymap.configure()
             keymap.updateKeymap()
             ts = datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S")
