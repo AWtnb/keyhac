@@ -281,21 +281,16 @@ def configure(keymap):
             setClipboardText(str(s))
 
         @classmethod
-        def paste(cls, s:str) -> None:
-            cls.set_string(s)
+        def paste(cls, s:str, format_func:Union[Callable, None]=None) -> None:
+            if format_func is not None:
+                cls.set_string(format_func(s))
+            else:
+                cls.set_string(s)
             VIRTUAL_FINGER_QUICK.type_keys("S-Insert")
 
         @classmethod
-        def paste_current(cls) -> None:
-            cls.paste(cls.get_string())
-
-        @classmethod
-        def paste_format(cls, s:str, format_func:Callable) -> None:
-            cls.paste(format_func(s))
-
-        @classmethod
-        def paste_current_format(cls, format_func:Callable) -> None:
-            cls.paste(format_func(cls.get_string()))
+        def paste_current(cls, format_func:Union[Callable, None]=None) -> None:
+            cls.paste(cls.get_string(), format_func)
 
         @classmethod
         def copy_string(cls) -> str:
@@ -386,7 +381,7 @@ def configure(keymap):
                     s = "".join(s.splitlines())
                 return s
             def _paster() -> None:
-                keyhaclip().paste_current_format(_cleaner)
+                keyhaclip().paste_current(_cleaner)
             return LazyFunc(_paster).defer()
 
         @classmethod
@@ -439,7 +434,7 @@ def configure(keymap):
     def quote_selection() -> None:
         cb = keyhaclip().copy_string()
         if cb:
-            keyhaclip().paste_format(cb, lambda x: ' "{}" '.format(x.strip()))
+            keyhaclip().paste(cb, lambda x: ' "{}" '.format(x.strip()))
     keymap_global["LC-U0-Q"] = LazyFunc(quote_selection).defer()
 
 
@@ -451,7 +446,7 @@ def configure(keymap):
                 return "> " + "".join([line.strip() for line in lines])
             return os.linesep.join(["> " + line for line in lines])
         def _paster() -> None:
-            keyhaclip().paste_current_format(_formatter)
+            keyhaclip().paste_current(_formatter)
         return LazyFunc(_paster).defer()
     keymap_global["U1-Q"] = paste_with_anchor(False)
     keymap_global["C-U1-Q"] = paste_with_anchor(True)
