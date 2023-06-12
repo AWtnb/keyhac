@@ -275,25 +275,40 @@ def configure(keymap):
         @staticmethod
         def get_string() -> str:
             return getClipboardText() or ""
+
         @staticmethod
         def set_string(s:str) -> None:
             setClipboardText(str(s))
 
-    def paste_string(s:str) -> None:
-        keyhaclip.set_string(s)
-        VIRTUAL_FINGER_QUICK.type_keys("S-Insert")
+        @classmethod
+        def paste(cls, s:str) -> None:
+            cls.set_string(s)
+            VIRTUAL_FINGER_QUICK.type_keys("S-Insert")
 
-    def copy_string() -> str:
-        keyhaclip.set_string("")
-        VIRTUAL_FINGER_QUICK.type_keys("C-Insert")
-        interval = 10
-        timeout = interval * 20
-        while timeout > 0:
-            if s := keyhaclip.get_string():
-                return s
-            delay(interval)
-            timeout -= interval
-        return ""
+        @classmethod
+        def paste_current(cls) -> None:
+            cls.paste(cls.get_string())
+
+        @classmethod
+        def paste_format(cls, s:str, format_func:Callable) -> None:
+            cls.paste(format_func(s))
+
+        @classmethod
+        def paste_current_format(cls, format_func:Callable) -> None:
+            cls.paste(format_func(cls.get_string()))
+
+        @classmethod
+        def copy_string(cls) -> str:
+            cls.set_string("")
+            VIRTUAL_FINGER_QUICK.type_keys("C-Insert")
+            interval = 10
+            timeout = interval * 20
+            while timeout > 0:
+                if s := cls.get_string():
+                    return s
+                delay(interval)
+                timeout -= interval
+            return ""
 
     class LazyFunc:
         def __init__(self, func:Callable) -> None:
@@ -353,7 +368,7 @@ def configure(keymap):
     keymap_global["S-U1-J"] = lambda : set_ime(0)
 
     # paste as plaintext
-    keymap_global["U0-V"] = LazyFunc(lambda : paste_string(keyhaclip.get_string())).defer()
+    keymap_global["U0-V"] = LazyFunc(keyhaclip().paste_current).defer()
 
     # paste as plaintext (with trimming removable whitespaces)
     class StrCleaner:
@@ -363,13 +378,15 @@ def configure(keymap):
 
         @classmethod
         def invoke(cls, remove_white:bool=False, include_linebreak:bool=False) -> Callable:
-            def _paster() -> None:
-                s = keyhaclip.get_string().strip()
+            def _cleaner(s:str) -> str:
+                s = s.strip()
                 if remove_white:
                     s = cls.clear_space(s)
                 if include_linebreak:
                     s = "".join(s.splitlines())
-                paste_string(s)
+                return s
+            def _paster() -> None:
+                keyhaclip().paste_current_format(_cleaner)
             return LazyFunc(_paster).defer()
 
         @classmethod
@@ -409,7 +426,7 @@ def configure(keymap):
 
     # count chars
     def count_chars() -> None:
-        cb = copy_string()
+        cb = keyhaclip().copy_string()
         if cb:
             total = len(cb)
             lines = len(cb.strip().splitlines())
@@ -420,32 +437,31 @@ def configure(keymap):
 
     # wrap with quote mark
     def quote_selection() -> None:
-        cb = copy_string()
+        cb = keyhaclip().copy_string()
         if cb:
-            paste_string(' "{}" '.format(cb.strip()))
+            keyhaclip().paste_format(cb, lambda x: ' "{}" '.format(x.strip()))
     keymap_global["LC-U0-Q"] = LazyFunc(quote_selection).defer()
 
 
     # paste with quote mark
     def paste_with_anchor(join_lines:bool=False) -> Callable:
-        def _paster() -> None:
-            cb = keyhaclip.get_string()
-            lines = cb.strip().splitlines()
+        def _formatter(s:str) -> str:
+            lines = s.strip().splitlines()
             if join_lines:
-                quoted = "> " + "".join([line.strip() for line in lines])
-            else:
-                quoted = os.linesep.join(["> " + line for line in lines])
-            paste_string(quoted)
+                return "> " + "".join([line.strip() for line in lines])
+            return os.linesep.join(["> " + line for line in lines])
+        def _paster() -> None:
+            keyhaclip().paste_current_format(_formatter)
         return LazyFunc(_paster).defer()
     keymap_global["U1-Q"] = paste_with_anchor(False)
     keymap_global["C-U1-Q"] = paste_with_anchor(True)
 
     # open url in browser
-    keymap_global["C-U0-O"] = LazyFunc(lambda : PathInfo(copy_string().strip()).run()).defer()
+    keymap_global["C-U0-O"] = LazyFunc(lambda : PathInfo(keyhaclip().copy_string().strip()).run()).defer()
 
     # re-input selected string with ime
     def re_input_with_ime() -> None:
-        selection = copy_string()
+        selection = keyhaclip().copy_string()
         if selection:
             sequence = ["Minus" if c == "-" else c for c in StrCleaner.clear_space(selection)]
             set_ime(1)
@@ -494,18 +510,18 @@ def configure(keymap):
             print("\n{} reloaded config.py\n".format(ts))
 
         @classmethod
-        def apply(cls) -> None:
-            keymap_global["LC-U0-X"] = keymap.defineMultiStrokeKeymap()
+        def apply(cls, km:Keymap) -> None:
             for key, func in {
                 "R" : cls.reload_config,
                 "E" : keymap.command_EditConfig,
                 "G" : cls.open_github,
-                "P" : lambda : paste_string(cls.read_config()),
+                "P" : lambda : keyhaclip().paste(cls.read_config()),
                 "X" : lambda : None,
             }.items():
-                keymap_global["LC-U0-X"][key] = LazyFunc(func).defer()
+                km[key] = LazyFunc(func).defer()
 
-    ConfigMenu().apply()
+    keymap_global["LC-U0-X"] = keymap.defineMultiStrokeKeymap()
+    ConfigMenu().apply(keymap_global["LC-U0-X"])
 
     keymap_global["U1-F12"] = ConfigMenu.reload_config
 
@@ -1131,7 +1147,7 @@ def configure(keymap):
         @staticmethod
         def invoke(uri:str, strict:bool=False, strip_hiragana:bool=False) -> Callable:
             def _search() -> None:
-                s = copy_string()
+                s = keyhaclip().copy_string()
                 query = SearchQuery(s)
                 query.fix_kangxi()
                 query.remove_honorific()
@@ -1558,10 +1574,16 @@ def configure(keymap):
         "C-L": ("A-D", "C-C"),
     }).alloc(keymap_filer)
 
-
     keymap_tablacus = keymap.defineWindowKeymap(check_func=CheckWnd.is_tablacus_viewmode)
     keymap_tablacus["H"] = "C-S-Tab"
     keymap_tablacus["L"] = "C-Tab"
+
+    def tablacus_key_accelerator(km:Keymap) -> None:
+        for alphabet in "ABCDEFGHIJKLMNOPQRSTUVWXTYZ":
+            km[alphabet] = alphabet
+
+    keymap_tablacus["LC-K"] = keymap.defineMultiStrokeKeymap()
+    tablacus_key_accelerator(keymap_tablacus["LC-K"])
 
 
 
