@@ -165,11 +165,16 @@ def configure(keymap):
     CoreKeys().ignore_kanakey(keymap_global)
 
 
-    def allocate_key(mapping_dict:dict, km:Keymap):
-        for key, value in mapping_dict.items():
-            km[key] = value
 
-    allocate_key({
+    class KeyAllocator:
+        def __init__(self, mapping_dict:dict) -> None:
+            self.dict = mapping_dict
+
+        def apply(self, km:Keymap):
+            for key, value in self.dict.items():
+                km[key] = value
+
+    KeyAllocator({
         # BackSpace / Delete
         "U0-D": ("Delete"),
         "U0-B": ("Back"),
@@ -222,7 +227,7 @@ def configure(keymap):
 
         "Insert": (lambda : None),
 
-    }, keymap_global)
+    }).apply(keymap_global)
 
 
     ################################
@@ -1576,7 +1581,7 @@ def configure(keymap):
 
     # filer
     keymap_filer = keymap.defineWindowKeymap(check_func=CheckWnd.is_filer_viewmode)
-    allocate_key({
+    KeyAllocator({
         "A": ("Home"),
         "E": ("End"),
         "C": ("C-C"),
@@ -1591,7 +1596,7 @@ def configure(keymap):
         "Space": ("Enter"),
         "C-S-C": ("C-Add"),
         "C-L": ("A-D", "C-C"),
-    }, keymap_filer)
+    }).apply(keymap_filer)
 
     keymap_tablacus = keymap.defineWindowKeymap(check_func=CheckWnd.is_tablacus_viewmode)
     keymap_tablacus["H"] = "C-S-Tab"
