@@ -165,15 +165,11 @@ def configure(keymap):
     CoreKeys().ignore_kanakey(keymap_global)
 
 
-    class KeyAllocator:
-        def __init__(self, mapping_dict:dict) -> None:
-            self.dict = mapping_dict
+    def allocate_key(mapping_dict:dict, km:Keymap):
+        for key, value in mapping_dict.items():
+            km[key] = value
 
-        def alloc(self, km:Keymap):
-            for key, value in self.dict.items():
-                km[key] = value
-
-    KeyAllocator({
+    allocate_key({
         # BackSpace / Delete
         "U0-D": ("Delete"),
         "U0-B": ("Back"),
@@ -226,7 +222,7 @@ def configure(keymap):
 
         "Insert": (lambda : None),
 
-    }).alloc(keymap_global)
+    }, keymap_global)
 
 
     ################################
@@ -349,9 +345,6 @@ def configure(keymap):
 
     # ime dict tool
     keymap_global["U0-F7"] = LazyFunc(lambda : PathInfo(r"C:\Program Files (x86)\Google\Google Japanese Input\GoogleIMEJaTool.exe").run("--mode=word_register_dialog")).defer()
-
-    # screen sketch
-    keymap_global["C-U1-S"] = LazyFunc(keymap.ShellExecuteCommand(None, "ms-screensketch:", None, None)).defer()
 
     # listup Window
     keymap_global["U0-W"] = LazyFunc(lambda : VIRTUAL_FINGER_QUICK.type_keys("LCtrl-LAlt-Tab")).defer()
@@ -478,7 +471,7 @@ def configure(keymap):
             ksnip_path.run()
         else:
             VIRTUAL_FINGER.type_keys("Lwin-S-S")
-    keymap_global["U1-PrintScreen"] = screenshot
+    keymap_global["C-U1-S"] = screenshot
 
 
     ################################
@@ -528,6 +521,9 @@ def configure(keymap):
     class WndRect:
         def __init__(self, left:int, top:int, right:int, bottom:int) -> None:
             self._rect = [left, top, right, bottom]
+            self.left, self.top, self.right, self.bottom = self._rect
+            self.half_width = int((self.right + self.left) / 2)
+            self.half_height = int((self.bottom + self.top) / 2)
 
         def check_rect(self, wnd:pyauto.Window) -> bool:
             return list(wnd.getRect()) == self._rect
@@ -549,17 +545,18 @@ def configure(keymap):
                     trial_limit -= 1
             return _snapper
 
+        def get_upper_half(self) -> list:
+            return [self.left, self.top, self.right, self.half_height]
 
-    class SizeMenu:
-        def __init__(self, max:int) -> None:
-            self.dict = {
-                "small": int(max / 3),
-                "middle": int(max / 2),
-                "large": int(max * 2 / 3),
-            }
+        def get_lower_half(self) -> list:
+            return [self.left, self.half_height, self.right, self.bottom]
 
-        def iterate(self) -> list:
-            return self.dict.items()
+        def get_left_half(self) -> list:
+            return [self.left, self.top, self.half_width, self.bottom]
+
+        def get_right_half(self) -> list:
+            return [self.half_width, self.top, self.right, self.bottom]
+
 
     class MonitorRect:
         def __init__(self, rect:list, is_primary:int) -> None:
@@ -567,13 +564,13 @@ def configure(keymap):
             self.left, self.top, self.right, self.bottom = rect
             self.max_width = self.right - self.left
             self.max_height = self.bottom - self.top
-            self.possible_width = SizeMenu(self.max_width)
-            self.possible_height = SizeMenu(self.max_height)
+            self.possible_width = self.get_variation(self.max_width)
+            self.possible_height = self.get_variation(self.max_height)
             self.area_mapping = {}
 
         def set_center_rect(self) -> None:
             d = {}
-            for size,px in self.possible_width.iterate():
+            for size,px in self.possible_width.items():
                 lx = self.left + int((self.max_width - px) / 2)
                 d[size] = WndRect(lx, self.top, lx + px, self.bottom)
             self.area_mapping["center"] = d
@@ -581,7 +578,7 @@ def configure(keymap):
         def set_horizontal_rect(self) -> None:
             for pos in ("left", "right"):
                 d = {}
-                for size,px in self.possible_width.iterate():
+                for size,px in self.possible_width.items():
                     if pos == "right":
                         lx = self.right - px
                     else:
@@ -592,7 +589,7 @@ def configure(keymap):
         def set_vertical_rect(self) -> None:
             for pos in ("top", "bottom"):
                 d = {}
-                for size,px in self.possible_height.iterate():
+                for size,px in self.possible_height.items():
                     if pos == "bottom":
                         ty = self.bottom - px
                     else:
@@ -601,38 +598,12 @@ def configure(keymap):
                 self.area_mapping[pos] = d
 
         @staticmethod
-        def to_half_width(to_left:bool=True) -> Callable:
-            def _snap() -> None:
-                wnd = keymap.getTopLevelWindow()
-                wnd_left, wnd_top, wnd_right, wnd_bottom = wnd.getRect()
-                if to_left:
-                    l, r = [wnd_left, int((wnd_right + wnd_left) / 2)]
-                else:
-                    l, r = [int((wnd_right + wnd_left) / 2), wnd_right]
-                if abs(r - l) < 400:
-                    return
-                if wnd.isMaximized():
-                    wnd.restore()
-                    delay()
-                wnd.setRect([l, wnd_top, r, wnd_bottom])
-            return LazyFunc(_snap).defer()
-
-        @staticmethod
-        def to_half_height(to_upper:bool=True) -> Callable:
-            def _snap() -> None:
-                wnd = keymap.getTopLevelWindow()
-                wnd_left, wnd_top, wnd_right, wnd_bottom = wnd.getRect()
-                if to_upper:
-                    t, b = [wnd_top, int((wnd_bottom + wnd_top) / 2)]
-                else:
-                    t, b = [int((wnd_bottom + wnd_top) / 2), wnd_bottom]
-                if abs(b - t) < 400:
-                    return
-                if wnd.isMaximized():
-                    wnd.restore()
-                    delay()
-                wnd.setRect([wnd_left, t, wnd_right, b])
-            return LazyFunc(_snap).defer()
+        def get_variation(max_size:int) -> dict:
+            return {
+                "small": int(max_size / 3),
+                "middle": int(max_size / 2),
+                "large": int(max_size * 2 / 3),
+            }
 
     def get_monitors() -> list:
         monitors = []
@@ -658,18 +629,6 @@ def configure(keymap):
     keymap_global["U0-Left"] = keymap.MouseHorizontalWheelCommand(-0.5)
     keymap_global["U0-Right"] = keymap.MouseHorizontalWheelCommand(+0.5)
 
-    def set_cursor_pos(x:int, y:int) -> None:
-        keymap.beginInput()
-        keymap.input_seq.append(pyauto.MouseMove(x, y))
-        keymap.endInput()
-
-    def cursor_to_center() -> None:
-        wnd = keymap.getTopLevelWindow()
-        wnd_left, wnd_top, wnd_right, wnd_bottom = wnd.getRect()
-        to_x = int((wnd_left + wnd_right) / 2)
-        to_y = int((wnd_bottom + wnd_top) / 2)
-        set_cursor_pos(to_x, to_y)
-    keymap_global["O-(236)"] = cursor_to_center
 
     class CursorPos:
         def __init__(self) -> None:
@@ -691,13 +650,28 @@ def configure(keymap):
                 x, y = pyauto.Input.getCursorPos()
                 idx = self.get_position_index(x, y)
                 if idx < 0 or idx == len(self.pos) - 1:
-                    set_cursor_pos(*self.pos[0])
+                    self.snap(*self.pos[0])
                 else:
-                    set_cursor_pos(*self.pos[idx+1])
+                    self.snap(*self.pos[idx+1])
             return _snap
+
+        @staticmethod
+        def snap(x:int, y:int) -> None:
+            keymap.beginInput()
+            keymap.input_seq.append(pyauto.MouseMove(x, y))
+            keymap.endInput()
+
+        @classmethod
+        def snap_to_center(cls) -> None:
+            wnd = keymap.getTopLevelWindow()
+            wnd_left, wnd_top, wnd_right, wnd_bottom = wnd.getRect()
+            to_x = int((wnd_left + wnd_right) / 2)
+            to_y = int((wnd_bottom + wnd_top) / 2)
+            cls.snap(to_x, to_y)
 
     keymap_global["O-RCtrl"] = CursorPos().get_snap_func()
 
+    keymap_global["O-(236)"] = CursorPos.snap_to_center
 
 
     ################################
@@ -733,35 +707,88 @@ def configure(keymap):
         }
 
         @classmethod
-        def alloc(cls, km:Keymap) -> None:
+        def alloc_flexible(cls, km:Keymap) -> None:
             for mod_mntr, mntr_idx in cls.monitor_dict.items():
                 for mod_area, size in cls.size_dict.items():
                     for key, pos in cls.snap_key_dict.items():
                         if mntr_idx < len(KEYMAP_MONITORS):
                             wnd_rect = KEYMAP_MONITORS[mntr_idx].area_mapping[pos][size]
-                            km["U1-M"][mod_mntr+mod_area+key] = LazyFunc(wnd_rect.get_snap_func()).defer()
+                            km[mod_mntr+mod_area+key] = LazyFunc(wnd_rect.get_snap_func()).defer()
 
-    WndPosAllocator().alloc(keymap_global)
+        @staticmethod
+        def alloc_maximize(km:Keymap, mapping_dict:dict) -> None:
+            for key, towards in mapping_dict.items():
+                def _snap() -> None:
+                    VIRTUAL_FINGER.type_keys("LShift-LWin-"+towards)
+                    delay()
+                    keymap.getTopLevelWindow().maximize()
+                km[key] = LazyFunc(_snap).defer()
 
+    WndPosAllocator().alloc_flexible(keymap_global["U1-M"])
 
-    def snap_and_maximize(towards="Left") -> Callable:
-        def _snap() -> None:
-            VIRTUAL_FINGER.type_keys("LShift-LWin-"+towards)
-            delay()
-            keymap.getTopLevelWindow().maximize()
-        return LazyFunc(_snap).defer()
-    keymap_global["LC-U1-L"] = snap_and_maximize("Right")
-    keymap_global["LC-U1-H"] = snap_and_maximize("Left")
+    WndPosAllocator.alloc_maximize(keymap_global, {
+        "LC-U1-L": "Right",
+        "LC-U1-H": "Left"
+    })
+    WndPosAllocator.alloc_maximize(keymap_global["U1-M"], {
+        "U0-L": "Right",
+        "U0-J": "Right",
+        "U0-H": "Left",
+        "U0-K": "Left",
+    })
 
-    keymap_global["U1-M"]["U0-L"] = snap_and_maximize("Right")
-    keymap_global["U1-M"]["U0-J"] = snap_and_maximize("Right")
-    keymap_global["U1-M"]["U0-H"] = snap_and_maximize("Left")
-    keymap_global["U1-M"]["U0-K"] = snap_and_maximize("Left")
+    class WndShrinker:
+        @staticmethod
+        def cancel_maximize(wnd:pyauto.Window) -> None:
+            if wnd.isMaximized():
+                wnd.restore()
+                delay()
 
-    keymap_global["U1-M"]["U0-Left"] = MonitorRect.to_half_width(True)
-    keymap_global["U1-M"]["U0-Right"] = MonitorRect.to_half_width(False)
-    keymap_global["U1-M"]["U0-Up"] = MonitorRect.to_half_height(True)
-    keymap_global["U1-M"]["U0-Down"] = MonitorRect.to_half_height(False)
+        @classmethod
+        def for_width(cls, to_left:bool=True) -> Callable:
+            def _snap() -> None:
+                wnd = keymap.getTopLevelWindow()
+                wr = WndRect(*wnd.getRect())
+                if to_left:
+                    rect = wr.get_left_half()
+                else:
+                    rect = wr.get_right_half()
+                if abs(rect[0] - rect[2]) < 400:
+                    return
+                cls.cancel_maximize(wnd)
+                wnd.setRect(rect)
+            return _snap
+
+        @classmethod
+        def for_height(cls, to_upper:bool=True) -> Callable:
+            def _snap() -> None:
+                wnd = keymap.getTopLevelWindow()
+                wr = WndRect(*wnd.getRect())
+                if to_upper:
+                    rect = wr.get_upper_half()
+                else:
+                    rect = wr.get_lower_half()
+                if abs(rect[1] - rect[3]) < 400:
+                    return
+                cls.cancel_maximize(wnd)
+                wnd.setRect(rect)
+            return _snap
+
+        @classmethod
+        def apply(cls, km:Keymap) -> Callable:
+            for key, to_left in {
+                "U0-Left": True,
+                "U0-Right": False,
+            }.items():
+                km[key] = LazyFunc(cls.for_width(to_left)).defer()
+            for key, to_upper in {
+                "U0-Up": True,
+                "U0-Down": False,
+            }.items():
+                km[key] = LazyFunc(cls.for_height(to_upper)).defer()
+
+    WndShrinker().apply(keymap_global["U1-M"])
+
 
 
     ################################
@@ -863,44 +890,41 @@ def configure(keymap):
     keymap_global["U0-Yen"] = KeyPuncher().invoke("S-Yen", "Left")
     keymap_global["U1-S"] = KeyPuncher().invoke("Slash")
 
-    class PuncsRemap:
-        @staticmethod
-        def without_ime(km:Keymap) -> None:
-            for key, send in {
-                "U0-1": "S-1",
-                "U0-4": "$_",
-                "U1-4": "$_.",
-                "U0-Colon": "Colon",
-                "U0-Comma": "Comma",
-                "U0-Period": "Period",
-                "U0-Slash": "Slash",
-                "U0-U": "S-BackSlash",
-                "U1-Enter": "<br />",
-                "U1-Minus": "Minus",
-                "LS-U0-SemiColon": "SemiColon",
-            }.items():
-                km[key] = KeyPuncher().invoke(send)
+    def punc_remap(mapping_dict:dict, km:Keymap, recover_ime:bool) -> None:
+        for key, send in mapping_dict.items():
+            km[key] = KeyPuncher(recover_ime=recover_ime).invoke(send)
 
-        @staticmethod
-        def with_ime(km:Keymap) -> None:
-            for key, send in {
-                "S-U0-Colon": "\uff1a", # FULLWIDTH COLON
-                "S-U0-Comma": "\uff0c", # FULLWIDTH COMMA
-                "S-U0-Minus": "\u3000\u2015\u2015",
-                "S-U0-Period": "\uff0e", # FULLWIDTH FULL STOP
-                "S-U0-U": "S-BackSlash",
-                "U0-Minus": "\u2015\u2015", # HORIZONTAL BAR * 2
-                "U0-P": "\u30fb", # KATAKANA MIDDLE DOT
-                "U0-SemiColon": "+ ",
-                "S-U0-8": "- ",
-                "LC-U1-B": "- ",
-                "U1-1": "1. ",
-                "S-U0-7": "1. ",
-            }.items():
-                km[key] = KeyPuncher(recover_ime=True).invoke(send)
+    punc_remap({
+        "U0-1": "S-1",
+        "U0-4": "$_",
+        "U1-4": "$_.",
+        "U0-Colon": "Colon",
+        "U0-Comma": "Comma",
+        "U0-Period": "Period",
+        "U0-Slash": "Slash",
+        "U0-U": "S-BackSlash",
+        "U1-Enter": "<br />",
+        "U1-Minus": "Minus",
+        "LS-U0-SemiColon": "SemiColon",
+    }, keymap_global, recover_ime=False)
 
-    PuncsRemap.without_ime(keymap_global)
-    PuncsRemap.with_ime(keymap_global)
+    punc_remap({
+        "S-U0-Colon": "\uff1a", # FULLWIDTH COLON
+        "S-U0-Comma": "\uff0c", # FULLWIDTH COMMA
+        "S-U0-Minus": "\u3000\u2015\u2015",
+        "S-U0-Period": "\uff0e", # FULLWIDTH FULL STOP
+        "S-U0-U": "S-BackSlash",
+        "U0-Minus": "\u2015\u2015", # HORIZONTAL BAR * 2
+        "U0-P": "\u30fb", # KATAKANA MIDDLE DOT
+        "S-C-U0-P": "\u2049", # EXCLAMATION QUESTION MARK
+        "U0-SemiColon": "+ ",
+        "S-U0-8": "- ",
+        "LC-U1-B": "- ",
+        "U1-1": "1. ",
+        "S-U0-7": "1. ",
+    }, keymap_global, recover_ime=True)
+
+
 
     class PairedPuncs:
         def __init__(self, pair_mapping: dict, recover_ime:bool) -> None:
@@ -1547,12 +1571,12 @@ def configure(keymap):
         return _sender
 
     keymap_tb = keymap.defineWindowKeymap(exe_name="thunderbird.exe")
-    keymap_tb["C-S-V"] = thunderbird_new_mail(["A-S", "Tab", "C-V", "C-Home", "S-End"], ["C-V"])
-    keymap_tb["C-S-S"] = thunderbird_new_mail(["C-X", "Delete", "A-S", "C-V"], ["A-S"])
+    keymap_tb["C-S-V"] = thunderbird_new_mail(["A-S", "Tab", "C-V", "C-Home"], ["C-V"])
+    keymap_tb["C-S-S"] = thunderbird_new_mail(["C-Home", "S-End", "C-X", "Delete", "A-S", "C-V"], ["A-S"])
 
     # filer
     keymap_filer = keymap.defineWindowKeymap(check_func=CheckWnd.is_filer_viewmode)
-    KeyAllocator({
+    allocate_key({
         "A": ("Home"),
         "E": ("End"),
         "C": ("C-C"),
@@ -1567,7 +1591,7 @@ def configure(keymap):
         "Space": ("Enter"),
         "C-S-C": ("C-Add"),
         "C-L": ("A-D", "C-C"),
-    }).alloc(keymap_filer)
+    }, keymap_filer)
 
     keymap_tablacus = keymap.defineWindowKeymap(check_func=CheckWnd.is_tablacus_viewmode)
     keymap_tablacus["H"] = "C-S-Tab"
