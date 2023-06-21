@@ -533,8 +533,8 @@ def configure(keymap):
         def check_rect(self, wnd:pyauto.Window) -> bool:
             return list(wnd.getRect()) == self._rect
 
-        def get_snap_func(self) -> Callable:
-            def _snapper() -> None:
+        def invoke_snapper(self) -> Callable:
+            def _snap() -> None:
                 wnd = keymap.getTopLevelWindow()
                 if self.check_rect(wnd):
                     wnd.maximize()
@@ -545,10 +545,10 @@ def configure(keymap):
                 trial_limit = 2
                 while trial_limit > 0:
                     wnd.setRect(self._rect)
-                    if self.check_rect(wnd):
+                    if list(wnd.getRect()) == self._rect:
                         return
                     trial_limit -= 1
-            return _snapper
+            return _snap
 
         def get_upper_half(self) -> list:
             return [self.left, self.top, self.right, self.half_height]
@@ -650,7 +650,7 @@ def configure(keymap):
                     return i
             return -1
 
-        def get_snap_func(self) -> Callable:
+        def invoke_snapper(self) -> Callable:
             def _snap() -> None:
                 x, y = pyauto.Input.getCursorPos()
                 idx = self.get_position_index(x, y)
@@ -674,9 +674,9 @@ def configure(keymap):
             to_y = int((wnd_bottom + wnd_top) / 2)
             cls.snap(to_x, to_y)
 
-    keymap_global["O-RCtrl"] = CursorPos().get_snap_func()
+    keymap_global["O-RCtrl"] = CursorPos().invoke_snapper()
 
-    keymap_global["O-(236)"] = CursorPos.snap_to_center
+    keymap_global["O-(236)"] = CursorPos().snap_to_center
 
 
     ################################
@@ -718,7 +718,7 @@ def configure(keymap):
                     for key, pos in cls.snap_key_dict.items():
                         if mntr_idx < len(KEYMAP_MONITORS):
                             wnd_rect = KEYMAP_MONITORS[mntr_idx].area_mapping[pos][size]
-                            km[mod_mntr+mod_area+key] = LazyFunc(wnd_rect.get_snap_func()).defer()
+                            km[mod_mntr+mod_area+key] = LazyFunc(wnd_rect.invoke_snapper()).defer()
 
         @staticmethod
         def alloc_maximize(km:Keymap, mapping_dict:dict) -> None:
@@ -743,11 +743,22 @@ def configure(keymap):
     })
 
     class WndShrinker:
+
+        min_px = 400
+
         @staticmethod
         def cancel_maximize(wnd:pyauto.Window) -> None:
             if wnd.isMaximized():
                 wnd.restore()
                 delay()
+
+        @classmethod
+        def check_min_width(cls, rect:list) -> bool:
+            return cls.min_px < abs(rect[0] - rect[2])
+
+        @classmethod
+        def check_min_height(cls, rect:list) -> bool:
+            return cls.min_px < abs(rect[1] - rect[3])
 
         @classmethod
         def for_width(cls, to_left:bool=True) -> Callable:
@@ -758,10 +769,9 @@ def configure(keymap):
                     rect = wr.get_left_half()
                 else:
                     rect = wr.get_right_half()
-                if abs(rect[0] - rect[2]) < 400:
-                    return
-                cls.cancel_maximize(wnd)
-                wnd.setRect(rect)
+                if cls.check_min_width(rect):
+                    cls.cancel_maximize(wnd)
+                    wnd.setRect(rect)
             return _snap
 
         @classmethod
@@ -773,10 +783,9 @@ def configure(keymap):
                     rect = wr.get_upper_half()
                 else:
                     rect = wr.get_lower_half()
-                if abs(rect[1] - rect[3]) < 400:
-                    return
-                cls.cancel_maximize(wnd)
-                wnd.setRect(rect)
+                if cls.check_min_height(rect):
+                    cls.cancel_maximize(wnd)
+                    wnd.setRect(rect)
             return _snap
 
         @classmethod
@@ -873,8 +882,8 @@ def configure(keymap):
             for combo, stroke in {
                 "Minus,F": ("\uff0d"),
                 "F,G": ("\u3013\u3013"),
-                "F,0": ("●●"),
-                "F,4": ("■■"),
+                "F,0": ("\u25cf\u25cf"),
+                "F,4": ("\u25a0\u25a0"),
                 "M,1": ("# "),
                 "M,2": ("## "),
                 "M,3": ("### "),
@@ -1588,7 +1597,6 @@ def configure(keymap):
         "J": ("Down"),
         "K": ("Up"),
         "N": ("F2"),
-        "R": ("F5"),
         "U": ("LAlt-Up"),
         "V": ("C-V"),
         "W": ("C-W"),
