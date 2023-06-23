@@ -529,6 +529,12 @@ def configure(keymap):
             self.left, self.top, self.right, self.bottom = self._rect
             self.half_width = int((self.right + self.left) / 2)
             self.half_height = int((self.bottom + self.top) / 2)
+            self.half_rects = {
+                "top": self.get_vertical_half(True),
+                "bottom": self.get_vertical_half(False),
+                "left": self.get_horizontal_half(True),
+                "right": self.get_horizontal_half(False),
+            }
 
         def check_rect(self, wnd:pyauto.Window) -> bool:
             return list(wnd.getRect()) == self._rect
@@ -550,17 +556,17 @@ def configure(keymap):
                     trial_limit -= 1
             return _snap
 
-        def get_upper_half(self) -> list:
-            return [self.left, self.top, self.right, self.half_height]
+        def get_vertical_half(self, upper:bool) -> list:
+            if upper:
+                return [self.left, self.top, self.right, self.half_height]
+            else:
+                return [self.left, self.half_height, self.right, self.bottom]
 
-        def get_lower_half(self) -> list:
-            return [self.left, self.half_height, self.right, self.bottom]
-
-        def get_left_half(self) -> list:
-            return [self.left, self.top, self.half_width, self.bottom]
-
-        def get_right_half(self) -> list:
-            return [self.half_width, self.top, self.right, self.bottom]
+        def get_horizontal_half(self, leftward:bool) -> list:
+            if leftward:
+                return [self.left, self.top, self.half_width, self.bottom]
+            else:
+                return [self.half_width, self.top, self.right, self.bottom]
 
 
     class MonitorRect:
@@ -744,7 +750,7 @@ def configure(keymap):
 
     class WndShrinker:
 
-        min_px = 400
+        min_px = 200
 
         @staticmethod
         def cancel_maximize(wnd:pyauto.Window) -> None:
@@ -761,45 +767,25 @@ def configure(keymap):
             return cls.min_px < abs(rect[1] - rect[3])
 
         @classmethod
-        def for_width(cls, to_left:bool=True) -> Callable:
+        def invoke_snapper(cls, pos:str) -> Callable:
             def _snap() -> None:
                 wnd = keymap.getTopLevelWindow()
                 wr = WndRect(*wnd.getRect())
-                if to_left:
-                    rect = wr.get_left_half()
-                else:
-                    rect = wr.get_right_half()
+                rect = wr.half_rects[pos]
                 if cls.check_min_width(rect):
                     cls.cancel_maximize(wnd)
                     wnd.setRect(rect)
             return _snap
 
         @classmethod
-        def for_height(cls, to_upper:bool=True) -> Callable:
-            def _snap() -> None:
-                wnd = keymap.getTopLevelWindow()
-                wr = WndRect(*wnd.getRect())
-                if to_upper:
-                    rect = wr.get_upper_half()
-                else:
-                    rect = wr.get_lower_half()
-                if cls.check_min_height(rect):
-                    cls.cancel_maximize(wnd)
-                    wnd.setRect(rect)
-            return _snap
-
-        @classmethod
         def apply(cls, km:Keymap) -> Callable:
-            for key, to_left in {
-                "U0-Left": True,
-                "U0-Right": False,
+            for key, pos in {
+                "H": "left",
+                "J": "bottom",
+                "K": "top",
+                "L": "right",
             }.items():
-                km[key] = LazyFunc(cls.for_width(to_left)).defer()
-            for key, to_upper in {
-                "U0-Up": True,
-                "U0-Down": False,
-            }.items():
-                km[key] = LazyFunc(cls.for_height(to_upper)).defer()
+                km["U1-"+key] = cls.invoke_snapper(pos)
 
     WndShrinker().apply(keymap_global["U1-M"])
 
@@ -1597,6 +1583,7 @@ def configure(keymap):
         "J": ("Down"),
         "K": ("Up"),
         "N": ("F2"),
+        "R": ("C-R"),
         "U": ("LAlt-Up"),
         "V": ("C-V"),
         "W": ("C-W"),
