@@ -557,16 +557,24 @@ def configure(keymap):
             return _snap
 
         def get_vertical_half(self, upper:bool) -> list:
+            r = self._rect[:]
             if upper:
-                return [self.left, self.top, self.right, self.half_height]
+                r[3] = self.half_height
             else:
-                return [self.left, self.half_height, self.right, self.bottom]
+                r[1] = self.half_height
+            if 200 < abs(r[1] - r[3]):
+                return r
+            return []
 
         def get_horizontal_half(self, leftward:bool) -> list:
+            r = self._rect[:]
             if leftward:
-                return [self.left, self.top, self.half_width, self.bottom]
+                r[2] = self.half_height
             else:
-                return [self.half_width, self.top, self.right, self.bottom]
+                r[0] = self.half_height
+            if 300 < abs(r[0] - r[2]):
+                return r
+            return []
 
 
     class MonitorRect:
@@ -750,42 +758,28 @@ def configure(keymap):
 
     class WndShrinker:
 
-        min_px = 200
-
         @staticmethod
-        def cancel_maximize(wnd:pyauto.Window) -> None:
-            if wnd.isMaximized():
-                wnd.restore()
-                delay()
-
-        @classmethod
-        def check_min_width(cls, rect:list) -> bool:
-            return cls.min_px < abs(rect[0] - rect[2])
-
-        @classmethod
-        def check_min_height(cls, rect:list) -> bool:
-            return cls.min_px < abs(rect[1] - rect[3])
-
-        @classmethod
-        def invoke_snapper(cls, pos:str) -> Callable:
+        def invoke_snapper(pos:str) -> Callable:
             def _snap() -> None:
                 wnd = keymap.getTopLevelWindow()
                 wr = WndRect(*wnd.getRect())
                 rect = wr.half_rects[pos]
-                if cls.check_min_width(rect):
-                    cls.cancel_maximize(wnd)
+                if len(rect):
+                    if wnd.isMaximized():
+                        wnd.restore()
+                        delay()
                     wnd.setRect(rect)
-            return _snap
+            return LazyFunc(_snap).defer()
 
         @classmethod
         def apply(cls, km:Keymap) -> Callable:
-            for key, pos in {
+            for key, toward in {
                 "H": "left",
                 "J": "bottom",
                 "K": "top",
                 "L": "right",
             }.items():
-                km["U1-"+key] = cls.invoke_snapper(pos)
+                km["U1-"+key] = cls.invoke_snapper(toward)
 
     WndShrinker().apply(keymap_global["U1-M"])
 
