@@ -1113,23 +1113,23 @@ def configure(keymap):
 
     SEARCH_NOISE = SearchNoise()
 
-    class QueryLine:
-        def __init__(self, line) -> None:
-            self.line = line
-
-        def format_right(self) -> str:
-            if self.line.endswith("-"):
-                return self.line.rstrip("-")
-            if len(self.line.strip()):
-                if self.line[-1].encode("utf-8").isalnum():
-                    return self.line + " "
-                return self.line.rstrip()
-            return ""
 
     class SearchQuery:
         def __init__(self, query:str) -> None:
+            self._query = ""
             lines = query.strip().replace("\u200b", "").replace("\u3000", " ").replace("\t", " ").splitlines()
-            self._query = "".join([ QueryLine(line).format_right() for line in lines ])
+            for line in lines:
+                self._query += self.format_line(line)
+
+        @staticmethod
+        def format_line(s:str) -> str:
+            if s.endswith("-"):
+                return s.rstrip("-")
+            if len(s.strip()):
+                if s[-1].encode("utf-8").isalnum():
+                    return s + " "
+                return s.rstrip()
+            return ""
 
         def fix_kangxi(self) -> None:
             self._query = KangxiRadicals().fix(self._query)
@@ -1711,8 +1711,8 @@ def configure(keymap):
         @classmethod
         def get_menu_transform(cls) -> list:
             return [
-                (" Transform: => \uff21-\uff3a/\uff10-\uff19 ", cls.format_cb(CharWidth().to_full_letter) ),
-                ("            => A-Z/0-9 ", cls.format_cb(CharWidth().to_half_letter) ),
+                (" Transform: => A-Z/0-9 ", cls.format_cb(CharWidth().to_half_letter) ),
+                ("            => \uff21-\uff3a/\uff10-\uff19 ", cls.format_cb(CharWidth().to_full_letter) ),
                 ("            => abc ", lambda : keyhaclip.get_string().lower() ),
                 ("            => ABC ", lambda : keyhaclip.get_string().upper() ),
                 (" Comma: - Curly (\uff0c) ", cls.replace_cb(r"\u3001", "\uff0c") ),
