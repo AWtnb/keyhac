@@ -569,9 +569,9 @@ def configure(keymap):
         def get_horizontal_half(self, leftward:bool) -> list:
             r = self._rect[:]
             if leftward:
-                r[2] = self.half_height
+                r[2] = self.half_width
             else:
-                r[0] = self.half_height
+                r[0] = self.half_width
             if 300 < abs(r[0] - r[2]):
                 return r
             return []
