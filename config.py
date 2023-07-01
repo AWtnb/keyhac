@@ -22,9 +22,20 @@ def configure(keymap):
             self.path = s
             self.isAccessible = self.path.startswith("http") or Path(self.path).exists()
 
-        def run(self, arg:str="") -> None:
+        @staticmethod
+        def args_to_param(args:tuple) -> str:
+            params = []
+            for arg in args:
+                if len(arg.strip()):
+                    if " " in arg:
+                        params.append('"{}"'.format(arg))
+                    else:
+                        params.append("{}".format(arg))
+            return " ".join(params)
+
+        def run(self, *args) -> None:
             if self.isAccessible:
-                keymap.ShellExecuteCommand(None, self.path, arg, None)()
+                keymap.ShellExecuteCommand(None, self.path, self.args_to_param(args), None)()
             else:
                 print("invalid-path: '{}'".format(self.path))
 
@@ -464,7 +475,7 @@ def configure(keymap):
     def moko(search_all:bool=False) -> Callable:
         exe_path = r"C:\Personal\tools\bin\moko.exe"
         def _launcher() -> None:
-            PathInfo(exe_path).run("-src={} -filer={} -all={} -exclude=_obsolete,node_modules".format(r"C:\Personal\launch.yaml", UserPath().get_filer(), search_all))
+            PathInfo(exe_path).run(r"-src=C:\Personal\launch.yaml", "-filer={}".format(UserPath().get_filer()), "-all={}".format(search_all), "-exclude=_obsolete,node_modules")
         return LazyFunc(_launcher).defer()
     keymap_global["U1-Z"] = moko(False)
     keymap_global["LC-U1-Z"] = moko(True)
@@ -501,7 +512,7 @@ def configure(keymap):
             repo_path = UserPath().resolve(r"Sync\develop\repo\keyhac")
             if repo_path.isAccessible:
                 vscode_path = UserPath().resolve(r"scoop\apps\vscode\current\Code.exe")
-                vscode_path.run(repo_path.path)
+                vscode_path.run(repo_path.path, "config.py")
             else:
                 print("cannot find path: '{}'".format(repo_path.path))
 
