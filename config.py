@@ -489,12 +489,6 @@ def configure(keymap):
         def read_config() -> str:
             return Path(getAppExePath(), "config.py").read_text("utf-8")
 
-        @classmethod
-        def open_github(cls) -> None:
-            repo = "https://github.com/AWtnb/keyhac/edit/main/config.py"
-            keyhaclip.set_string(cls.read_config())
-            PathInfo(repo).run()
-
         @staticmethod
         def reload_config() -> None:
             keymap.configure()
@@ -502,12 +496,20 @@ def configure(keymap):
             ts = datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S")
             print("\n{} reloaded config.py\n".format(ts))
 
+        @staticmethod
+        def open_repo() -> None:
+            repo_path = UserPath().resolve(r"repo\keyhac")
+            if repo_path.isAccessible:
+                vscode_path = UserPath().resolve(r"scoop\apps\vscode\current\Code.exe")
+                vscode_path.run(repo_path.path)
+            else:
+                print("cannot find path: '{}'".format(repo_path.path))
+
         @classmethod
         def apply(cls, km:Keymap) -> None:
             for key, func in {
                 "R" : cls.reload_config,
-                "E" : keymap.command_EditConfig,
-                "G" : cls.open_github,
+                "E" : cls.open_repo,
                 "P" : lambda : keyhaclip().paste(cls.read_config()),
                 "X" : lambda : None,
             }.items():
