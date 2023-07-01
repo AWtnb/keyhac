@@ -498,7 +498,7 @@ def configure(keymap):
 
         @staticmethod
         def open_repo() -> None:
-            repo_path = UserPath().resolve(r"repo\keyhac")
+            repo_path = UserPath().resolve(r"Sync\develop\repo\keyhac")
             if repo_path.isAccessible:
                 vscode_path = UserPath().resolve(r"scoop\apps\vscode\current\Code.exe")
                 vscode_path.run(repo_path.path)
