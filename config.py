@@ -512,7 +512,7 @@ def configure(keymap):
             repo_path = UserPath().resolve(r"Sync\develop\repo\keyhac")
             if repo_path.isAccessible:
                 vscode_path = UserPath().resolve(r"scoop\apps\vscode\current\Code.exe")
-                vscode_path.run(repo_path.path, "config.py")
+                vscode_path.run(repo_path.path)
             else:
                 print("cannot find path: '{}'".format(repo_path.path))
 
