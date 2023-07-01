@@ -26,7 +26,7 @@ def configure(keymap):
             if self.isAccessible:
                 keymap.ShellExecuteCommand(None, self.path, arg, None)()
             else:
-                print("invalid-path:", self.path)
+                print("invalid-path: '{}'".format(self.path))
 
     class UserPath:
         user_prof = os.environ.get("USERPROFILE")
