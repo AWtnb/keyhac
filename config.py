@@ -827,10 +827,8 @@ def configure(keymap):
             for combo, stroke in {
                 "X,X": (".txt"),
                 "X,M": (".md"),
-                "P,M": (user_path.resolve(r"Dropbox\develop\app_config\IME_google\convertion_dict\main.txt").path),
-                "P,A": (user_path.resolve(r"Dropbox\develop\app_config").path + "\\"),
+                "P,M": (user_path.resolve(r"Sync\develop\app_setting\IME_google\convertion_dict\main.txt").path),
                 "P,D": (user_path.resolve(r"Desktop").path + "\\"),
-                "P,X": (user_path.resolve(r"Dropbox").path + "\\"),
                 "M,P": ("=============================="),
                 "M,D": ("div."),
                 "M,S": ("span."),
