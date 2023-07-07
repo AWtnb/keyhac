@@ -1437,6 +1437,8 @@ def configure(keymap):
         def _invoker() -> None:
             if PathInfo(dir_path).isAccessible:
                 PathInfo(filer_path).run(dir_path)
+            else:
+                print("invalid-path: '{}'".format(dir_path))
         return LazyFunc(_invoker).defer()
     keymap_global["U1-F"] = keymap.defineMultiStrokeKeymap()
     keymap_global["U1-F"]["D"] = invoke_filer(UserPath().resolve(r"Desktop").path)
