@@ -54,7 +54,7 @@ def configure(keymap):
 
         @classmethod
         def get_filer(cls) -> str:
-            tablacus = cls.resolve(r"Dropbox\portable_apps\tablacus\TE64.exe")
+            tablacus = cls.resolve(r"Sync\portable_app\tablacus\TE64.exe")
             if tablacus.isAccessible:
                 return tablacus.path
             return "explorer.exe"
@@ -1375,7 +1375,7 @@ def configure(keymap):
             "T": (
                 "TE64.exe",
                 "TablacusExplorer",
-                UserPath().resolve(r"Dropbox\portable_apps\tablacus\TE64.exe").path
+                UserPath().resolve(r"Sync\portable_app\tablacus\TE64.exe").path
             ),
             "M": (
                 "Mery.exe",
