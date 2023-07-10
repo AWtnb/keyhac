@@ -1528,15 +1528,15 @@ def configure(keymap):
     sumatra_change_tab(keymap_sumatra_inputmode)
 
     keymap_sumatra_viewmode = keymap.defineWindowKeymap(check_func=CheckWnd.is_sumatra_viewmode)
-    keymap_sumatra_viewmode["F"] = KeyPuncher(recover_ime=True).invoke("C-F")
-    keymap_sumatra_viewmode["H"] = "C-S-Tab"
-    keymap_sumatra_viewmode["L"] = "C-Tab"
 
     def sumatra_view_key(km:Keymap) -> None:
         for key in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
             km[key] = KeyPuncher().invoke(key)
     sumatra_view_key(keymap_sumatra_viewmode)
 
+    keymap_sumatra_viewmode["F"] = KeyPuncher(recover_ime=True).invoke("C-F")
+    keymap_sumatra_viewmode["H"] = "C-S-Tab"
+    keymap_sumatra_viewmode["L"] = "C-Tab"
 
     # word
     keymap_word = keymap.defineWindowKeymap(exe_name="WINWORD.EXE")
