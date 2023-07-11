@@ -1269,9 +1269,9 @@ def configure(keymap):
 
         def scan(self) -> None:
             self.found = None
-            pyauto.Window.enum(self.check_wnd, None)
+            pyauto.Window.enum(self.traverse_wnd, None)
 
-        def check_wnd(self, wnd:pyauto.Window, _) -> bool:
+        def traverse_wnd(self, wnd:pyauto.Window, _) -> bool:
             if not wnd.isVisible() : return True
             if not wnd.isEnabled() : return True
             if not fnmatch.fnmatch(wnd.getProcessName(), self.exe_name) : return True
@@ -1448,28 +1448,29 @@ def configure(keymap):
                 self.hwnd = wnd.getHWND()
                 print("registered: {}".format(self.hwnd))
 
-        def recall(self) -> Union[pyauto.Window, None]:
-            if self.hwnd is not None:
-                self.found = None
-                pyauto.Window.enum(self.check_wnd, None)
-            return self.found
+        def recall(self) -> None:
+            self.found = None
+            if self.hwnd:
+                print("safasu", self.hwnd)
+                pyauto.Window.enum(self.traverse_wnd, None)
 
         def activate(self) -> None:
-            if target := self.recall():
-                PseudoCuteExec.activate_wnd(target)
+            self.recall()
+            if self.found:
+                PseudoCuteExec.activate_wnd(self.found)
             else:
+                print("cannot find: {} ==> unregistered".format(self.hwnd))
                 self.hwnd = None
-                print("unregistered: {}".format(self.hwnd))
 
-        def check_wnd(self, wnd:pyauto.Window, _) -> bool:
-            if wnd.getHWND() != self.hwnd:
-                return True
-            self.found = wnd.getLastActivePopup()
-            return False
+        def traverse_wnd(self, wnd:pyauto.Window, _) -> bool:
+            if wnd.getHWND() == self.hwnd:
+                self.found = wnd.getLastActivePopup()
+                return False
+            return True
 
     WND_MEMORY = WndMemory()
     keymap_global["U1-C"]["0"] = WND_MEMORY.register
-    keymap_global["U1-C"]["Enter"] = WND_MEMORY.activate
+    keymap_global["U1-C"]["Enter"] = LazyFunc(WND_MEMORY.activate).defer(80)
 
     # invoke specific filer
     def invoke_filer(dir_path:str) -> Callable:
