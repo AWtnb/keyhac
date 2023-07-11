@@ -439,6 +439,13 @@ def configure(keymap):
             keymap.popBalloon("", t, 5000)
     keymap_global["LC-U1-C"] = LazyFunc(count_chars).defer()
 
+    # append clipboard
+    def append_clipboard() -> None:
+        cb = keyhaclip.get_string()
+        s = keyhaclip().copy_string()
+        keyhaclip.set_string(cb + s)
+    keymap_global["LC-U0-C"] = LazyFunc(append_clipboard).defer()
+
     # wrap with quote mark
     def quote_selection() -> None:
         cb = keyhaclip().copy_string()
