@@ -1437,41 +1437,6 @@ def configure(keymap):
     keymap_global["U1-C"] = keymap.defineMultiStrokeKeymap()
     PseudoCuteExec().apply_combo(keymap_global["U1-C"])
 
-    class WndMemory:
-        def __init__(self) -> None:
-            self.hwnd = None
-            self.found = None
-
-        def register(self) -> None:
-            wnd = keymap.getWindow()
-            if wnd:
-                self.hwnd = wnd.getHWND()
-                print("registered: {}".format(self.hwnd))
-
-        def recall(self) -> None:
-            self.found = None
-            if self.hwnd:
-                print("safasu", self.hwnd)
-                pyauto.Window.enum(self.traverse_wnd, None)
-
-        def activate(self) -> None:
-            self.recall()
-            if self.found:
-                PseudoCuteExec.activate_wnd(self.found)
-            else:
-                print("cannot find: {} ==> unregistered".format(self.hwnd))
-                self.hwnd = None
-
-        def traverse_wnd(self, wnd:pyauto.Window, _) -> bool:
-            if wnd.getHWND() == self.hwnd:
-                self.found = wnd.getLastActivePopup()
-                return False
-            return True
-
-    WND_MEMORY = WndMemory()
-    keymap_global["U1-C"]["0"] = WND_MEMORY.register
-    keymap_global["U1-C"]["Enter"] = LazyFunc(WND_MEMORY.activate).defer(80)
-
     # invoke specific filer
     def invoke_filer(dir_path:str) -> Callable:
         filer_path = UserPath().get_filer()
