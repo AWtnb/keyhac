@@ -317,6 +317,12 @@ def configure(keymap):
                 timeout -= interval
             return ""
 
+        @classmethod
+        def append(cls) -> None:
+            org = cls.get_string()
+            cb = cls.copy_string()
+            cls.set_string(org + cb)
+
     class LazyFunc:
         def __init__(self, func:Callable) -> None:
             def _wrapper() -> None:
@@ -355,6 +361,9 @@ def configure(keymap):
     ################################
     # custom hotkey
     ################################
+
+    # append clipboard
+    keymap_global["LC-U0-C"] = LazyFunc(keyhaclip.append).defer()
 
     # switch window
     keymap_global["U1-Tab"] = KeyPuncher(defer_msec=40).invoke("Alt-Tab")
@@ -438,13 +447,6 @@ def configure(keymap):
             t = "total: {}(lines: {}), net: {}".format(total, lines, net)
             keymap.popBalloon("", t, 5000)
     keymap_global["LC-U1-C"] = LazyFunc(count_chars).defer()
-
-    # append clipboard
-    def append_clipboard() -> None:
-        cb = keyhaclip.get_string()
-        s = keyhaclip().copy_string()
-        keyhaclip.set_string(cb + s)
-    keymap_global["LC-U0-C"] = LazyFunc(append_clipboard).defer()
 
     # wrap with quote mark
     def quote_selection() -> None:
@@ -1493,7 +1495,7 @@ def configure(keymap):
             VIRTUAL_FINGER.type_keys("S-A-B", "F6")
         elif wnd.getProcessName() == "firefox.exe":
             VIRTUAL_FINGER.type_keys("C-L", "F6")
-    keymap_browser["C-U0-C"] = focus_chrome_content
+    keymap_browser["U0-F6"] = focus_chrome_content
 
     # intra
     keymap_intra = keymap.defineWindowKeymap(exe_name="APARClientAWS.exe")
