@@ -1265,19 +1265,19 @@ def configure(keymap):
         def __init__(self, exe_name:str, class_name:str) -> None:
             self.exe_name = exe_name
             self.class_name = class_name
+            self.found = None
 
-        def scan(self) -> Union[pyauto.Window, None]:
-            found = [None]
-            def _callback(wnd:pyauto.Window, _) -> bool:
-                if not wnd.isVisible() : return True
-                if not wnd.isEnabled() : return True
-                if not fnmatch.fnmatch(wnd.getProcessName(), self.exe_name) : return True
-                if self.class_name and not fnmatch.fnmatch(wnd.getClassName(), self.class_name) : return True
-                found[0] = wnd.getLastActivePopup()
-                return False
-            pyauto.Window.enum(_callback, None)
-            return found[0]
+        def scan(self) -> None:
+            self.found = None
+            pyauto.Window.enum(self.check_wnd, None)
 
+        def check_wnd(self, wnd:pyauto.Window, _) -> bool:
+            if not wnd.isVisible() : return True
+            if not wnd.isEnabled() : return True
+            if not fnmatch.fnmatch(wnd.getProcessName(), self.exe_name) : return True
+            if self.class_name and not fnmatch.fnmatch(wnd.getClassName(), self.class_name) : return True
+            self.found = wnd.getLastActivePopup()
+            return False
 
 
     class PseudoCuteExec:
@@ -1305,8 +1305,9 @@ def configure(keymap):
         def invoke(cls, exe_name:str, class_name:str, exe_path:str) -> Callable:
             scanner = WndScanner(exe_name, class_name)
             def _executer() -> None:
-                if found := scanner.scan():
-                    if not cls.activate_wnd(found):
+                scanner.scan()
+                if scanner.found:
+                    if not cls.activate_wnd(scanner.found):
                         VIRTUAL_FINGER.type_keys("LCtrl-LAlt-Tab")
                 else:
                     if exe_path:
@@ -1436,7 +1437,39 @@ def configure(keymap):
     keymap_global["U1-C"] = keymap.defineMultiStrokeKeymap()
     PseudoCuteExec().apply_combo(keymap_global["U1-C"])
 
+    class WndMemory:
+        def __init__(self) -> None:
+            self.hwnd = None
+            self.found = None
 
+        def register(self) -> None:
+            wnd = keymap.getWindow()
+            if wnd:
+                self.hwnd = wnd.getHWND()
+                print("registered: {}".format(self.hwnd))
+
+        def recall(self) -> Union[pyauto.Window, None]:
+            if self.hwnd is not None:
+                self.found = None
+                pyauto.Window.enum(self.check_wnd, None)
+            return self.found
+
+        def activate(self) -> None:
+            if target := self.recall():
+                PseudoCuteExec.activate_wnd(target)
+            else:
+                self.hwnd = None
+                print("unregistered: {}".format(self.hwnd))
+
+        def check_wnd(self, wnd:pyauto.Window, _) -> bool:
+            if wnd.getHWND() != self.hwnd:
+                return True
+            self.found = wnd.getLastActivePopup()
+            return False
+
+    WND_MEMORY = WndMemory()
+    keymap_global["U1-C"]["0"] = WND_MEMORY.register
+    keymap_global["U1-C"]["Enter"] = WND_MEMORY.activate
 
     # invoke specific filer
     def invoke_filer(dir_path:str) -> Callable:
@@ -1453,8 +1486,9 @@ def configure(keymap):
 
     def invoke_cmder() -> None:
         scanner = WndScanner("ConEmu64.exe", "VirtualConsoleClass")
-        if found := scanner.scan():
-            if not PseudoCuteExec.activate_wnd(found):
+        scanner.scan()
+        if scanner.found:
+            if not PseudoCuteExec.activate_wnd(scanner.found):
                 VIRTUAL_FINGER.type_keys("C-AtMark")
         else:
             cmder_path = UserPath().resolve(r"scoop\apps\cmder\current\Cmder.exe").path
@@ -1466,8 +1500,9 @@ def configure(keymap):
             VIRTUAL_FINGER.type_keys("C-T")
         else:
             scanner = WndScanner(DEFAULT_BROWSER.get_exe_name(), DEFAULT_BROWSER.get_wnd_class())
-            if found := scanner.scan():
-                if PseudoCuteExec.activate_wnd(found):
+            scanner.scan()
+            if scanner.found:
+                if PseudoCuteExec.activate_wnd(scanner.found):
                     delay()
                     VIRTUAL_FINGER.type_keys("C-T")
                 else:
