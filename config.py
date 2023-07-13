@@ -277,11 +277,31 @@ def configure(keymap):
     VIRTUAL_FINGER = VirtualFinger(10)
     VIRTUAL_FINGER_QUICK = VirtualFinger(0)
 
-    def set_ime(mode:int) -> None:
-        if keymap.getWindow().getImeStatus() != mode:
-            VIRTUAL_FINGER_QUICK.type_keys("(243)")
-            delay(10)
+    class ImeControl:
 
+        @staticmethod
+        def get_status() -> pyauto.Window:
+            return keymap.getWindow().getImeStatus()
+
+        @classmethod
+        def set_status(cls, mode:int) -> None:
+            if cls.get_status() != mode:
+                VIRTUAL_FINGER_QUICK.type_keys("(243)")
+                delay(10)
+
+        @classmethod
+        def is_enabled(cls) -> bool:
+            return cls.get_status() == 1
+
+        @classmethod
+        def enable(cls) -> None:
+            cls.set_status(1)
+
+        @classmethod
+        def disable(cls) -> None:
+            cls.set_status(0)
+
+    IME_CONTROL = ImeControl()
 
     class keyhaclip:
         @staticmethod
@@ -344,10 +364,10 @@ def configure(keymap):
         def invoke(self, *sequence) -> Callable:
             vf = VirtualFinger(self._inter_stroke_pause)
             def _input() -> None:
-                set_ime(0)
+                IME_CONTROL.disable()
                 vf.type_smart(*sequence)
                 if self._recover_ime:
-                    set_ime(1)
+                    IME_CONTROL.enable()
             return LazyFunc(_input).defer(self._defer_msec)
 
     ################################
@@ -375,10 +395,10 @@ def configure(keymap):
     keymap_global["U0-W"] = LazyFunc(lambda : VIRTUAL_FINGER_QUICK.type_keys("LCtrl-LAlt-Tab")).defer()
 
     # ime: Japanese / Foreign
-    keymap_global["U1-J"] = lambda : set_ime(1)
-    keymap_global["U0-F"] = lambda : set_ime(0)
-    keymap_global["S-U0-F"] = lambda : set_ime(1)
-    keymap_global["S-U1-J"] = lambda : set_ime(0)
+    keymap_global["U1-J"] = IME_CONTROL.enable
+    keymap_global["U0-F"] = IME_CONTROL.disable
+    keymap_global["S-U0-F"] = IME_CONTROL.enable
+    keymap_global["S-U1-J"] = IME_CONTROL.disable
 
     # paste as plaintext
     keymap_global["U0-V"] = LazyFunc(keyhaclip().paste_current).defer()
@@ -419,7 +439,7 @@ def configure(keymap):
     # select last word with ime
     def select_last_word() -> None:
         VIRTUAL_FINGER.type_keys("C-S-Left")
-        set_ime(1)
+        IME_CONTROL.enable()
     keymap_global["U1-Space"] = select_last_word
 
     # Non-convert
@@ -436,6 +456,11 @@ def configure(keymap):
 
     keymap_global["U1-N"] = as_alphabet(False)
     keymap_global["S-U1-N"] = as_alphabet(True)
+
+    def as_titled_alphabet() -> None:
+        if keymap.getWindow().getImeStatus() == 1:
+            VIRTUAL_FINGER.type_keys("F10", "F10", "F10")
+    keymap_global["LA-U1-N"] = as_titled_alphabet
 
     # count chars
     def count_chars() -> None:
@@ -477,7 +502,7 @@ def configure(keymap):
         selection = keyhaclip().copy_string()
         if selection:
             sequence = ["Minus" if c == "-" else c for c in StrCleaner.clear_space(selection)]
-            set_ime(1)
+            IME_CONTROL.enable()
             VIRTUAL_FINGER_QUICK.type_smart(*sequence)
     keymap_global["U1-I"] = LazyFunc(re_input_with_ime).defer()
 
@@ -1057,11 +1082,11 @@ def configure(keymap):
         def invoke(fmt:str, recover_ime:bool=False) -> Callable:
             def _input() -> None:
                 d = datetime.datetime.today()
-                set_ime(0)
+                IME_CONTROL.disable()
                 seq = [c for c in d.strftime(fmt)]
                 VIRTUAL_FINGER_QUICK.type_smart(*seq)
                 if recover_ime:
-                    set_ime(1)
+                    IME_CONTROL.enable()
             return LazyFunc(_input).defer()
 
         @classmethod
