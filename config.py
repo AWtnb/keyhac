@@ -836,6 +836,8 @@ def configure(keymap):
             for combo, stroke in {
                 "X,X": (".txt"),
                 "X,M": (".md"),
+                "E,P,T": (":pekori: :tori_isogi: :houkoku_made:"),
+                "E,P,G": (":pekori_gif:"),
                 "P,M": (user_path.resolve(r"Sync\develop\app_setting\IME_google\convertion_dict\main.txt").path),
                 "P,D": (user_path.resolve(r"Desktop").path + "\\"),
                 "M,P": ("=============================="),
