@@ -459,7 +459,7 @@ def configure(keymap):
 
     def as_titled_alphabet() -> None:
         if keymap.getWindow().getImeStatus() == 1:
-            VIRTUAL_FINGER.type_keys("F10", "F10", "F10")
+            VIRTUAL_FINGER.type_keys("F10", "F10", "F10", "C-Space")
     keymap_global["LA-U1-N"] = as_titled_alphabet
 
     # count chars
