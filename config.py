@@ -1407,7 +1407,7 @@ def configure(keymap):
             "V": (
                 "Code.exe",
                 "Chrome_WidgetWin_1",
-                UserPath().resolve(r"scoop\apps\vscode\current\Code.exe").path
+                UserPath().get_editor()
             ),
             "C-V": (
                 "vivaldi.exe",
@@ -1417,7 +1417,7 @@ def configure(keymap):
             "T": (
                 "TE64.exe",
                 "TablacusExplorer",
-                UserPath().resolve(r"Sync\portable_app\tablacus\TE64.exe").path
+                UserPath().get_filer()
             ),
             "M": (
                 "Mery.exe",
