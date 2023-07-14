@@ -1394,6 +1394,11 @@ def configure(keymap):
                 "XLMAIN",
                 ""
             ),
+            "I": (
+                "i_view64.exe",
+                "IrfanView",
+                ""
+            ),
             "W": (
                 "WINWORD.EXE",
                 "OpusApp",
