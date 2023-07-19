@@ -960,6 +960,7 @@ def configure(keymap):
         "S-C-U0-P": "\u2049", # EXCLAMATION QUESTION MARK
         "U0-SemiColon": "+ ",
         "S-U0-8": "- ",
+        "U1-G": "\u3013\u3013", # GETA MARK * 2
         "LC-U1-B": "- ",
         "U1-1": "1. ",
         "S-U0-7": "1. ",
@@ -974,7 +975,8 @@ def configure(keymap):
 
         def apply_sender(self, km:Keymap) -> None:
             for key, pair in self.pair_mapping.items():
-                sent = pair + ["Left"]*len(pair[-1])
+                _, suffix = pair
+                sent = pair + ["Left"]*len(suffix)
                 km[key] = KeyPuncher(recover_ime=self.recover_ime).invoke(*sent)
 
         def apply_wrapper(self, km:Keymap) -> None:
