@@ -1545,6 +1545,7 @@ def configure(keymap):
     # vscode
     keymap_vscode = keymap.defineWindowKeymap(exe_name="Code.exe")
     keymap_vscode["C-S-P"] = KeyPuncher().invoke("C-S-P")
+    keymap_vscode["C-A-B"] = KeyPuncher().invoke("C-A-B")
 
     # mery
     keymap_mery = keymap.defineWindowKeymap(exe_name="Mery.exe")
