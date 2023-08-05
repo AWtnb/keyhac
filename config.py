@@ -189,6 +189,7 @@ def configure(keymap):
         # BackSpace / Delete
         "U0-D": ("Delete"),
         "U0-B": ("Back"),
+        "A-U0-B": ("A-Back"),
         "C-U0-D": ("C-Delete"),
         "C-U0-B": ("C-Back"),
         "S-U0-D": ("S-End", "Delete"),
