@@ -1125,21 +1125,35 @@ def configure(keymap):
         def fix(cls, s:str) -> str:
             return s.translate(str.maketrans(cls.mapping))
 
+    class NoiseDict:
+        dict = { int("30FB",16): ord(" ") }
+
+        @classmethod
+        def register_range(cls, pair:list) -> None:
+            start, end = pair
+            for i in range(int(start,16), int(end,16)+1):
+                cls.dict[i] = ord(" ")
+
+        @classmethod
+        def register_ranges(cls, pairs:list) -> None:
+            for pair in pairs:
+                cls.register_range(pair)
+
     class SearchNoise:
-        space = ord(" ")
-        punc_dict = { int("30FB",16): space }
-        for noise_range in [
+        nd = NoiseDict()
+        nd.register_ranges([ # ascii
             ["0021", "002F"],
             ["003A", "0040"],
             ["005B", "0060"],
             ["007B", "007E"],
-            # quotation marks
-            ["2018", "201F"],
-            # horizontal bars
+        ])
+        nd.register_range(["2018", "201F"]) # quotation
+        nd.register_ranges([ # horizontal bars
             ["2010", "2017"],
             ["2500", "2501"],
             ["2E3A", "2E3B"],
-            # fullwidth symbols
+        ])
+        nd.register_ranges([ # fullwidth symbols
             ["25A0", "25EF"],
             ["3000", "3004"],
             ["3008", "3040"],
@@ -1150,16 +1164,12 @@ def configure(keymap):
             ["FF1A", "FF20"],
             ["FF3B", "FF40"],
             ["FF5B", "FF65"],
-            # CJK Radicals
-            ["2E80", "2EF3"],
-        ]:
-            f, t = noise_range
-            for i in range(int(f,16), int(t,16)+1):
-                punc_dict[i] = space
+        ])
+        nd.register_range(["2E80", "2EF3"]) # kangxi
 
         @classmethod
         def to_space(cls, s:str) -> str:
-            return s.translate(str.maketrans(cls.punc_dict))
+            return s.translate(str.maketrans(cls.nd.dict))
 
 
     SEARCH_NOISE = SearchNoise()
