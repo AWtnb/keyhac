@@ -1125,54 +1125,61 @@ def configure(keymap):
         def fix(cls, s:str) -> str:
             return s.translate(str.maketrans(cls.mapping))
 
-    class NoiseDict:
-        dict = { int("30FB",16): ord(" ") }
+    class RemovableUnicode:
+        alt = ord(" ")
+        mapping = {}
+
+        @classmethod
+        def register(cls, ord:int) -> None:
+            cls.mapping[ord] = cls.alt
 
         @classmethod
         def register_range(cls, pair:list) -> None:
             start, end = pair
             for i in range(int(start,16), int(end,16)+1):
-                cls.dict[i] = ord(" ")
+                cls.register(i)
 
         @classmethod
         def register_ranges(cls, pairs:list) -> None:
             for pair in pairs:
                 cls.register_range(pair)
 
-    class SearchNoise:
-        nd = NoiseDict()
-        nd.register_ranges([ # ascii
-            ["0021", "002F"],
-            ["003A", "0040"],
-            ["005B", "0060"],
-            ["007B", "007E"],
-        ])
-        nd.register_range(["2018", "201F"]) # quotation
-        nd.register_ranges([ # horizontal bars
-            ["2010", "2017"],
-            ["2500", "2501"],
-            ["2E3A", "2E3B"],
-        ])
-        nd.register_ranges([ # fullwidth symbols
-            ["25A0", "25EF"],
-            ["3000", "3004"],
-            ["3008", "3040"],
-            ["3097", "30A0"],
-            ["3097", "30A0"],
-            ["30FD", "30FF"],
-            ["FF01", "FF0F"],
-            ["FF1A", "FF20"],
-            ["FF3B", "FF40"],
-            ["FF5B", "FF65"],
-        ])
-        nd.register_range(["2E80", "2EF3"]) # kangxi
+    class NoiseCleaner(RemovableUnicode):
+        def __init__(self) -> None:
+            super().__init__()
+            self.register_ranges([ # ascii
+                ["0021", "002F"],
+                ["003A", "0040"],
+                ["005B", "0060"],
+                ["007B", "007E"],
+            ])
+            self.register_range(["2018", "201F"]) # quotation
+            self.register_ranges([ # horizontal bars
+                ["2010", "2017"],
+                ["2500", "2501"],
+                ["2E3A", "2E3B"],
+            ])
+            self.register_ranges([ # fullwidth symbols
+                ["25A0", "25EF"],
+                ["3000", "3004"],
+                ["3008", "3040"],
+                ["3097", "30A0"],
+                ["3097", "30A0"],
+                ["30FD", "30FF"],
+                ["FF01", "FF0F"],
+                ["FF1A", "FF20"],
+                ["FF3B", "FF40"],
+                ["FF5B", "FF65"],
+            ])
+            self.register_range(["2E80", "2EF3"]) # kangxi
+            self.register(int("30FB",16)) # KATAKANA MIDDLE DOT
 
         @classmethod
-        def to_space(cls, s:str) -> str:
-            return s.translate(str.maketrans(cls.nd.dict))
+        def cleanup(cls, s:str) -> str:
+            return s.translate(str.maketrans(cls.mapping))
 
 
-    SEARCH_NOISE = SearchNoise()
+    NOISE_CLEANER = NoiseCleaner()
 
 
     class SearchQuery:
@@ -1208,7 +1215,7 @@ def configure(keymap):
 
         def encode(self, strict:bool=False) -> str:
             words = []
-            for word in SEARCH_NOISE.to_space(self._query).split(" "):
+            for word in NOISE_CLEANER.cleanup(self._query).split(" "):
                 if len(word):
                     if strict:
                         words.append('"{}"'.format(word))
