@@ -150,6 +150,9 @@ def configure(keymap):
                     "J": "Down",
                     "K": "Up",
                     "L": "Right",
+                    # Back / Delete
+                    "B": "Back",
+                    "D": "Delete",
                     # Home / End
                     "A": "Home",
                     "E": "End",
@@ -186,15 +189,6 @@ def configure(keymap):
                 km[key] = value
 
     KeyAllocator({
-        # BackSpace / Delete
-        "U0-D": ("Delete"),
-        "U0-B": ("Back"),
-        "A-U0-B": ("A-Back"),
-        "C-U0-D": ("C-Delete"),
-        "C-U0-B": ("C-Back"),
-        "S-U0-D": ("S-End", "Delete"),
-        "S-U0-B": ("S-Home", "Delete"),
-
         # escape
         "O-(235)": ("Esc"),
         "U0-X": ("Esc"),
@@ -1569,10 +1563,10 @@ def configure(keymap):
     keymap_mery = keymap.defineWindowKeymap(exe_name="Mery.exe")
     keymap_mery["LA-U0-J"] = "A-CloseBracket"
     keymap_mery["LA-U0-K"] = "A-OpenBracket"
+    keymap_mery["LA-LC-U0-J"] = "A-C-CloseBracket"
+    keymap_mery["LA-LC-U0-K"] = "A-C-OpenBracket"
     keymap_mery["LA-LS-U0-J"] = "A-S-CloseBracket"
     keymap_mery["LA-LS-U0-k"] = "A-S-OpenBracket"
-    keymap_mery["LA-LC-U0-J"] = "C-S-Down"
-    keymap_mery["LA-LC-U0-k"] = "C-S-Up"
 
     # cmder
     keymap_cmder = keymap.defineWindowKeymap(class_name="VirtualConsoleClass")
