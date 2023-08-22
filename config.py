@@ -189,6 +189,10 @@ def configure(keymap):
                 km[key] = value
 
     KeyAllocator({
+        # delete to bol / eol
+        "S-U0-B": ("S-Home", "Delete"),
+        "S-U0-D": ("S-End", "Delete"),
+
         # escape
         "O-(235)": ("Esc"),
         "U0-X": ("Esc"),
