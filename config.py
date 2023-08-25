@@ -582,19 +582,11 @@ def configure(keymap):
 
     class WndRect:
         def __init__(self, left: int, top: int, right: int, bottom: int) -> None:
-            self._rect = [left, top, right, bottom]
+            self._rect = (left, top, right, bottom)
             self.left, self.top, self.right, self.bottom = self._rect
-            self.half_width = int((self.right + self.left) / 2)
-            self.half_height = int((self.bottom + self.top) / 2)
-            self.half_rects = {
-                "top": self.get_vertical_half(True),
-                "bottom": self.get_vertical_half(False),
-                "left": self.get_horizontal_half(True),
-                "right": self.get_horizontal_half(False),
-            }
 
         def check_rect(self, wnd: pyauto.Window) -> bool:
-            return list(wnd.getRect()) == self._rect
+            return wnd.getRect() == self._rect
 
         def snap(self) -> None:
             wnd = keymap.getTopLevelWindow()
@@ -606,27 +598,29 @@ def configure(keymap):
                 delay()
             trial_limit = 2
             while trial_limit > 0:
-                wnd.setRect(self._rect)
-                if list(wnd.getRect()) == self._rect:
+                wnd.setRect(list(self._rect))
+                if self.check_rect(wnd):
                     return
                 trial_limit -= 1
 
         def get_vertical_half(self, upper: bool) -> list:
-            r = self._rect[:]
+            half_height = int((self.bottom + self.top) / 2)
+            r = list(self._rect)
             if upper:
-                r[3] = self.half_height
+                r[3] = half_height
             else:
-                r[1] = self.half_height
+                r[1] = half_height
             if 200 < abs(r[1] - r[3]):
                 return r
             return []
 
         def get_horizontal_half(self, leftward: bool) -> list:
-            r = self._rect[:]
+            half_width = int((self.right + self.left) / 2)
+            r = list(self._rect)
             if leftward:
-                r[2] = self.half_width
+                r[2] = half_width
             else:
-                r[0] = self.half_width
+                r[0] = half_width
             if 300 < abs(r[0] - r[2]):
                 return r
             return []
@@ -810,29 +804,32 @@ def configure(keymap):
 
     class WndShrinker:
         @staticmethod
-        def snap(pos) -> None:
-            wnd = keymap.getTopLevelWindow()
-            wr = WndRect(*wnd.getRect())
-            rect = wr.half_rects[pos]
-            if len(rect):
-                if wnd.isMaximized():
-                    wnd.restore()
-                    delay()
-                wnd.setRect(rect)
+        def invoke_snapper(horizontal: bool, default_pos: bool) -> Callable:
+            def _snap() -> None:
+                wnd = keymap.getTopLevelWindow()
+                wr = WndRect(*wnd.getRect())
+                rect = []
+                if horizontal:
+                    rect = wr.get_horizontal_half(default_pos)
+                else:
+                    rect = wr.get_vertical_half(default_pos)
+                if len(rect):
+                    if wnd.isMaximized():
+                        wnd.restore()
+                        delay()
+                    wnd.setRect(rect)
+
+            return LazyFunc(_snap).defer()
 
         @classmethod
         def apply(cls, km: Keymap) -> None:
-            for key, toward in {
-                "H": "left",
-                "J": "bottom",
-                "K": "top",
-                "L": "right",
+            for key, params in {
+                "H": {"horizontal": True, "default_pos": True},
+                "L": {"horizontal": True, "default_pos": False},
+                "K": {"horizontal": False, "default_pos": True},
+                "J": {"horizontal": False, "default_pos": False},
             }.items():
-
-                def snapper() -> None:
-                    cls.snap(toward)
-
-                km["U1-" + key] = LazyFunc(snapper).defer()
+                km["U1-" + key] = cls.invoke_snapper(**params)
 
     WndShrinker().apply(keymap_global["U1-M"])
 
