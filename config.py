@@ -596,23 +596,20 @@ def configure(keymap):
         def check_rect(self, wnd: pyauto.Window) -> bool:
             return list(wnd.getRect()) == self._rect
 
-        def invoke_snapper(self) -> Callable:
-            def _snap() -> None:
-                wnd = keymap.getTopLevelWindow()
-                if self.check_rect(wnd):
-                    wnd.maximize()
+        def snap(self) -> None:
+            wnd = keymap.getTopLevelWindow()
+            if self.check_rect(wnd):
+                wnd.maximize()
+                return
+            if wnd.isMaximized():
+                wnd.restore()
+                delay()
+            trial_limit = 2
+            while trial_limit > 0:
+                wnd.setRect(self._rect)
+                if list(wnd.getRect()) == self._rect:
                     return
-                if wnd.isMaximized():
-                    wnd.restore()
-                    delay()
-                trial_limit = 2
-                while trial_limit > 0:
-                    wnd.setRect(self._rect)
-                    if list(wnd.getRect()) == self._rect:
-                        return
-                    trial_limit -= 1
-
-            return _snap
+                trial_limit -= 1
 
         def get_vertical_half(self, upper: bool) -> list:
             r = self._rect[:]
@@ -714,25 +711,22 @@ def configure(keymap):
                     x = monitor.left + int(monitor.max_width / 4) * i
                     self.pos.append([x, y])
 
-        def get_position_index(self, x, y) -> int:
+        def get_position_index(self) -> int:
+            x, y = pyauto.Input.getCursorPos()
             for i, p in enumerate(self.pos):
                 if p[0] == x and p[1] == y:
                     return i
             return -1
 
-        def invoke_snapper(self) -> Callable:
-            def _snap() -> None:
-                x, y = pyauto.Input.getCursorPos()
-                idx = self.get_position_index(x, y)
-                if idx < 0 or idx == len(self.pos) - 1:
-                    self.snap(*self.pos[0])
-                else:
-                    self.snap(*self.pos[idx + 1])
-
-            return _snap
+        def snap(self) -> None:
+            idx = self.get_position_index()
+            if idx < 0 or idx == len(self.pos) - 1:
+                self.set_position(*self.pos[0])
+            else:
+                self.set_position(*self.pos[idx + 1])
 
         @staticmethod
-        def snap(x: int, y: int) -> None:
+        def set_position(x: int, y: int) -> None:
             keymap.beginInput()
             keymap.input_seq.append(pyauto.MouseMove(x, y))
             keymap.endInput()
@@ -743,9 +737,9 @@ def configure(keymap):
             wnd_left, wnd_top, wnd_right, wnd_bottom = wnd.getRect()
             to_x = int((wnd_left + wnd_right) / 2)
             to_y = int((wnd_bottom + wnd_top) / 2)
-            cls.snap(to_x, to_y)
+            cls.set_position(to_x, to_y)
 
-    keymap_global["O-RCtrl"] = CursorPos().invoke_snapper()
+    keymap_global["O-RCtrl"] = CursorPos().snap
 
     keymap_global["O-(236)"] = CursorPos().snap_to_center
 
@@ -788,7 +782,7 @@ def configure(keymap):
                     for key, pos in cls.snap_key_dict.items():
                         if mntr_idx < len(KEYMAP_MONITORS):
                             wnd_rect = KEYMAP_MONITORS[mntr_idx].area_mapping[pos][size]
-                            km[mod_mntr + mod_area + key] = LazyFunc(wnd_rect.invoke_snapper()).defer()
+                            km[mod_mntr + mod_area + key] = LazyFunc(wnd_rect.snap).defer()
 
         @staticmethod
         def alloc_maximize(km: Keymap, mapping_dict: dict) -> None:
@@ -816,28 +810,29 @@ def configure(keymap):
 
     class WndShrinker:
         @staticmethod
-        def invoke_snapper(pos: str) -> Callable:
-            def _snap() -> None:
-                wnd = keymap.getTopLevelWindow()
-                wr = WndRect(*wnd.getRect())
-                rect = wr.half_rects[pos]
-                if len(rect):
-                    if wnd.isMaximized():
-                        wnd.restore()
-                        delay()
-                    wnd.setRect(rect)
-
-            return LazyFunc(_snap).defer()
+        def snap(pos) -> None:
+            wnd = keymap.getTopLevelWindow()
+            wr = WndRect(*wnd.getRect())
+            rect = wr.half_rects[pos]
+            if len(rect):
+                if wnd.isMaximized():
+                    wnd.restore()
+                    delay()
+                wnd.setRect(rect)
 
         @classmethod
-        def apply(cls, km: Keymap) -> Callable:
+        def apply(cls, km: Keymap) -> None:
             for key, toward in {
                 "H": "left",
                 "J": "bottom",
                 "K": "top",
                 "L": "right",
             }.items():
-                km["U1-" + key] = cls.invoke_snapper(toward)
+
+                def snapper() -> None:
+                    cls.snap(toward)
+
+                km["U1-" + key] = LazyFunc(snapper).defer()
 
     WndShrinker().apply(keymap_global["U1-M"])
 
