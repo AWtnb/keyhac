@@ -238,20 +238,29 @@ def configure(keymap):
         def __init__(self, inter_stroke_pause: int = 10) -> None:
             self.inter_stroke_pause = inter_stroke_pause
 
-        def _execute(self, func: Callable) -> None:
-            delay(self.inter_stroke_pause)
+        @staticmethod
+        def _prepare() -> None:
             keymap.setInput_Modifier(0)
             keymap.beginInput()
-            func()
+
+        @staticmethod
+        def _finish() -> None:
             keymap.endInput()
 
         def type_keys(self, *keys) -> None:
-            func = lambda: [keymap.setInput_FromString(str(key)) for key in keys]
-            self._execute(func)
+            self._prepare()
+            for key in keys:
+                delay(self.inter_stroke_pause)
+                keymap.setInput_FromString(str(key))
+            self._finish()
 
         def type_text(self, s: str) -> None:
-            func = lambda: [keymap.input_seq.append(pyauto.Char(c)) for c in str(s)]
-            self._execute(func)
+            keymap.setInput_Modifier(0)
+            self._prepare()
+            for c in str(s):
+                delay(self.inter_stroke_pause)
+                keymap.input_seq.append(pyauto.Char(c))
+            self._finish()
 
         def type_smart(self, *sequence) -> None:
             for elem in sequence:
