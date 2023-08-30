@@ -957,7 +957,7 @@ def configure(keymap):
             "U0-U": "S-BackSlash",
             "U1-Enter": "<br />",
             "U1-Minus": "Minus",
-            "LS-U0-SemiColon": "SemiColon",
+            "U0-SemiColon": "SemiColon",
         },
         keymap_global,
         recover_ime=False,
@@ -973,7 +973,7 @@ def configure(keymap):
             "U0-Minus": "\u2015\u2015",  # HORIZONTAL BAR * 2
             "U0-P": "\u30fb",  # KATAKANA MIDDLE DOT
             "S-C-U0-P": "\u2049",  # EXCLAMATION QUESTION MARK
-            "U0-SemiColon": "+ ",
+            "S-U0-SemiColon": "+ ",
             "S-U0-8": "- ",
             "U1-G": "\u3013\u3013",  # GETA MARK * 2
             "LC-U1-B": "- ",
