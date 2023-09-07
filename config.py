@@ -395,7 +395,7 @@ def configure(keymap):
     keymap_global["U0-F7"] = LazyFunc(lambda: PathInfo(r"C:\Program Files (x86)\Google\Google Japanese Input\GoogleIMEJaTool.exe").run("--mode=word_register_dialog")).defer()
 
     # listup Window
-    keymap_global["U0-W"] = LazyFunc(lambda: VIRTUAL_FINGER_QUICK.type_keys("LCtrl-LAlt-Tab")).defer()
+    keymap_global["U0-W"] = LazyFunc(lambda: VIRTUAL_FINGER.type_keys("LCtrl-LAlt-Tab")).defer()
 
     # ime: Japanese / Foreign
     keymap_global["U1-J"] = IME_CONTROL.enable
