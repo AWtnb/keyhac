@@ -1565,9 +1565,10 @@ def configure(keymap):
         def activate_wnd(target: pyauto.Window) -> bool:
             if keymap.getWindow() == target:
                 return False
+            interval = 10
             if target.isMinimized():
                 target.restore()
-            interval = 10
+                delay(interval)
             timeout = interval * 10
             while timeout > 0:
                 try:
@@ -1659,12 +1660,16 @@ def configure(keymap):
                     "TChildForm",
                     UserPath().resolve(r"AppData\Local\Programs\Mery\Mery.exe").path,
                 ),
+                "LC-U1-W": (
+                    "wezterm-gui.exe",
+                    "org.wezfurlong.wezterm",
+                    UserPath().resolve(r"scoop\apps\cmder\current\wezterm-gui.exe").path,
+                ),
                 "LC-U1-N": (
                     "notepad.exe",
                     "Notepad",
                     r"C:\Windows\System32\notepad.exe",
                 ),
-                "C-U1-W": ("WindowsTerminal.exe", "CASCADIA_HOSTING_WINDOW_CLASS", ""),
             }.items():
                 km[key] = cls.invoke(*params)
 
