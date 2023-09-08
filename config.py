@@ -1663,7 +1663,7 @@ def configure(keymap):
                 "LC-U1-W": (
                     "wezterm-gui.exe",
                     "org.wezfurlong.wezterm",
-                    UserPath().resolve(r"scoop\apps\cmder\current\wezterm-gui.exe").path,
+                    UserPath().resolve(r"scoop\apps\wezterm\current\wezterm-gui.exe").path,
                 ),
                 "LC-U1-N": (
                     "notepad.exe",
