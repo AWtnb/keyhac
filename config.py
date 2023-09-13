@@ -40,7 +40,7 @@ def configure(keymap):
                 print("invalid-path: '{}'".format(self.path))
 
     class UserPath:
-        user_prof = os.environ.get("USERPROFILE")
+        user_prof = os.environ.get("USERPROFILE") or ""
 
         @classmethod
         def resolve(cls, rel: str = "") -> PathInfo:
