@@ -1615,7 +1615,7 @@ def configure(keymap):
             "D": (
                 "vivaldi.exe",
                 "Chrome_WidgetWin_1",
-                UserPath().resolve(r"AppData\Local\Vivaldi\Application\vivaldi.exe"),
+                UserPath().resolve(r"AppData\Local\Vivaldi\Application\vivaldi.exe").path,
             ),
             "S": (
                 "slack.exe",
