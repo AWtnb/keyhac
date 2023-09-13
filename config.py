@@ -1693,17 +1693,17 @@ def configure(keymap):
     keymap_global["U1-F"]["D"] = invoke_filer(UserPath().resolve(r"Desktop").path)
     keymap_global["U1-F"]["S"] = invoke_filer(r"X:\scan")
 
-    def invoke_cmder() -> None:
-        scanner = WndScanner("ConEmu64.exe", "VirtualConsoleClass")
+    def invoke_terminal() -> None:
+        scanner = WndScanner("wezterm-gui.exe", "org.wezfurlong.wezterm")
         scanner.scan()
         if scanner.found:
             if not PseudoCuteExec.activate_wnd(scanner.found):
                 VIRTUAL_FINGER.type_keys("C-AtMark")
         else:
-            cmder_path = UserPath().resolve(r"scoop\apps\cmder\current\Cmder.exe").path
-            PathInfo(cmder_path).run()
+            terminal_path = UserPath().resolve(r"scoop\apps\wezterm\current\wezterm-gui.exe").path
+            PathInfo(terminal_path).run()
 
-    keymap_global["LC-AtMark"] = LazyFunc(invoke_cmder).defer()
+    keymap_global["LC-AtMark"] = LazyFunc(invoke_terminal).defer()
 
     def search_on_browser() -> None:
         if keymap.getWindow().getProcessName() == DEFAULT_BROWSER.get_exe_name():
