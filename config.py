@@ -565,8 +565,12 @@ def configure(keymap):
         def open_repo() -> None:
             repo_path = UserPath().resolve(r"Sync\develop\repo\keyhac")
             if repo_path.isAccessible:
-                vscode_path = UserPath().resolve(r"scoop\apps\vscode\current\Code.exe")
-                vscode_path.run(repo_path.path)
+                editor_path = UserPath().get_editor()
+                if editor_path == "notepad.exe":
+                    print("notepad.exe cannot open directory. instead, open directory on explorer.")
+                    PathInfo(repo_path.path).run()
+                else:
+                    PathInfo(editor_path).run(repo_path.path)
             else:
                 print("cannot find path: '{}'".format(repo_path.path))
 
