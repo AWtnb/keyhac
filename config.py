@@ -1901,7 +1901,7 @@ def configure(keymap):
     class Zoom:
         @staticmethod
         def get_time(s) -> str:
-            d_str = re.sub(r" 大阪.+$|^時間：", "", s)
+            d_str = re.sub(r" 大阪.+$|^時[間刻]：", "", s)
             try:
                 d = datetime.datetime.strptime(d_str, "%Y年%m月%d日 %I:%M %p")
                 week = "月火水木金土日"[d.weekday()]
@@ -1913,9 +1913,11 @@ def configure(keymap):
         def format(cls, copied: str) -> str:
             lines = copied.replace(": ", "\uff1a").strip().splitlines()
             if len(lines) < 9:
+                print("ERROR: lack of lines.")
                 return ""
             due = cls.get_time(lines[3])
             if len(due) < 1:
+                print("ERROR: could not parse due date.")
                 return ""
             return os.linesep.join(
                 [
