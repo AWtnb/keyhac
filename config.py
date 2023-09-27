@@ -1670,11 +1670,6 @@ def configure(keymap):
                     "TChildForm",
                     UserPath().resolve(r"AppData\Local\Programs\Mery\Mery.exe").path,
                 ),
-                "LC-U1-W": (
-                    "wezterm-gui.exe",
-                    "org.wezfurlong.wezterm",
-                    UserPath().resolve(r"scoop\apps\wezterm\current\wezterm-gui.exe").path,
-                ),
                 "LC-U1-N": (
                     "notepad.exe",
                     "Notepad",
@@ -1685,6 +1680,7 @@ def configure(keymap):
 
     PseudoCuteExec().apply_single(keymap_global)
     keymap_global["U1-C"] = keymap.defineMultiStrokeKeymap()
+    keymap_global["U1-C"]["LC-D"] = lambda : PathInfo(r"C:\Personal\draft.txt").run()
     PseudoCuteExec().apply_combo(keymap_global["U1-C"])
 
     # invoke specific filer
