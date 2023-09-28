@@ -686,20 +686,24 @@ def configure(keymap):
                 "large": int(max_size * 2 / 3),
             }
 
-    def get_monitors() -> list:
-        monitors = []
-        for mi in pyauto.Window.getMonitorInfo():
-            mr = MonitorRect(rect=mi[1], is_primary=mi[2])
-            mr.set_center_rect()
-            mr.set_horizontal_rect()
-            mr.set_vertical_rect()
-            monitors.append(mr)
-        max_widths = [m.max_width for m in monitors]
-        if len(set(max_widths)) == 1:
-            return sorted(monitors, key=lambda x: x.is_primary, reverse=True)
-        return sorted(monitors, key=lambda x: x.max_width, reverse=True)
+    class CurrentMonitors:
+        def __init__(self) -> None:
+            self.monitors = []
+            for mi in pyauto.Window.getMonitorInfo():
+                mr = MonitorRect(rect=mi[1], is_primary=mi[2])
+                mr.set_center_rect()
+                mr.set_horizontal_rect()
+                mr.set_vertical_rect()
+                self.monitors.append(mr)
 
-    KEYMAP_MONITORS = get_monitors()
+        def is_multi_widths(self) -> bool:
+            variation = [m.max_width for m in self.monitors]
+            return len(set(variation)) != 1
+
+        def get_info(self) -> list:
+            if self.is_multi_widths():
+                return sorted(self.monitors, key=lambda x: x.max_width, reverse=True)
+            return sorted(self.monitors, key=lambda x: x.is_primary, reverse=True)
 
     ################################
     # set cursor position
@@ -713,7 +717,8 @@ def configure(keymap):
     class CursorPos:
         def __init__(self) -> None:
             self.pos = []
-            for monitor in KEYMAP_MONITORS:
+            monitors = CurrentMonitors().get_info()
+            for monitor in monitors:
                 for i in (1, 3):
                     y = monitor.top + int(monitor.max_height / 2)
                     x = monitor.left + int(monitor.max_width / 4) * i
@@ -785,11 +790,12 @@ def configure(keymap):
 
         @classmethod
         def alloc_flexible(cls, km: Keymap) -> None:
+            monitors = CurrentMonitors().get_info()
             for mod_mntr, mntr_idx in cls.monitor_dict.items():
                 for mod_area, size in cls.size_dict.items():
                     for key, pos in cls.snap_key_dict.items():
-                        if mntr_idx < len(KEYMAP_MONITORS):
-                            wnd_rect = KEYMAP_MONITORS[mntr_idx].area_mapping[pos][size]
+                        if mntr_idx < len(monitors):
+                            wnd_rect = monitors[mntr_idx].area_mapping[pos][size]
                             km[mod_mntr + mod_area + key] = LazyFunc(wnd_rect.snap).defer()
 
         @staticmethod
@@ -1680,7 +1686,7 @@ def configure(keymap):
 
     PseudoCuteExec().apply_single(keymap_global)
     keymap_global["U1-C"] = keymap.defineMultiStrokeKeymap("waiting for next key...")
-    keymap_global["U1-C"]["LC-M"] = lambda : PathInfo(r"C:\Personal\draft.txt").run()
+    keymap_global["U1-C"]["LC-M"] = lambda: PathInfo(r"C:\Personal\draft.txt").run()
     PseudoCuteExec().apply_combo(keymap_global["U1-C"])
 
     # invoke specific filer
