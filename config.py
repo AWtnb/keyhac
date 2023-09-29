@@ -1006,41 +1006,44 @@ def configure(keymap):
                 sent = pair + ["Left"] * len(suffix)
                 km[key] = KeyPuncher(recover_ime=self.recover_ime).invoke(*sent)
 
-        def apply_wrapper(self, km: Keymap) -> None:
+        def apply_wrapper(self, km: Keymap, modifier: str = "LC-") -> None:
             for key, pair in self.pair_mapping.items():
                 prefix, suffix = pair
-                km[key] = KeyPuncher(recover_ime=self.recover_ime, defer_msec=50, inter_stroke_pause=10).invoke("C-Insert", prefix, "S-Insert", suffix)
+                km[modifier + key] = KeyPuncher(recover_ime=self.recover_ime, defer_msec=50, inter_stroke_pause=10).invoke(prefix, "C-V", suffix)
 
-    PAIRS_WITHOUT_IME = {
-        "U0-2": ['"', '"'],
-        "U0-7": ["'", "'"],
-        "U0-AtMark": ["`", "`"],
-        "U1-AtMark": [" `", "` "],
-        "U0-CloseBracket": ["[", "]"],
-        "U1-9": ["(", ")"],
-        "U1-CloseBracket": ["{", "}"],
-        "U0-Caret": ["~~", "~~"],
-    }
-    PAIRS_WITH_IME = {
-        "U0-8": ["\u300e", "\u300f"],  # WHITE CORNER BRACKET 『』
-        "U0-9": ["\u3010", "\u3011"],  # BLACK LENTICULAR BRACKET 【】
-        "U0-OpenBracket": ["\u300c", "\u300d"],  # CORNER BRACKET 「」
-        "U0-Y": ["\u300a", "\u300b"],  # DOUBLE ANGLE BRACKET 《》
-        "U1-2": ["\u201c", "\u201d"],  # DOUBLE QUOTATION MARK “”
-        "U1-7": ["\u2018", "\u2019"],  # SINGLE QUOTATION MARK ‘’
-        "U0-T": ["\u3014", "\u3015"],  # TORTOISE SHELL BRACKET 〔〕
-        "U1-8": ["\uff08", "\uff09"],  # FULLWIDTH PARENTHESIS （）
-        "U1-OpenBracket": ["\uff3b", "\uff3d"],  # FULLWIDTH SQUARE BRACKET ［］
-        "U1-Y": ["\u3008", "\u3009"],  # ANGLE BRACKET 〈〉
-        "C-U0-Caret": ["\u300c", "\u300d\uff1f"],
-    }
+    PAIRS_WITHOUT_IME = PairedPuncs(
+        {
+            "U0-2": ['"', '"'],
+            "U0-7": ["'", "'"],
+            "U0-AtMark": ["`", "`"],
+            "U1-AtMark": [" `", "` "],
+            "U0-CloseBracket": ["[", "]"],
+            "U1-9": ["(", ")"],
+            "U1-CloseBracket": ["{", "}"],
+            "U0-Caret": ["~~", "~~"],
+        },
+        False,
+    )
+    PAIRS_WITHOUT_IME.apply_sender(keymap_global)
+    PAIRS_WITHOUT_IME.apply_wrapper(keymap_global, "LC-")
 
-    PairedPuncs(PAIRS_WITH_IME, True).apply_sender(keymap_global)
-    PairedPuncs(PAIRS_WITHOUT_IME, False).apply_sender(keymap_global)
-
-    keymap_global["U1-W"] = keymap.defineMultiStrokeKeymap()
-    PairedPuncs(PAIRS_WITH_IME, True).apply_wrapper(keymap_global["U1-W"])
-    PairedPuncs(PAIRS_WITHOUT_IME, False).apply_wrapper(keymap_global["U1-W"])
+    PAIRS_WITH_IME = PairedPuncs(
+        {
+            "U0-8": ["\u300e", "\u300f"],  # WHITE CORNER BRACKET 『』
+            "U0-9": ["\u3010", "\u3011"],  # BLACK LENTICULAR BRACKET 【】
+            "U0-OpenBracket": ["\u300c", "\u300d"],  # CORNER BRACKET 「」
+            "U0-Y": ["\u300a", "\u300b"],  # DOUBLE ANGLE BRACKET 《》
+            "U1-2": ["\u201c", "\u201d"],  # DOUBLE QUOTATION MARK “”
+            "U1-7": ["\u2018", "\u2019"],  # SINGLE QUOTATION MARK ‘’
+            "U0-T": ["\u3014", "\u3015"],  # TORTOISE SHELL BRACKET 〔〕
+            "U1-8": ["\uff08", "\uff09"],  # FULLWIDTH PARENTHESIS （）
+            "U1-OpenBracket": ["\uff3b", "\uff3d"],  # FULLWIDTH SQUARE BRACKET ［］
+            "U1-Y": ["\u3008", "\u3009"],  # ANGLE BRACKET 〈〉
+        },
+        True,
+    )
+    PAIRS_WITH_IME.apply_sender(keymap_global)
+    PAIRS_WITH_IME.apply_wrapper(keymap_global, "LC-")
 
     class DirectInput:
         @staticmethod
