@@ -298,7 +298,7 @@ def configure(keymap):
 
     IME_CONTROL = ImeControl()
 
-    class keyhaclip:
+    class ClipHandler:
         @staticmethod
         def get_string() -> str:
             return getClipboardText() or ""
@@ -387,7 +387,7 @@ def configure(keymap):
     ################################
 
     # append clipboard
-    keymap_global["LC-U0-C"] = LazyFunc(keyhaclip.append).defer()
+    keymap_global["LC-U0-C"] = LazyFunc(ClipHandler.append).defer()
 
     # switch window
     keymap_global["U1-Tab"] = KeyPuncher(defer_msec=40).invoke("Alt-Tab")
@@ -405,7 +405,7 @@ def configure(keymap):
     keymap_global["S-U1-J"] = IME_CONTROL.disable
 
     # paste as plaintext
-    keymap_global["U0-V"] = LazyFunc(keyhaclip().paste_current).defer()
+    keymap_global["U0-V"] = LazyFunc(ClipHandler().paste_current).defer()
 
     # paste as plaintext (with trimming removable whitespaces)
     class StrCleaner:
@@ -424,7 +424,7 @@ def configure(keymap):
                 return s
 
             def _paster() -> None:
-                keyhaclip().paste_current(_cleaner)
+                ClipHandler().paste_current(_cleaner)
 
             return LazyFunc(_paster).defer()
 
@@ -474,7 +474,7 @@ def configure(keymap):
 
     # count chars
     def count_chars() -> None:
-        cb = keyhaclip().copy_string()
+        cb = ClipHandler().copy_string()
         if cb:
             total = len(cb)
             lines = len(cb.strip().splitlines())
@@ -486,9 +486,9 @@ def configure(keymap):
 
     # wrap with quote mark
     def quote_selection() -> None:
-        cb = keyhaclip().copy_string()
+        cb = ClipHandler().copy_string()
         if cb:
-            keyhaclip().paste(cb, lambda x: ' "{}" '.format(x.strip()))
+            ClipHandler().paste(cb, lambda x: ' "{}" '.format(x.strip()))
 
     keymap_global["LC-U0-Q"] = LazyFunc(quote_selection).defer()
 
@@ -501,7 +501,7 @@ def configure(keymap):
             return os.linesep.join(["> " + line for line in lines])
 
         def _paster() -> None:
-            keyhaclip().paste_current(_formatter)
+            ClipHandler().paste_current(_formatter)
 
         return LazyFunc(_paster).defer()
 
@@ -509,11 +509,11 @@ def configure(keymap):
     keymap_global["C-U1-Q"] = paste_with_anchor(True)
 
     # open url in browser
-    keymap_global["C-U0-O"] = LazyFunc(lambda: PathInfo(keyhaclip().copy_string().strip()).run()).defer()
+    keymap_global["C-U0-O"] = LazyFunc(lambda: PathInfo(ClipHandler().copy_string().strip()).run()).defer()
 
     # re-input selected string with ime
     def re_input_with_ime() -> None:
-        selection = keyhaclip().copy_string()
+        selection = ClipHandler().copy_string()
         if selection:
             sequence = ["Minus" if c == "-" else c for c in StrCleaner.clear_space(selection)]
             IME_CONTROL.enable()
@@ -580,7 +580,7 @@ def configure(keymap):
             for key, func in {
                 "R": cls.reload_config,
                 "E": cls.open_repo,
-                "P": lambda: keyhaclip().paste(cls.read_config()),
+                "P": lambda: ClipHandler().paste(cls.read_config()),
                 "X": lambda: None,
             }.items():
                 km[key] = LazyFunc(func).defer()
@@ -1471,7 +1471,7 @@ def configure(keymap):
         @staticmethod
         def invoke(uri: str, strict: bool = False, strip_hiragana: bool = False) -> Callable:
             def _search() -> None:
-                s = keyhaclip().copy_string()
+                s = ClipHandler().copy_string()
                 query = SearchQuery(s)
                 query.fix_kangxi()
                 query.remove_honorific()
@@ -1941,7 +1941,7 @@ def configure(keymap):
         @staticmethod
         def format_cb(func: Callable) -> Callable:
             def _formatter() -> str:
-                cb = keyhaclip.get_string()
+                cb = ClipHandler.get_string()
                 if cb:
                     return func(cb)
 
@@ -1952,7 +1952,7 @@ def configure(keymap):
             reg = re.compile(search)
 
             def _replacer() -> str:
-                cb = keyhaclip.get_string()
+                cb = ClipHandler.get_string()
                 if cb:
                     return reg.sub(replace_to, cb)
 
@@ -2010,8 +2010,8 @@ def configure(keymap):
             return [
                 (" Transform: => A-Z/0-9 ", cls.format_cb(CharWidth().to_half_letter)),
                 ("            => \uff21-\uff3a/\uff10-\uff19 ", cls.format_cb(CharWidth().to_full_letter)),
-                ("            => abc ", lambda: keyhaclip.get_string().lower()),
-                ("            => ABC ", lambda: keyhaclip.get_string().upper()),
+                ("            => abc ", lambda: ClipHandler.get_string().lower()),
+                ("            => ABC ", lambda: ClipHandler.get_string().upper()),
                 (" Comma: - Curly (\uff0c) ", cls.replace_cb(r"\u3001", "\uff0c")),
                 ("        - Straight (\u3001) ", cls.replace_cb(r"\uff0c", "\u3001")),
             ]
