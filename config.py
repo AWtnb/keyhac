@@ -239,30 +239,29 @@ def configure(keymap):
 
     class VirtualFinger:
         def __init__(self, inter_stroke_pause: int = 10) -> None:
-            self.inter_stroke_pause = inter_stroke_pause
+            self._keymap = keymap
+            self._inter_stroke_pause = inter_stroke_pause
 
-        @staticmethod
-        def _prepare() -> None:
-            keymap.setInput_Modifier(0)
-            keymap.beginInput()
+        def _prepare(self) -> None:
+            self._keymap.setInput_Modifier(0)
+            self._keymap.beginInput()
 
-        @staticmethod
-        def _finish() -> None:
-            keymap.endInput()
+        def _finish(self) -> None:
+            self._keymap.endInput()
 
         def type_keys(self, *keys) -> None:
             self._prepare()
             for key in keys:
-                delay(self.inter_stroke_pause)
-                keymap.setInput_FromString(str(key))
+                delay(self._inter_stroke_pause)
+                self._keymap.setInput_FromString(str(key))
             self._finish()
 
         def type_text(self, s: str) -> None:
-            keymap.setInput_Modifier(0)
+            self._keymap.setInput_Modifier(0)
             self._prepare()
             for c in str(s):
-                delay(self.inter_stroke_pause)
-                keymap.input_seq.append(pyauto.Char(c))
+                delay(self._inter_stroke_pause)
+                self._keymap.input_seq.append(pyauto.Char(c))
             self._finish()
 
         def type_smart(self, *sequence) -> None:
@@ -276,27 +275,25 @@ def configure(keymap):
     VIRTUAL_FINGER_QUICK = VirtualFinger(0)
 
     class ImeControl:
-        @staticmethod
-        def get_status() -> pyauto.Window:
-            return keymap.getWindow().getImeStatus()
+        def __init__(self) -> None:
+            self._keymap = keymap
 
-        @classmethod
-        def set_status(cls, mode: int) -> None:
-            if cls.get_status() != mode:
+        def get_status(self) -> pyauto.Window:
+            return self._keymap.getWindow().getImeStatus()
+
+        def set_status(self, mode: int) -> None:
+            if self.get_status() != mode:
                 VIRTUAL_FINGER_QUICK.type_keys("(243)")
                 delay(10)
 
-        @classmethod
-        def is_enabled(cls) -> bool:
-            return cls.get_status() == 1
+        def is_enabled(self) -> bool:
+            return self.get_status() == 1
 
-        @classmethod
-        def enable(cls) -> None:
-            cls.set_status(1)
+        def enable(self) -> None:
+            self.set_status(1)
 
-        @classmethod
-        def disable(cls) -> None:
-            cls.set_status(0)
+        def disable(self) -> None:
+            self.set_status(0)
 
     IME_CONTROL = ImeControl()
 
@@ -342,15 +339,17 @@ def configure(keymap):
 
     class LazyFunc:
         def __init__(self, func: Callable) -> None:
+            self._keymap = keymap
+
             def _wrapper() -> None:
-                keymap.hookCall(func)
+                self._keymap.hookCall(func)
 
             self._func = _wrapper
 
         def defer(self, msec: int = 20) -> Callable:
             def _executer() -> None:
                 # use delayedCall in ckit => https://github.com/crftwr/ckit/blob/2ea84f986f9b46a3e7f7b20a457d979ec9be2d33/ckitcore/ckitcore.cpp#L1998
-                keymap.delayedCall(self._func, msec)
+                self._keymap.delayedCall(self._func, msec)
 
             return _executer
 
@@ -553,14 +552,16 @@ def configure(keymap):
     ################################
 
     class ConfigMenu:
+        def __init__(self) -> None:
+            self._keymap = keymap
+
         @staticmethod
         def read_config() -> str:
             return Path(getAppExePath(), "config.py").read_text("utf-8")
 
-        @staticmethod
-        def reload_config() -> None:
-            keymap.configure()
-            keymap.updateKeymap()
+        def reload_config(self) -> None:
+            self._keymap.configure()
+            self._keymap.updateKeymap()
             ts = datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S")
             print("\n{} reloaded config.py\n".format(ts))
 
@@ -577,12 +578,11 @@ def configure(keymap):
             else:
                 print("cannot find path: '{}'".format(repo_path.path))
 
-        @classmethod
-        def apply(cls, km: Keymap) -> None:
+        def apply(self, km: Keymap) -> None:
             for key, func in {
-                "R": cls.reload_config,
-                "E": cls.open_repo,
-                "P": lambda: ClipHandler().paste(cls.read_config()),
+                "R": self.reload_config,
+                "E": self.open_repo,
+                "P": lambda: ClipHandler().paste(self.read_config()),
                 "X": lambda: None,
             }.items():
                 km[key] = LazyFunc(func).defer()
@@ -718,6 +718,7 @@ def configure(keymap):
 
     class CursorPos:
         def __init__(self) -> None:
+            self._keymap = keymap
             self.pos = []
             monitors = CurrentMonitors().get_info()
             for monitor in monitors:
@@ -740,19 +741,17 @@ def configure(keymap):
             else:
                 self.set_position(*self.pos[idx + 1])
 
-        @staticmethod
-        def set_position(x: int, y: int) -> None:
-            keymap.beginInput()
-            keymap.input_seq.append(pyauto.MouseMove(x, y))
-            keymap.endInput()
+        def set_position(self, x: int, y: int) -> None:
+            self._keymap.beginInput()
+            self._keymap.input_seq.append(pyauto.MouseMove(x, y))
+            self._keymap.endInput()
 
-        @classmethod
-        def snap_to_center(cls) -> None:
-            wnd = keymap.getTopLevelWindow()
+        def snap_to_center(self) -> None:
+            wnd = self._keymap.getTopLevelWindow()
             wnd_left, wnd_top, wnd_right, wnd_bottom = wnd.getRect()
             to_x = int((wnd_left + wnd_right) / 2)
             to_y = int((wnd_bottom + wnd_top) / 2)
-            cls.set_position(to_x, to_y)
+            self.set_position(to_x, to_y)
 
     keymap_global["O-RCtrl"] = CursorPos().snap
 
@@ -790,31 +789,32 @@ def configure(keymap):
             "M": "center",
         }
 
-        @classmethod
-        def alloc_flexible(cls, km: Keymap) -> None:
+        def __init__(self) -> None:
+            self._keymap = keymap
+
+        def alloc_flexible(self, km: Keymap) -> None:
             monitors = CurrentMonitors().get_info()
-            for mod_mntr, mntr_idx in cls.monitor_dict.items():
-                for mod_area, size in cls.size_dict.items():
-                    for key, pos in cls.snap_key_dict.items():
+            for mod_mntr, mntr_idx in self.monitor_dict.items():
+                for mod_area, size in self.size_dict.items():
+                    for key, pos in self.snap_key_dict.items():
                         if mntr_idx < len(monitors):
                             wnd_rect = monitors[mntr_idx].area_mapping[pos][size]
                             km[mod_mntr + mod_area + key] = LazyFunc(wnd_rect.snap).defer()
 
-        @staticmethod
-        def alloc_maximize(km: Keymap, mapping_dict: dict) -> None:
+        def alloc_maximize(self, km: Keymap, mapping_dict: dict) -> None:
             for key, towards in mapping_dict.items():
 
                 def _snap() -> None:
                     VIRTUAL_FINGER.type_keys("LShift-LWin-" + towards)
                     delay()
-                    keymap.getTopLevelWindow().maximize()
+                    self._keymap.getTopLevelWindow().maximize()
 
                 km[key] = LazyFunc(_snap).defer()
 
     WndPosAllocator().alloc_flexible(keymap_global["U1-M"])
 
-    WndPosAllocator.alloc_maximize(keymap_global, {"LC-U1-L": "Right", "LC-U1-H": "Left"})
-    WndPosAllocator.alloc_maximize(
+    WndPosAllocator().alloc_maximize(keymap_global, {"LC-U1-L": "Right", "LC-U1-H": "Left"})
+    WndPosAllocator().alloc_maximize(
         keymap_global["U1-M"],
         {
             "U0-L": "Right",
@@ -825,10 +825,12 @@ def configure(keymap):
     )
 
     class WndShrinker:
-        @staticmethod
-        def invoke_snapper(horizontal: bool, default_pos: bool) -> Callable:
+        def __init__(self) -> None:
+            self._keymap = keymap
+
+        def invoke_snapper(self, horizontal: bool, default_pos: bool) -> Callable:
             def _snap() -> None:
-                wnd = keymap.getTopLevelWindow()
+                wnd = self._keymap.getTopLevelWindow()
                 wr = WndRect(*wnd.getRect())
                 rect = []
                 if horizontal:
@@ -843,15 +845,14 @@ def configure(keymap):
 
             return LazyFunc(_snap).defer()
 
-        @classmethod
-        def apply(cls, km: Keymap) -> None:
+        def apply(self, km: Keymap) -> None:
             for key, params in {
                 "H": {"horizontal": True, "default_pos": True},
                 "L": {"horizontal": True, "default_pos": False},
                 "K": {"horizontal": False, "default_pos": True},
                 "J": {"horizontal": False, "default_pos": False},
             }.items():
-                km["U1-" + key] = cls.invoke_snapper(**params)
+                km["U1-" + key] = self.invoke_snapper(**params)
 
     WndShrinker().apply(keymap_global["U1-M"])
 
@@ -878,7 +879,8 @@ def configure(keymap):
 
     class KeyCombo:
         def __init__(self) -> None:
-            self.mapping = keymap.defineMultiStrokeKeymap()
+            self._keymap = keymap
+            self.mapping = self._keymap.defineMultiStrokeKeymap()
             user_path = UserPath()
             direct_puncher = KeyPuncher(defer_msec=50)
             for combo, stroke in {
@@ -1056,7 +1058,7 @@ def configure(keymap):
 
             def _input() -> None:
                 VIRTUAL_FINGER.type_keys(key)
-                if keymap.getWindow().getImeStatus():
+                if IME_CONTROL.is_enabled():
                     VIRTUAL_FINGER.type_keys(*finish_keys)
 
             return _input
@@ -1470,6 +1472,9 @@ def configure(keymap):
             return urllib.parse.quote(" ".join(words))
 
     class WebSearcher:
+        def __init__(self) -> None:
+            self._keymap = keymap
+
         @staticmethod
         def invoke(uri: str, strict: bool = False, strip_hiragana: bool = False) -> Callable:
             def _search() -> None:
@@ -1511,12 +1516,11 @@ def configure(keymap):
             "W": "https://www.worldcat.org/search?q={}",
         }
 
-        @classmethod
-        def apply(cls, km: Keymap) -> None:
-            for mod_key, params in cls.mod_dict.items():
-                km[mod_key + "U0-S"] = keymap.defineMultiStrokeKeymap()
-                for key, uri in cls.key_uri_dict.items():
-                    km[mod_key + "U0-S"][key] = cls.invoke(uri, *params)
+        def apply(self, km: Keymap) -> None:
+            for mod_key, params in self.mod_dict.items():
+                km[mod_key + "U0-S"] = self._keymap.defineMultiStrokeKeymap()
+                for key, uri in self.key_uri_dict.items():
+                    km[mod_key + "U0-S"][key] = self.invoke(uri, *params)
 
     WebSearcher().apply(keymap_global)
 
@@ -1577,9 +1581,11 @@ def configure(keymap):
             return False
 
     class PseudoCuteExec:
-        @staticmethod
-        def activate_wnd(target: pyauto.Window) -> bool:
-            if keymap.getWindow() == target:
+        def __init__(self) -> None:
+            self._keymap = keymap
+
+        def activate_wnd(self, target: pyauto.Window) -> bool:
+            if self._keymap.getWindow() == target:
                 return False
             interval = 10
             if target.isMinimized():
@@ -1598,14 +1604,13 @@ def configure(keymap):
                 timeout -= interval
             return False
 
-        @classmethod
-        def invoke(cls, exe_name: str, class_name: str, exe_path: str) -> Callable:
+        def invoke(self, exe_name: str, class_name: str, exe_path: str) -> Callable:
             scanner = WndScanner(exe_name, class_name)
 
             def _executer() -> None:
                 scanner.scan()
                 if scanner.found:
-                    if not cls.activate_wnd(scanner.found):
+                    if not self.activate_wnd(scanner.found):
                         VIRTUAL_FINGER.type_keys("LCtrl-LAlt-Tab")
                 else:
                     if exe_path:
@@ -1666,13 +1671,11 @@ def configure(keymap):
             "X": ("explorer.exe", "CabinetWClass", r"C:\Windows\explorer.exe"),
         }
 
-        @classmethod
-        def apply_combo(cls, km: Keymap) -> None:
-            for key, params in cls.activate_keymap.items():
-                km[key] = cls.invoke(*params)
+        def apply_combo(self, km: Keymap) -> None:
+            for key, params in self.activate_keymap.items():
+                km[key] = self.invoke(*params)
 
-        @classmethod
-        def apply_single(cls, km: Keymap) -> None:
+        def apply_single(self, km: Keymap) -> None:
             for key, params in {
                 "U1-T": ("TE64.exe", "TablacusExplorer", ""),
                 "U1-P": ("SumatraPDF.exe", "SUMATRA_PDF_FRAME", ""),
@@ -1687,7 +1690,7 @@ def configure(keymap):
                     r"C:\Windows\System32\notepad.exe",
                 ),
             }.items():
-                km[key] = cls.invoke(*params)
+                km[key] = self.invoke(*params)
 
     PseudoCuteExec().apply_single(keymap_global)
     keymap_global["U1-C"] = keymap.defineMultiStrokeKeymap()
@@ -1714,7 +1717,7 @@ def configure(keymap):
         scanner = WndScanner("wezterm-gui.exe", "org.wezfurlong.wezterm")
         scanner.scan()
         if scanner.found:
-            if not PseudoCuteExec.activate_wnd(scanner.found):
+            if not PseudoCuteExec().activate_wnd(scanner.found):
                 VIRTUAL_FINGER.type_keys("C-AtMark")
         else:
             terminal_path = UserPath().resolve(r"scoop\apps\wezterm\current\wezterm-gui.exe").path
@@ -1939,6 +1942,9 @@ def configure(keymap):
             )
 
     class ClipboardMenu:
+        def __init__(self) -> None:
+            self._keymap = keymap
+
         @staticmethod
         def format_cb(func: Callable) -> Callable:
             def _formatter() -> str:
@@ -1994,49 +2000,45 @@ def configure(keymap):
         def decode_url(s: str) -> str:
             return urllib.parse.unquote(s)
 
-        @classmethod
-        def get_menu_noise_reduction(cls) -> list:
+        def get_menu_noise_reduction(self) -> list:
             return [
-                (" Remove: - Blank lines ", cls.format_cb(cls.skip_blank_line)),
-                ("         - Inside Paren ", cls.replace_cb(r"[\uff08\u0028].+?[\uff09\u0029]", "")),
-                ("         - Line-break ", cls.replace_cb(r"\r?\n", "")),
-                ("         - Quotations ", cls.replace_cb(r"[\u0022\u0027]", "")),
-                (" Fix: - Dumb Quotation ", cls.format_cb(cls.fix_dumb_quotation)),
-                ("      - MSWord-Bullet ", cls.replace_cb(r"\uf09f\u0009", "\u30fb")),
-                ("      - KANGXI RADICALS ", cls.format_cb(KangxiRadicals().fix)),
+                (" Remove: - Blank lines ", self.format_cb(self.skip_blank_line)),
+                ("         - Inside Paren ", self.replace_cb(r"[\uff08\u0028].+?[\uff09\u0029]", "")),
+                ("         - Line-break ", self.replace_cb(r"\r?\n", "")),
+                ("         - Quotations ", self.replace_cb(r"[\u0022\u0027]", "")),
+                (" Fix: - Dumb Quotation ", self.format_cb(self.fix_dumb_quotation)),
+                ("      - MSWord-Bullet ", self.replace_cb(r"\uf09f\u0009", "\u30fb")),
+                ("      - KANGXI RADICALS ", self.format_cb(KangxiRadicals().fix)),
             ]
 
-        @classmethod
-        def get_menu_transform(cls) -> list:
+        def get_menu_transform(self) -> list:
             return [
-                (" Transform: => A-Z/0-9 ", cls.format_cb(CharWidth().to_half_letter)),
-                ("            => \uff21-\uff3a/\uff10-\uff19 ", cls.format_cb(CharWidth().to_full_letter)),
+                (" Transform: => A-Z/0-9 ", self.format_cb(CharWidth().to_half_letter)),
+                ("            => \uff21-\uff3a/\uff10-\uff19 ", self.format_cb(CharWidth().to_full_letter)),
                 ("            => abc ", lambda: ClipHandler.get_string().lower()),
                 ("            => ABC ", lambda: ClipHandler.get_string().upper()),
-                (" Comma: - Curly (\uff0c) ", cls.replace_cb(r"\u3001", "\uff0c")),
-                ("        - Straight (\u3001) ", cls.replace_cb(r"\uff0c", "\u3001")),
+                (" Comma: - Curly (\uff0c) ", self.replace_cb(r"\u3001", "\uff0c")),
+                ("        - Straight (\u3001) ", self.replace_cb(r"\uff0c", "\u3001")),
             ]
 
-        @classmethod
-        def get_menu_other(cls) -> list:
+        def get_menu_other(self) -> list:
             return [
-                (" Cat local file ", cls.format_cb(cls.catanate_file_content)),
-                (" Mask USERNAME ", cls.format_cb(UserPath().mask_user_name)),
-                (" Postalcode | Address ", cls.format_cb(cls.split_postalcode)),
-                (" URL: - Decode ", cls.format_cb(cls.decode_url)),
-                ("      - Shorten Amazon ", cls.replace_cb(r"^.+amazon\.co\.jp/.+dp/(.{10}).*", r"https://www.amazon.jp/dp/\1")),
-                (" Zoom invitation ", cls.format_cb(Zoom().format)),
+                (" Cat local file ", self.format_cb(self.catanate_file_content)),
+                (" Mask USERNAME ", self.format_cb(UserPath().mask_user_name)),
+                (" Postalcode | Address ", self.format_cb(self.split_postalcode)),
+                (" URL: - Decode ", self.format_cb(self.decode_url)),
+                ("      - Shorten Amazon ", self.replace_cb(r"^.+amazon\.co\.jp/.+dp/(.{10}).*", r"https://www.amazon.jp/dp/\1")),
+                (" Zoom invitation ", self.format_cb(Zoom().format)),
             ]
 
-        @classmethod
-        def apply(cls) -> None:
+        def apply(self) -> None:
             for title, menu in {
-                "Noise-Reduction": cls.get_menu_noise_reduction(),
-                "Transform Alphabet / Punctuation": cls.get_menu_transform(),
-                "Others": cls.get_menu_other(),
+                "Noise-Reduction": self.get_menu_noise_reduction(),
+                "Transform Alphabet / Punctuation": self.get_menu_transform(),
+                "Others": self.get_menu_other(),
             }.items():
                 m = menu + [("---------------- EXIT ----------------", lambda: None)]
-                keymap.cblisters += [(title, cblister_FixedPhrase(m))]
+                self._keymap.cblisters += [(title, cblister_FixedPhrase(m))]
 
     ClipboardMenu().apply()
     keymap_global["LC-LS-X"] = LazyFunc(keymap.command_ClipboardList).defer(msec=100)
