@@ -197,6 +197,8 @@ def configure(keymap):
             "U0-X": ("Esc"),
             # select first suggestion
             "U0-Tab": ("Down", "Enter"),
+            # confirm and move cursor
+            "U0-M": ("Enter", "Right"),
             # line selection
             "U1-A": ("End", "S-Home"),
             # punctuation
@@ -1822,7 +1824,6 @@ def configure(keymap):
 
     # excel
     keymap_excel = keymap.defineWindowKeymap(exe_name="excel.exe")
-    keymap_excel["U0-M"] = "Enter", "Enter"
     keymap_excel["F11"] = "A-F", "E", "P", "A"
     keymap_excel["LC-Q"] = "A-F4"
 
