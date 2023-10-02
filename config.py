@@ -1688,7 +1688,7 @@ def configure(keymap):
                 km[key] = cls.invoke(*params)
 
     PseudoCuteExec().apply_single(keymap_global)
-    keymap_global["U1-C"] = keymap.defineMultiStrokeKeymap("waiting for next key...")
+    keymap_global["U1-C"] = keymap.defineMultiStrokeKeymap()
     keymap_global["U1-C"]["LC-M"] = lambda: PathInfo(r"C:\Personal\draft.txt").run()
     PseudoCuteExec().apply_combo(keymap_global["U1-C"])
 
