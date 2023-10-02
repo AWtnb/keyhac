@@ -1009,7 +1009,7 @@ def configure(keymap):
         def apply_wrapper(self, km: Keymap, modifier: str = "LS-") -> None:
             for key, pair in self.pair_mapping.items():
                 prefix, suffix = pair
-                km[modifier + key] = KeyPuncher(recover_ime=self.recover_ime, inter_stroke_pause=10).invoke(prefix, "S-Insert", suffix)
+                km[modifier + key] = KeyPuncher(recover_ime=self.recover_ime, defer_msec=40, inter_stroke_pause=10).invoke(prefix, "S-Insert", suffix)
 
     PAIRS_WITHOUT_IME = PairedPuncs(
         {
