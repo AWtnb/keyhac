@@ -1008,10 +1008,10 @@ def configure(keymap):
                 sent = pair + ["Left"] * len(suffix)
                 km[key] = KeyPuncher(recover_ime=self.recover_ime).invoke(*sent)
 
-        def apply_wrapper(self, km: Keymap, modifier: str = "LS-") -> None:
+        def apply_wrapper(self, km: Keymap, modifier: str = "LC-") -> None:
             for key, pair in self.pair_mapping.items():
                 prefix, suffix = pair
-                km[modifier + key] = KeyPuncher(recover_ime=self.recover_ime, defer_msec=40, inter_stroke_pause=10).invoke(prefix, "S-Insert", suffix)
+                km[modifier + key] = KeyPuncher(recover_ime=self.recover_ime, defer_msec=40, inter_stroke_pause=10).invoke(prefix, "C-V", suffix)
 
     PAIRS_WITHOUT_IME = PairedPuncs(
         {
@@ -1027,7 +1027,7 @@ def configure(keymap):
         False,
     )
     PAIRS_WITHOUT_IME.apply_sender(keymap_global)
-    PAIRS_WITHOUT_IME.apply_wrapper(keymap_global, "LS-")
+    PAIRS_WITHOUT_IME.apply_wrapper(keymap_global, "LC-")
 
     PAIRS_WITH_IME = PairedPuncs(
         {
@@ -1045,7 +1045,7 @@ def configure(keymap):
         True,
     )
     PAIRS_WITH_IME.apply_sender(keymap_global)
-    PAIRS_WITH_IME.apply_wrapper(keymap_global, "LS-")
+    PAIRS_WITH_IME.apply_wrapper(keymap_global, "LC-")
 
     class DirectInput:
         @staticmethod
