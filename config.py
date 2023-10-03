@@ -1732,7 +1732,7 @@ def configure(keymap):
             scanner = WndScanner(DEFAULT_BROWSER.get_exe_name(), DEFAULT_BROWSER.get_wnd_class())
             scanner.scan()
             if scanner.found:
-                if PseudoCuteExec.activate_wnd(scanner.found):
+                if PseudoCuteExec().activate_wnd(scanner.found):
                     delay()
                     VIRTUAL_FINGER.type_keys("C-T")
                 else:
