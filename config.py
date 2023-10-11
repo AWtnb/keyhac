@@ -133,7 +133,7 @@ def configure(keymap):
     keymap_global = keymap.defineWindowKeymap(check_func=CheckWnd.is_global_target)
 
     # keyboard macro
-    keymap_global["U0-Z"] = keymap.command_RecordPlay
+    keymap_global["U0-R"] = keymap.command_RecordPlay
     keymap_global["U0-0"] = keymap.command_RecordToggle
     keymap_global["U1-0"] = keymap.command_RecordClear
 
@@ -206,9 +206,9 @@ def configure(keymap):
             "LS-U0-Enter": ("Comma"),
             "LC-U0-Enter": ("Slash"),
             "U1-B": ("Minus"),
-            "LC-U0-Z": ("Minus"),
+            "U0-Z": ("Minus"),
             # Re-convert
-            "U0-R": ("LWin-Slash"),
+            "S-(236)": ("LWin-Slash"),
             # emacs-like backchar
             "LC-H": ("Back"),
             # Insert line
