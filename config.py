@@ -134,6 +134,7 @@ def configure(keymap):
 
     # keyboard macro
     keymap_global["U0-R"] = keymap.command_RecordPlay
+    keymap_global["U0-LWin"] = keymap.command_RecordPlay
     keymap_global["U0-0"] = keymap.command_RecordToggle
     keymap_global["U1-0"] = keymap.command_RecordClear
 
