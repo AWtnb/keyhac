@@ -209,7 +209,7 @@ def configure(keymap):
             "U1-B": ("Minus"),
             "U0-Z": ("Minus"),
             # Re-convert
-            "S-(236)": ("LWin-Slash"),
+            "U0-(236)": ("LWin-Slash"),
             # emacs-like backchar
             "LC-H": ("Back"),
             # Insert line
