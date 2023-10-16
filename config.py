@@ -313,7 +313,7 @@ def configure(keymap):
                 cls.set_string(format_func(s))
             else:
                 cls.set_string(s)
-            VIRTUAL_FINGER_QUICK.type_keys("S-Insert")
+            VIRTUAL_FINGER_QUICK.type_keys("C-V")
 
         @classmethod
         def paste_current(cls, format_func: Union[Callable, None] = None) -> None:
