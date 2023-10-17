@@ -1019,7 +1019,7 @@ def configure(keymap):
 
             def _paster() -> None:
                 IME_CONTROL.disable()
-                ClipHandler().paste_current(lambda s: prefix + s + suffix)
+                ClipHandler().paste_current(lambda s: prefix + s.strip() + suffix)
                 if self.recover_ime:
                     IME_CONTROL.enable()
 
