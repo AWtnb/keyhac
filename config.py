@@ -1596,7 +1596,7 @@ def configure(keymap):
             return False
 
     class PseudoCuteExec:
-        def __init__(self, remap_table: dict) -> None:
+        def __init__(self, remap_table: dict = {}) -> None:
             self._keymap = keymap
             self._remap_table = remap_table
 
