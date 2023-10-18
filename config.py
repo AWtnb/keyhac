@@ -1596,8 +1596,9 @@ def configure(keymap):
             return False
 
     class PseudoCuteExec:
-        def __init__(self) -> None:
+        def __init__(self, remap_table: dict) -> None:
             self._keymap = keymap
+            self._remap_table = remap_table
 
         def activate_wnd(self, target: pyauto.Window) -> bool:
             if self._keymap.getWindow() == target:
@@ -1633,7 +1634,30 @@ def configure(keymap):
 
             return LazyFunc(_executer).defer(80)
 
-        activate_keymap = {
+        def apply(self, km: Keymap) -> None:
+            for key, params in self._remap_table.items():
+                km[key] = self.invoke(*params)
+
+    PseudoCuteExec(
+        {
+            "U1-T": ("TE64.exe", "TablacusExplorer", ""),
+            "U1-P": ("SumatraPDF.exe", "SUMATRA_PDF_FRAME", ""),
+            "LC-U1-M": (
+                "Mery.exe",
+                "TChildForm",
+                UserPath().resolve(r"AppData\Local\Programs\Mery\Mery.exe").path,
+            ),
+            "LC-U1-N": (
+                "notepad.exe",
+                "Notepad",
+                r"C:\Windows\System32\notepad.exe",
+            ),
+        }
+    ).apply(keymap_global)
+
+    keymap_global["U1-C"] = keymap.defineMultiStrokeKeymap()
+    PseudoCuteExec(
+        {
             "Space": (
                 DEFAULT_BROWSER.get_exe_name(),
                 DEFAULT_BROWSER.get_wnd_class(),
@@ -1685,32 +1709,9 @@ def configure(keymap):
             ),
             "X": ("explorer.exe", "CabinetWClass", r"C:\Windows\explorer.exe"),
         }
+    ).apply(keymap_global["U1-C"])
 
-        def apply_combo(self, km: Keymap) -> None:
-            for key, params in self.activate_keymap.items():
-                km[key] = self.invoke(*params)
-
-        def apply_single(self, km: Keymap) -> None:
-            for key, params in {
-                "U1-T": ("TE64.exe", "TablacusExplorer", ""),
-                "U1-P": ("SumatraPDF.exe", "SUMATRA_PDF_FRAME", ""),
-                "LC-U1-M": (
-                    "Mery.exe",
-                    "TChildForm",
-                    UserPath().resolve(r"AppData\Local\Programs\Mery\Mery.exe").path,
-                ),
-                "LC-U1-N": (
-                    "notepad.exe",
-                    "Notepad",
-                    r"C:\Windows\System32\notepad.exe",
-                ),
-            }.items():
-                km[key] = self.invoke(*params)
-
-    PseudoCuteExec().apply_single(keymap_global)
-    keymap_global["U1-C"] = keymap.defineMultiStrokeKeymap()
-    keymap_global["U1-C"]["LC-M"] = lambda: PathInfo(r"C:\Personal\draft.txt").run()
-    PseudoCuteExec().apply_combo(keymap_global["U1-C"])
+    keymap_global["LS-LC-U1-M"] = lambda: PathInfo(r"C:\Personal\draft.txt").run()
 
     # invoke specific filer
     def invoke_filer(dir_path: str) -> Callable:
