@@ -2016,6 +2016,10 @@ def configure(keymap):
         def decode_url(s: str) -> str:
             return urllib.parse.unquote(s)
 
+        @staticmethod
+        def encode_url(s: str) -> str:
+            return urllib.parse.quote(s)
+
         def get_menu_noise_reduction(self) -> list:
             return [
                 (" Remove: - Blank lines ", self.format_cb(self.skip_blank_line)),
@@ -2043,6 +2047,7 @@ def configure(keymap):
                 (" Mask USERNAME ", self.format_cb(UserPath().mask_user_name)),
                 (" Postalcode | Address ", self.format_cb(self.split_postalcode)),
                 (" URL: - Decode ", self.format_cb(self.decode_url)),
+                ("      - Encode ", self.format_cb(self.encode_url)),
                 ("      - Shorten Amazon ", self.replace_cb(r"^.+amazon\.co\.jp/.+dp/(.{10}).*", r"https://www.amazon.jp/dp/\1")),
                 (" Zoom invitation ", self.format_cb(Zoom().format)),
             ]
