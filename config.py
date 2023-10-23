@@ -1768,7 +1768,7 @@ def configure(keymap):
     keymap_browser["O-LShift"] = "C-F"
     keymap_browser["LC-Q"] = "A-F4"
     keymap_browser["LC-J"] = "F3"
-    keymap_browser["LC-K"] = "S-F3"
+    keymap_browser["LS-LC-J"] = "S-F3"
     keymap_browser["U0-F9"] = KeyPuncher(inter_stroke_pause=20).invoke("C-L", "C-C", "C-N", "C-V")
 
     def focus_main_pane() -> None:
