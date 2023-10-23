@@ -1767,16 +1767,18 @@ def configure(keymap):
     keymap_browser["LC-LS-W"] = "A-Left"
     keymap_browser["O-LShift"] = "C-F"
     keymap_browser["LC-Q"] = "A-F4"
+    keymap_browser["LC-J"] = "F3"
+    keymap_browser["LC-K"] = "S-F3"
     keymap_browser["U0-F9"] = KeyPuncher(inter_stroke_pause=20).invoke("C-L", "C-C", "C-N", "C-V")
 
-    def focus_chrome_content() -> None:
+    def focus_main_pane() -> None:
         wnd = keymap.getWindow()
         if wnd.getProcessName() == "chrome.exe":
             VIRTUAL_FINGER.type_keys("S-A-B", "F6")
         elif wnd.getProcessName() == "firefox.exe":
             VIRTUAL_FINGER.type_keys("C-L", "F6")
 
-    keymap_browser["U0-F6"] = focus_chrome_content
+    keymap_browser["U0-F6"] = focus_main_pane
 
     # intra
     keymap_intra = keymap.defineWindowKeymap(exe_name="APARClientAWS.exe")
