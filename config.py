@@ -1014,6 +1014,15 @@ def configure(keymap):
             for key, pair in self.pair_mapping.items():
                 km[key] = self._get_sender(pair)
 
+        def _get_wrapper(self, pair: list) -> Callable:
+            _, suffix = pair
+            sent = pair + ["Left"] * len(suffix) + ["C-V"]
+            return KeyPuncher(recover_ime=self.recover_ime, inter_stroke_pause=20).invoke(*sent)
+
+        def apply_wrapper(self, km: Keymap, modifier: str = "") -> None:
+            for key, pair in self.pair_mapping.items():
+                km[modifier + key] = self._get_wrapper(pair)
+
         def _get_paster(self, pair: list) -> Callable:
             prefix, suffix = pair
 
@@ -1025,7 +1034,7 @@ def configure(keymap):
 
             return _paster
 
-        def apply_paster(self, km: Keymap, modifier: str = "LC-") -> None:
+        def apply_paster(self, km: Keymap, modifier: str = "") -> None:
             for key, pair in self.pair_mapping.items():
                 km[modifier + key] = self._get_paster(pair)
 
