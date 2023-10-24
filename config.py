@@ -1601,6 +1601,8 @@ def configure(keymap):
                 return True
             if self.class_name and not fnmatch.fnmatch(wnd.getClassName(), self.class_name):
                 return True
+            if len(wnd.getText()) < 1:
+                return True
             self.found = wnd.getLastActivePopup()
             return False
 
