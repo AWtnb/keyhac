@@ -2009,6 +2009,17 @@ def configure(keymap):
             return os.linesep.join([l for l in lines if l.strip()])
 
         @staticmethod
+        def to_double_bracket(s: str) -> str:
+            reg = re.compile(r"[\u300c\u300d]")
+
+            def _replacer(mo: re.Match) -> str:
+                if mo.group(0) == "\u300c":
+                    return "\u300e"
+                return "\u300f"
+
+            return reg.sub(_replacer, s)
+
+        @staticmethod
         def split_postalcode(s: str) -> str:
             reg = re.compile(r"(\d{3}).(\d{4})[\s\r\n]*(.+$)")
             hankaku = CharWidth().to_half_letter(s.strip().strip("\u3012"))
@@ -2046,6 +2057,7 @@ def configure(keymap):
                 (" Fix: - Dumb Quotation ", cls.format_cb(cls.fix_dumb_quotation)),
                 ("      - MSWord-Bullet ", cls.replace_cb(r"\uf09f\u0009", "\u30fb")),
                 ("      - KANGXI RADICALS ", cls.format_cb(KangxiRadicals().fix)),
+                ("      - To-Double-Bracket ", cls.format_cb(cls.to_double_bracket)),
             ]
 
         @classmethod
