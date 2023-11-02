@@ -392,7 +392,8 @@ def configure(keymap):
     keymap_global["LC-U0-C"] = LazyFunc(ClipHandler.append).defer()
 
     # switch window
-    keymap_global["U1-Tab"] = KeyPuncher(defer_msec=40).invoke("Alt-Tab")
+    keymap_global["U1-Tab"] = KeyPuncher(defer_msec=40).invoke("LA-ESC")
+    keymap_global["S-U1-Tab"] = KeyPuncher(defer_msec=40).invoke("LS-LA-ESC")
 
     # ime dict tool
     keymap_global["U0-F7"] = LazyFunc(lambda: PathInfo(r"C:\Program Files (x86)\Google\Google Japanese Input\GoogleIMEJaTool.exe").run("--mode=word_register_dialog")).defer()
