@@ -617,6 +617,7 @@ def configure(keymap):
             trial_limit = 2
             while trial_limit > 0:
                 wnd.setRect(list(self._rect))
+                delay()
                 if self.check_rect(wnd):
                     return
                 trial_limit -= 1
