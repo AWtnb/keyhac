@@ -1975,7 +1975,7 @@ def configure(keymap):
 
     class ClipboardMenu:
         def __init__(self) -> None:
-            self._keymap = keymap
+            pass
 
         @staticmethod
         def format_cb(func: Callable) -> Callable:
@@ -2036,46 +2036,50 @@ def configure(keymap):
         def encode_url(s: str) -> str:
             return urllib.parse.quote(s)
 
-        def get_menu_noise_reduction(self) -> list:
+        @classmethod
+        def get_menu_noise_reduction(cls) -> list:
             return [
-                (" Remove: - Blank lines ", self.format_cb(self.skip_blank_line)),
-                ("         - Inside Paren ", self.replace_cb(r"[\uff08\u0028].+?[\uff09\u0029]", "")),
-                ("         - Line-break ", self.replace_cb(r"\r?\n", "")),
-                ("         - Quotations ", self.replace_cb(r"[\u0022\u0027]", "")),
-                (" Fix: - Dumb Quotation ", self.format_cb(self.fix_dumb_quotation)),
-                ("      - MSWord-Bullet ", self.replace_cb(r"\uf09f\u0009", "\u30fb")),
-                ("      - KANGXI RADICALS ", self.format_cb(KangxiRadicals().fix)),
+                (" Remove: - Blank lines ", cls.format_cb(cls.skip_blank_line)),
+                ("         - Inside Paren ", cls.replace_cb(r"[\uff08\u0028].+?[\uff09\u0029]", "")),
+                ("         - Line-break ", cls.replace_cb(r"\r?\n", "")),
+                ("         - Quotations ", cls.replace_cb(r"[\u0022\u0027]", "")),
+                (" Fix: - Dumb Quotation ", cls.format_cb(cls.fix_dumb_quotation)),
+                ("      - MSWord-Bullet ", cls.replace_cb(r"\uf09f\u0009", "\u30fb")),
+                ("      - KANGXI RADICALS ", cls.format_cb(KangxiRadicals().fix)),
             ]
 
-        def get_menu_transform(self) -> list:
+        @classmethod
+        def get_menu_transform(cls) -> list:
             return [
-                (" Transform: => A-Z/0-9 ", self.format_cb(CharWidth().to_half_letter)),
-                ("            => \uff21-\uff3a/\uff10-\uff19 ", self.format_cb(CharWidth().to_full_letter)),
+                (" Transform: => A-Z/0-9 ", cls.format_cb(CharWidth().to_half_letter)),
+                ("            => \uff21-\uff3a/\uff10-\uff19 ", cls.format_cb(CharWidth().to_full_letter)),
                 ("            => abc ", lambda: ClipHandler.get_string().lower()),
                 ("            => ABC ", lambda: ClipHandler.get_string().upper()),
-                (" Comma: - Curly (\uff0c) ", self.replace_cb(r"\u3001", "\uff0c")),
-                ("        - Straight (\u3001) ", self.replace_cb(r"\uff0c", "\u3001")),
+                (" Comma: - Curly (\uff0c) ", cls.replace_cb(r"\u3001", "\uff0c")),
+                ("        - Straight (\u3001) ", cls.replace_cb(r"\uff0c", "\u3001")),
             ]
 
-        def get_menu_other(self) -> list:
+        @classmethod
+        def get_menu_other(cls) -> list:
             return [
-                (" Cat local file ", self.format_cb(self.catanate_file_content)),
-                (" Mask USERNAME ", self.format_cb(UserPath().mask_user_name)),
-                (" Postalcode | Address ", self.format_cb(self.split_postalcode)),
-                (" URL: - Decode ", self.format_cb(self.decode_url)),
-                ("      - Encode ", self.format_cb(self.encode_url)),
-                ("      - Shorten Amazon ", self.replace_cb(r"^.+amazon\.co\.jp/.+dp/(.{10}).*", r"https://www.amazon.jp/dp/\1")),
-                (" Zoom invitation ", self.format_cb(Zoom().format)),
+                (" Cat local file ", cls.format_cb(cls.catanate_file_content)),
+                (" Mask USERNAME ", cls.format_cb(UserPath().mask_user_name)),
+                (" Postalcode | Address ", cls.format_cb(cls.split_postalcode)),
+                (" URL: - Decode ", cls.format_cb(cls.decode_url)),
+                ("      - Encode ", cls.format_cb(cls.encode_url)),
+                ("      - Shorten Amazon ", cls.replace_cb(r"^.+amazon\.co\.jp/.+dp/(.{10}).*", r"https://www.amazon.jp/dp/\1")),
+                (" Zoom invitation ", cls.format_cb(Zoom().format)),
             ]
 
-        def apply(self) -> None:
+        @classmethod
+        def apply(cls, km: Keymap) -> None:
             for title, menu in {
-                "Noise-Reduction": self.get_menu_noise_reduction(),
-                "Transform Alphabet / Punctuation": self.get_menu_transform(),
-                "Others": self.get_menu_other(),
+                "Noise-Reduction": cls.get_menu_noise_reduction(),
+                "Transform Alphabet / Punctuation": cls.get_menu_transform(),
+                "Others": cls.get_menu_other(),
             }.items():
                 m = menu + [("---------------- EXIT ----------------", lambda: None)]
-                self._keymap.cblisters += [(title, cblister_FixedPhrase(m))]
+                km.cblisters += [(title, cblister_FixedPhrase(m))]
 
-    ClipboardMenu().apply()
+    ClipboardMenu().apply(keymap)
     keymap_global["LC-LS-X"] = LazyFunc(keymap.command_ClipboardList).defer(msec=100)
