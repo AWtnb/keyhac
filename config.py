@@ -1395,46 +1395,65 @@ def configure(keymap):
         def fix(cls, s: str) -> str:
             return s.translate(str.maketrans(cls.mapping))
 
-    class RemovableUnicode:
-        alt = ord(" ")
-        mapping = {}
+    class UnicodeMapper:
+        def __init__(self, repl: str) -> None:
+            if len(repl):
+                self._repl = ord(repl)
+            else:
+                self._repl = None
+            self._mapping = {}
 
-        @classmethod
-        def register(cls, ord: int) -> None:
-            cls.mapping[ord] = cls.alt
+        def register(self, char_code: int) -> None:
+            self._mapping[char_code] = self._repl
 
-        @classmethod
-        def register_range(cls, pair: list) -> None:
+        def register_range(self, pair: list) -> None:
             start, end = pair
             for i in range(int(start, 16), int(end, 16) + 1):
-                cls.register(i)
+                self.register(i)
 
-        @classmethod
-        def register_ranges(cls, pairs: list) -> None:
+        def register_ranges(self, pairs: list) -> None:
             for pair in pairs:
-                cls.register_range(pair)
+                self.register_range(pair)
 
-    class NoiseCleaner(RemovableUnicode):
-        def __init__(self) -> None:
-            super().__init__()
-            self.register_ranges(
-                [  # ascii
+        def get_mapping(self) -> dict:
+            return self._mapping
+
+    class RangeMapper:
+        def __init__(self, repl: str, pairs: list) -> None:
+            mapper = UnicodeMapper(repl)
+            mapper.register_ranges(pairs)
+            self.mapping = mapper.get_mapping()
+
+    class SearchNoiseMapping:
+        def __init__(self, repl: str) -> None:
+            _base = UnicodeMapper(repl)
+            _base.register(int("30FB", 16))  # KATAKANA MIDDLE DOT
+            _base.register_range(["2018", "201F"])  # quotation
+            _base.register_range(["2E80", "2EF3"])  # kangxi
+            self.base = _base.get_mapping()
+
+            self.ascii = RangeMapper(
+                repl,
+                [
                     ["0021", "002F"],
                     ["003A", "0040"],
                     ["005B", "0060"],
                     ["007B", "007E"],
-                ]
-            )
-            self.register_range(["2018", "201F"])  # quotation
-            self.register_ranges(
-                [  # horizontal bars
+                ],
+            ).mapping
+
+            self.bars = RangeMapper(
+                repl,
+                [
                     ["2010", "2017"],
                     ["2500", "2501"],
                     ["2E3A", "2E3B"],
-                ]
-            )
-            self.register_ranges(
-                [  # fullwidth symbols
+                ],
+            ).mapping
+
+            self.fullwidth = RangeMapper(
+                repl,
+                [
                     ["25A0", "25EF"],
                     ["3000", "3004"],
                     ["3008", "3040"],
@@ -1445,16 +1464,29 @@ def configure(keymap):
                     ["FF1A", "FF20"],
                     ["FF3B", "FF40"],
                     ["FF5B", "FF65"],
-                ]
-            )
-            self.register_range(["2E80", "2EF3"])  # kangxi
-            self.register(int("30FB", 16))  # KATAKANA MIDDLE DOT
+                ],
+            ).mapping
 
-        @classmethod
-        def cleanup(cls, s: str) -> str:
-            return s.translate(str.maketrans(cls.mapping))
+    SEARCH_NOISE_MAPPIING = SearchNoiseMapping(" ")
 
-    NOISE_CLEANER = NoiseCleaner()
+    class NoiseCleaner:
+        def __init__(self, query: str) -> None:
+            self._query = query.translate(str.maketrans(SEARCH_NOISE_MAPPIING.base))
+
+        def _clean_ascii(self) -> None:
+            self._query = self._query.translate(str.maketrans(SEARCH_NOISE_MAPPIING.ascii))
+
+        def _clean_bars(self) -> None:
+            self._query = self._query.translate(str.maketrans(SEARCH_NOISE_MAPPIING.bars))
+
+        def _clean_fullwidth(self) -> None:
+            self._query = self._query.translate(str.maketrans(SEARCH_NOISE_MAPPIING.fullwidth))
+
+        def execute(self) -> str:
+            self._clean_ascii()
+            self._clean_bars()
+            self._clean_fullwidth()
+            return self._query
 
     class SearchQuery:
         def __init__(self, query: str) -> None:
@@ -1489,7 +1521,7 @@ def configure(keymap):
 
         def encode(self, strict: bool = False) -> str:
             words = []
-            for word in NOISE_CLEANER.cleanup(self._query).split(" "):
+            for word in NoiseCleaner(self._query).execute().split(" "):
                 if len(word):
                     if strict:
                         words.append('"{}"'.format(word))
