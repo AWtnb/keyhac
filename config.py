@@ -1418,42 +1418,29 @@ def configure(keymap):
         def get_mapping(self) -> dict:
             return self._mapping
 
-    class RangeMapper:
-        def __init__(self, repl: str, pairs: list) -> None:
-            mapper = UnicodeMapper(repl)
-            mapper.register_ranges(pairs)
-            self.mapping = mapper.get_mapping()
-
     class SearchNoiseMapping:
         def __init__(self, repl: str) -> None:
-            _base = UnicodeMapper(repl)
-            _base.register(int("30FB", 16))  # KATAKANA MIDDLE DOT
-            _base.register_range(["2018", "201F"])  # quotation
-            _base.register_range(["2E80", "2EF3"])  # kangxi
-            self.base = _base.get_mapping()
-
-            self.ascii = RangeMapper(
-                repl,
-                [
+            _mapper = UnicodeMapper(repl)
+            _mapper.register(int("30FB", 16))  # KATAKANA MIDDLE DOT
+            _mapper.register_range(["2018", "201F"])  # quotation
+            _mapper.register_range(["2E80", "2EF3"])  # kangxi
+            _mapper.register_ranges(
+                [  # ascii
                     ["0021", "002F"],
                     ["003A", "0040"],
                     ["005B", "0060"],
                     ["007B", "007E"],
-                ],
-            ).mapping
-
-            self.bars = RangeMapper(
-                repl,
-                [
+                ]
+            )
+            _mapper.register_ranges(
+                [  # bars
                     ["2010", "2017"],
                     ["2500", "2501"],
                     ["2E3A", "2E3B"],
-                ],
-            ).mapping
-
-            self.fullwidth = RangeMapper(
-                repl,
-                [
+                ]
+            )
+            _mapper.register_ranges(
+                [  # fullwidth
                     ["25A0", "25EF"],
                     ["3000", "3004"],
                     ["3008", "3040"],
@@ -1464,29 +1451,15 @@ def configure(keymap):
                     ["FF1A", "FF20"],
                     ["FF3B", "FF40"],
                     ["FF5B", "FF65"],
-                ],
-            ).mapping
+                ]
+            )
+
+            self._mapping = _mapper.get_mapping()
+
+        def cleanup(self, s: str) -> str:
+            return s.translate(str.maketrans(self._mapping))
 
     SEARCH_NOISE_MAPPIING = SearchNoiseMapping(" ")
-
-    class NoiseCleaner:
-        def __init__(self, query: str) -> None:
-            self._query = query.translate(str.maketrans(SEARCH_NOISE_MAPPIING.base))
-
-        def _clean_ascii(self) -> None:
-            self._query = self._query.translate(str.maketrans(SEARCH_NOISE_MAPPIING.ascii))
-
-        def _clean_bars(self) -> None:
-            self._query = self._query.translate(str.maketrans(SEARCH_NOISE_MAPPIING.bars))
-
-        def _clean_fullwidth(self) -> None:
-            self._query = self._query.translate(str.maketrans(SEARCH_NOISE_MAPPIING.fullwidth))
-
-        def execute(self) -> str:
-            self._clean_ascii()
-            self._clean_bars()
-            self._clean_fullwidth()
-            return self._query
 
     class SearchQuery:
         def __init__(self, query: str) -> None:
@@ -1521,7 +1494,7 @@ def configure(keymap):
 
         def encode(self, strict: bool = False) -> str:
             words = []
-            for word in NoiseCleaner(self._query).execute().split(" "):
+            for word in SEARCH_NOISE_MAPPIING.cleanup(self._query).split(" "):
                 if len(word):
                     if strict:
                         words.append('"{}"'.format(word))
