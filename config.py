@@ -757,6 +757,7 @@ def configure(keymap):
             self.set_position(to_x, to_y)
 
     keymap_global["O-RCtrl"] = CursorPos().snap
+    keymap_global["U0-G"] = CursorPos().snap
 
     keymap_global["O-(236)"] = CursorPos().snap_to_center
 
