@@ -221,6 +221,9 @@ def configure(keymap):
             # Context menu
             "U0-C": ("Apps"),
             "S-U0-C": ("S-F10"),
+            # indent / outdent
+            "U1-Tab": ("LC-CloseBracket"),
+            "LS-U1-Tab": ("LC-OpenBracket"),
             # rename
             "U0-N": ("F2", "Right"),
             "S-U0-N": ("F2", "C-Home"),
@@ -391,10 +394,6 @@ def configure(keymap):
 
     # append clipboard
     keymap_global["LC-U0-C"] = LazyFunc(ClipHandler.append).defer()
-
-    # switch window
-    keymap_global["U1-Tab"] = KeyPuncher(defer_msec=40).invoke("LA-ESC")
-    keymap_global["S-U1-Tab"] = KeyPuncher(defer_msec=40).invoke("LS-LA-ESC")
 
     # ime dict tool
     keymap_global["U0-F7"] = LazyFunc(lambda: PathInfo(r"C:\Program Files (x86)\Google\Google Japanese Input\GoogleIMEJaTool.exe").run("--mode=word_register_dialog")).defer()
