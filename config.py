@@ -133,9 +133,10 @@ def configure(keymap):
     keymap_global = keymap.defineWindowKeymap(check_func=CheckWnd.is_global_target)
 
     # keyboard macro
-    keymap_global["U1-0"] = keymap.command_RecordPlay
     keymap_global["U0-0"] = keymap.command_RecordToggle
     keymap_global["S-U0-0"] = keymap.command_RecordClear
+    keymap_global["U1-0"] = keymap.command_RecordPlay
+    keymap_global["U0-F4"] = keymap.command_RecordPlay
 
     # combination with modifier key
     class CoreKeys:
