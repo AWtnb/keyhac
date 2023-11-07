@@ -1504,8 +1504,9 @@ def configure(keymap):
             return urllib.parse.quote(" ".join(words))
 
     class WebSearcher:
-        def __init__(self) -> None:
+        def __init__(self, uri_mapping: dict) -> None:
             self._keymap = keymap
+            self._uri_mapping = uri_mapping
 
         @staticmethod
         def invoke(uri: str, strict: bool = False, strip_hiragana: bool = False) -> Callable:
@@ -1521,13 +1522,22 @@ def configure(keymap):
 
             return LazyFunc(_search).defer()
 
-        mod_dict = {
-            "": (False, False),
-            "S-": (True, False),
-            "C-": (False, True),
-            "S-C-": (True, True),
-        }
-        key_uri_dict = {
+        @staticmethod
+        def _mod_key(s: str) -> list:
+            return ["", s + "-"]
+
+        def apply(self, km: Keymap) -> None:
+            for shift_key in self._mod_key("S"):
+                for ctrl_key in self._mod_key("C"):
+                    is_strict = 0 < len(shift_key)
+                    strip_hiragana = 0 < len(ctrl_key)
+                    trigger_key = shift_key + ctrl_key + "U0-S"
+                    km[trigger_key] = self._keymap.defineMultiStrokeKeymap()
+                    for key, uri in self._uri_mapping.items():
+                        km[trigger_key][key] = self.invoke(uri, is_strict, strip_hiragana)
+
+    WebSearcher(
+        {
             "A": "https://www.amazon.co.jp/s?i=stripbooks&k={}",
             "B": "https://www.google.com/search?q=site%3Abooks.or.jp%20{}",
             "C": "https://ci.nii.ac.jp/books/search?q={}",
@@ -1547,14 +1557,7 @@ def configure(keymap):
             "Y": "http://www.google.co.jp/search?q=site%3Ayuhikaku.co.jp%20{}",
             "W": "https://www.worldcat.org/search?q={}",
         }
-
-        def apply(self, km: Keymap) -> None:
-            for mod_key, params in self.mod_dict.items():
-                km[mod_key + "U0-S"] = self._keymap.defineMultiStrokeKeymap()
-                for key, uri in self.key_uri_dict.items():
-                    km[mod_key + "U0-S"][key] = self.invoke(uri, *params)
-
-    WebSearcher().apply(keymap_global)
+    ).apply(keymap_global)
 
     ################################
     # activate window
