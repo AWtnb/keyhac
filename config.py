@@ -1905,17 +1905,6 @@ def configure(keymap):
         }
     ).apply(keymap_filer)
 
-    keymap_tablacus = keymap.defineWindowKeymap(check_func=CheckWnd.is_tablacus_viewmode)
-    keymap_tablacus["H"] = "C-S-Tab"
-    keymap_tablacus["L"] = "C-Tab"
-
-    def tablacus_key_accelerator(km: Keymap) -> None:
-        for alphabet in "ABCDEFGHIJKLMNOPQRSTUVWXTYZ":
-            km[alphabet] = alphabet
-
-    keymap_tablacus["LC-K"] = keymap.defineMultiStrokeKeymap()
-    tablacus_key_accelerator(keymap_tablacus["LC-K"])
-
     ################################
     # popup clipboard menu
     ################################
