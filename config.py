@@ -1900,18 +1900,6 @@ def configure(keymap):
     keymap_filer = keymap.defineWindowKeymap(check_func=CheckWnd.is_filer_viewmode)
     KeyAllocator(
         {
-            "A": ("Home"),
-            "E": ("End"),
-            "C": ("C-C"),
-            "J": ("Down"),
-            "K": ("Up"),
-            "N": ("F2"),
-            "R": ("C-R"),
-            "U": ("LAlt-Up"),
-            "V": ("C-V"),
-            "W": ("C-W"),
-            "X": ("C-X"),
-            "Space": ("Enter"),
             "C-S-C": ("C-Add"),
             "C-L": ("A-D", "C-C"),
         }
