@@ -1909,8 +1909,8 @@ def configure(keymap):
 
     def tablacus_singlekey_mapper(km: Keymap) -> None:
         puncher = KeyPuncher(defer_msec=40)
-        for alphabet in "ABCDEFGHIJKLMNOPQRSTUVWXTYZ":
-            km[alphabet] = puncher.invoke(alphabet)
+        for key in ("Z", "A-Z", "S-Z", "A-U", "A-S-S", "A-S-D", "A-S-U"):
+            km[key] = puncher.invoke(key)
 
     tablacus_singlekey_mapper(keymap_tablacus)
 
