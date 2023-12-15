@@ -1905,6 +1905,15 @@ def configure(keymap):
         }
     ).apply(keymap_filer)
 
+    keymap_tablacus = keymap.defineWindowKeymap(check_func=CheckWnd.is_tablacus_viewmode)
+
+    def tablacus_singlekey_mapper(km: Keymap) -> None:
+        puncher = KeyPuncher(defer_msec=40)
+        for alphabet in "ABCDEFGHIJKLMNOPQRSTUVWXTYZ":
+            km[alphabet] = puncher.invoke(alphabet)
+
+    tablacus_singlekey_mapper(keymap_tablacus)
+
     ################################
     # popup clipboard menu
     ################################
