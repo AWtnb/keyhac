@@ -1907,12 +1907,12 @@ def configure(keymap):
 
     keymap_tablacus = keymap.defineWindowKeymap(check_func=CheckWnd.is_tablacus_viewmode)
 
-    def tablacus_singlekey_mapper(km: Keymap) -> None:
-        puncher = KeyPuncher(defer_msec=40)
+    def tablacus_fuzzy_tools(km: Keymap) -> None:
+        puncher = KeyPuncher(defer_msec=20)
         for key in ("Z", "A-Z", "S-Z", "A-U", "A-S-S", "A-S-D", "A-S-U"):
-            km[key] = puncher.invoke(key)
+            km["U-"+key] = puncher.invoke(key)
 
-    tablacus_singlekey_mapper(keymap_tablacus)
+    tablacus_fuzzy_tools(keymap_tablacus)
 
     ################################
     # popup clipboard menu
