@@ -1910,7 +1910,7 @@ def configure(keymap):
     def tablacus_fuzzy_tools(km: Keymap) -> None:
         puncher = KeyPuncher(defer_msec=40)
         for key in ("Z", "A-Z", "S-Z", "A-U", "A-S-S", "A-S-D", "A-S-U"):
-            km["U-"+key] = puncher.invoke(key)
+            km[key] = puncher.invoke(key)
 
     tablacus_fuzzy_tools(keymap_tablacus)
 
