@@ -1908,7 +1908,7 @@ def configure(keymap):
     keymap_tablacus = keymap.defineWindowKeymap(check_func=CheckWnd.is_tablacus_viewmode)
 
     def tablacus_fuzzy_tools(km: Keymap) -> None:
-        puncher = KeyPuncher(defer_msec=20)
+        puncher = KeyPuncher(defer_msec=40)
         for key in ("Z", "A-Z", "S-Z", "A-U", "A-S-S", "A-S-D", "A-S-U"):
             km["U-"+key] = puncher.invoke(key)
 
