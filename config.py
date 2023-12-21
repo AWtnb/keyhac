@@ -1931,6 +1931,8 @@ def configure(keymap):
             return s.translate(str.maketrans(cls.half_letters, cls.full_letters))
 
     class Zoom:
+        full_colon = "\uff1a"
+
         @staticmethod
         def get_time(s) -> str:
             d_str = re.sub(r" 大阪.+$|^時[間刻]：", "", s)
@@ -1942,8 +1944,12 @@ def configure(keymap):
                 return ""
 
         @classmethod
+        def to_code(cls, s: str, prefix: str) -> str:
+            return prefix + s.split(cls.full_colon)[1].strip()
+
+        @classmethod
         def format(cls, copied: str) -> str:
-            lines = copied.replace(": ", "\uff1a").strip().splitlines()
+            lines = copied.replace(": ", cls.full_colon).strip().splitlines()
             if len(lines) < 9:
                 print("ERROR: lack of lines.")
                 return ""
@@ -1957,8 +1963,8 @@ def configure(keymap):
                     lines[2],
                     due,
                     lines[6],
-                    lines[8],
-                    lines[9],
+                    cls.to_code(lines[8], "meeting ID: "),
+                    cls.to_code(lines[9], "passcord: "),
                     "------------------------------",
                 ]
             )
