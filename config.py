@@ -1931,25 +1931,34 @@ def configure(keymap):
             return s.translate(str.maketrans(cls.half_letters, cls.full_letters))
 
     class Zoom:
-        full_colon = "\uff1a"
+        separator = ": "
+        hr = "=============================="
 
         @staticmethod
         def get_time(s) -> str:
-            d_str = re.sub(r" 大阪.+$|^時[間刻]：", "", s)
             try:
-                d = datetime.datetime.strptime(d_str, "%Y年%m月%d日 %I:%M %p")
+                d = datetime.datetime.strptime(s, "時刻: %Y年%m月%d日 %I:%M %p 大阪、札幌、東京")
                 week = "月火水木金土日"[d.weekday()]
                 return (d.strftime("%Y年%m月%d日（{}） %p %I:%M～")).format(week)
             except:
                 return ""
 
         @classmethod
-        def to_code(cls, s: str, prefix: str) -> str:
-            return prefix + s.split(cls.full_colon)[1].strip()
+        def to_field(cls, s: str, prefix: str) -> str:
+            i = s.find(cls.separator)
+            if -1 < i:
+                v = s[(i + len(cls.separator)) :].strip()
+            else:
+                v = s
+            if 0 < len(prefix):
+                c = ": "
+            else:
+                c = ""
+            return prefix + c + v
 
         @classmethod
         def format(cls, copied: str) -> str:
-            lines = copied.replace(": ", cls.full_colon).strip().splitlines()
+            lines = copied.strip().splitlines()
             if len(lines) < 9:
                 print("ERROR: lack of lines.")
                 return ""
@@ -1959,13 +1968,14 @@ def configure(keymap):
                 return ""
             return os.linesep.join(
                 [
-                    "------------------------------",
-                    lines[2],
-                    due,
-                    lines[6],
-                    cls.to_code(lines[8], "meeting ID: "),
-                    cls.to_code(lines[9], "passcord: "),
-                    "------------------------------",
+                    cls.hr,
+                    cls.to_field(lines[2], ""),
+                    cls.to_field(due, ""),
+                    cls.to_field(lines[6], ""),
+                    "",
+                    cls.to_field(lines[8], "meeting ID"),
+                    cls.to_field(lines[9], "passcode"),
+                    cls.hr,
                 ]
             )
 
