@@ -925,11 +925,6 @@ def configure(keymap):
                 keys = combo.split(",")
                 self.mapping = combo_mapper(self.mapping, keys, direct_puncher.invoke(*stroke))
 
-            for i in "0123456789":
-                keys = ("I", "S", i)
-                s = chr(0x2080 + int(i))
-                self.mapping = combo_mapper(self.mapping, keys, direct_puncher.invoke(s))
-
             indirect_puncher = KeyPuncher(recover_ime=True, defer_msec=50)
             for combo, stroke in {
                 "Minus,F": ("\uff0d"),
