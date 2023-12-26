@@ -2,5 +2,5 @@
 
 Environment:
 
-+  [Google 日本語入力](https://www.google.co.jp/ime/)
-+ JIS 配列キーボード
+- [CorvusSKK](https://github.com/nathancorvussolis/corvusskk)
+- JIS 配列キーボード

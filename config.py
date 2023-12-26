@@ -196,8 +196,10 @@ def configure(keymap):
             # escape
             "O-(235)": ("Esc"),
             "U0-X": ("Esc"),
-            # select first suggestion
-            "U0-Tab": ("Down", "Enter"),
+            # close window
+            "LC-Q": ("A-F4"),
+            # SKK: contbvert to first suggestion
+            "U0-Tab": ("Tab", "Space", "Enter"),
             # confirm and move cursor
             "U0-M": ("Enter", "Right"),
             # line selection
@@ -208,9 +210,6 @@ def configure(keymap):
             "LC-U0-Enter": ("Slash"),
             "U1-B": ("Minus"),
             "U0-Z": ("Minus"),
-            # Re-convert
-            "U0-(236)": ("LWin-Slash"),
-            "U0-R": ("LWin-Slash"),
             # emacs-like backchar
             "LC-H": ("Back"),
             # Insert line
@@ -232,6 +231,10 @@ def configure(keymap):
             "F1": ("C-P"),
             "U1-F1": ("F1"),
             "Insert": (lambda: None),
+            # punctuation
+            "U1-S": ("Slash"),
+            "LS-U0-P": ("LS-Slash"),
+            "LC-U0-P": ("LS-1"),
         }
     ).apply(keymap_global)
 
@@ -286,9 +289,12 @@ def configure(keymap):
         def get_status(self) -> pyauto.Window:
             return self._keymap.getWindow().getImeStatus()
 
+        def toggle(self) -> None:
+            VIRTUAL_FINGER_QUICK.type_keys("(243)")
+
         def set_status(self, mode: int) -> None:
             if self.get_status() != mode:
-                VIRTUAL_FINGER_QUICK.type_keys("(243)")
+                self.toggle()
                 delay(10)
 
         def is_enabled(self) -> bool:
@@ -406,9 +412,19 @@ def configure(keymap):
     keymap_global["U0-F"] = IME_CONTROL.disable
     keymap_global["S-U0-F"] = IME_CONTROL.enable
     keymap_global["S-U1-J"] = IME_CONTROL.disable
+    keymap_global["U1-N"] = IME_CONTROL.disable
 
     # paste as plaintext
     keymap_global["U0-V"] = LazyFunc(ClipHandler().paste_current).defer()
+
+    # re-convert
+    def re_convert() -> None:
+        if not IME_CONTROL.is_enabled():
+            IME_CONTROL.enable()
+        VIRTUAL_FINGER_QUICK.type_keys("LWin-Slash")
+
+    keymap_global["U0-(236)"] = re_convert
+    keymap_global["U0-R"] = re_convert
 
     # paste as plaintext (with trimming removable whitespaces)
     class StrCleaner:
@@ -447,33 +463,10 @@ def configure(keymap):
 
     # select last word with ime
     def select_last_word() -> None:
-        VIRTUAL_FINGER.type_keys("C-S-Left")
         IME_CONTROL.enable()
+        VIRTUAL_FINGER.type_keys("C-S-Left", "C-J")
 
     keymap_global["U1-Space"] = select_last_word
-
-    # Non-convert
-    def as_alphabet(recover_ime: bool = False) -> Callable:
-        keys = ["F10"]
-        if recover_ime:
-            keys.append("Enter")
-        else:
-            keys.append("(243)")
-
-        def _sender():
-            if keymap.getWindow().getImeStatus() == 1:
-                VIRTUAL_FINGER.type_keys(*keys)
-
-        return _sender
-
-    keymap_global["U1-N"] = as_alphabet(False)
-    keymap_global["S-U1-N"] = as_alphabet(True)
-
-    def as_titled_alphabet() -> None:
-        if keymap.getWindow().getImeStatus() == 1:
-            VIRTUAL_FINGER.type_keys("F10", "F10", "F10", "C-Space")
-
-    keymap_global["LA-U1-N"] = as_titled_alphabet
 
     # count chars
     def count_chars() -> None:
@@ -540,15 +533,6 @@ def configure(keymap):
     keymap_global["U1-Z"] = moko(False)
     keymap_global["LC-U1-Z"] = moko(True)
 
-    def screenshot() -> None:
-        ksnip_path = UserPath().resolve(r"scoop\apps\ksnip\current\ksnip.exe")
-        if ksnip_path.isAccessible:
-            ksnip_path.run()
-        else:
-            VIRTUAL_FINGER.type_keys("Lwin-S-S")
-
-    keymap_global["C-U1-S"] = screenshot
-
     ################################
     # config menu
     ################################
@@ -580,11 +564,17 @@ def configure(keymap):
             else:
                 print("cannot find path: '{}'".format(repo_path.path))
 
+        @staticmethod
+        def open_skk_config() -> None:
+            skk_path = PathInfo(r"C:\Windows\System32\IME\IMCRVSKK\imcrvcnf.exe")
+            skk_path.run()
+
         def apply(self, km: Keymap) -> None:
             for key, func in {
                 "R": self.reload_config,
                 "E": self.open_repo,
                 "P": lambda: ClipHandler().paste(self.read_config()),
+                "S": self.open_skk_config,
                 "X": lambda: None,
             }.items():
                 km[key] = LazyFunc(func).defer()
@@ -948,7 +938,6 @@ def configure(keymap):
     ################################
 
     keymap_global["U0-Yen"] = KeyPuncher().invoke("S-Yen", "Left")
-    keymap_global["U1-S"] = KeyPuncher().invoke("Slash")
 
     def punc_remap(mapping_dict: dict, km: Keymap, recover_ime: bool) -> None:
         for key, send in mapping_dict.items():
@@ -972,7 +961,32 @@ def configure(keymap):
         recover_ime=False,
     )
 
-    punc_remap(
+    punc_remap({"LS-U0-8": "- "}, keymap_global, recover_ime=True)
+
+    class SKK_kana_input:
+        def __init__(
+            self,
+            inter_stroke_pause: int = 0,
+            defer_msec: int = 0,
+        ) -> None:
+            self._inter_stroke_pause = inter_stroke_pause
+            self._defer_msec = defer_msec
+
+        def invoke(self, *sequence) -> Callable:
+            vf = VirtualFinger(self._inter_stroke_pause)
+
+            def _input() -> None:
+                IME_CONTROL.enable()
+                vf.type_smart("C-J", *sequence)
+
+            return LazyFunc(_input).defer(self._defer_msec)
+
+    def skk_remap(mapping_dict: dict, km: Keymap) -> None:
+        skk = SKK_kana_input()
+        for key, send in mapping_dict.items():
+            km[key] = skk.invoke(send)
+
+    skk_remap(
         {
             "S-U0-Colon": "\uff1a",  # FULLWIDTH COLON
             "S-U0-Comma": "\uff0c",  # FULLWIDTH COMMA
@@ -981,16 +995,12 @@ def configure(keymap):
             "S-U0-U": "S-BackSlash",
             "U0-Minus": "\u2015\u2015",  # HORIZONTAL BAR * 2
             "U0-P": "\u30fb",  # KATAKANA MIDDLE DOT
-            "S-C-U0-P": "\u2049",  # EXCLAMATION QUESTION MARK
             "S-U0-SemiColon": "+ ",
-            "S-U0-8": "- ",
             "U1-G": "\u3013\u3013",  # GETA MARK * 2
-            "LC-U1-B": "- ",
             "U1-1": "1. ",
             "S-U0-7": "1. ",
         },
         keymap_global,
-        recover_ime=True,
     )
 
     class PairedPuncs:
@@ -1065,67 +1075,68 @@ def configure(keymap):
     PAIRS_WITH_IME.apply_sender(keymap_global)
     PAIRS_WITH_IME.apply_paster(keymap_global, "LC-")
 
-    class DirectInput:
-        @staticmethod
-        def invoke(key: str, turnoff_ime_later: bool = False) -> Callable:
-            finish_keys = ["C-M"]
-            if turnoff_ime_later:
-                finish_keys.append("(243)")
+    if 0: # ignore for SKK
+        class DirectInput:
+            @staticmethod
+            def invoke(key: str, turnoff_ime_later: bool = False) -> Callable:
+                finish_keys = ["C-M"]
+                if turnoff_ime_later:
+                    finish_keys.append("(243)")
 
-            def _input() -> None:
-                VIRTUAL_FINGER.type_keys(key)
-                if IME_CONTROL.is_enabled():
-                    VIRTUAL_FINGER.type_keys(*finish_keys)
+                def _input() -> None:
+                    VIRTUAL_FINGER.type_keys(key)
+                    if IME_CONTROL.is_enabled():
+                        VIRTUAL_FINGER.type_keys(*finish_keys)
 
-            return _input
+                return _input
 
-        @classmethod
-        def invoke_puncs(cls, km: Keymap) -> None:
-            for key, turnoff_ime in {
-                "AtMark": True,
-                "Caret": False,
-                "CloseBracket": False,
-                "Colon": False,
-                "Comma": False,
-                "LS-AtMark": True,
-                "LS-Caret": False,
-                "LS-Colon": True,
-                "LS-Comma": True,
-                "LS-Minus": False,
-                "LS-Period": True,
-                "LS-SemiColon": False,
-                "LS-Slash": False,
-                "LS-Yen": True,
-                "OpenBracket": False,
-                "Period": False,
-                "SemiColon": False,
-                "Slash": False,
-                "Yen": True,
-            }.items():
-                km[key] = cls.invoke(key, turnoff_ime)
+            @classmethod
+            def invoke_puncs(cls, km: Keymap) -> None:
+                for key, turnoff_ime in {
+                    "AtMark": True,
+                    "Caret": False,
+                    "CloseBracket": False,
+                    "Colon": False,
+                    "Comma": False,
+                    "LS-AtMark": True,
+                    "LS-Caret": False,
+                    "LS-Colon": True,
+                    "LS-Comma": True,
+                    "LS-Minus": False,
+                    "LS-Period": True,
+                    "LS-SemiColon": False,
+                    "LS-Slash": False,
+                    "LS-Yen": True,
+                    "OpenBracket": False,
+                    "Period": False,
+                    "SemiColon": False,
+                    "Slash": False,
+                    "Yen": True,
+                }.items():
+                    km[key] = cls.invoke(key, turnoff_ime)
 
-        @classmethod
-        def invoke_alphabets(cls, km: Keymap) -> None:
-            for alphabet in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
-                key = "LS-" + alphabet
-                km[key] = cls.invoke(key, True)
+            @classmethod
+            def invoke_alphabets(cls, km: Keymap) -> None:
+                for alphabet in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
+                    key = "LS-" + alphabet
+                    km[key] = cls.invoke(key, True)
 
-        @classmethod
-        def invoke_shift_numbers(cls, km: Keymap) -> None:
-            for n in "123456789":
-                key = "LS-" + n
-                turnoff_ime = False
-                if n in ("2", "3", "4"):
-                    turnoff_ime = True
-                km[key] = cls.invoke(key, turnoff_ime)
+            @classmethod
+            def invoke_shift_numbers(cls, km: Keymap) -> None:
+                for n in "123456789":
+                    key = "LS-" + n
+                    turnoff_ime = False
+                    if n in ("2", "3", "4"):
+                        turnoff_ime = True
+                    km[key] = cls.invoke(key, turnoff_ime)
 
-    DirectInput().invoke_puncs(keymap_global)
-    DirectInput().invoke_alphabets(keymap_global)
-    DirectInput().invoke_shift_numbers(keymap_global)
+        DirectInput().invoke_puncs(keymap_global)
+        DirectInput().invoke_alphabets(keymap_global)
+        DirectInput().invoke_shift_numbers(keymap_global)
 
-    keymap_global["BackSlash"] = DirectInput.invoke("S-BackSlash", False)
-    keymap_global["C-U0-P"] = DirectInput.invoke("S-1", False)
-    keymap_global["S-U0-P"] = DirectInput.invoke("S-Slash", False)
+        keymap_global["BackSlash"] = DirectInput.invoke("S-BackSlash", False)
+        keymap_global["C-U0-P"] = DirectInput.invoke("S-1", False)
+        keymap_global["S-U0-P"] = DirectInput.invoke("S-Slash", False)
 
     class DateInput:
         @staticmethod
@@ -1778,7 +1789,6 @@ def configure(keymap):
     keymap_browser = keymap.defineWindowKeymap(check_func=CheckWnd.is_browser)
     keymap_browser["LC-LS-W"] = "A-Left"
     keymap_browser["O-LShift"] = "C-F"
-    keymap_browser["LC-Q"] = "A-F4"
     keymap_browser["LC-J"] = "F3"
     keymap_browser["LS-LC-J"] = "S-F3"
 
@@ -1849,7 +1859,6 @@ def configure(keymap):
     keymap_word = keymap.defineWindowKeymap(exe_name="WINWORD.EXE")
     keymap_word["F11"] = "A-F", "E", "P", "A"
     keymap_word["C-G"] = KeyPuncher().invoke("C-G")
-    keymap_word["LC-Q"] = "A-F4"
 
     # powerpoint
     keymap_ppt = keymap.defineWindowKeymap(exe_name="powerpnt.exe")
@@ -1858,7 +1867,6 @@ def configure(keymap):
     # excel
     keymap_excel = keymap.defineWindowKeymap(exe_name="excel.exe")
     keymap_excel["F11"] = "A-F", "E", "P", "A"
-    keymap_excel["LC-Q"] = "A-F4"
 
     def select_all() -> None:
         if keymap.getWindow().getClassName() == "EXCEL6":
