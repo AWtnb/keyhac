@@ -937,54 +937,36 @@ def configure(keymap):
     # input customize
     ################################
 
-    keymap_global["U0-Yen"] = KeyPuncher().invoke("S-Yen", "Left")
-
-    def punc_remap(mapping_dict: dict, km: Keymap, recover_ime: bool) -> None:
-        for key, send in mapping_dict.items():
-            km[key] = KeyPuncher(recover_ime=recover_ime).invoke(send)
-
-    punc_remap(
-        {
-            "U0-1": "S-1",
-            "U0-4": "$_",
-            "U1-4": "$_.",
-            "U0-Colon": "Colon",
-            "U0-Comma": "Comma",
-            "U0-Period": "Period",
-            "U0-Slash": "Slash",
-            "U0-U": "S-BackSlash",
-            "U1-Enter": "<br />",
-            "U1-Minus": "Minus",
-            "U0-SemiColon": "SemiColon",
-        },
-        keymap_global,
-        recover_ime=False,
-    )
-
-    punc_remap({"LS-U0-8": "- "}, keymap_global, recover_ime=True)
-
-    class SKK_kana_input:
+    class SKK:
         def __init__(
             self,
-            inter_stroke_pause: int = 0,
-            defer_msec: int = 0,
+            inter_stroke_pause: int = 10,
+            defer_msec: int = 10,
         ) -> None:
-            self._inter_stroke_pause = inter_stroke_pause
             self._defer_msec = defer_msec
+            self.finger = VirtualFinger(inter_stroke_pause)
 
-        def invoke(self, *sequence) -> Callable:
-            vf = VirtualFinger(self._inter_stroke_pause)
-
+        def invoke_kana(self, *sequence) -> Callable:
             def _input() -> None:
                 IME_CONTROL.enable()
-                vf.type_smart("C-J", *sequence)
+                self.finger.type_smart("C-J", *sequence)
 
             return LazyFunc(_input).defer(self._defer_msec)
 
-    def skk_remap(mapping_dict: dict, km: Keymap) -> None:
-        skk = SKK_kana_input()
+        def invoke_eisu(self, *sequence) -> Callable:
+            def _input() -> None:
+                IME_CONTROL.enable()
+                self.finger.type_smart("C-J", "L", *sequence)
+
+            return LazyFunc(_input).defer(self._defer_msec)
+
+    def skk_remap(mapping_dict: dict, as_kana: bool, km: Keymap) -> None:
+        skk = SKK()
         for key, send in mapping_dict.items():
-            km[key] = skk.invoke(send)
+            if as_kana:
+                km[key] = skk.invoke_kana(send)
+            else:
+                km[key] = skk.invoke_eisu(send)
 
     skk_remap(
         {
@@ -1000,7 +982,26 @@ def configure(keymap):
             "U1-1": "1. ",
             "S-U0-7": "1. ",
         },
+        True,
         keymap_global,
+    )
+
+    skk_remap(
+        {
+            "U0-1": "S-1",
+            "U0-4": "$_",
+            "U1-4": "$_.",
+            "U0-Colon": "Colon",
+            "U0-Comma": "Comma",
+            "U0-Period": "Period",
+            "U0-Slash": "Slash",
+            "U0-U": "S-BackSlash",
+            "U1-Enter": "<br />",
+            "U1-Minus": "Minus",
+            "U0-SemiColon": "SemiColon",
+        },
+        False,
+        keymap_global
     )
 
     class PairedPuncs:
@@ -1075,7 +1076,8 @@ def configure(keymap):
     PAIRS_WITH_IME.apply_sender(keymap_global)
     PAIRS_WITH_IME.apply_paster(keymap_global, "LC-")
 
-    if 0: # ignore for SKK
+    if 0:  # ignore for SKK
+
         class DirectInput:
             @staticmethod
             def invoke(key: str, turnoff_ime_later: bool = False) -> Callable:
