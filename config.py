@@ -204,7 +204,7 @@ def configure(keymap):
             # close window
             "LC-Q": ("A-F4"),
             # SKK: contbvert to first suggestion
-            "U0-Tab": ("Tab", "Space", "Enter"),
+            "U0-Tab": ("C-I", "C-N", "C-J"),
             # confirm and move cursor
             "U0-M": ("Enter", "Right"),
             # line selection
