@@ -132,9 +132,9 @@ def configure(keymap):
     # keymap working on any window
     keymap_global = keymap.defineWindowKeymap(check_func=CheckWnd.is_global_target)
 
-    if 0: # SandS
-        keymap.replaceKey( "Space", "RShift" )
-        keymap.replaceKey( "RShift", "LShift" )
+    if 0:  # SandS
+        keymap.replaceKey("Space", "RShift")
+        keymap.replaceKey("RShift", "LShift")
         keymap_global["O-RShift"] = "Space"
 
     # keyboard macro
@@ -425,7 +425,6 @@ def configure(keymap):
     keymap_global["S-U0-F"] = IME_CONTROL.enable_skk
     keymap_global["S-U1-J"] = IME_CONTROL.to_skk_latin
     keymap_global["U1-N"] = IME_CONTROL.to_skk_latin
-
 
     # paste as plaintext
     keymap_global["U0-V"] = LazyFunc(ClipHandler().paste_current).defer()
@@ -954,6 +953,20 @@ def configure(keymap):
     # input customize
     ################################
 
+    def markdown_list(with_index: bool) -> Callable:
+        s = "-"
+        if with_index:
+            s = "1."
+
+        def _sender() -> None:
+            IME_CONTROL.to_skk_latin()
+            VIRTUAL_FINGER.type_smart(s, "Space", "C-J")
+
+        return _sender
+
+    keymap_global["S-U0-8"] = markdown_list(False)
+    keymap_global["S-U0-7"] = markdown_list(True)
+
     class SKK:
         def __init__(
             self,
@@ -1021,8 +1034,6 @@ def configure(keymap):
             "U0-P": "\u30fb",  # KATAKANA MIDDLE DOT
             "S-U0-SemiColon": "+ ",
             "U1-G": "\u3013\u3013",  # GETA MARK * 2
-            "U1-1": "1. ",
-            "S-U0-7": "1. ",
         },
         True,
         keymap_global,
