@@ -301,7 +301,14 @@ def configure(keymap):
 
         def enable(self) -> None:
             self.set_status(1)
-            VIRTUAL_FINGER_QUICK.type_keys("C-J")
+
+        def enable_skk(self) -> None:
+            self.set_status(1)
+            VIRTUAL_FINGER.type_keys("C-J")
+
+        def to_skk_latin(self) -> None:
+            self.enable_skk()
+            VIRTUAL_FINGER.type_keys("L")
 
         def disable(self) -> None:
             self.set_status(0)
@@ -408,19 +415,19 @@ def configure(keymap):
     keymap_global["U0-W"] = LazyFunc(lambda: VIRTUAL_FINGER.type_keys("LCtrl-LAlt-Tab")).defer()
 
     # ime: Japanese / Foreign
-    keymap_global["U1-J"] = IME_CONTROL.enable
-    keymap_global["U0-F"] = IME_CONTROL.disable
-    keymap_global["S-U0-F"] = IME_CONTROL.enable
-    keymap_global["S-U1-J"] = IME_CONTROL.disable
-    keymap_global["U1-N"] = IME_CONTROL.disable
+    keymap_global["U1-J"] = IME_CONTROL.enable_skk
+    keymap_global["U0-F"] = IME_CONTROL.to_skk_latin
+    keymap_global["S-U0-F"] = IME_CONTROL.enable_skk
+    keymap_global["S-U1-J"] = IME_CONTROL.to_skk_latin
+    keymap_global["U1-N"] = IME_CONTROL.to_skk_latin
+
 
     # paste as plaintext
     keymap_global["U0-V"] = LazyFunc(ClipHandler().paste_current).defer()
 
     # re-convert
     def re_convert() -> None:
-        if not IME_CONTROL.is_enabled():
-            IME_CONTROL.enable()
+        IME_CONTROL.enable_skk()
         VIRTUAL_FINGER_QUICK.type_keys("LWin-Slash")
 
     keymap_global["U0-(236)"] = re_convert
@@ -463,8 +470,8 @@ def configure(keymap):
 
     # select last word with ime
     def select_last_word() -> None:
-        IME_CONTROL.enable()
-        VIRTUAL_FINGER.type_keys("C-S-Left", "C-J")
+        IME_CONTROL.enable_skk()
+        VIRTUAL_FINGER.type_keys("C-S-Left")
 
     keymap_global["U1-Space"] = select_last_word
 
@@ -512,7 +519,7 @@ def configure(keymap):
         selection = ClipHandler().copy_string()
         if selection:
             sequence = ["Minus" if c == "-" else c for c in StrCleaner.clear_space(selection)]
-            IME_CONTROL.enable()
+            IME_CONTROL.enable_skk()
             VIRTUAL_FINGER_QUICK.type_smart(*sequence)
 
     keymap_global["U1-I"] = LazyFunc(re_input_with_ime).defer()
@@ -953,14 +960,14 @@ def configure(keymap):
 
         def invoke_kana_sender(self, *sequence) -> Callable:
             def _send() -> None:
-                IME_CONTROL.enable()
+                IME_CONTROL.enable_skk()
                 self.finger.type_smart(*sequence)
 
             return LazyFunc(_send).defer(self._defer_msec)
 
         def invoke_latin_sender(self, *sequence) -> Callable:
             def _send() -> None:
-                IME_CONTROL.enable()
+                IME_CONTROL.enable_skk()
                 self.finger.type_smart("L", *sequence)
 
             return LazyFunc(_send).defer(self._defer_msec)
@@ -972,7 +979,7 @@ def configure(keymap):
                 sent.append("C-J")
 
             def _send() -> None:
-                IME_CONTROL.enable()
+                IME_CONTROL.enable_skk()
                 self.finger.type_smart(*sent)
 
             return LazyFunc(_send).defer(self._defer_msec)
@@ -1106,7 +1113,7 @@ def configure(keymap):
                 seq = [c for c in d.strftime(fmt)]
                 skk.invoke_latin_sender(*seq)()
                 if after_mode_is_kana:
-                    IME_CONTROL.enable()
+                    IME_CONTROL.enable_skk()
 
             return LazyFunc(_input).defer()
 
