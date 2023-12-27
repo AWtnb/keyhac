@@ -265,7 +265,6 @@ def configure(keymap):
             self._finish()
 
         def type_text(self, s: str) -> None:
-            self._keymap.setInput_Modifier(0)
             self._prepare()
             for c in str(s):
                 delay(self._inter_stroke_pause)
@@ -302,6 +301,7 @@ def configure(keymap):
 
         def enable(self) -> None:
             self.set_status(1)
+            VIRTUAL_FINGER_QUICK.type_keys("C-J")
 
         def disable(self) -> None:
             self.set_status(0)
@@ -887,8 +887,6 @@ def configure(keymap):
             for combo, stroke in {
                 "X,X": (".txt"),
                 "X,M": (".md"),
-                "P,M": (user_path.resolve(r"Sync\develop\app_setting\IME_google\convertion_dict\main.txt").path),
-                "P,H": (user_path.resolve(r"Sync\develop\app_setting\IME_google\convertion_dict\human.txt").path),
                 "P,D": (user_path.resolve(r"Desktop").path + "\\"),
                 "N,0": ("0_plain"),
                 "N,P,L": ("plain"),
@@ -948,32 +946,56 @@ def configure(keymap):
         def __init__(
             self,
             inter_stroke_pause: int = 10,
-            defer_msec: int = 10,
+            defer_msec: int = 0,
         ) -> None:
             self._defer_msec = defer_msec
             self.finger = VirtualFinger(inter_stroke_pause)
 
-        def invoke_kana(self, *sequence) -> Callable:
-            def _input() -> None:
+        def invoke_kana_sender(self, *sequence) -> Callable:
+            def _send() -> None:
                 IME_CONTROL.enable()
-                self.finger.type_smart("C-J", *sequence)
+                self.finger.type_smart(*sequence)
 
-            return LazyFunc(_input).defer(self._defer_msec)
+            return LazyFunc(_send).defer(self._defer_msec)
 
-        def invoke_eisu(self, *sequence) -> Callable:
-            def _input() -> None:
+        def invoke_latin_sender(self, *sequence) -> Callable:
+            def _send() -> None:
                 IME_CONTROL.enable()
-                self.finger.type_smart("C-J", "L", *sequence)
+                self.finger.type_smart("L", *sequence)
 
-            return LazyFunc(_input).defer(self._defer_msec)
+            return LazyFunc(_send).defer(self._defer_msec)
+
+        def invoke_pair_sender(self, pair: list, post_mode: int) -> Callable:
+            _, suffix = pair
+            sent = ["L"] + pair + ["Left"] * len(suffix)
+            if post_mode == 1:
+                IME_CONTROL.enable()
+
+            def _send() -> None:
+                IME_CONTROL.enable()
+                self.finger.type_smart(*sent)
+
+            return LazyFunc(_send).defer(self._defer_msec)
+
+        def invoke_pair_wrapper(self, pair: list, post_mode: int) -> Callable:
+            prefix, suffix = pair
+            handler = ClipHandler()
+
+            def _send() -> None:
+                sent = ["C-J", "L", prefix, handler.get_string(), suffix]
+                if post_mode == 1:
+                    IME_CONTROL.enable()
+                self.finger.type_smart(*sent)
+
+            return LazyFunc(_send).defer(self._defer_msec)
 
     def skk_remap(mapping_dict: dict, as_kana: bool, km: Keymap) -> None:
         skk = SKK()
         for key, send in mapping_dict.items():
             if as_kana:
-                km[key] = skk.invoke_kana(send)
+                km[key] = skk.invoke_kana_sender(send)
             else:
-                km[key] = skk.invoke_eisu(send)
+                km[key] = skk.invoke_latin_sender(send)
 
     skk_remap(
         {
@@ -1008,154 +1030,81 @@ def configure(keymap):
             "U0-SemiColon": "SemiColon",
         },
         False,
-        keymap_global
+        keymap_global,
     )
 
-    class PairedPuncs:
-        def __init__(self, pair_mapping: dict, recover_ime: bool) -> None:
-            self.pair_mapping = pair_mapping
-            self.recover_ime = recover_ime
+    def skk_pair_remap(mapping_dict: dict, after_mode_is_kana: bool, km: Keymap) -> None:
+        skk = SKK()
+        for key, send in mapping_dict.items():
+            if after_mode_is_kana:
+                km[key] = skk.invoke_pair_sender(send, 1)
+            else:
+                km[key] = skk.invoke_pair_sender(send, 0)
 
-        def _get_sender(self, pair: list) -> Callable:
-            _, suffix = pair
-            sent = pair + ["Left"] * len(suffix)
-            return KeyPuncher(recover_ime=self.recover_ime).invoke(*sent)
+    def skk_pair_wrapper_remap(mapping_dict: dict, after_mode_is_kana: bool, trigger_key: str, km: Keymap) -> None:
+        skk = SKK()
+        for key, send in mapping_dict.items():
+            if after_mode_is_kana:
+                km[trigger_key + key] = skk.invoke_pair_wrapper(send, 1)
+            else:
+                km[trigger_key + key] = skk.invoke_pair_wrapper(send, 0)
 
-        def apply_sender(self, km: Keymap) -> None:
-            for key, pair in self.pair_mapping.items():
-                km[key] = self._get_sender(pair)
-
-        def _get_wrapper(self, pair: list) -> Callable:
-            _, suffix = pair
-            sent = pair + ["Left"] * len(suffix) + ["C-V"]
-            return KeyPuncher(recover_ime=self.recover_ime, inter_stroke_pause=20).invoke(*sent)
-
-        def apply_wrapper(self, km: Keymap, modifier: str = "") -> None:
-            for key, pair in self.pair_mapping.items():
-                km[modifier + key] = self._get_wrapper(pair)
-
-        def _get_paster(self, pair: list) -> Callable:
-            prefix, suffix = pair
-
-            def _paster() -> None:
-                IME_CONTROL.disable()
-                ClipHandler().paste_current(lambda s: prefix + s.strip() + suffix)
-                if self.recover_ime:
-                    IME_CONTROL.enable()
-
-            return _paster
-
-        def apply_paster(self, km: Keymap, modifier: str = "") -> None:
-            for key, pair in self.pair_mapping.items():
-                km[modifier + key] = self._get_paster(pair)
-
-    PAIRS_WITHOUT_IME = PairedPuncs(
-        {
-            "U0-2": ['"', '"'],
-            "U0-7": ["'", "'"],
-            "U0-AtMark": ["`", "`"],
-            "U1-AtMark": [" `", "` "],
-            "U0-CloseBracket": ["[", "]"],
-            "U1-9": ["(", ")"],
-            "U1-CloseBracket": ["{", "}"],
-            "U0-Caret": ["~~", "~~"],
-        },
+    PAIRS_AS_LATIN = {
+        "U0-2": ['"', '"'],
+        "U0-7": ["'", "'"],
+        "U0-AtMark": ["`", "`"],
+        "U1-AtMark": [" `", "` "],
+        "U0-CloseBracket": ["[", "]"],
+        "U1-9": ["(", ")"],
+        "U1-CloseBracket": ["{", "}"],
+        "U0-Caret": ["~~", "~~"],
+    }
+    skk_pair_remap(
+        PAIRS_AS_LATIN,
         False,
+        keymap_global,
     )
-    PAIRS_WITHOUT_IME.apply_sender(keymap_global)
-    PAIRS_WITHOUT_IME.apply_paster(keymap_global, "LC-")
+    skk_pair_wrapper_remap(
+        PAIRS_AS_LATIN,
+        False,
+        "LC-",
+        keymap_global,
+    )
 
-    PAIRS_WITH_IME = PairedPuncs(
-        {
-            "U0-8": ["\u300e", "\u300f"],  # WHITE CORNER BRACKET 『』
-            "U0-9": ["\u3010", "\u3011"],  # BLACK LENTICULAR BRACKET 【】
-            "U0-OpenBracket": ["\u300c", "\u300d"],  # CORNER BRACKET 「」
-            "U0-Y": ["\u300a", "\u300b"],  # DOUBLE ANGLE BRACKET 《》
-            "U1-2": ["\u201c", "\u201d"],  # DOUBLE QUOTATION MARK “”
-            "U1-7": ["\u2018", "\u2019"],  # SINGLE QUOTATION MARK ‘’
-            "U0-T": ["\u3014", "\u3015"],  # TORTOISE SHELL BRACKET 〔〕
-            "U1-8": ["\uff08", "\uff09"],  # FULLWIDTH PARENTHESIS （）
-            "U1-OpenBracket": ["\uff3b", "\uff3d"],  # FULLWIDTH SQUARE BRACKET ［］
-            "U1-Y": ["\u3008", "\u3009"],  # ANGLE BRACKET 〈〉
-        },
+    PAIRS_AS_JP = {
+        "U0-8": ["\u300e", "\u300f"],  # WHITE CORNER BRACKET 『』
+        "U0-9": ["\u3010", "\u3011"],  # BLACK LENTICULAR BRACKET 【】
+        "U0-OpenBracket": ["\u300c", "\u300d"],  # CORNER BRACKET 「」
+        "U0-Y": ["\u300a", "\u300b"],  # DOUBLE ANGLE BRACKET 《》
+        "U1-2": ["\u201c", "\u201d"],  # DOUBLE QUOTATION MARK “”
+        "U1-7": ["\u2018", "\u2019"],  # SINGLE QUOTATION MARK ‘’
+        "U0-T": ["\u3014", "\u3015"],  # TORTOISE SHELL BRACKET 〔〕
+        "U1-8": ["\uff08", "\uff09"],  # FULLWIDTH PARENTHESIS （）
+        "U1-OpenBracket": ["\uff3b", "\uff3d"],  # FULLWIDTH SQUARE BRACKET ［］
+        "U1-Y": ["\u3008", "\u3009"],  # ANGLE BRACKET 〈〉
+    }
+    skk_pair_remap(
+        PAIRS_AS_JP,
         True,
+        keymap_global,
     )
-    PAIRS_WITH_IME.apply_sender(keymap_global)
-    PAIRS_WITH_IME.apply_paster(keymap_global, "LC-")
-
-    if 0:  # ignore for SKK
-
-        class DirectInput:
-            @staticmethod
-            def invoke(key: str, turnoff_ime_later: bool = False) -> Callable:
-                finish_keys = ["C-M"]
-                if turnoff_ime_later:
-                    finish_keys.append("(243)")
-
-                def _input() -> None:
-                    VIRTUAL_FINGER.type_keys(key)
-                    if IME_CONTROL.is_enabled():
-                        VIRTUAL_FINGER.type_keys(*finish_keys)
-
-                return _input
-
-            @classmethod
-            def invoke_puncs(cls, km: Keymap) -> None:
-                for key, turnoff_ime in {
-                    "AtMark": True,
-                    "Caret": False,
-                    "CloseBracket": False,
-                    "Colon": False,
-                    "Comma": False,
-                    "LS-AtMark": True,
-                    "LS-Caret": False,
-                    "LS-Colon": True,
-                    "LS-Comma": True,
-                    "LS-Minus": False,
-                    "LS-Period": True,
-                    "LS-SemiColon": False,
-                    "LS-Slash": False,
-                    "LS-Yen": True,
-                    "OpenBracket": False,
-                    "Period": False,
-                    "SemiColon": False,
-                    "Slash": False,
-                    "Yen": True,
-                }.items():
-                    km[key] = cls.invoke(key, turnoff_ime)
-
-            @classmethod
-            def invoke_alphabets(cls, km: Keymap) -> None:
-                for alphabet in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
-                    key = "LS-" + alphabet
-                    km[key] = cls.invoke(key, True)
-
-            @classmethod
-            def invoke_shift_numbers(cls, km: Keymap) -> None:
-                for n in "123456789":
-                    key = "LS-" + n
-                    turnoff_ime = False
-                    if n in ("2", "3", "4"):
-                        turnoff_ime = True
-                    km[key] = cls.invoke(key, turnoff_ime)
-
-        DirectInput().invoke_puncs(keymap_global)
-        DirectInput().invoke_alphabets(keymap_global)
-        DirectInput().invoke_shift_numbers(keymap_global)
-
-        keymap_global["BackSlash"] = DirectInput.invoke("S-BackSlash", False)
-        keymap_global["C-U0-P"] = DirectInput.invoke("S-1", False)
-        keymap_global["S-U0-P"] = DirectInput.invoke("S-Slash", False)
+    skk_pair_wrapper_remap(
+        PAIRS_AS_JP,
+        True,
+        "LC-",
+        keymap_global,
+    )
 
     class DateInput:
         @staticmethod
-        def invoke(fmt: str, recover_ime: bool = False) -> Callable:
+        def invoke(fmt: str, after_mode_is_kana: bool = False) -> Callable:
+            skk = SKK()
+
             def _input() -> None:
                 d = datetime.datetime.today()
-                IME_CONTROL.disable()
                 seq = [c for c in d.strftime(fmt)]
-                VIRTUAL_FINGER_QUICK.type_smart(*seq)
-                if recover_ime:
+                skk.invoke_latin_sender(*seq)()
+                if after_mode_is_kana:
                     IME_CONTROL.enable()
 
             return LazyFunc(_input).defer()
@@ -1818,12 +1767,12 @@ def configure(keymap):
     keymap_slack = keymap.defineWindowKeymap(exe_name="slack.exe", class_name="Chrome_WidgetWin_1")
     keymap_slack["O-LShift"] = "Esc", "C-K"
     keymap_slack["F3"] = "Esc", "C-K"
-    keymap_slack["F1"] = KeyPuncher().invoke("+:")
+    keymap_slack["F1"] = SKK().invoke_latin_sender("+:")
 
     # vscode
     keymap_vscode = keymap.defineWindowKeymap(exe_name="Code.exe")
-    keymap_vscode["C-S-P"] = KeyPuncher().invoke("C-S-P")
-    keymap_vscode["C-A-B"] = KeyPuncher().invoke("C-A-B")
+    keymap_vscode["C-S-P"] = SKK().invoke_latin_sender("C-S-P")
+    keymap_vscode["C-A-B"] = SKK().invoke_latin_sender("C-A-B")
 
     # mery
     keymap_mery = keymap.defineWindowKeymap(exe_name="Mery.exe")
@@ -1841,8 +1790,7 @@ def configure(keymap):
 
     # sumatra PDF
     keymap_sumatra = keymap.defineWindowKeymap(check_func=CheckWnd.is_sumatra)
-    keymap_sumatra["O-LShift"] = KeyPuncher(recover_ime=True).invoke("F6", "C-Home", "C-F")
-    keymap_sumatra["C-G"] = KeyPuncher().invoke("C-G")
+    keymap_sumatra["O-LShift"] = SKK().invoke_kana_sender("F6", "C-Home", "C-F")
 
     keymap_sumatra_inputmode = keymap.defineWindowKeymap(check_func=CheckWnd.is_sumatra_inputmode)
 
@@ -1856,18 +1804,17 @@ def configure(keymap):
 
     def sumatra_view_key(km: Keymap) -> None:
         for key in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
-            km[key] = KeyPuncher().invoke(key)
+            km[key] = SKK().invoke_latin_sender(key)
 
     sumatra_view_key(keymap_sumatra_viewmode)
 
-    keymap_sumatra_viewmode["F"] = KeyPuncher(recover_ime=True).invoke("C-F")
+    keymap_sumatra_viewmode["F"] = SKK().invoke_kana_sender("C-F")
     keymap_sumatra_viewmode["H"] = "C-S-Tab"
     keymap_sumatra_viewmode["L"] = "C-Tab"
 
     # word
     keymap_word = keymap.defineWindowKeymap(exe_name="WINWORD.EXE")
     keymap_word["F11"] = "A-F", "E", "P", "A"
-    keymap_word["C-G"] = KeyPuncher().invoke("C-G")
 
     # powerpoint
     keymap_ppt = keymap.defineWindowKeymap(exe_name="powerpnt.exe")
