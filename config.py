@@ -429,6 +429,15 @@ def configure(keymap):
     # paste as plaintext
     keymap_global["U0-V"] = LazyFunc(ClipHandler().paste_current).defer()
 
+    # fullwidth-space with skk
+    def skk_fullwidth_space() -> None:
+        if IME_CONTROL.is_enabled():
+            IME_CONTROL.enable_skk()
+            VIRTUAL_FINGER_QUICK.type_keys("S-L", "S-Space", "C-J")
+        else:
+            VIRTUAL_FINGER_QUICK.type_keys("S-Space")
+    keymap_global["LS-Space"] = skk_fullwidth_space
+
     # re-convert
     def re_convert() -> None:
         IME_CONTROL.enable_skk()
