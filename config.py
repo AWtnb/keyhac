@@ -969,7 +969,7 @@ def configure(keymap):
             _, suffix = pair
             sent = ["L"] + pair + ["Left"] * len(suffix)
             if post_mode == 1:
-                IME_CONTROL.enable()
+                sent.append("C-J")
 
             def _send() -> None:
                 IME_CONTROL.enable()
@@ -980,12 +980,13 @@ def configure(keymap):
         def invoke_pair_wrapper(self, pair: list, post_mode: int) -> Callable:
             prefix, suffix = pair
             handler = ClipHandler()
+            pres = ["L", prefix]
+            sufs = [suffix]
+            if post_mode == 1:
+                sufs.append("C-J")
 
             def _send() -> None:
-                sent = ["C-J", "L", prefix, handler.get_string(), suffix]
-                if post_mode == 1:
-                    IME_CONTROL.enable()
-                self.finger.type_smart(*sent)
+                self.finger.type_smart(*pres, handler.get_string(), *sufs)
 
             return LazyFunc(_send).defer(self._defer_msec)
 
