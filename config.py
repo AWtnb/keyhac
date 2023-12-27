@@ -132,6 +132,11 @@ def configure(keymap):
     # keymap working on any window
     keymap_global = keymap.defineWindowKeymap(check_func=CheckWnd.is_global_target)
 
+    if 0: # SandS
+        keymap.replaceKey( "Space", "RShift" )
+        keymap.replaceKey( "RShift", "LShift" )
+        keymap_global["O-RShift"] = "Space"
+
     # keyboard macro
     keymap_global["U0-0"] = keymap.command_RecordToggle
     keymap_global["S-U0-0"] = keymap.command_RecordClear
@@ -1773,7 +1778,6 @@ def configure(keymap):
 
     # slack
     keymap_slack = keymap.defineWindowKeymap(exe_name="slack.exe", class_name="Chrome_WidgetWin_1")
-    keymap_slack["O-LShift"] = "Esc", "C-K"
     keymap_slack["F3"] = "Esc", "C-K"
     keymap_slack["F1"] = SKK().invoke_latin_sender("+:")
 
