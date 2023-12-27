@@ -569,12 +569,19 @@ def configure(keymap):
             skk_path = PathInfo(r"C:\Windows\System32\IME\IMCRVSKK\imcrvcnf.exe")
             skk_path.run()
 
+        @staticmethod
+        def open_skk_dir() -> None:
+            filer_path = PathInfo(UserPath().get_filer())
+            skk_dir_path = UserPath().resolve(r"AppData\Roaming\CorvusSKK")
+            filer_path.run(skk_dir_path.path)
+
         def apply(self, km: Keymap) -> None:
             for key, func in {
                 "R": self.reload_config,
                 "E": self.open_repo,
                 "P": lambda: ClipHandler().paste(self.read_config()),
                 "S": self.open_skk_config,
+                "S-S": self.open_skk_dir,
                 "X": lambda: None,
             }.items():
                 km[key] = LazyFunc(func).defer()
