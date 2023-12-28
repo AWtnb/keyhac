@@ -1793,22 +1793,42 @@ def configure(keymap):
 
     # vscode
     keymap_vscode = keymap.defineWindowKeymap(exe_name="Code.exe")
-    keymap_vscode["C-S-P"] = SKK().invoke_latin_sender("C-S-P")
-    keymap_vscode["C-A-B"] = SKK().invoke_latin_sender("C-A-B")
+
+    def remap_vscode(keys: list, km: Keymap) -> Callable:
+        skk = SKK()
+        for key in keys:
+            km[key] = skk.invoke_latin_sender(key)
+
+    remap_vscode(
+        [
+            "C-F",
+            "C-E",
+            "C-S-F",
+            "C-0",
+            "C-S-P",
+            "C-A-B",
+        ],
+        keymap_vscode,
+    )
 
     # mery
     keymap_mery = keymap.defineWindowKeymap(exe_name="Mery.exe")
-    keymap_mery["LA-U0-J"] = "A-CloseBracket"
-    keymap_mery["LA-U0-K"] = "A-OpenBracket"
-    keymap_mery["LA-LC-U0-J"] = "A-C-CloseBracket"
-    keymap_mery["LA-LC-U0-K"] = "A-C-OpenBracket"
-    keymap_mery["LA-LS-U0-J"] = "A-S-CloseBracket"
-    keymap_mery["LA-LS-U0-k"] = "A-S-OpenBracket"
 
-    # cmder
-    keymap_cmder = keymap.defineWindowKeymap(class_name="VirtualConsoleClass")
-    keymap_cmder["LAlt-Space"] = "Lwin-LAlt-Space"
-    keymap_cmder["C-W"] = lambda: None
+    def remap_mery(mapping_dict: dict, km: Keymap) -> Callable:
+        for key, value in mapping_dict.items():
+            km[key] = value
+
+    remap_mery(
+        {
+            "LA-U0-J": "A-CloseBracket",
+            "LA-U0-K": "A-OpenBracket",
+            "LA-LC-U0-J": "A-C-CloseBracket",
+            "LA-LC-U0-K": "A-C-OpenBracket",
+            "LA-LS-U0-J": "A-S-CloseBracket",
+            "LA-LS-U0-k": "A-S-OpenBracket",
+        },
+        keymap_mery,
+    )
 
     # sumatra PDF
     keymap_sumatra = keymap.defineWindowKeymap(check_func=CheckWnd.is_sumatra)
