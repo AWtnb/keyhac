@@ -429,15 +429,6 @@ def configure(keymap):
     # paste as plaintext
     keymap_global["U0-V"] = LazyFunc(ClipHandler().paste_current).defer()
 
-    # fullwidth-space with skk
-    def skk_fullwidth_space() -> None:
-        if IME_CONTROL.is_enabled():
-            IME_CONTROL.enable_skk()
-            VIRTUAL_FINGER_QUICK.type_keys("S-L", "S-Space", "C-J")
-        else:
-            VIRTUAL_FINGER_QUICK.type_keys("S-Space")
-    keymap_global["LS-Space"] = skk_fullwidth_space
-
     # re-convert
     def re_convert() -> None:
         IME_CONTROL.enable_skk()
@@ -1779,9 +1770,7 @@ def configure(keymap):
     # browser
     keymap_browser = keymap.defineWindowKeymap(check_func=CheckWnd.is_browser)
     keymap_browser["LC-LS-W"] = "A-Left"
-    keymap_browser["O-LShift"] = "C-F"
-    keymap_browser["LC-J"] = "F3"
-    keymap_browser["LS-LC-J"] = "S-F3"
+    keymap_browser["O-LCtrl"] = "C-F"
 
     def focus_main_pane() -> None:
         wnd = keymap.getWindow()
@@ -1799,6 +1788,7 @@ def configure(keymap):
     # slack
     keymap_slack = keymap.defineWindowKeymap(exe_name="slack.exe", class_name="Chrome_WidgetWin_1")
     keymap_slack["F3"] = "Esc", "C-K"
+    keymap_slack["O-LCtrl"] = "Esc", "C-K"
     keymap_slack["F1"] = SKK().invoke_latin_sender("+:")
 
     # vscode
@@ -1822,7 +1812,7 @@ def configure(keymap):
 
     # sumatra PDF
     keymap_sumatra = keymap.defineWindowKeymap(check_func=CheckWnd.is_sumatra)
-    keymap_sumatra["O-LShift"] = SKK().invoke_kana_sender("F6", "C-Home", "C-F")
+    keymap_sumatra["O-LCtrl"] = SKK().invoke_kana_sender("F6", "C-Home", "C-F")
 
     keymap_sumatra_inputmode = keymap.defineWindowKeymap(check_func=CheckWnd.is_sumatra_inputmode)
 
