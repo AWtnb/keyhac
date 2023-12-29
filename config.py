@@ -436,6 +436,12 @@ def configure(keymap):
         VIRTUAL_FINGER_QUICK.type_keys("C-S-Left")
     keymap_global["U1-N"] = to_skk_latin_mode
 
+    # re-convert
+    def re_convert_with_skk() -> None:
+        IME_CONTROL.enable_skk()
+        VIRTUAL_FINGER.type_keys("C-S-Left", "LWin-Slash", "C-G")
+    keymap_global["LS-U0-R"] = re_convert_with_skk
+
     # paste as plaintext (with trimming removable whitespaces)
     class StrCleaner:
         @staticmethod
@@ -1127,7 +1133,8 @@ def configure(keymap):
             def _input() -> None:
                 d = datetime.datetime.today()
                 seq = [c for c in d.strftime(fmt)]
-                skk.invoke_latin_sender(*seq)()
+                IME_CONTROL.to_skk_latin()
+                VIRTUAL_FINGER_QUICK.type_smart(*seq)
                 if after_mode_is_kana:
                     IME_CONTROL.enable_skk()
 
