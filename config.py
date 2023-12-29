@@ -222,6 +222,9 @@ def configure(keymap):
             "S-U0-I": ("Home", "Enter", "Up"),
             # as katakana suggestion
             "C-U0-I": ("C-I", "S-Slash", "C-M"),
+            # re-convert
+            "U0-(236)": ("LWin-Slash"),
+            "U0-R": ("LWin-Slash"),
             # Context menu
             "U0-C": ("Apps"),
             "S-U0-C": ("S-F10"),
@@ -294,12 +297,11 @@ def configure(keymap):
             return self._keymap.getWindow().getImeStatus()
 
         def toggle(self) -> None:
-            VIRTUAL_FINGER_QUICK.type_keys("(243)")
+            VIRTUAL_FINGER.type_keys("(243)")
 
         def set_status(self, mode: int) -> None:
             if self.get_status() != mode:
                 self.toggle()
-                delay(10)
 
         def is_enabled(self) -> bool:
             return self.get_status() == 1
@@ -424,18 +426,15 @@ def configure(keymap):
     keymap_global["U0-F"] = IME_CONTROL.to_skk_latin
     keymap_global["S-U0-F"] = IME_CONTROL.enable_skk
     keymap_global["S-U1-J"] = IME_CONTROL.to_skk_latin
-    keymap_global["U1-N"] = IME_CONTROL.to_skk_latin
 
     # paste as plaintext
     keymap_global["U0-V"] = LazyFunc(ClipHandler().paste_current).defer()
 
-    # re-convert
-    def re_convert() -> None:
-        IME_CONTROL.enable_skk()
-        VIRTUAL_FINGER_QUICK.type_keys("LWin-Slash")
-
-    keymap_global["U0-(236)"] = re_convert
-    keymap_global["U0-R"] = re_convert
+    # to latin mode
+    def to_skk_latin_mode() -> None:
+        IME_CONTROL.to_skk_latin()
+        VIRTUAL_FINGER_QUICK.type_keys("C-S-Left")
+    keymap_global["U1-N"] = to_skk_latin_mode
 
     # paste as plaintext (with trimming removable whitespaces)
     class StrCleaner:
@@ -518,15 +517,16 @@ def configure(keymap):
     # open url in browser
     keymap_global["C-U0-O"] = LazyFunc(lambda: PathInfo(ClipHandler().copy_string().strip()).run()).defer()
 
-    # re-input selected string with ime
-    def re_input_with_ime() -> None:
+    # re-input selected string with skk
+    def re_input_with_skk() -> None:
         selection = ClipHandler().copy_string()
         if selection:
             sequence = ["Minus" if c == "-" else c for c in StrCleaner.clear_space(selection)]
             IME_CONTROL.enable_skk()
+            sequence = ["LS-" + sequence[0]] + sequence[1:]
             VIRTUAL_FINGER_QUICK.type_smart(*sequence)
 
-    keymap_global["U1-I"] = LazyFunc(re_input_with_ime).defer()
+    keymap_global["U1-I"] = LazyFunc(re_input_with_skk).defer()
 
     def moko(search_all: bool = False) -> Callable:
         exe_path = r"C:\Personal\tools\bin\moko.exe"
