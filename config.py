@@ -1810,7 +1810,7 @@ def configure(keymap):
             "C-S-F",
             "C-S-E",
             "C-S-G",
-            "C-S-X",
+            "RC-RS-X",
             "C-0",
             "C-S-P",
             "C-A-B",
