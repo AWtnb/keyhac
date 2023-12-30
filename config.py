@@ -222,9 +222,6 @@ def configure(keymap):
             "S-U0-I": ("Home", "Enter", "Up"),
             # as katakana suggestion
             "C-U0-I": ("C-I", "S-Slash", "C-M"),
-            # re-convert
-            "U0-(236)": ("LWin-Slash"),
-            "U0-R": ("LWin-Slash"),
             # Context menu
             "U0-C": ("Apps"),
             "S-U0-C": ("S-F10"),
@@ -439,8 +436,9 @@ def configure(keymap):
     # re-convert
     def re_convert_with_skk() -> None:
         IME_CONTROL.enable_skk()
-        VIRTUAL_FINGER.type_keys("C-S-Left", "LWin-Slash", "C-G")
-    keymap_global["LS-U0-R"] = re_convert_with_skk
+        VIRTUAL_FINGER.type_keys("LWin-Slash", "C-G")
+    keymap_global["U0-R"] = re_convert_with_skk
+    keymap_global["U0-(236)"] = re_convert_with_skk
 
     # paste as plaintext (with trimming removable whitespaces)
     class StrCleaner:
