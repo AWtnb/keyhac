@@ -1126,7 +1126,6 @@ def configure(keymap):
     class DateInput:
         @staticmethod
         def invoke(fmt: str, after_mode_is_kana: bool = False) -> Callable:
-            skk = SKK()
 
             def _input() -> None:
                 d = datetime.datetime.today()
