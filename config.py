@@ -475,6 +475,12 @@ def configure(keymap):
 
     StrCleaner().apply(keymap_global, "U1-V")
 
+    # select last characeter with ime
+    def select_last_char() -> None:
+        IME_CONTROL.enable_skk()
+        VIRTUAL_FINGER.type_keys("S-Left")
+    keymap_global["LC-U0-Z"] = select_last_char
+
     # select last word with ime
     def select_last_word() -> None:
         IME_CONTROL.enable_skk()
