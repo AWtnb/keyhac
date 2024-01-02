@@ -314,7 +314,7 @@ def configure(keymap):
             self.enable_skk()
             VIRTUAL_FINGER.type_keys("L")
 
-        def reconvert(self) -> None:
+        def reconvert_with_skk(self) -> None:
             self.enable_skk()
             VIRTUAL_FINGER.type_keys("LWin-Slash", "C-G")
 
@@ -439,8 +439,8 @@ def configure(keymap):
     keymap_global["U1-N"] = to_skk_latin_mode
 
     # re-convert
-    keymap_global["U0-R"] = IME_CONTROL.reconvert
-    keymap_global["U0-(236)"] = IME_CONTROL.reconvert
+    keymap_global["U0-R"] = IME_CONTROL.reconvert_with_skk
+    keymap_global["U0-(236)"] = IME_CONTROL.reconvert_with_skk
 
     # paste as plaintext (with trimming removable whitespaces)
     class StrCleaner:
@@ -480,14 +480,14 @@ def configure(keymap):
     # select last characeter with ime
     def select_last_char() -> None:
         VIRTUAL_FINGER.type_keys("S-Left")
-        IME_CONTROL.reconvert()
+        IME_CONTROL.reconvert_with_skk()
 
     keymap_global["LC-U0-Z"] = select_last_char
 
     # select last word with ime
     def select_last_word() -> None:
         VIRTUAL_FINGER.type_keys("C-S-Left")
-        IME_CONTROL.reconvert()
+        IME_CONTROL.reconvert_with_skk()
 
     keymap_global["U1-Space"] = select_last_word
 
