@@ -307,7 +307,7 @@ def configure(keymap):
             self.set_status(1)
 
         def enable_skk(self) -> None:
-            self.set_status(1)
+            self.enable()
             VIRTUAL_FINGER.type_keys("C-J")
 
         def to_skk_latin(self) -> None:
