@@ -440,7 +440,6 @@ def configure(keymap):
 
     # re-convert
     keymap_global["U0-R"] = IME_CONTROL.reconvert_with_skk
-    keymap_global["U0-(236)"] = IME_CONTROL.reconvert_with_skk
 
     # paste as plaintext (with trimming removable whitespaces)
     class StrCleaner:
@@ -477,12 +476,20 @@ def configure(keymap):
 
     StrCleaner().apply(keymap_global, "U1-V")
 
-    # select last characeter with ime
-    def select_last_char() -> None:
-        VIRTUAL_FINGER.type_keys("S-Left")
-        IME_CONTROL.reconvert_with_skk()
+    # reconvert last input
+    def reconvert_last_input(greedy: bool) -> Callable:
+        key = "S-Left"
+        if greedy:
+            key = "C-" + key
 
-    keymap_global["LC-U0-Z"] = select_last_char
+        def _sender() -> None:
+            VIRTUAL_FINGER.type_keys(key)
+            IME_CONTROL.reconvert_with_skk()
+
+        return _sender
+
+    keymap_global["U0-(236)"] = reconvert_last_input(False)
+    keymap_global["LS-U0-(236)"] = reconvert_last_input(True)
 
     # select last word with ime
     def select_last_word() -> None:
