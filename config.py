@@ -543,8 +543,10 @@ def configure(keymap):
         if selection:
             sequence = ["Minus" if c == "-" else c for c in StrCleaner.clear_space(selection)]
             IME_CONTROL.enable_skk()
-            sequence = ["LS-" + sequence[0]] + sequence[1:]
-            VIRTUAL_FINGER_QUICK.type_smart(*sequence)
+            c = ord(sequence[0])
+            if ord("A") <= c <= ord("Z") or ord("a") <= c <= ord("z"):
+                sequence = ["LS-" + sequence[0]] + sequence[1:]
+                VIRTUAL_FINGER_QUICK.type_smart(*sequence)
 
     keymap_global["U1-I"] = LazyFunc(re_input_with_skk).defer()
 
