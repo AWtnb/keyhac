@@ -889,87 +889,6 @@ def configure(keymap):
     WndShrinker().apply(keymap_global["U1-M"])
 
     ################################
-    # pseudo espanso
-    ################################
-
-    def combo_mapper(root_map: Union[Callable, dict], keys: list, func: Callable) -> Union[Callable, dict, None]:
-        if callable(root_map):
-            return root_map
-        if len(keys) == 1:
-            root_map[keys[0]] = func
-            return root_map
-        if len(keys) < 1:
-            return None
-        head = keys[0]
-        rest = keys[1:]
-        try:
-            root_map[head] = combo_mapper(root_map[head], rest, func)
-        except:
-            sub_map = keymap.defineMultiStrokeKeymap()
-            root_map[head] = combo_mapper(sub_map, rest, func)
-        return root_map
-
-    class KeyCombo:
-        def __init__(self) -> None:
-            self._keymap = keymap
-            self.mapping = self._keymap.defineMultiStrokeKeymap()
-            user_path = UserPath()
-            direct_puncher = KeyPuncher(defer_msec=50)
-            for combo, stroke in {
-                "X,X": (".txt"),
-                "X,M": (".md"),
-                "P,D": (user_path.resolve(r"Desktop").path + "\\"),
-                "N,0": ("0_plain"),
-                "N,P,L": ("plain"),
-                "N,P,A": ("proofed_by_author"),
-                "N,P,J": ("project_proposal"),
-                "N,P,P": ("proofed"),
-                "N,S,A": ("send_to_author"),
-                "N,S,P": ("send_to_printshop"),
-                "Minus,H": ("\u2010"),
-                "Minus,M": ("\u2014"),
-                "Minus,N": ("\u2013"),
-                "Minus,S": ("\u2212"),
-                "Minus,D": ("\u30a0"),
-                "R,B": (r"[\[［].+?[\]］]"),
-                "R,P": (r"[\(（].+?[\)）]"),
-                "C-R,S-Right": ("(?!)", "Left"),
-                "C-R,Right": ("(?=)", "Left"),
-                "C-R,S-Left": ("(?<!)", "Left"),
-                "C-R,Left": ("(?<=)", "Left"),
-                "A,E": ("\u00e9"),
-                "A,S-E": ("\u00c9"),
-                "C-A,E": ("\u00e8"),
-                "C-A,S-E": ("\u00c8"),
-                "U,S-A": ("\u00c4"),
-                "U,A": ("\u00e4"),
-                "U,S-O": ("\u00d6"),
-                "U,O": ("\u00f6"),
-                "U,S-U": ("\u00dc"),
-                "U,U": ("\u00fc"),
-            }.items():
-                keys = combo.split(",")
-                self.mapping = combo_mapper(self.mapping, keys, direct_puncher.invoke(*stroke))
-
-            indirect_puncher = KeyPuncher(recover_ime=True, defer_msec=50)
-            for combo, stroke in {
-                "Minus,F": ("\uff0d"),
-                "F,G": ("\u3013\u3013"),
-                "F,0": ("\u25cf\u25cf"),
-                "F,4": ("\u25a0\u25a0"),
-                "M,1": ("# "),
-                "M,2": ("## "),
-                "M,3": ("### "),
-                "M,4": ("#### "),
-                "M,5": ("##### "),
-                "M,6": ("###### "),
-            }.items():
-                keys = combo.split(",")
-                self.mapping = combo_mapper(self.mapping, keys, indirect_puncher.invoke(*stroke))
-
-    keymap_global["U1-X"] = KeyCombo().mapping
-
-    ################################
     # input customize
     ################################
 
@@ -1005,19 +924,19 @@ def configure(keymap):
 
         def invoke_latin_sender(self, *sequence) -> Callable:
             def _send() -> None:
-                IME_CONTROL.enable_skk()
-                self.finger.type_smart("L", *sequence)
+                IME_CONTROL.to_skk_latin()
+                self.finger.type_smart(*sequence)
 
             return LazyFunc(_send).defer(self._defer_msec)
 
         def invoke_pair_sender(self, pair: list, post_mode: int) -> Callable:
             _, suffix = pair
-            sent = ["L"] + pair + ["Left"] * len(suffix)
+            sent = pair + ["Left"] * len(suffix)
             if post_mode == 1:
                 sent.append("C-J")
 
             def _send() -> None:
-                IME_CONTROL.enable_skk()
+                IME_CONTROL.to_skk_latin()
                 self.finger.type_smart(*sent)
 
             return LazyFunc(_send).defer(self._defer_msec)
@@ -1025,13 +944,13 @@ def configure(keymap):
         def invoke_pair_wrapper(self, pair: list, post_mode: int) -> Callable:
             prefix, suffix = pair
             handler = ClipHandler()
-            pres = ["L", prefix]
             sufs = [suffix]
             if post_mode == 1:
                 sufs.append("C-J")
 
             def _send() -> None:
-                self.finger.type_smart(*pres, handler.get_string(), *sufs)
+                IME_CONTROL.to_skk_latin()
+                self.finger.type_smart(*[prefix], handler.get_string(), *sufs)
 
             return LazyFunc(_send).defer(self._defer_msec)
 
@@ -1171,6 +1090,87 @@ def configure(keymap):
 
     keymap_global["U1-D"] = keymap.defineMultiStrokeKeymap()
     DateInput().apply(keymap_global["U1-D"])
+
+    ################################
+    # pseudo espanso
+    ################################
+
+    def combo_mapper(root_map: Union[Callable, dict], keys: list, func: Callable) -> Union[Callable, dict, None]:
+        if callable(root_map):
+            return root_map
+        if len(keys) == 1:
+            root_map[keys[0]] = func
+            return root_map
+        if len(keys) < 1:
+            return None
+        head = keys[0]
+        rest = keys[1:]
+        try:
+            root_map[head] = combo_mapper(root_map[head], rest, func)
+        except:
+            sub_map = keymap.defineMultiStrokeKeymap()
+            root_map[head] = combo_mapper(sub_map, rest, func)
+        return root_map
+
+    class KeyCombo:
+        def __init__(self) -> None:
+            self._keymap = keymap
+            self.mapping = self._keymap.defineMultiStrokeKeymap()
+            user_path = UserPath()
+            skk = SKK(defer_msec=50, inter_stroke_pause=0)
+            for combo, stroke in {
+                "X,X": [".txt"],
+                "X,M": [".md"],
+                "P,D": [user_path.resolve(r"Desktop").path + "\\"],
+                "N,0": ["0_plain"],
+                "N,P,L": ["plain"],
+                "N,P,A": ["proofed_by_author"],
+                "N,P,J": ["project_proposal"],
+                "N,P,P": ["proofed"],
+                "N,S,A": ["send_to_author"],
+                "N,S,P": ["send_to_printshop"],
+                "Minus,H": ["\u2010"],
+                "Minus,M": ["\u2014"],
+                "Minus,N": ["\u2013"],
+                "Minus,S": ["\u2212"],
+                "Minus,D": ["\u30a0"],
+                "R,B": [r"[\[［].+?[\]］]"],
+                "R,P": [r"[\(（].+?[\)）]"],
+                "C-R,S-Right": ["(?!)", "Left"],
+                "C-R,Right": ["(?=)", "Left"],
+                "C-R,S-Left": ["(?<!)", "Left"],
+                "C-R,Left": ["(?<=)", "Left"],
+                "A,E": ["\u00e9"],
+                "A,S-E": ["\u00c9"],
+                "C-A,E": ["\u00e8"],
+                "C-A,S-E": ["\u00c8"],
+                "U,S-A": ["\u00c4"],
+                "U,A": ["\u00e4"],
+                "U,S-O": ["\u00d6"],
+                "U,O": ["\u00f6"],
+                "U,S-U": ["\u00dc"],
+                "U,U": ["\u00fc"],
+            }.items():
+                keys = combo.split(",")
+                self.mapping = combo_mapper(self.mapping, keys, skk.invoke_latin_sender(*stroke))
+
+            for combo, stroke in {
+                "Minus,F": ["\uff0d"],
+                "F,G": ["\u3013\u3013"],
+                "F,0": ["\u25cf\u25cf"],
+                "F,4": ["\u25a0\u25a0"],
+                "M,1": ["# "],
+                "M,2": ["## "],
+                "M,3": ["### "],
+                "M,4": ["#### "],
+                "M,5": ["##### "],
+                "M,6": ["###### "],
+            }.items():
+                keys = combo.split(",")
+                stroke.append("C-J")
+                self.mapping = combo_mapper(self.mapping, keys, skk.invoke_latin_sender(*stroke))
+
+    keymap_global["U1-X"] = KeyCombo().mapping
 
     ################################
     # web search
