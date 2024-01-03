@@ -494,7 +494,7 @@ def configure(keymap):
     # select last word with ime
     def select_last_word() -> None:
         VIRTUAL_FINGER.type_keys("C-S-Left")
-        IME_CONTROL.enable()
+        IME_CONTROL.enable_skk()
 
     keymap_global["U1-Space"] = select_last_word
 
