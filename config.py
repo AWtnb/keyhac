@@ -1817,7 +1817,7 @@ def configure(keymap):
     keymap_vscode = keymap.defineWindowKeymap(exe_name="Code.exe")
 
     def remap_vscode(keys: list, km: Keymap) -> Callable:
-        skk = SKK()
+        skk = SKK(defer_msec=10)
         for key in keys:
             km[key] = skk.invoke_latin_sender(key)
 
