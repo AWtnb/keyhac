@@ -215,6 +215,7 @@ def configure(keymap):
             "LC-U0-Enter": ("Slash"),
             "U1-B": ("Minus"),
             "U0-Z": ("Minus"),
+            "BackSlash": ("S-BackSlash"),
             # emacs-like backchar
             "LC-H": ("Back"),
             # Insert line
