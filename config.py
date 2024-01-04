@@ -426,7 +426,7 @@ def configure(keymap):
     keymap_global["U1-J"] = IME_CONTROL.enable_skk
     keymap_global["U0-F"] = IME_CONTROL.to_skk_latin
     keymap_global["S-U0-F"] = IME_CONTROL.enable_skk
-    keymap_global["S-U1-J"] = IME_CONTROL.to_skk_latin
+    keymap_global["S-U1-J"] = IME_CONTROL.disable
 
     # paste as plaintext
     keymap_global["U0-V"] = LazyFunc(ClipHandler().paste_current).defer()
