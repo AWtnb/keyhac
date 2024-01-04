@@ -551,11 +551,12 @@ def configure(keymap):
     keymap_global["U1-I"] = LazyFunc(re_input_with_skk).defer()
 
     def moko(search_all: bool = False) -> Callable:
-        exe_path = r"C:\Personal\tools\bin\moko.exe"
+        exe_path = UserPath().resolve(r"Personal\tools\bin\moko.exe")
+        src_path = UserPath().resolve(r"Personal\launch.yaml").path
 
         def _launcher() -> None:
-            PathInfo(exe_path).run(
-                r"-src=C:\Personal\launch.yaml",
+            exe_path.run(
+                r"-src={}".format(src_path),
                 "-filer={}".format(UserPath().get_filer()),
                 "-all={}".format(search_all),
                 "-exclude=_obsolete,node_modules",
@@ -1737,7 +1738,7 @@ def configure(keymap):
         }
     ).apply(keymap_global["U1-C"])
 
-    keymap_global["LS-LC-U1-M"] = lambda: PathInfo(r"C:\Personal\draft.txt").run()
+    keymap_global["LS-LC-U1-M"] = UserPath().resolve(r"Personal\draft.txt").run
 
     # invoke specific filer
     def invoke_filer(dir_path: str) -> Callable:
