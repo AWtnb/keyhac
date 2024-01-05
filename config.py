@@ -992,13 +992,23 @@ def configure(keymap):
             "U0-Period": "Period",
             "U0-Slash": "Slash",
             "U0-U": "S-BackSlash",
-            "U1-Enter": "<br />",
             "U1-Minus": "Minus",
             "U0-SemiColon": "SemiColon",
         },
         False,
         keymap_global,
     )
+
+    def skk_z_trigger(trigger_key, km: Keymap) -> None:
+        km[trigger_key] = keymap.defineMultiStrokeKeymap()
+        skk = SKK()
+        for mod in ("", "S-"):
+            for key in "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789":
+                km[trigger_key][mod + key] = skk.invoke_kana_sender("Z", mod + key)
+            for key in ("OpenBracket", "CloseBracket", "Minus", "Caret", "Slash"):
+                km[trigger_key][mod + key] = skk.invoke_kana_sender("Z", mod + key)
+
+    skk_z_trigger("U1-Enter", keymap_global)
 
     def skk_pair_remap(mapping_dict: dict, after_mode_is_kana: bool, km: Keymap) -> None:
         skk = SKK()
