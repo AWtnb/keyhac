@@ -205,8 +205,6 @@ def configure(keymap):
             "LC-Q": ("A-F4"),
             # SKK: contbvert to first suggestion
             "U0-Tab": ("C-I", "C-N", "C-J"),
-            # confirm and move cursor
-            "U0-M": ("Enter", "Right"),
             # line selection
             "U1-A": ("End", "S-Home"),
             # punctuation
@@ -1005,7 +1003,7 @@ def configure(keymap):
             for key in ("OpenBracket", "CloseBracket", "Minus", "Caret", "Slash"):
                 km[trigger_key][mod + key] = skk.invoke_kana_sender("Z", mod + key)
 
-    skk_z_trigger("U1-Enter", keymap_global)
+    skk_z_trigger("U0-M", keymap_global)
 
     def skk_pair_remap(mapping_dict: dict, after_mode_is_kana: bool, km: Keymap) -> None:
         skk = SKK()
