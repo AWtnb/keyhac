@@ -1851,7 +1851,7 @@ def configure(keymap):
             "LA-LC-U0-J": "A-C-CloseBracket",
             "LA-LC-U0-K": "A-C-OpenBracket",
             "LA-LS-U0-J": "A-S-CloseBracket",
-            "LA-LS-U0-k": "A-S-OpenBracket",
+            "LA-LS-U0-K": "A-S-OpenBracket",
         },
         keymap_mery,
     )
