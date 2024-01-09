@@ -1824,22 +1824,22 @@ def configure(keymap):
     # vscode
     keymap_vscode = keymap.defineWindowKeymap(exe_name="Code.exe")
 
-    def remap_vscode(keys: list, km: Keymap) -> Callable:
+    def remap_vscode(sequences: list, km: Keymap) -> Callable:
         skk = SKK(defer_msec=10)
-        for key in keys:
-            km[key] = skk.invoke_latin_sender(key)
+        for seq in sequences:
+            km[seq[0]] = skk.invoke_latin_sender(*seq)
 
     remap_vscode(
         [
-            "C-F",
-            "C-E",
-            "C-S-F",
-            "C-S-E",
-            "C-S-G",
-            "RC-RS-X",
-            "C-0",
-            "C-S-P",
-            "C-A-B",
+            ("C-F"),
+            ("C-E"),
+            ("C-S-F", "C-0"),
+            ("C-S-E", "C-0"),
+            ("C-S-G", "C-0"),
+            ("RC-RS-X", "C-0"),
+            ("C-0"),
+            ("C-S-P"),
+            ("C-A-B"),
         ],
         keymap_vscode,
     )
