@@ -1869,6 +1869,7 @@ def configure(keymap):
     # sumatra PDF
     keymap_sumatra = keymap.defineWindowKeymap(check_func=CheckWnd.is_sumatra)
     keymap_sumatra["O-LCtrl"] = SKK().invoke_kana_sender("F6", "C-Home", "C-F")
+    keymap_sumatra["F9"] = SKK().invoke_kana_sender("F6", "C-Home", "C-F")
 
     keymap_sumatra_inputmode = keymap.defineWindowKeymap(check_func=CheckWnd.is_sumatra_inputmode)
 
