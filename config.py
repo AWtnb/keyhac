@@ -1854,6 +1854,8 @@ def configure(keymap):
 
     remap_mery(
         {
+            "LA-LC-J": "LA-LC-N",
+            "LA-LC-K": "LA-LC-LS-N",
             "LA-U0-J": "A-CloseBracket",
             "LA-U0-K": "A-OpenBracket",
             "LA-LC-U0-J": "A-C-CloseBracket",
