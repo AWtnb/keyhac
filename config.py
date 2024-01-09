@@ -484,8 +484,9 @@ def configure(keymap):
 
         return _sender
 
-    keymap_global["U0-(236)"] = reconvert_last_input(False)
-    keymap_global["LS-U0-(236)"] = reconvert_last_input(True)
+    keymap_global["LC-Back"] = reconvert_last_input(False)
+    keymap_global["U1-(235)"] = reconvert_last_input(False)
+    keymap_global["LS-U1-(235)"] = reconvert_last_input(True)
 
     # select last word with ime
     def select_last_word() -> None:
@@ -1824,22 +1825,22 @@ def configure(keymap):
     # vscode
     keymap_vscode = keymap.defineWindowKeymap(exe_name="Code.exe")
 
-    def remap_vscode(sequences: list, km: Keymap) -> Callable:
-        skk = SKK(defer_msec=10)
-        for seq in sequences:
-            km[seq[0]] = skk.invoke_latin_sender(*seq)
+    def remap_vscode(keys: list, km: Keymap) -> Callable:
+        skk = SKK(defer_msec=20)
+        for key in keys:
+            km[key] = skk.invoke_latin_sender(key)
 
     remap_vscode(
         [
-            ("C-F"),
-            ("C-E"),
-            ("C-S-F", "C-0"),
-            ("C-S-E", "C-0"),
-            ("C-S-G", "C-0"),
-            ("RC-RS-X", "C-0"),
-            ("C-0"),
-            ("C-S-P"),
-            ("C-A-B"),
+            "C-F",
+            "C-E",
+            "C-S-F",
+            "C-S-E",
+            "C-S-G",
+            "RC-RS-X",
+            "C-0",
+            "C-S-P",
+            "C-A-B",
         ],
         keymap_vscode,
     )
