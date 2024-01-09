@@ -286,14 +286,18 @@ def configure(keymap):
     VIRTUAL_FINGER_QUICK = VirtualFinger(0)
 
     class ImeControl:
-        def __init__(self) -> None:
+        def __init__(self, kana_key: str = "C-J", latin_key: str = "L", cancel_key: str = "C-G") -> None:
             self._keymap = keymap
+            self._kana_key = kana_key
+            self._latin_key = latin_key
+            self._cancel_key = cancel_key
+            self._finger = VirtualFinger(10)
 
         def get_status(self) -> pyauto.Window:
             return self._keymap.getWindow().getImeStatus()
 
         def toggle(self) -> None:
-            VIRTUAL_FINGER.type_keys("(243)")
+            self._finger.type_keys("(243)")
 
         def set_status(self, mode: int) -> None:
             if self.get_status() != mode:
@@ -307,15 +311,15 @@ def configure(keymap):
 
         def enable_skk(self) -> None:
             self.enable()
-            VIRTUAL_FINGER.type_keys("C-J")
+            self._finger.type_keys(self._kana_key)
 
         def to_skk_latin(self) -> None:
             self.enable_skk()
-            VIRTUAL_FINGER.type_keys("L")
+            self._finger.type_keys(self._latin_key)
 
         def reconvert_with_skk(self) -> None:
             self.enable_skk()
-            VIRTUAL_FINGER.type_keys("LWin-Slash", "C-G")
+            self._finger.type_keys("LWin-Slash", self._cancel_key)
 
         def disable(self) -> None:
             self.set_status(0)
