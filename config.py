@@ -543,6 +543,8 @@ def configure(keymap):
             if ord("A") <= c <= ord("Z") or ord("a") <= c <= ord("z"):
                 sequence = ["LS-" + sequence[0]] + sequence[1:]
                 VIRTUAL_FINGER_QUICK.type_smart(*sequence)
+            else:
+                IME_CONTROL.reconvert_with_skk()
 
     keymap_global["U1-I"] = LazyFunc(re_input_with_skk).defer()
 
