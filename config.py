@@ -286,7 +286,7 @@ def configure(keymap):
     VIRTUAL_FINGER_QUICK = VirtualFinger(0)
 
     class ImeControl:
-        def __init__(self, kana_key: str = "C-J", latin_key: str = "L", cancel_key: str = "C-G") -> None:
+        def __init__(self, keymap: Keymap, kana_key: str = "C-J", latin_key: str = "L", cancel_key: str = "C-G") -> None:
             self._keymap = keymap
             self._kana_key = kana_key
             self._latin_key = latin_key
@@ -324,7 +324,7 @@ def configure(keymap):
         def disable(self) -> None:
             self.set_status(0)
 
-    IME_CONTROL = ImeControl()
+    IME_CONTROL = ImeControl(keymap)
 
     class ClipHandler:
         @staticmethod
