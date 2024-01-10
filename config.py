@@ -10,6 +10,7 @@ from winreg import HKEY_CURRENT_USER, HKEY_CLASSES_ROOT, OpenKey, QueryValueEx
 
 import pyauto
 from keyhac import *
+from keyhac_keymap import WindowKeymap
 
 
 def configure(keymap):
@@ -149,7 +150,7 @@ def configure(keymap):
         key_status = ("D-", "U-")
 
         @classmethod
-        def cursor_keys(cls, km: Keymap) -> None:
+        def cursor_keys(cls, km: WindowKeymap) -> None:
             for mod_key in cls.mod_keys:
                 for key, value in {
                     # move cursor
@@ -169,13 +170,13 @@ def configure(keymap):
                     km[mod_key + "U0-" + key] = mod_key + value
 
         @classmethod
-        def ignore_capslock(cls, km: Keymap) -> None:
+        def ignore_capslock(cls, km: WindowKeymap) -> None:
             for stat in cls.key_status:
                 for mod_key in cls.mod_keys:
                     km[mod_key + stat + "Capslock"] = lambda: None
 
         @classmethod
-        def ignore_kanakey(cls, km: Keymap) -> None:
+        def ignore_kanakey(cls, km: WindowKeymap) -> None:
             for stat in cls.key_status:
                 for mod_key in cls.mod_keys:
                     for vk in list(range(124, 136)) + list(range(240, 243)) + list(range(245, 254)):
@@ -189,7 +190,7 @@ def configure(keymap):
         def __init__(self, mapping_dict: dict) -> None:
             self.dict = mapping_dict
 
-        def apply(self, km: Keymap):
+        def apply(self, km: WindowKeymap):
             for key, value in self.dict.items():
                 km[key] = value
 
@@ -465,7 +466,7 @@ def configure(keymap):
             return LazyFunc(_paster).defer()
 
         @classmethod
-        def apply(cls, km: Keymap, custom_key: str) -> None:
+        def apply(cls, km: WindowKeymap, custom_key: str) -> None:
             for mod_ctrl, remove_white in {
                 "": False,
                 "LC-": True,
@@ -490,7 +491,6 @@ def configure(keymap):
 
         return _sender
 
-    keymap_global["LC-Back"] = reconvert_last_input(False)
     keymap_global["U1-(235)"] = reconvert_last_input(False)
     keymap_global["LS-U1-(235)"] = reconvert_last_input(True)
 
@@ -614,7 +614,7 @@ def configure(keymap):
             skk_dir_path = UserPath().resolve(r"AppData\Roaming\CorvusSKK")
             filer_path.run(skk_dir_path.path)
 
-        def apply(self, km: Keymap) -> None:
+        def apply(self, km: WindowKeymap) -> None:
             for key, func in {
                 "R": self.reload_config,
                 "E": self.open_repo,
@@ -832,7 +832,7 @@ def configure(keymap):
         def __init__(self) -> None:
             self._keymap = keymap
 
-        def alloc_flexible(self, km: Keymap) -> None:
+        def alloc_flexible(self, km: WindowKeymap) -> None:
             monitors = CurrentMonitors().get_info()
             for mod_mntr, mntr_idx in self.monitor_dict.items():
                 for mod_area, size in self.size_dict.items():
@@ -841,7 +841,7 @@ def configure(keymap):
                             wnd_rect = monitors[mntr_idx].area_mapping[pos][size]
                             km[mod_mntr + mod_area + key] = LazyFunc(wnd_rect.snap).defer()
 
-        def alloc_maximize(self, km: Keymap, mapping_dict: dict) -> None:
+        def alloc_maximize(self, km: WindowKeymap, mapping_dict: dict) -> None:
             for key, towards in mapping_dict.items():
 
                 def _snap() -> None:
@@ -885,7 +885,7 @@ def configure(keymap):
 
             return LazyFunc(_snap).defer()
 
-        def apply(self, km: Keymap) -> None:
+        def apply(self, km: WindowKeymap) -> None:
             for key, params in {
                 "H": {"horizontal": True, "default_pos": True},
                 "L": {"horizontal": True, "default_pos": False},
@@ -966,7 +966,7 @@ def configure(keymap):
 
     BASE_SKK = SKK(keymap)
 
-    def skk_remap(mapping_dict: dict, as_kana: bool, km: Keymap) -> None:
+    def skk_remap(mapping_dict: dict, as_kana: bool, km: WindowKeymap) -> None:
         for key, send in mapping_dict.items():
             if as_kana:
                 km[key] = BASE_SKK.invoke_kana_sender(send)
@@ -1006,7 +1006,7 @@ def configure(keymap):
         keymap_global,
     )
 
-    def skk_z_trigger(base_keymap: Keymap, trigger_key, km: Keymap) -> None:
+    def skk_z_trigger(trigger_key, km: WindowKeymap) -> None:
         km[trigger_key] = keymap.defineMultiStrokeKeymap()
         for mod in ("", "S-"):
             for key in "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789":
@@ -1014,16 +1014,16 @@ def configure(keymap):
             for key in ("OpenBracket", "CloseBracket", "Minus", "Caret", "Slash"):
                 km[trigger_key][mod + key] = BASE_SKK.invoke_kana_sender("Z", mod + key)
 
-    skk_z_trigger(keymap, "U0-M", keymap_global)
+    skk_z_trigger("U0-M", keymap_global)
 
-    def skk_pair_remap(mapping_dict: dict, after_mode_is_kana: bool, km: Keymap) -> None:
+    def skk_pair_remap(mapping_dict: dict, after_mode_is_kana: bool, km: WindowKeymap) -> None:
         for key, send in mapping_dict.items():
             if after_mode_is_kana:
                 km[key] = BASE_SKK.invoke_pair_sender(send, 1)
             else:
                 km[key] = BASE_SKK.invoke_pair_sender(send, 0)
 
-    def skk_pair_wrapper_remap(mapping_dict: dict, after_mode_is_kana: bool, trigger_key: str, km: Keymap) -> None:
+    def skk_pair_wrapper_remap(mapping_dict: dict, after_mode_is_kana: bool, trigger_key: str, km: WindowKeymap) -> None:
         for key, send in mapping_dict.items():
             if after_mode_is_kana:
                 km[trigger_key + key] = BASE_SKK.invoke_pair_wrapper(send, 1)
@@ -1090,7 +1090,7 @@ def configure(keymap):
             return LazyFunc(_input).defer()
 
         @classmethod
-        def apply(cls, km: Keymap) -> None:
+        def apply(cls, km: WindowKeymap) -> None:
             for key, params in {
                 "1": ("%Y%m%d", False),
                 "2": ("%Y/%m/%d", False),
@@ -1135,7 +1135,7 @@ def configure(keymap):
             self._keymap = keymap
             self.mapping = self._keymap.defineMultiStrokeKeymap()
             user_path = UserPath()
-            skk = SKK(self._keymap ,defer_msec=50, inter_stroke_pause=0)
+            skk = SKK(self._keymap, defer_msec=50, inter_stroke_pause=0)
             for combo, stroke in {
                 "X,X": [".txt"],
                 "X,M": [".md"],
@@ -1546,7 +1546,7 @@ def configure(keymap):
         def _mod_key(s: str) -> list:
             return ["", s + "-"]
 
-        def apply(self, km: Keymap) -> None:
+        def apply(self, km: WindowKeymap) -> None:
             for shift_key in self._mod_key("S"):
                 for ctrl_key in self._mod_key("C"):
                     is_strict = 0 < len(shift_key)
@@ -1676,7 +1676,7 @@ def configure(keymap):
 
             return LazyFunc(_executer).defer(80)
 
-        def apply(self, km: Keymap) -> None:
+        def apply(self, km: WindowKeymap) -> None:
             for key, params in self._remap_table.items():
                 km[key] = self.invoke(*params)
 
@@ -1831,7 +1831,7 @@ def configure(keymap):
     # vscode
     keymap_vscode = keymap.defineWindowKeymap(exe_name="Code.exe")
 
-    def remap_vscode(base_keymap: Keymap, keys: list, km: Keymap) -> Callable:
+    def remap_vscode(base_keymap: Keymap, keys: list, km: WindowKeymap) -> Callable:
         puncher = KeyPuncher(base_keymap, defer_msec=20)
         for key in keys:
             km[key] = puncher.invoke(key)
@@ -1855,7 +1855,7 @@ def configure(keymap):
     # mery
     keymap_mery = keymap.defineWindowKeymap(exe_name="Mery.exe")
 
-    def remap_mery(mapping_dict: dict, km: Keymap) -> Callable:
+    def remap_mery(mapping_dict: dict, km: WindowKeymap) -> Callable:
         for key, value in mapping_dict.items():
             km[key] = value
 
@@ -1880,7 +1880,7 @@ def configure(keymap):
 
     keymap_sumatra_inputmode = keymap.defineWindowKeymap(check_func=CheckWnd.is_sumatra_inputmode)
 
-    def sumatra_change_tab(km: Keymap) -> None:
+    def sumatra_change_tab(km: WindowKeymap) -> None:
         for key in ["C-Tab", "C-S-Tab"]:
             km[key] = "Esc", key
 
@@ -1888,7 +1888,7 @@ def configure(keymap):
 
     keymap_sumatra_viewmode = keymap.defineWindowKeymap(check_func=CheckWnd.is_sumatra_viewmode)
 
-    def sumatra_view_key(km: Keymap) -> None:
+    def sumatra_view_key(km: WindowKeymap) -> None:
         for key in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
             km[key] = BASE_SKK.invoke_latin_sender(key)
 
@@ -1951,7 +1951,7 @@ def configure(keymap):
 
     keymap_tablacus = keymap.defineWindowKeymap(check_func=CheckWnd.is_tablacus_viewmode)
 
-    def tablacus_fuzzy_tools(base_keymap: Keymap, wnd_keymap: Keymap) -> None:
+    def tablacus_fuzzy_tools(base_keymap: Keymap, wnd_keymap) -> None:
         puncher = KeyPuncher(base_keymap, defer_msec=20)
         for key in ("Z", "A-Z", "S-Z", "A-U", "A-S-S", "A-S-D", "A-S-U"):
             wnd_keymap[key] = puncher.invoke(key)
@@ -2134,7 +2134,7 @@ def configure(keymap):
             ]
 
         @classmethod
-        def apply(cls, km: Keymap) -> None:
+        def apply(cls, km: WindowKeymap) -> None:
             for title, menu in {
                 "Noise-Reduction": cls.get_menu_noise_reduction(),
                 "Transform Alphabet / Punctuation": cls.get_menu_transform(),
