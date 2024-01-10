@@ -917,6 +917,7 @@ def configure(keymap):
     class SKK:
         def __init__(
             self,
+            keymap: Keymap,
             inter_stroke_pause: int = 10,
             defer_msec: int = 0,
         ) -> None:
@@ -963,13 +964,14 @@ def configure(keymap):
 
             return LazyFunc(_send).defer(self._defer_msec)
 
+    BASE_SKK = SKK(keymap)
+
     def skk_remap(mapping_dict: dict, as_kana: bool, km: Keymap) -> None:
-        skk = SKK()
         for key, send in mapping_dict.items():
             if as_kana:
-                km[key] = skk.invoke_kana_sender(send)
+                km[key] = BASE_SKK.invoke_kana_sender(send)
             else:
-                km[key] = skk.invoke_latin_sender(send)
+                km[key] = BASE_SKK.invoke_latin_sender(send)
 
     skk_remap(
         {
@@ -1004,32 +1006,29 @@ def configure(keymap):
         keymap_global,
     )
 
-    def skk_z_trigger(trigger_key, km: Keymap) -> None:
+    def skk_z_trigger(base_keymap: Keymap, trigger_key, km: Keymap) -> None:
         km[trigger_key] = keymap.defineMultiStrokeKeymap()
-        skk = SKK()
         for mod in ("", "S-"):
             for key in "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789":
-                km[trigger_key][mod + key] = skk.invoke_kana_sender("Z", mod + key)
+                km[trigger_key][mod + key] = BASE_SKK.invoke_kana_sender("Z", mod + key)
             for key in ("OpenBracket", "CloseBracket", "Minus", "Caret", "Slash"):
-                km[trigger_key][mod + key] = skk.invoke_kana_sender("Z", mod + key)
+                km[trigger_key][mod + key] = BASE_SKK.invoke_kana_sender("Z", mod + key)
 
-    skk_z_trigger("U0-M", keymap_global)
+    skk_z_trigger(keymap, "U0-M", keymap_global)
 
     def skk_pair_remap(mapping_dict: dict, after_mode_is_kana: bool, km: Keymap) -> None:
-        skk = SKK()
         for key, send in mapping_dict.items():
             if after_mode_is_kana:
-                km[key] = skk.invoke_pair_sender(send, 1)
+                km[key] = BASE_SKK.invoke_pair_sender(send, 1)
             else:
-                km[key] = skk.invoke_pair_sender(send, 0)
+                km[key] = BASE_SKK.invoke_pair_sender(send, 0)
 
     def skk_pair_wrapper_remap(mapping_dict: dict, after_mode_is_kana: bool, trigger_key: str, km: Keymap) -> None:
-        skk = SKK()
         for key, send in mapping_dict.items():
             if after_mode_is_kana:
-                km[trigger_key + key] = skk.invoke_pair_wrapper(send, 1)
+                km[trigger_key + key] = BASE_SKK.invoke_pair_wrapper(send, 1)
             else:
-                km[trigger_key + key] = skk.invoke_pair_wrapper(send, 0)
+                km[trigger_key + key] = BASE_SKK.invoke_pair_wrapper(send, 0)
 
     PAIRS_AS_LATIN = {
         "U0-2": ['"', '"'],
@@ -1132,11 +1131,11 @@ def configure(keymap):
         return root_map
 
     class KeyCombo:
-        def __init__(self) -> None:
+        def __init__(self, keymap: Keymap) -> None:
             self._keymap = keymap
             self.mapping = self._keymap.defineMultiStrokeKeymap()
             user_path = UserPath()
-            skk = SKK(defer_msec=50, inter_stroke_pause=0)
+            skk = SKK(self._keymap ,defer_msec=50, inter_stroke_pause=0)
             for combo, stroke in {
                 "X,X": [".txt"],
                 "X,M": [".md"],
@@ -1189,7 +1188,7 @@ def configure(keymap):
                 stroke.append("C-J")
                 self.mapping = combo_mapper(self.mapping, keys, skk.invoke_latin_sender(*stroke))
 
-    keymap_global["U1-X"] = KeyCombo().mapping
+    keymap_global["U1-X"] = KeyCombo(keymap).mapping
 
     ################################
     # web search
@@ -1827,17 +1826,18 @@ def configure(keymap):
     keymap_slack = keymap.defineWindowKeymap(exe_name="slack.exe", class_name="Chrome_WidgetWin_1")
     keymap_slack["F3"] = "Esc", "C-K"
     keymap_slack["O-LCtrl"] = "Esc", "C-K"
-    keymap_slack["F1"] = SKK().invoke_latin_sender("+:")
+    keymap_slack["F1"] = BASE_SKK.invoke_latin_sender("+:")
 
     # vscode
     keymap_vscode = keymap.defineWindowKeymap(exe_name="Code.exe")
 
-    def remap_vscode(keys: list, km: Keymap) -> Callable:
-        skk = SKK(defer_msec=20)
+    def remap_vscode(base_keymap: Keymap, keys: list, km: Keymap) -> Callable:
+        puncher = KeyPuncher(base_keymap, defer_msec=20)
         for key in keys:
-            km[key] = skk.invoke_latin_sender(key)
+            km[key] = puncher.invoke(key)
 
     remap_vscode(
+        keymap,
         [
             "C-F",
             "C-E",
@@ -1875,8 +1875,8 @@ def configure(keymap):
 
     # sumatra PDF
     keymap_sumatra = keymap.defineWindowKeymap(check_func=CheckWnd.is_sumatra)
-    keymap_sumatra["O-LCtrl"] = SKK().invoke_kana_sender("F6", "C-Home", "C-F")
-    keymap_sumatra["F9"] = SKK().invoke_kana_sender("F6", "C-Home", "C-F")
+    keymap_sumatra["O-LCtrl"] = BASE_SKK.invoke_kana_sender("F6", "C-Home", "C-F")
+    keymap_sumatra["F9"] = BASE_SKK.invoke_kana_sender("F6", "C-Home", "C-F")
 
     keymap_sumatra_inputmode = keymap.defineWindowKeymap(check_func=CheckWnd.is_sumatra_inputmode)
 
@@ -1890,11 +1890,11 @@ def configure(keymap):
 
     def sumatra_view_key(km: Keymap) -> None:
         for key in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
-            km[key] = SKK().invoke_latin_sender(key)
+            km[key] = BASE_SKK.invoke_latin_sender(key)
 
     sumatra_view_key(keymap_sumatra_viewmode)
 
-    keymap_sumatra_viewmode["F"] = SKK().invoke_kana_sender("C-F")
+    keymap_sumatra_viewmode["F"] = BASE_SKK.invoke_kana_sender("C-F")
     keymap_sumatra_viewmode["H"] = "C-S-Tab"
     keymap_sumatra_viewmode["L"] = "C-Tab"
 
