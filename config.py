@@ -387,17 +387,15 @@ def configure(keymap):
             inter_stroke_pause: int = 0,
             defer_msec: int = 0,
         ) -> None:
-            self._keymap = keymap
             self._recover_ime = recover_ime
-            self._inter_stroke_pause = inter_stroke_pause
             self._defer_msec = defer_msec
+            self._finger = VirtualFinger(keymap, inter_stroke_pause)
 
         def invoke(self, *sequence) -> Callable:
-            vf = VirtualFinger(self._keymap, self._inter_stroke_pause)
 
             def _input() -> None:
                 IME_CONTROL.disable()
-                vf.type_smart(*sequence)
+                self._finger.type_smart(*sequence)
                 if self._recover_ime:
                     IME_CONTROL.enable()
 
@@ -917,21 +915,20 @@ def configure(keymap):
             inter_stroke_pause: int = 10,
             defer_msec: int = 0,
         ) -> None:
-            self._keymap = keymap
             self._defer_msec = defer_msec
-            self.finger = VirtualFinger(self._keymap, inter_stroke_pause)
+            self._finger = VirtualFinger(keymap, inter_stroke_pause)
 
         def invoke_kana_sender(self, *sequence) -> Callable:
             def _send() -> None:
                 IME_CONTROL.enable_skk()
-                self.finger.type_smart(*sequence)
+                self._finger.type_smart(*sequence)
 
             return LazyFunc(_send).defer(self._defer_msec)
 
         def invoke_latin_sender(self, *sequence) -> Callable:
             def _send() -> None:
                 IME_CONTROL.to_skk_latin()
-                self.finger.type_smart(*sequence)
+                self._finger.type_smart(*sequence)
 
             return LazyFunc(_send).defer(self._defer_msec)
 
@@ -943,7 +940,7 @@ def configure(keymap):
 
             def _send() -> None:
                 IME_CONTROL.to_skk_latin()
-                self.finger.type_smart(*sent)
+                self._finger.type_smart(*sent)
 
             return LazyFunc(_send).defer(self._defer_msec)
 
@@ -956,7 +953,7 @@ def configure(keymap):
 
             def _send() -> None:
                 IME_CONTROL.to_skk_latin()
-                self.finger.type_smart(*[prefix], handler.get_string(), *sufs)
+                self._finger.type_smart(*[prefix], handler.get_string(), *sufs)
 
             return LazyFunc(_send).defer(self._defer_msec)
 
@@ -1001,16 +998,6 @@ def configure(keymap):
         False,
         keymap_global,
     )
-
-    def skk_z_trigger(trigger_key, km: WindowKeymap) -> None:
-        km[trigger_key] = keymap.defineMultiStrokeKeymap()
-        for mod in ("", "S-"):
-            for key in "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789":
-                km[trigger_key][mod + key] = BASE_SKK.invoke_kana_sender("Z", mod + key)
-            for key in ("OpenBracket", "CloseBracket", "Minus", "Caret", "Slash"):
-                km[trigger_key][mod + key] = BASE_SKK.invoke_kana_sender("Z", mod + key)
-
-    skk_z_trigger("U0-M", keymap_global)
 
     def skk_pair_remap(mapping_dict: dict, after_mode_is_kana: bool, km: WindowKeymap) -> None:
         for key, send in mapping_dict.items():
