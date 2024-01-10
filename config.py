@@ -250,7 +250,7 @@ def configure(keymap):
         time.sleep(msec / 1000)
 
     class VirtualFinger:
-        def __init__(self, inter_stroke_pause: int = 10) -> None:
+        def __init__(self, keymap: Keymap, inter_stroke_pause: int = 10) -> None:
             self._keymap = keymap
             self._inter_stroke_pause = inter_stroke_pause
 
@@ -282,8 +282,8 @@ def configure(keymap):
                 except:
                     self.type_text(elem)
 
-    VIRTUAL_FINGER = VirtualFinger(10)
-    VIRTUAL_FINGER_QUICK = VirtualFinger(0)
+    VIRTUAL_FINGER = VirtualFinger(keymap, 10)
+    VIRTUAL_FINGER_QUICK = VirtualFinger(keymap, 0)
 
     class ImeControl:
         def __init__(self, keymap: Keymap, kana_key: str = "C-J", latin_key: str = "L", cancel_key: str = "C-G") -> None:
@@ -291,7 +291,7 @@ def configure(keymap):
             self._kana_key = kana_key
             self._latin_key = latin_key
             self._cancel_key = cancel_key
-            self._finger = VirtualFinger(10)
+            self._finger = VirtualFinger(self._keymap, 10)
 
         def get_status(self) -> pyauto.Window:
             return self._keymap.getWindow().getImeStatus()
@@ -385,16 +385,18 @@ def configure(keymap):
     class KeyPuncher:
         def __init__(
             self,
+            keymap: Keymap,
             recover_ime: bool = False,
             inter_stroke_pause: int = 0,
             defer_msec: int = 0,
         ) -> None:
+            self._keymap = keymap
             self._recover_ime = recover_ime
             self._inter_stroke_pause = inter_stroke_pause
             self._defer_msec = defer_msec
 
         def invoke(self, *sequence) -> Callable:
-            vf = VirtualFinger(self._inter_stroke_pause)
+            vf = VirtualFinger(self._keymap, self._inter_stroke_pause)
 
             def _input() -> None:
                 IME_CONTROL.disable()
@@ -918,8 +920,9 @@ def configure(keymap):
             inter_stroke_pause: int = 10,
             defer_msec: int = 0,
         ) -> None:
+            self._keymap = keymap
             self._defer_msec = defer_msec
-            self.finger = VirtualFinger(inter_stroke_pause)
+            self.finger = VirtualFinger(self._keymap, inter_stroke_pause)
 
         def invoke_kana_sender(self, *sequence) -> Callable:
             def _send() -> None:
@@ -1948,12 +1951,12 @@ def configure(keymap):
 
     keymap_tablacus = keymap.defineWindowKeymap(check_func=CheckWnd.is_tablacus_viewmode)
 
-    def tablacus_fuzzy_tools(km: Keymap) -> None:
-        puncher = KeyPuncher(defer_msec=40)
+    def tablacus_fuzzy_tools(base_keymap: Keymap, wnd_keymap: Keymap) -> None:
+        puncher = KeyPuncher(base_keymap, defer_msec=20)
         for key in ("Z", "A-Z", "S-Z", "A-U", "A-S-S", "A-S-D", "A-S-U"):
-            km[key] = puncher.invoke(key)
+            wnd_keymap[key] = puncher.invoke(key)
 
-    tablacus_fuzzy_tools(keymap_tablacus)
+    tablacus_fuzzy_tools(keymap, keymap_tablacus)
 
     ################################
     # popup clipboard menu
