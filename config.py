@@ -10,7 +10,7 @@ from winreg import HKEY_CURRENT_USER, HKEY_CLASSES_ROOT, OpenKey, QueryValueEx
 
 import pyauto
 from keyhac import *
-from keyhac_keymap import WindowKeymap
+from keyhac_keymap import Keymap, WindowKeymap
 
 
 def configure(keymap):
@@ -1951,7 +1951,7 @@ def configure(keymap):
 
     keymap_tablacus = keymap.defineWindowKeymap(check_func=CheckWnd.is_tablacus_viewmode)
 
-    def tablacus_fuzzy_tools(base_keymap: Keymap, wnd_keymap) -> None:
+    def tablacus_fuzzy_tools(base_keymap: Keymap, wnd_keymap: WindowKeymap) -> None:
         puncher = KeyPuncher(base_keymap, defer_msec=20)
         for key in ("Z", "A-Z", "S-Z", "A-U", "A-S-S", "A-S-D", "A-S-U"):
             wnd_keymap[key] = puncher.invoke(key)
