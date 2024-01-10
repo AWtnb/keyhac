@@ -294,15 +294,11 @@ def configure(keymap):
             self._cancel_key = cancel_key
             self._finger = VirtualFinger(self._keymap, 10)
 
-        def get_status(self) -> pyauto.Window:
+        def get_status(self) -> int:
             return self._keymap.getWindow().getImeStatus()
 
-        def toggle(self) -> None:
-            self._finger.type_keys("(243)")
-
         def set_status(self, mode: int) -> None:
-            if self.get_status() != mode:
-                self.toggle()
+            self._keymap.getWindow().setImeStatus(mode)
 
         def is_enabled(self) -> bool:
             return self.get_status() == 1
