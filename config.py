@@ -209,7 +209,7 @@ def configure(keymap):
             # line selection
             "U1-A": ("End", "S-Home"),
             # select left
-            "U1-B": ("S-Left"),
+            "U1-(235)": ("S-Left"),
             # punctuation
             "U0-Enter": ("Period"),
             "LS-U0-Enter": ("Comma"),
@@ -426,6 +426,7 @@ def configure(keymap):
     keymap_global["U0-F"] = IME_CONTROL.to_skk_latin
     keymap_global["S-U0-F"] = IME_CONTROL.enable_skk
     keymap_global["S-U1-J"] = IME_CONTROL.to_skk_latin
+    keymap_global["U1-R"] = IME_CONTROL.reconvert_with_skk
 
     # paste as plaintext
     keymap_global["U0-V"] = LazyFunc(ClipHandler().paste_current).defer()
@@ -474,21 +475,6 @@ def configure(keymap):
                     km[mod_ctrl + mod_shift + custom_key] = cls.invoke(remove_white, include_linebreak)
 
     StrCleaner().apply(keymap_global, "U1-V")
-
-    # reconvert last input
-    def reconvert_last_input(greedy: bool) -> Callable:
-        key = "S-Left"
-        if greedy:
-            key = "C-" + key
-
-        def _sender() -> None:
-            VIRTUAL_FINGER.type_keys(key)
-            IME_CONTROL.reconvert_with_skk()
-
-        return _sender
-
-    keymap_global["U1-(235)"] = reconvert_last_input(False)
-    keymap_global["LS-U1-(235)"] = reconvert_last_input(True)
 
     # select last word with ime
     def select_last_word() -> None:
