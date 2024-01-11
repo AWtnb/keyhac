@@ -209,6 +209,7 @@ def configure(keymap):
             # line selection
             "U1-A": ("End", "S-Home"),
             # select left
+            "U1-B": ("S-Left"),
             "U1-(235)": ("S-Left"),
             # punctuation
             "U0-Enter": ("Period"),
@@ -776,7 +777,7 @@ def configure(keymap):
 
     keymap_global["O-RCtrl"] = CursorPos().snap
 
-    keymap_global["C-RAlt"] = CursorPos().snap_to_center
+    keymap_global["U1-Enter"] = CursorPos().snap_to_center
 
     ################################
     # set window position
