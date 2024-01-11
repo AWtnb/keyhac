@@ -294,7 +294,7 @@ def configure(keymap):
             self._kana_key = kana_key
             self._latin_key = latin_key
             self._cancel_key = cancel_key
-            self._finger = VirtualFinger(self._keymap, 10)
+            self._finger = VirtualFinger(self._keymap, 0)
 
         def get_status(self) -> int:
             return self._keymap.getWindow().getImeStatus()
