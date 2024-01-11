@@ -1794,8 +1794,8 @@ def configure(keymap):
 
     # slack
     keymap_slack = keymap.defineWindowKeymap(exe_name="slack.exe", class_name="Chrome_WidgetWin_1")
-    keymap_slack["F3"] = "Esc", "C-K"
-    keymap_slack["O-LCtrl"] = "Esc", "C-K"
+    keymap_slack["F3"] = BASE_SKK.invoke_latin_sender("C-K")
+    keymap_slack["C-E"] = BASE_SKK.invoke_latin_sender("C-K")
     keymap_slack["F1"] = BASE_SKK.invoke_latin_sender("+:")
 
     # vscode
