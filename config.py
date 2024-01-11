@@ -1771,7 +1771,6 @@ def configure(keymap):
     # browser
     keymap_browser = keymap.defineWindowKeymap(check_func=CheckWnd.is_browser)
     keymap_browser["LC-LS-W"] = "A-Left"
-    keymap_browser["O-LCtrl"] = "C-F"
 
     def focus_main_pane() -> None:
         wnd = keymap.getWindow()
