@@ -208,11 +208,12 @@ def configure(keymap):
             "U0-Tab": ("C-N", "C-J"),
             # line selection
             "U1-A": ("End", "S-Home"),
+            # select left
+            "U1-B": ("S-Left"),
             # punctuation
             "U0-Enter": ("Period"),
             "LS-U0-Enter": ("Comma"),
             "LC-U0-Enter": ("Slash"),
-            "U1-B": ("Minus"),
             "U0-Z": ("Minus"),
             "BackSlash": ("S-BackSlash"),
             # emacs-like backchar
@@ -238,6 +239,7 @@ def configure(keymap):
             "Insert": (lambda: None),
             # punctuation
             "U1-S": ("Slash"),
+            "O-(236)": ("Slash"),
             "LS-U0-P": ("LS-Slash"),
             "LC-U0-P": ("LS-1"),
         }
@@ -787,9 +789,9 @@ def configure(keymap):
             self.set_position(to_x, to_y)
 
     keymap_global["O-RCtrl"] = CursorPos().snap
-    keymap_global["U0-G"] = CursorPos().snap
+    keymap_global["U1-G"] = CursorPos().snap
 
-    keymap_global["O-(236)"] = CursorPos().snap_to_center
+    keymap_global["U1-Enter"] = CursorPos().snap_to_center
 
     ################################
     # set window position
@@ -976,7 +978,6 @@ def configure(keymap):
             "U0-Minus": "\u2015\u2015",  # HORIZONTAL BAR * 2
             "U0-P": "\u30fb",  # KATAKANA MIDDLE DOT
             "S-U0-SemiColon": "+ ",
-            "U1-G": "\u3013\u3013",  # GETA MARK * 2
         },
         True,
         keymap_global,
