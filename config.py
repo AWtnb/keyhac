@@ -428,19 +428,10 @@ def configure(keymap):
     keymap_global["S-U0-F"] = IME_CONTROL.enable_skk
     keymap_global["S-U1-J"] = IME_CONTROL.to_skk_latin
     keymap_global["U1-R"] = IME_CONTROL.reconvert_with_skk
+    keymap_global["U0-R"] = IME_CONTROL.reconvert_with_skk
 
     # paste as plaintext
     keymap_global["U0-V"] = LazyFunc(ClipHandler().paste_current).defer()
-
-    # to latin mode
-    def to_skk_latin_mode() -> None:
-        IME_CONTROL.to_skk_latin()
-        VIRTUAL_FINGER_QUICK.type_keys("C-S-Left")
-
-    keymap_global["U1-N"] = to_skk_latin_mode
-
-    # re-convert
-    keymap_global["U0-R"] = IME_CONTROL.reconvert_with_skk
 
     # paste as plaintext (with trimming removable whitespaces)
     class StrCleaner:
@@ -900,7 +891,7 @@ def configure(keymap):
         def __init__(
             self,
             keymap: Keymap,
-            inter_stroke_pause: int = 10,
+            inter_stroke_pause: int = 0,
             defer_msec: int = 0,
         ) -> None:
             self._defer_msec = defer_msec
@@ -946,6 +937,9 @@ def configure(keymap):
             return LazyFunc(_send).defer(self._defer_msec)
 
     BASE_SKK = SKK(keymap)
+
+    # to latin mode
+    keymap_global["U1-N"] = BASE_SKK.invoke_latin_sender("C-S-Left")
 
     def skk_remap(mapping_dict: dict, as_kana: bool, km: WindowKeymap) -> None:
         for key, send in mapping_dict.items():
