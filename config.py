@@ -395,7 +395,6 @@ def configure(keymap):
             self._finger = VirtualFinger(keymap, inter_stroke_pause)
 
         def invoke(self, *sequence) -> Callable:
-
             def _input() -> None:
                 IME_CONTROL.disable()
                 self._finger.type_smart(*sequence)
@@ -1838,8 +1837,12 @@ def configure(keymap):
 
     # sumatra PDF
     keymap_sumatra = keymap.defineWindowKeymap(check_func=CheckWnd.is_sumatra)
-    keymap_sumatra["O-LCtrl"] = BASE_SKK.invoke_kana_sender("F6", "C-Home", "C-F")
-    keymap_sumatra["F9"] = BASE_SKK.invoke_kana_sender("F6", "C-Home", "C-F")
+    def search_from_top() -> None:
+        VIRTUAL_FINGER_QUICK.type_keys("C-G", "F6", "C-Home", "Esc", "C-F")
+        IME_CONTROL.enable_skk()
+
+    keymap_sumatra["O-LCtrl"] = search_from_top
+    keymap_sumatra["F9"] = search_from_top
 
     keymap_sumatra_inputmode = keymap.defineWindowKeymap(check_func=CheckWnd.is_sumatra_inputmode)
 
