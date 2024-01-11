@@ -775,9 +775,8 @@ def configure(keymap):
             self.set_position(to_x, to_y)
 
     keymap_global["O-RCtrl"] = CursorPos().snap
-    keymap_global["U1-G"] = CursorPos().snap
 
-    keymap_global["U1-Enter"] = CursorPos().snap_to_center
+    keymap_global["C-RAlt"] = CursorPos().snap_to_center
 
     ################################
     # set window position
