@@ -1857,6 +1857,7 @@ def configure(keymap):
     keymap_sumatra_viewmode["F"] = BASE_SKK.invoke_kana_sender("C-F")
     keymap_sumatra_viewmode["H"] = "C-S-Tab"
     keymap_sumatra_viewmode["L"] = "C-Tab"
+    keymap_sumatra_viewmode["X"] = BASE_SKK.invoke_latin_sender("C-Home", "Esc", "C-F", "C-J")
 
     # word
     keymap_word = keymap.defineWindowKeymap(exe_name="WINWORD.EXE")
