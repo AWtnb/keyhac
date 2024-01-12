@@ -467,13 +467,6 @@ def configure(keymap):
 
     StrCleaner().apply(keymap_global, "U1-V")
 
-    # select last word with ime
-    def select_last_word() -> None:
-        VIRTUAL_FINGER.type_keys("C-S-Left")
-        IME_CONTROL.enable_skk()
-
-    keymap_global["U1-Space"] = select_last_word
-
     # count chars
     def count_chars() -> None:
         cb = ClipHandler().copy_string()
@@ -939,6 +932,10 @@ def configure(keymap):
 
     # to latin mode
     keymap_global["U1-N"] = BASE_SKK.invoke_latin_sender("C-S-Left")
+
+    # # select last word with ime control
+    keymap_global["U1-Space"] = BASE_SKK.invoke_kana_sender("C-S-Left")
+    keymap_global["LS-U1-Space"] = BASE_SKK.invoke_latin_sender("C-S-Left")
 
     def skk_remap(mapping_dict: dict, as_kana: bool, km: WindowKeymap) -> None:
         for key, send in mapping_dict.items():
