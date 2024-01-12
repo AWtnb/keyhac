@@ -297,6 +297,18 @@ def configure(keymap):
             self._cancel_key = cancel_key
             self._finger = VirtualFinger(self._keymap, 0)
 
+        @property
+        def kana_key(self) -> str:
+            return self._kana_key
+
+        @property
+        def latin_key(self) -> str:
+            return self._latin_key
+
+        @property
+        def cancel_key(self) -> str:
+            return self._cancel_key
+
         def get_status(self) -> int:
             return self._keymap.getWindow().getImeStatus()
 
@@ -894,39 +906,39 @@ def configure(keymap):
                 IME_CONTROL.enable_skk()
                 self._finger.type_smart(*sequence)
 
-            return LazyFunc(_send).defer(self._defer_msec)
+            return _send
 
         def invoke_latin_sender(self, *sequence) -> Callable:
             def _send() -> None:
                 IME_CONTROL.to_skk_latin()
                 self._finger.type_smart(*sequence)
 
-            return LazyFunc(_send).defer(self._defer_msec)
+            return _send
 
         def invoke_pair_sender(self, pair: list, post_mode: int) -> Callable:
             _, suffix = pair
             sent = pair + ["Left"] * len(suffix)
             if post_mode == 1:
-                sent.append("C-J")
+                sent.append(IME_CONTROL.kana_key)
 
             def _send() -> None:
                 IME_CONTROL.to_skk_latin()
                 self._finger.type_smart(*sent)
 
-            return LazyFunc(_send).defer(self._defer_msec)
+            return _send
 
         def invoke_pair_wrapper(self, pair: list, post_mode: int) -> Callable:
             prefix, suffix = pair
             handler = ClipHandler()
             sufs = [suffix]
             if post_mode == 1:
-                sufs.append("C-J")
+                sufs.append(IME_CONTROL.kana_key)
 
             def _send() -> None:
                 IME_CONTROL.to_skk_latin()
                 self._finger.type_smart(*[prefix], handler.get_string(), *sufs)
 
-            return LazyFunc(_send).defer(self._defer_msec)
+            return _send
 
     BASE_SKK = SKK(keymap)
 
