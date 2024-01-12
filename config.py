@@ -1835,8 +1835,8 @@ def configure(keymap):
     # sumatra PDF
     keymap_sumatra = keymap.defineWindowKeymap(check_func=CheckWnd.is_sumatra)
 
-    keymap_sumatra["C-S-F"] = BASE_SKK.invoke_latin_sender("C-G", "Esc", "C-Home", "Esc", "C-F", "C-J")
-    keymap_sumatra["F9"] = BASE_SKK.invoke_latin_sender("C-G", "Esc", "C-Home", "Esc", "C-F", "C-J")
+    keymap_sumatra["C-S-F"] = BASE_SKK.invoke_latin_sender("C-Home", "Esc", "C-F", "C-J")
+    keymap_sumatra["LA-X"] = BASE_SKK.invoke_latin_sender("C-Home", "Esc", "C-F", "C-J")
 
     keymap_sumatra_inputmode = keymap.defineWindowKeymap(check_func=CheckWnd.is_sumatra_inputmode)
 
