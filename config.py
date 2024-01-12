@@ -1837,12 +1837,9 @@ def configure(keymap):
 
     # sumatra PDF
     keymap_sumatra = keymap.defineWindowKeymap(check_func=CheckWnd.is_sumatra)
-    def search_from_top() -> None:
-        VIRTUAL_FINGER_QUICK.type_keys("C-G", "F6", "C-Home", "Esc", "C-F")
-        IME_CONTROL.enable_skk()
 
-    keymap_sumatra["O-LCtrl"] = search_from_top
-    keymap_sumatra["F9"] = search_from_top
+    keymap_sumatra["C-S-F"] = BASE_SKK.invoke_latin_sender("C-G", "Esc", "C-Home", "Esc", "C-F", "C-J")
+    keymap_sumatra["F9"] = BASE_SKK.invoke_latin_sender("C-G", "Esc", "C-Home", "Esc", "C-F", "C-J")
 
     keymap_sumatra_inputmode = keymap.defineWindowKeymap(check_func=CheckWnd.is_sumatra_inputmode)
 
@@ -1910,7 +1907,7 @@ def configure(keymap):
     keymap_filer = keymap.defineWindowKeymap(check_func=CheckWnd.is_filer_viewmode)
     KeyAllocator(
         {
-            "C-S-C": ("C-Add"),
+            "C-SemiColon": ("C-Add"),
             "C-L": ("A-D", "C-C"),
         }
     ).apply(keymap_filer)
