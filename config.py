@@ -441,8 +441,7 @@ def configure(keymap):
     keymap_global["U0-F"] = IME_CONTROL.to_skk_latin
     keymap_global["S-U0-F"] = IME_CONTROL.enable_skk
     keymap_global["S-U1-J"] = IME_CONTROL.to_skk_latin
-    keymap_global["U1-R"] = IME_CONTROL.reconvert_with_skk
-    keymap_global["U0-R"] = IME_CONTROL.reconvert_with_skk
+    keymap_global["U1-I"] = IME_CONTROL.reconvert_with_skk
 
     # paste as plaintext
     keymap_global["U0-V"] = LazyFunc(ClipHandler().paste_current).defer()
@@ -534,7 +533,7 @@ def configure(keymap):
             else:
                 IME_CONTROL.reconvert_with_skk()
 
-    keymap_global["U1-I"] = LazyFunc(re_input_with_skk).defer()
+    keymap_global["U1-R"] = LazyFunc(re_input_with_skk).defer()
 
     def moko(search_all: bool = False) -> Callable:
         exe_path = UserPath().resolve(r"Personal\tools\bin\moko.exe")
