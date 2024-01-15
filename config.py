@@ -1925,7 +1925,7 @@ def configure(keymap):
 
     def tablacus_fuzzy_tools(wnd_keymap: WindowKeymap) -> None:
         for key in ("Z", "A-Z", "S-Z", "A-U", "A-S-S", "A-S-D", "A-S-U"):
-            wnd_keymap[key] = LAZY_PUNCHER.invoke(key)
+            wnd_keymap["D-" + key] = key
 
     tablacus_fuzzy_tools(keymap_tablacus)
 
