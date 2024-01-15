@@ -1588,7 +1588,7 @@ def configure(keymap):
     DEFAULT_BROWSER = SystemBrowser()
 
     class WndScanner:
-        def __init__(self, exe_name: str, class_name: str) -> None:
+        def __init__(self, exe_name: str, class_name: str = "") -> None:
             self.exe_name = exe_name
             self.class_name = class_name
             self.found = None
@@ -1636,7 +1636,7 @@ def configure(keymap):
                 timeout -= interval
             return False
 
-        def invoke(self, exe_name: str, class_name: str, exe_path: str) -> Callable:
+        def invoke(self, exe_name: str, class_name: str = "", exe_path: str = "") -> Callable:
             scanner = WndScanner(exe_name, class_name)
 
             def _executer() -> None:
@@ -1656,8 +1656,8 @@ def configure(keymap):
 
     PseudoCuteExec(
         {
-            "U1-T": ("TE64.exe", "TablacusExplorer", ""),
-            "U1-P": ("SumatraPDF.exe", "SUMATRA_PDF_FRAME", ""),
+            "U1-T": ("TE64.exe",),
+            "U1-P": ("SumatraPDF.exe", "SUMATRA_PDF_FRAME"),
             "LC-U1-M": (
                 "Mery.exe",
                 "TChildForm",
@@ -1709,15 +1709,14 @@ def configure(keymap):
                 "Qt5152QWindowIcon",
                 UserPath().resolve(r"scoop\apps\ksnip\current\ksnip.exe").path,
             ),
-            "O": ("Obsidian.exe", "Chrome_WidgetWin_1", ""),
-            "P": ("SumatraPDF.exe", "SUMATRA_PDF_FRAME", ""),
-            "C-P": ("powerpnt.exe", "PPTFrameClass", ""),
-            "E": ("EXCEL.EXE", "XLMAIN", ""),
-            "I": ("i_view64.exe", "IrfanView", ""),
-            "W": ("WINWORD.EXE", "OpusApp", ""),
+            "O": ("Obsidian.exe", "Chrome_WidgetWin_1"),
+            "P": ("SumatraPDF.exe", "SUMATRA_PDF_FRAME"),
+            "C-P": ("powerpnt.exe", "PPTFrameClass"),
+            "E": ("EXCEL.EXE", "XLMAIN"),
+            "W": ("WINWORD.EXE", "OpusApp"),
             "V": ("Code.exe", "Chrome_WidgetWin_1", UserPath().get_editor()),
-            "C-V": ("vivaldi.exe", "Chrome_WidgetWin_1", ""),
-            "T": ("TE64.exe", "TablacusExplorer", UserPath().get_filer()),
+            "C-V": ("vivaldi.exe", "Chrome_WidgetWin_1"),
+            "T": ("TE64.exe", "", UserPath().get_filer()),
             "M": (
                 "Mery.exe",
                 "TChildForm",
