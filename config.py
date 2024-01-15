@@ -415,8 +415,8 @@ def configure(keymap):
 
             return LazyFunc(_input).defer(self._defer_msec)
 
-    BASE_PUNCHER = KeyPuncher(keymap, defer_msec=20)
-    BASE_PUNCHER_QUICK = KeyPuncher(keymap)
+    LAZY_PUNCHER = KeyPuncher(keymap, defer_msec=20)
+    QUICK_PUNCHER = KeyPuncher(keymap)
 
     ################################
     # release CapsLock on reload
@@ -1806,7 +1806,7 @@ def configure(keymap):
 
     def remap_vscode(keys: list, km: WindowKeymap) -> Callable:
         for key in keys:
-            km[key] = BASE_PUNCHER.invoke(key)
+            km[key] = LAZY_PUNCHER.invoke(key)
 
     remap_vscode(
         [
@@ -1926,7 +1926,7 @@ def configure(keymap):
 
     def tablacus_fuzzy_tools(wnd_keymap: WindowKeymap) -> None:
         for key in ("Z", "A-Z", "S-Z", "A-U", "A-S-S", "A-S-D", "A-S-U"):
-            wnd_keymap[key] = BASE_PUNCHER.invoke(key)
+            wnd_keymap[key] = LAZY_PUNCHER.invoke(key)
 
     tablacus_fuzzy_tools(keymap_tablacus)
 
