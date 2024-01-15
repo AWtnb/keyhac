@@ -415,6 +415,9 @@ def configure(keymap):
 
             return LazyFunc(_input).defer(self._defer_msec)
 
+    BASE_PUNCHER = KeyPuncher(keymap, defer_msec=20)
+    BASE_PUNCHER_QUICK = KeyPuncher(keymap)
+
     ################################
     # release CapsLock on reload
     ################################
@@ -1802,13 +1805,11 @@ def configure(keymap):
     # vscode
     keymap_vscode = keymap.defineWindowKeymap(exe_name="Code.exe")
 
-    def remap_vscode(base_keymap: Keymap, keys: list, km: WindowKeymap) -> Callable:
-        puncher = KeyPuncher(base_keymap, defer_msec=20)
+    def remap_vscode(keys: list, km: WindowKeymap) -> Callable:
         for key in keys:
-            km[key] = puncher.invoke(key)
+            km[key] = BASE_PUNCHER.invoke(key)
 
     remap_vscode(
-        keymap,
         [
             "C-F",
             "C-E",
@@ -1922,14 +1923,21 @@ def configure(keymap):
         }
     ).apply(keymap_filer)
 
+    def filer_accelaretor_key(wnd_keymap: WindowKeymap) -> None:
+        for k in "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ":
+            wnd_keymap[k] = BASE_PUNCHER_QUICK.invoke(k)
+
+    keymap_filer["U1-A"] = keymap.defineMultiStrokeKeymap()
+    filer_accelaretor_key(keymap_filer["U1-A"])
+
+
     keymap_tablacus = keymap.defineWindowKeymap(check_func=CheckWnd.is_tablacus_viewmode)
 
-    def tablacus_fuzzy_tools(base_keymap: Keymap, wnd_keymap: WindowKeymap) -> None:
-        puncher = KeyPuncher(base_keymap, defer_msec=20)
+    def tablacus_fuzzy_tools(wnd_keymap: WindowKeymap) -> None:
         for key in ("Z", "A-Z", "S-Z", "A-U", "A-S-S", "A-S-D", "A-S-U"):
-            wnd_keymap[key] = puncher.invoke(key)
+            wnd_keymap[key] = BASE_PUNCHER.invoke(key)
 
-    tablacus_fuzzy_tools(keymap, keymap_tablacus)
+    tablacus_fuzzy_tools(keymap_tablacus)
 
     ################################
     # popup clipboard menu
