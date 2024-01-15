@@ -1923,14 +1923,6 @@ def configure(keymap):
         }
     ).apply(keymap_filer)
 
-    def filer_accelaretor_key(wnd_keymap: WindowKeymap) -> None:
-        for k in "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ":
-            wnd_keymap[k] = BASE_PUNCHER_QUICK.invoke(k)
-
-    keymap_filer["U1-A"] = keymap.defineMultiStrokeKeymap()
-    filer_accelaretor_key(keymap_filer["U1-A"])
-
-
     keymap_tablacus = keymap.defineWindowKeymap(check_func=CheckWnd.is_tablacus_viewmode)
 
     def tablacus_fuzzy_tools(wnd_keymap: WindowKeymap) -> None:
