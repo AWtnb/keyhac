@@ -536,6 +536,7 @@ def configure(keymap):
                 IME_CONTROL.reconvert_with_skk()
 
     keymap_global["U0-Back"] = LazyFunc(re_input_with_skk).defer()
+    keymap_global["U1-Back"] = LazyFunc(re_input_with_skk).defer()
 
     def moko(search_all: bool = False) -> Callable:
         exe_path = UserPath().resolve(r"Personal\tools\bin\moko.exe")
