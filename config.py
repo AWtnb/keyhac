@@ -1661,7 +1661,7 @@ def configure(keymap):
 
     PseudoCuteExec(
         {
-            "U1-T": ("TE64.exe",),
+            "U1-T": ("TE64.exe", "TablacusExplorer"),
             "U1-P": ("SumatraPDF.exe", "SUMATRA_PDF_FRAME"),
             "LC-U1-M": (
                 "Mery.exe",
@@ -1688,6 +1688,11 @@ def configure(keymap):
                 "chrome.exe",
                 "Chrome_WidgetWin_1",
                 r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+            ),
+            "G": (
+                "msedge.exe",
+                "Chrome_WidgetWin_1",
+                r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
             ),
             "D": (
                 "vivaldi.exe",
