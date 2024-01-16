@@ -947,8 +947,9 @@ def configure(keymap):
 
     BASE_SKK = SKK(keymap)
 
-    # to latin mode
+    # select last with skk-mode
     keymap_global["U1-N"] = BASE_SKK.invoke_latin_sender("C-S-Left")
+    keymap_global["LS-U1-N"] = BASE_SKK.invoke_kana_sender("C-S-Left")
 
     # # select last word with ime control
     keymap_global["U1-Space"] = BASE_SKK.invoke_kana_sender("C-S-Left")
