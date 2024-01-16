@@ -18,10 +18,23 @@ def configure(keymap):
     # general setting
     ################################
 
-    class PathInfo:
-        def __init__(self, s: str) -> None:
-            self.path = s
-            self.isAccessible = self.path.startswith("http") or Path(self.path).exists()
+    class PathHandler:
+        def __init__(self, s: str, under_user_profile: bool = False) -> None:
+            if under_user_profile:
+                user_prof = os.environ.get("USERPROFILE") or ""
+                if len(user_prof) < 1:
+                    self._path = s
+                else:
+                    self._path = str(Path(user_prof, s))
+            else:
+                self._path = s
+
+        @property
+        def path(self) -> str:
+            return self._path
+
+        def is_accessible(self) -> bool:
+            return self._path.startswith("http") or Path(self._path).exists()
 
         @staticmethod
         def args_to_param(args: tuple) -> str:
@@ -35,39 +48,28 @@ def configure(keymap):
             return " ".join(params)
 
         def run(self, *args) -> None:
-            if self.isAccessible:
-                keymap.ShellExecuteCommand(None, self.path, self.args_to_param(args), None)()
+            print(self._path)
+            if self.is_accessible():
+                keymap.ShellExecuteCommand(None, self._path, self.args_to_param(args), None)()
             else:
-                print("invalid-path: '{}'".format(self.path))
+                print("invalid-path: '{}'".format(self._path))
 
-    class UserPath:
-        user_prof = os.environ.get("USERPROFILE") or ""
+    def get_keyhac_filer() -> str:
+        tablacus = PathHandler(r"Sync\portable_app\tablacus\TE64.exe", True)
+        if tablacus.is_accessible():
+            return tablacus.path
+        return "explorer.exe"
 
-        @classmethod
-        def resolve(cls, rel: str = "") -> PathInfo:
-            fullpath = str(Path(cls.user_prof, rel))
-            return PathInfo(fullpath)
+    KEYHAC_FILER = get_keyhac_filer()
 
-        @classmethod
-        def mask_user_name(cls, path: str) -> str:
-            masked = str(Path(cls.user_prof).parent) + r"\%USERNAME%"
-            return masked + path[len(cls.user_prof) :]
+    def get_keyhac_editor() -> str:
+        vscode_path = PathHandler(r"scoop\apps\vscode\current\Code.exe", True)
+        if vscode_path.is_accessible():
+            return vscode_path.path
+        return "notepad.exe"
 
-        @classmethod
-        def get_filer(cls) -> str:
-            tablacus = cls.resolve(r"Sync\portable_app\tablacus\TE64.exe")
-            if tablacus.isAccessible:
-                return tablacus.path
-            return "explorer.exe"
-
-        @classmethod
-        def get_editor(cls) -> str:
-            vscode = cls.resolve(r"scoop\apps\vscode\current\Code.exe")
-            if vscode.isAccessible:
-                return vscode.path
-            return "notepad.exe"
-
-    keymap.editor = UserPath().get_editor()
+    KEYHAC_EDITOR = get_keyhac_editor()
+    keymap.editor = KEYHAC_EDITOR
 
     # console theme
     keymap.setFont("HackGen", 16)
@@ -520,7 +522,7 @@ def configure(keymap):
     keymap_global["C-U1-Q"] = paste_with_anchor(True)
 
     # open url in browser
-    keymap_global["C-U0-O"] = LazyFunc(lambda: PathInfo(ClipHandler().copy_string().strip()).run()).defer()
+    keymap_global["C-U0-O"] = LazyFunc(lambda: PathHandler(ClipHandler().copy_string().strip()).run()).defer()
 
     # re-input selected string with skk
     def re_input_with_skk() -> None:
@@ -539,13 +541,13 @@ def configure(keymap):
     keymap_global["U1-Back"] = LazyFunc(re_input_with_skk).defer()
 
     def moko(search_all: bool = False) -> Callable:
-        exe_path = UserPath().resolve(r"Personal\tools\bin\moko.exe")
-        src_path = UserPath().resolve(r"Personal\launch.yaml").path
+        exe_path = PathHandler(r"Personal\tools\bin\moko.exe", True)
+        src_path = PathHandler(r"Personal\launch.yaml", True)
 
         def _launcher() -> None:
             exe_path.run(
-                r"-src={}".format(src_path),
-                "-filer={}".format(UserPath().get_filer()),
+                r"-src={}".format(src_path.path),
+                "-filer={}".format(KEYHAC_FILER),
                 "-all={}".format(search_all),
                 "-exclude=_obsolete,node_modules",
             )
@@ -575,27 +577,25 @@ def configure(keymap):
 
         @staticmethod
         def open_repo() -> None:
-            repo_path = UserPath().resolve(r"Sync\develop\repo\keyhac")
-            if repo_path.isAccessible:
-                editor_path = UserPath().get_editor()
-                if editor_path == "notepad.exe":
+            repo_path = PathHandler(r"Sync\develop\repo\keyhac", True)
+            if repo_path.is_accessible():
+                if KEYHAC_EDITOR == "notepad.exe":
                     print("notepad.exe cannot open directory. instead, open directory on explorer.")
-                    PathInfo(repo_path.path).run()
+                    repo_path.run()
                 else:
-                    PathInfo(editor_path).run(repo_path.path)
+                    PathHandler(KEYHAC_EDITOR).run(repo_path.path)
             else:
                 print("cannot find path: '{}'".format(repo_path.path))
 
         @staticmethod
         def open_skk_config() -> None:
-            skk_path = PathInfo(r"C:\Windows\System32\IME\IMCRVSKK\imcrvcnf.exe")
+            skk_path = PathHandler(r"C:\Windows\System32\IME\IMCRVSKK\imcrvcnf.exe")
             skk_path.run()
 
         @staticmethod
         def open_skk_dir() -> None:
-            filer_path = PathInfo(UserPath().get_filer())
-            skk_dir_path = UserPath().resolve(r"AppData\Roaming\CorvusSKK")
-            filer_path.run(skk_dir_path.path)
+            skk_dir_path = PathHandler(r"AppData\Roaming\CorvusSKK", True)
+            PathHandler(KEYHAC_FILER).run(skk_dir_path.path)
 
         def apply(self, km: WindowKeymap) -> None:
             for key, func in {
@@ -1113,12 +1113,10 @@ def configure(keymap):
         def __init__(self, keymap: Keymap) -> None:
             self._keymap = keymap
             self.mapping = self._keymap.defineMultiStrokeKeymap()
-            user_path = UserPath()
             skk = SKK(self._keymap, defer_msec=50, inter_stroke_pause=0)
             for combo, stroke in {
                 "X,X": [".txt"],
                 "X,M": [".md"],
-                "P,D": [user_path.resolve(r"Desktop").path + "\\"],
                 "N,0": ["0_plain"],
                 "N,P,L": ["plain"],
                 "N,P,A": ["proofed_by_author"],
@@ -1517,7 +1515,7 @@ def configure(keymap):
                 query.remove_editorial_style()
                 if strip_hiragana:
                     query.remove_hiragana()
-                PathInfo(uri.format(query.encode(strict))).run()
+                PathHandler(uri.format(query.encode(strict))).run()
 
             return LazyFunc(_search).defer()
 
@@ -1651,7 +1649,7 @@ def configure(keymap):
                         VIRTUAL_FINGER.type_keys("LCtrl-LAlt-Tab")
                 else:
                     if exe_path:
-                        PathInfo(exe_path).run()
+                        PathHandler(exe_path).run()
 
             return LazyFunc(_executer).defer(80)
 
@@ -1666,7 +1664,7 @@ def configure(keymap):
             "LC-U1-M": (
                 "Mery.exe",
                 "TChildForm",
-                UserPath().resolve(r"AppData\Local\Programs\Mery\Mery.exe").path,
+                PathHandler(r"AppData\Local\Programs\Mery\Mery.exe", True).path,
             ),
             "LC-U1-N": (
                 "notepad.exe",
@@ -1697,12 +1695,12 @@ def configure(keymap):
             "D": (
                 "vivaldi.exe",
                 "Chrome_WidgetWin_1",
-                UserPath().resolve(r"AppData\Local\Vivaldi\Application\vivaldi.exe").path,
+                PathHandler(r"AppData\Local\Vivaldi\Application\vivaldi.exe", True).path,
             ),
             "S": (
                 "slack.exe",
                 "Chrome_WidgetWin_1",
-                UserPath().resolve(r"AppData\Local\slack\slack.exe").path,
+                PathHandler(r"AppData\Local\slack\slack.exe", True).path,
             ),
             "F": (
                 "firefox.exe",
@@ -1717,41 +1715,39 @@ def configure(keymap):
             "K": (
                 "ksnip.exe",
                 "Qt5152QWindowIcon",
-                UserPath().resolve(r"scoop\apps\ksnip\current\ksnip.exe").path,
+                PathHandler(r"scoop\apps\ksnip\current\ksnip.exe", True).path,
             ),
             "O": ("Obsidian.exe", "Chrome_WidgetWin_1"),
             "P": ("SumatraPDF.exe", "SUMATRA_PDF_FRAME"),
             "C-P": ("powerpnt.exe", "PPTFrameClass"),
             "E": ("EXCEL.EXE", "XLMAIN"),
             "W": ("WINWORD.EXE", "OpusApp"),
-            "V": ("Code.exe", "Chrome_WidgetWin_1", UserPath().get_editor()),
+            "V": ("Code.exe", "Chrome_WidgetWin_1", KEYHAC_EDITOR),
             "C-V": ("vivaldi.exe", "Chrome_WidgetWin_1"),
-            "T": ("TE64.exe", "", UserPath().get_filer()),
+            "T": ("TE64.exe", "", KEYHAC_FILER),
             "M": (
                 "Mery.exe",
                 "TChildForm",
-                UserPath().resolve(r"AppData\Local\Programs\Mery\Mery.exe").path,
+                PathHandler(r"AppData\Local\Programs\Mery\Mery.exe", True).path,
             ),
             "X": ("explorer.exe", "CabinetWClass", r"C:\Windows\explorer.exe"),
         }
     ).apply(keymap_global["U1-C"])
 
-    keymap_global["LS-LC-U1-M"] = UserPath().resolve(r"Personal\draft.txt").run
+    keymap_global["LS-LC-U1-M"] = PathHandler(r"Personal\draft.txt", True).run
 
     # invoke specific filer
     def invoke_filer(dir_path: str) -> Callable:
-        filer_path = UserPath().get_filer()
-
         def _invoker() -> None:
-            if PathInfo(dir_path).isAccessible:
-                PathInfo(filer_path).run(dir_path)
+            if PathHandler(dir_path).is_accessible():
+                PathHandler(KEYHAC_FILER).run(dir_path)
             else:
                 print("invalid-path: '{}'".format(dir_path))
 
         return LazyFunc(_invoker).defer()
 
     keymap_global["U1-F"] = keymap.defineMultiStrokeKeymap()
-    keymap_global["U1-F"]["D"] = invoke_filer(UserPath().resolve(r"Desktop").path)
+    keymap_global["U1-F"]["D"] = invoke_filer(PathHandler(r"Desktop", True).path)
     keymap_global["U1-F"]["S"] = invoke_filer(r"X:\scan")
 
     def invoke_terminal() -> None:
@@ -1761,8 +1757,7 @@ def configure(keymap):
             if not PseudoCuteExec().activate_wnd(scanner.found):
                 VIRTUAL_FINGER.type_keys("C-AtMark")
         else:
-            terminal_path = UserPath().resolve(r"scoop\apps\wezterm\current\wezterm-gui.exe").path
-            PathInfo(terminal_path).run()
+            PathHandler(r"scoop\apps\wezterm\current\wezterm-gui.exe", True).run()
 
     keymap_global["LC-AtMark"] = LazyFunc(invoke_terminal).defer()
 
@@ -1779,7 +1774,7 @@ def configure(keymap):
                 else:
                     VIRTUAL_FINGER.type_keys("LCtrl-LAlt-Tab")
             else:
-                PathInfo("https://duckduckgo.com").run()
+                PathHandler("https://duckduckgo.com").run()
 
     keymap_global["U0-Q"] = LazyFunc(search_on_browser).defer(100)
 
@@ -2030,7 +2025,7 @@ def configure(keymap):
 
         @staticmethod
         def catanate_file_content(s: str) -> str:
-            if PathInfo(s).isAccessible:
+            if PathHandler(s).is_accessible():
                 return Path(s).read_text("utf-8")
             return ""
 
@@ -2106,7 +2101,6 @@ def configure(keymap):
         def get_menu_other(cls) -> list:
             return [
                 (" Cat local file ", cls.format_cb(cls.catanate_file_content)),
-                (" Mask USERNAME ", cls.format_cb(UserPath().mask_user_name)),
                 (" Postalcode | Address ", cls.format_cb(cls.split_postalcode)),
                 (" URL: - Decode ", cls.format_cb(cls.decode_url)),
                 ("      - Encode ", cls.format_cb(cls.encode_url)),
