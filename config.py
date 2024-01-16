@@ -989,6 +989,7 @@ def configure(keymap):
             "U0-U": "S-BackSlash",
             "U1-Minus": "Minus",
             "U0-SemiColon": "SemiColon",
+            "U1-SemiColon": "+:",
         },
         False,
         keymap_global,
