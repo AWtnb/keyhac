@@ -30,7 +30,9 @@ def configure(keymap):
             return self._path
 
         def is_accessible(self) -> bool:
-            return self._path.startswith("http") or Path(self._path).exists()
+            if self._path:
+                return self._path.startswith("http") or Path(self._path).exists()
+            return False
 
         @staticmethod
         def resolve_user_profile(rel) -> str:
@@ -49,7 +51,6 @@ def configure(keymap):
             return " ".join(params)
 
         def run(self, *args) -> None:
-            print(self._path)
             if self.is_accessible():
                 keymap.ShellExecuteCommand(None, self._path, self.args_to_param(args), None)()
             else:
