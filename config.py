@@ -952,7 +952,7 @@ def configure(keymap):
 
     BASE_SKK = SKK(keymap)
 
-    # select last with skk-mode
+    # select last with skk-abbrev-mode
     keymap_global["U1-N"] = BASE_SKK.invoke_kana_sender("S-Left", "Slash")
 
     # # select last word with ime control
