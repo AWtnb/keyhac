@@ -1086,6 +1086,7 @@ def configure(keymap):
                 "P": ("%Y.%m.%d", False),
                 "H": ("%Y-%m-%d", False),
                 "U": ("%Y_%m_%d", False),
+                "M": ("%Y%m", False),
                 "J": ("%Y年%#m月%#d日", True),
             }.items():
                 km[key] = cls.invoke(*params)
