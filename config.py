@@ -887,21 +887,7 @@ def configure(keymap):
     # input customize
     ################################
 
-    def markdown_list(with_index: bool) -> Callable:
-        s = "-"
-        if with_index:
-            s = "1."
-
-        def _sender() -> None:
-            IME_CONTROL.to_skk_latin()
-            VIRTUAL_FINGER.type_smart(s, "Space", "C-J")
-
-        return _sender
-
-    keymap_global["S-U0-8"] = markdown_list(False)
-    keymap_global["S-U0-7"] = markdown_list(True)
-
-    class SKK:
+    class SimpleSKK:
         def __init__(
             self,
             keymap: Keymap,
@@ -911,62 +897,62 @@ def configure(keymap):
             self._defer_msec = defer_msec
             self._finger = VirtualFinger(keymap, inter_stroke_pause)
 
-        def invoke_kana_sender(self, *sequence) -> Callable:
+        def under_kanamode(self, *sequence) -> Callable:
             def _send() -> None:
                 IME_CONTROL.enable_skk()
                 self._finger.type_smart(*sequence)
 
             return _send
 
-        def invoke_latin_sender(self, *sequence) -> Callable:
+        def under_latinmode(self, *sequence) -> Callable:
             def _send() -> None:
                 IME_CONTROL.to_skk_latin()
                 self._finger.type_smart(*sequence)
 
             return _send
 
-        def invoke_pair_sender(self, pair: list, post_mode: int) -> Callable:
-            _, suffix = pair
-            sent = pair + ["Left"] * len(suffix)
-            if post_mode == 1:
-                sent.append(IME_CONTROL.kana_key)
-
-            def _send() -> None:
-                IME_CONTROL.to_skk_latin()
-                self._finger.type_smart(*sent)
-
-            return _send
-
-        def invoke_pair_wrapper(self, pair: list, post_mode: int) -> Callable:
-            prefix, suffix = pair
-            handler = ClipHandler()
-            sufs = [suffix]
-            if post_mode == 1:
-                sufs.append(IME_CONTROL.kana_key)
-
-            def _send() -> None:
-                IME_CONTROL.to_skk_latin()
-                self._finger.type_smart(*[prefix], handler.get_string(), *sufs)
-
-            return _send
-
-    BASE_SKK = SKK(keymap)
+    SIMPLE_SKK = SimpleSKK(keymap)
 
     # select last with skk-abbrev-mode
-    keymap_global["U1-N"] = BASE_SKK.invoke_kana_sender("S-Left", "Slash")
+    keymap_global["U1-N"] = SIMPLE_SKK.under_kanamode("S-Left", "Slash")
 
-    # # select last word with ime control
-    keymap_global["U1-Space"] = BASE_SKK.invoke_kana_sender("C-S-Left")
-    keymap_global["LS-U1-Space"] = BASE_SKK.invoke_latin_sender("C-S-Left")
+    # select last word with ime control
+    keymap_global["U1-Space"] = SIMPLE_SKK.under_kanamode("C-S-Left")
+    keymap_global["LS-U1-Space"] = SIMPLE_SKK.under_latinmode("C-S-Left")
 
-    def skk_remap(mapping_dict: dict, as_kana: bool, km: WindowKeymap) -> None:
-        for key, send in mapping_dict.items():
-            if as_kana:
-                km[key] = BASE_SKK.invoke_kana_sender(send)
-            else:
-                km[key] = BASE_SKK.invoke_latin_sender(send)
+    class SKK:
+        def __init__(self, keymap: Keymap, finish_with_kanamode: bool = True) -> None:
+            self._base_skk = SimpleSKK(keymap)
+            self._finish_with_kanamode = finish_with_kanamode
 
-    skk_remap(
+        def send(self, *sequence) -> Callable:
+            if self._finish_with_kanamode:
+                sequence = list(sequence) + [IME_CONTROL.kana_key]
+            return self._base_skk.under_latinmode(*sequence)
+
+        def send_pair(self, pair: list) -> Callable:
+            _, suffix = pair
+            sequence = pair + ["Left"] * len(suffix)
+            if self._finish_with_kanamode:
+                sequence.append(IME_CONTROL.kana_key)
+            return self._base_skk.under_latinmode(*sequence)
+
+        def apply(self, km: WindowKeymap, mapping_dict: dict) -> None:
+            for key, sent in mapping_dict.items():
+                if type(sent) is str:
+                    km[key] = self.send(sent)
+                elif type(sent) is list:
+                    km[key] = self.send_pair(sent)
+
+    SKK_TO_KANAMODE = SKK(keymap, True)
+    SKK_TO_LATINMODE = SKK(keymap, False)
+
+    # markdown list
+    keymap_global["S-U0-8"] = SKK_TO_KANAMODE.send("- ")
+    keymap_global["U1-1"] = SKK_TO_KANAMODE.send("1. ")
+
+    SKK_TO_KANAMODE.apply(
+        keymap_global,
         {
             "S-U0-Colon": "\uff1a",  # FULLWIDTH COLON
             "S-U0-Comma": "\uff0c",  # FULLWIDTH COMMA
@@ -976,12 +962,21 @@ def configure(keymap):
             "U0-Minus": "\u2015\u2015",  # HORIZONTAL BAR * 2
             "U0-P": "\u30fb",  # KATAKANA MIDDLE DOT
             "S-U0-SemiColon": "+ ",
+            "U0-8": ["\u300e", "\u300f"],  # WHITE CORNER BRACKET 『』
+            "U0-9": ["\u3010", "\u3011"],  # BLACK LENTICULAR BRACKET 【】
+            "U0-OpenBracket": ["\u300c", "\u300d"],  # CORNER BRACKET 「」
+            "U0-Y": ["\u300a", "\u300b"],  # DOUBLE ANGLE BRACKET 《》
+            "U1-2": ["\u201c", "\u201d"],  # DOUBLE QUOTATION MARK “”
+            "U1-7": ["\u2018", "\u2019"],  # SINGLE QUOTATION MARK ‘’
+            "U0-T": ["\u3014", "\u3015"],  # TORTOISE SHELL BRACKET 〔〕
+            "U1-8": ["\uff08", "\uff09"],  # FULLWIDTH PARENTHESIS （）
+            "U1-OpenBracket": ["\uff3b", "\uff3d"],  # FULLWIDTH SQUARE BRACKET ［］
+            "U1-Y": ["\u3008", "\u3009"],  # ANGLE BRACKET 〈〉
         },
-        True,
-        keymap_global,
     )
 
-    skk_remap(
+    SKK_TO_LATINMODE.apply(
+        keymap_global,
         {
             "U0-1": "S-1",
             "U0-4": "$_",
@@ -994,69 +989,15 @@ def configure(keymap):
             "U1-Minus": "Minus",
             "U0-SemiColon": "SemiColon",
             "U1-SemiColon": "+:",
+            "U0-2": ['"', '"'],
+            "U0-7": ["'", "'"],
+            "U0-AtMark": ["`", "`"],
+            "U1-AtMark": [" `", "` "],
+            "U0-CloseBracket": ["[", "]"],
+            "U1-9": ["(", ")"],
+            "U1-CloseBracket": ["{", "}"],
+            "U0-Caret": ["~~", "~~"],
         },
-        False,
-        keymap_global,
-    )
-
-    def skk_pair_remap(mapping_dict: dict, after_mode_is_kana: bool, km: WindowKeymap) -> None:
-        for key, send in mapping_dict.items():
-            if after_mode_is_kana:
-                km[key] = BASE_SKK.invoke_pair_sender(send, 1)
-            else:
-                km[key] = BASE_SKK.invoke_pair_sender(send, 0)
-
-    def skk_pair_wrapper_remap(mapping_dict: dict, after_mode_is_kana: bool, trigger_key: str, km: WindowKeymap) -> None:
-        for key, send in mapping_dict.items():
-            if after_mode_is_kana:
-                km[trigger_key + key] = BASE_SKK.invoke_pair_wrapper(send, 1)
-            else:
-                km[trigger_key + key] = BASE_SKK.invoke_pair_wrapper(send, 0)
-
-    PAIRS_AS_LATIN = {
-        "U0-2": ['"', '"'],
-        "U0-7": ["'", "'"],
-        "U0-AtMark": ["`", "`"],
-        "U1-AtMark": [" `", "` "],
-        "U0-CloseBracket": ["[", "]"],
-        "U1-9": ["(", ")"],
-        "U1-CloseBracket": ["{", "}"],
-        "U0-Caret": ["~~", "~~"],
-    }
-    skk_pair_remap(
-        PAIRS_AS_LATIN,
-        False,
-        keymap_global,
-    )
-    skk_pair_wrapper_remap(
-        PAIRS_AS_LATIN,
-        False,
-        "LC-",
-        keymap_global,
-    )
-
-    PAIRS_AS_JP = {
-        "U0-8": ["\u300e", "\u300f"],  # WHITE CORNER BRACKET 『』
-        "U0-9": ["\u3010", "\u3011"],  # BLACK LENTICULAR BRACKET 【】
-        "U0-OpenBracket": ["\u300c", "\u300d"],  # CORNER BRACKET 「」
-        "U0-Y": ["\u300a", "\u300b"],  # DOUBLE ANGLE BRACKET 《》
-        "U1-2": ["\u201c", "\u201d"],  # DOUBLE QUOTATION MARK “”
-        "U1-7": ["\u2018", "\u2019"],  # SINGLE QUOTATION MARK ‘’
-        "U0-T": ["\u3014", "\u3015"],  # TORTOISE SHELL BRACKET 〔〕
-        "U1-8": ["\uff08", "\uff09"],  # FULLWIDTH PARENTHESIS （）
-        "U1-OpenBracket": ["\uff3b", "\uff3d"],  # FULLWIDTH SQUARE BRACKET ［］
-        "U1-Y": ["\u3008", "\u3009"],  # ANGLE BRACKET 〈〉
-    }
-    skk_pair_remap(
-        PAIRS_AS_JP,
-        True,
-        keymap_global,
-    )
-    skk_pair_wrapper_remap(
-        PAIRS_AS_JP,
-        True,
-        "LC-",
-        keymap_global,
     )
 
     class DateInput:
@@ -1065,12 +1006,12 @@ def configure(keymap):
             def _input() -> None:
                 d = datetime.datetime.today()
                 seq = [c for c in d.strftime(fmt)]
-                IME_CONTROL.to_skk_latin()
-                VIRTUAL_FINGER_QUICK.type_smart(*seq)
                 if after_mode_is_kana:
-                    IME_CONTROL.enable_skk()
+                    SKK_TO_KANAMODE.send(*seq)()
+                else:
+                    SKK_TO_LATINMODE.send(*seq)()
 
-            return LazyFunc(_input).defer()
+            return _input
 
         @classmethod
         def apply(cls, km: WindowKeymap) -> None:
@@ -1118,17 +1059,10 @@ def configure(keymap):
         def __init__(self, keymap: Keymap) -> None:
             self._keymap = keymap
             self.mapping = self._keymap.defineMultiStrokeKeymap()
-            skk = SKK(self._keymap, defer_msec=50, inter_stroke_pause=0)
+            skk = SimpleSKK(self._keymap, defer_msec=50, inter_stroke_pause=0)
             for combo, stroke in {
                 "X,X": [".txt"],
                 "X,M": [".md"],
-                "N,0": ["0_plain"],
-                "N,P,L": ["plain"],
-                "N,P,A": ["proofed_by_author"],
-                "N,P,J": ["project_proposal"],
-                "N,P,P": ["proofed"],
-                "N,S,A": ["send_to_author"],
-                "N,S,P": ["send_to_printshop"],
                 "Minus,H": ["\u2010"],
                 "Minus,M": ["\u2014"],
                 "Minus,N": ["\u2013"],
@@ -1152,7 +1086,7 @@ def configure(keymap):
                 "U,U": ["\u00fc"],
             }.items():
                 keys = combo.split(",")
-                self.mapping = combo_mapper(self.mapping, keys, skk.invoke_latin_sender(*stroke))
+                self.mapping = combo_mapper(self.mapping, keys, skk.under_latinmode(*stroke))
 
             for combo, stroke in {
                 "Minus,F": ["\uff0d"],
@@ -1168,7 +1102,7 @@ def configure(keymap):
             }.items():
                 keys = combo.split(",")
                 stroke.append("C-J")
-                self.mapping = combo_mapper(self.mapping, keys, skk.invoke_latin_sender(*stroke))
+                self.mapping = combo_mapper(self.mapping, keys, skk.under_latinmode(*stroke))
 
     keymap_global["U1-X"] = KeyCombo(keymap).mapping
 
@@ -1806,9 +1740,9 @@ def configure(keymap):
 
     # slack
     keymap_slack = keymap.defineWindowKeymap(exe_name="slack.exe", class_name="Chrome_WidgetWin_1")
-    keymap_slack["F3"] = BASE_SKK.invoke_latin_sender("C-K")
-    keymap_slack["C-E"] = BASE_SKK.invoke_latin_sender("C-K")
-    keymap_slack["F1"] = BASE_SKK.invoke_latin_sender("+:")
+    keymap_slack["F3"] = SIMPLE_SKK.under_latinmode("C-K")
+    keymap_slack["C-E"] = SIMPLE_SKK.under_latinmode("C-K")
+    keymap_slack["F1"] = SIMPLE_SKK.under_latinmode("+:")
 
     # vscode
     keymap_vscode = keymap.defineWindowKeymap(exe_name="Code.exe")
@@ -1856,8 +1790,8 @@ def configure(keymap):
     # sumatra PDF
     keymap_sumatra = keymap.defineWindowKeymap(check_func=CheckWnd.is_sumatra)
 
-    keymap_sumatra["C-S-F"] = BASE_SKK.invoke_latin_sender("C-Home", "Esc", "C-F", "C-J")
-    keymap_sumatra["LA-X"] = BASE_SKK.invoke_latin_sender("C-Home", "Esc", "C-F", "C-J")
+    keymap_sumatra["C-S-F"] = SIMPLE_SKK.under_latinmode("C-Home", "Esc", "C-F", "C-J")
+    keymap_sumatra["LA-X"] = SIMPLE_SKK.under_latinmode("C-Home", "Esc", "C-F", "C-J")
 
     keymap_sumatra_inputmode = keymap.defineWindowKeymap(check_func=CheckWnd.is_sumatra_inputmode)
 
@@ -1871,14 +1805,14 @@ def configure(keymap):
 
     def sumatra_view_key(km: WindowKeymap) -> None:
         for key in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
-            km[key] = BASE_SKK.invoke_latin_sender(key)
+            km[key] = SIMPLE_SKK.under_latinmode(key)
 
     sumatra_view_key(keymap_sumatra_viewmode)
 
-    keymap_sumatra_viewmode["F"] = BASE_SKK.invoke_kana_sender("C-F")
+    keymap_sumatra_viewmode["F"] = SIMPLE_SKK.under_kanamode("C-F")
     keymap_sumatra_viewmode["H"] = "C-S-Tab"
     keymap_sumatra_viewmode["L"] = "C-Tab"
-    keymap_sumatra_viewmode["X"] = BASE_SKK.invoke_latin_sender("C-Home", "Esc", "C-F", "C-J")
+    keymap_sumatra_viewmode["X"] = SIMPLE_SKK.under_latinmode("C-Home", "Esc", "C-F", "C-J")
 
     # word
     keymap_word = keymap.defineWindowKeymap(exe_name="WINWORD.EXE")
