@@ -939,10 +939,11 @@ def configure(keymap):
 
         def apply(self, km: WindowKeymap, mapping_dict: dict) -> None:
             for key, sent in mapping_dict.items():
-                if type(sent) is str:
-                    km[key] = self.send(sent)
-                elif type(sent) is list:
-                    km[key] = self.send_pair(sent)
+                km[key] = self.send(sent)
+
+        def apply_pair(self, km: WindowKeymap, mapping_dict: dict) -> None:
+            for key, sent in mapping_dict.items():
+                km[key] = self.send_pair(sent)
 
     SKK_TO_KANAMODE = SKK(keymap, True)
     SKK_TO_LATINMODE = SKK(keymap, False)
@@ -962,6 +963,11 @@ def configure(keymap):
             "U0-Minus": "\u2015\u2015",  # HORIZONTAL BAR * 2
             "U0-P": "\u30fb",  # KATAKANA MIDDLE DOT
             "S-U0-SemiColon": "+ ",
+        },
+    )
+    SKK_TO_KANAMODE.apply_pair(
+        keymap_global,
+        {
             "U0-8": ["\u300e", "\u300f"],  # WHITE CORNER BRACKET 『』
             "U0-9": ["\u3010", "\u3011"],  # BLACK LENTICULAR BRACKET 【】
             "U0-OpenBracket": ["\u300c", "\u300d"],  # CORNER BRACKET 「」
@@ -989,6 +995,11 @@ def configure(keymap):
             "U1-Minus": "Minus",
             "U0-SemiColon": "SemiColon",
             "U1-SemiColon": "+:",
+        },
+    )
+    SKK_TO_LATINMODE.apply_pair(
+        keymap_global,
+        {
             "U0-2": ['"', '"'],
             "U0-7": ["'", "'"],
             "U0-AtMark": ["`", "`"],
