@@ -215,9 +215,6 @@ def configure(keymap):
             "U0-Tab": ("C-N", "C-J"),
             # line selection
             "U1-A": ("End", "S-Home"),
-            # select left
-            "U1-B": ("S-Left"),
-            "U1-(235)": ("S-Left"),
             # punctuation
             "U0-Enter": ("Period"),
             "LS-U0-Enter": ("Comma"),
@@ -297,11 +294,19 @@ def configure(keymap):
     VIRTUAL_FINGER_QUICK = VirtualFinger(keymap, 0)
 
     class ImeControl:
-        def __init__(self, keymap: Keymap, kana_key: str = "C-J", latin_key: str = "L", cancel_key: str = "C-G") -> None:
+        def __init__(
+            self,
+            keymap: Keymap,
+            kana_key: str = "C-J",
+            latin_key: str = "L",
+            cancel_key: str = "C-G",
+            reconv_key: str = "LWin-Slash",
+        ) -> None:
             self._keymap = keymap
             self._kana_key = kana_key
             self._latin_key = latin_key
             self._cancel_key = cancel_key
+            self._reconv_key = reconv_key
             self._finger = VirtualFinger(self._keymap, 0)
 
         @property
@@ -315,6 +320,10 @@ def configure(keymap):
         @property
         def cancel_key(self) -> str:
             return self._cancel_key
+
+        @property
+        def reconv_key(self) -> str:
+            return self._reconv_key
 
         def get_status(self) -> int:
             return self._keymap.getWindow().getImeStatus()
@@ -338,7 +347,7 @@ def configure(keymap):
 
         def reconvert_with_skk(self) -> None:
             self.enable_skk()
-            self._finger.type_keys("LWin-Slash", self._cancel_key)
+            self._finger.type_keys(self._reconv_key, self._cancel_key)
 
         def disable(self) -> None:
             self.set_status(0)
@@ -486,7 +495,9 @@ def configure(keymap):
                     "": False,
                     "LS-": True,
                 }.items():
-                    km[mod_ctrl + mod_shift + custom_key] = cls.invoke(remove_white, include_linebreak)
+                    km[mod_ctrl + mod_shift + custom_key] = cls.invoke(
+                        remove_white, include_linebreak
+                    )
 
     StrCleaner().apply(keymap_global, "U1-V")
 
@@ -527,7 +538,9 @@ def configure(keymap):
     keymap_global["C-U1-Q"] = paste_with_anchor(True)
 
     # open url in browser
-    keymap_global["C-U0-O"] = LazyFunc(lambda: PathHandler(ClipHandler().copy_string().strip()).run()).defer()
+    keymap_global["C-U0-O"] = LazyFunc(
+        lambda: PathHandler(ClipHandler().copy_string().strip()).run()
+    ).defer()
 
     # re-input selected string with skk
     def re_input_with_skk() -> None:
@@ -913,6 +926,9 @@ def configure(keymap):
 
     SIMPLE_SKK = SimpleSKK(keymap)
 
+    # reconvert last char
+    keymap_global["U1-B"] = SIMPLE_SKK.under_kanamode("S-Left", IME_CONTROL.reconv_key, IME_CONTROL.cancel_key)
+
     # select last with skk-abbrev-mode
     keymap_global["U1-N"] = SIMPLE_SKK.under_kanamode("S-Left", "Slash")
 
@@ -1049,7 +1065,9 @@ def configure(keymap):
     # pseudo espanso
     ################################
 
-    def combo_mapper(root_map: Union[Callable, dict], keys: list, func: Callable) -> Union[Callable, dict, None]:
+    def combo_mapper(
+        root_map: Union[Callable, dict], keys: list, func: Callable
+    ) -> Union[Callable, dict, None]:
         if callable(root_map):
             return root_map
         if len(keys) == 1:
@@ -1412,7 +1430,13 @@ def configure(keymap):
     class SearchQuery:
         def __init__(self, query: str) -> None:
             self._query = ""
-            lines = query.strip().replace("\u200b", "").replace("\u3000", " ").replace("\t", " ").splitlines()
+            lines = (
+                query.strip()
+                .replace("\u200b", "")
+                .replace("\u3000", " ")
+                .replace("\t", " ")
+                .splitlines()
+            )
             for line in lines:
                 self._query += self.format_line(line)
 
@@ -1511,7 +1535,9 @@ def configure(keymap):
     ################################
 
     class SystemBrowser:
-        register_path = r"Software\Microsoft\Windows\Shell\Associations\UrlAssociations\https\UserChoice"
+        register_path = (
+            r"Software\Microsoft\Windows\Shell\Associations\UrlAssociations\https\UserChoice"
+        )
         prog_id = ""
         with OpenKey(HKEY_CURRENT_USER, register_path) as key:
             prog_id = str(QueryValueEx(key, "ProgId")[0])
@@ -1865,7 +1891,9 @@ def configure(keymap):
 
     keymap_tb = keymap.defineWindowKeymap(exe_name="thunderbird.exe")
     keymap_tb["C-S-V"] = thunderbird_new_mail(["A-S", "Tab", "C-V", "C-Home"], ["C-V"])
-    keymap_tb["C-S-S"] = thunderbird_new_mail(["C-Home", "S-End", "C-X", "Delete", "A-S", "C-V"], ["A-S"])
+    keymap_tb["C-S-S"] = thunderbird_new_mail(
+        ["C-Home", "S-End", "C-X", "Delete", "A-S", "C-V"], ["A-S"]
+    )
 
     # filer
     keymap_filer = keymap.defineWindowKeymap(check_func=CheckWnd.is_filer_viewmode)
@@ -2027,7 +2055,10 @@ def configure(keymap):
         def get_menu_noise_reduction(cls) -> list:
             return [
                 (" Remove: - Blank lines ", cls.format_cb(cls.skip_blank_line)),
-                ("         - Inside Paren ", cls.replace_cb(r"[\uff08\u0028].+?[\uff09\u0029]", "")),
+                (
+                    "         - Inside Paren ",
+                    cls.replace_cb(r"[\uff08\u0028].+?[\uff09\u0029]", ""),
+                ),
                 ("         - Line-break ", cls.replace_cb(r"\r?\n", "")),
                 ("         - Quotations ", cls.replace_cb(r"[\u0022\u0027]", "")),
                 (" Fix: - Dumb Quotation ", cls.format_cb(cls.fix_dumb_quotation)),
@@ -2040,7 +2071,10 @@ def configure(keymap):
         def get_menu_transform(cls) -> list:
             return [
                 (" Transform: => A-Z/0-9 ", cls.format_cb(CharWidth().to_half_letter)),
-                ("            => \uff21-\uff3a/\uff10-\uff19 ", cls.format_cb(CharWidth().to_full_letter)),
+                (
+                    "            => \uff21-\uff3a/\uff10-\uff19 ",
+                    cls.format_cb(CharWidth().to_full_letter),
+                ),
                 ("            => abc ", lambda: ClipHandler.get_string().lower()),
                 ("            => ABC ", lambda: ClipHandler.get_string().upper()),
                 (" Comma: - Curly (\uff0c) ", cls.replace_cb(r"\u3001", "\uff0c")),
@@ -2054,7 +2088,12 @@ def configure(keymap):
                 (" Postalcode | Address ", cls.format_cb(cls.split_postalcode)),
                 (" URL: - Decode ", cls.format_cb(cls.decode_url)),
                 ("      - Encode ", cls.format_cb(cls.encode_url)),
-                ("      - Shorten Amazon ", cls.replace_cb(r"^.+amazon\.co\.jp/.+dp/(.{10}).*", r"https://www.amazon.jp/dp/\1")),
+                (
+                    "      - Shorten Amazon ",
+                    cls.replace_cb(
+                        r"^.+amazon\.co\.jp/.+dp/(.{10}).*", r"https://www.amazon.jp/dp/\1"
+                    ),
+                ),
                 (" Zoom invitation ", cls.format_cb(Zoom().format)),
             ]
 
