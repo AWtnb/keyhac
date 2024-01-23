@@ -928,7 +928,7 @@ def configure(keymap):
 
     # reconvert last char
     keymap_global["U1-B"] = SIMPLE_SKK.under_kanamode("S-Left", IME_CONTROL.reconv_key, IME_CONTROL.cancel_key)
-    keymap_global["U1-U"] = SIMPLE_SKK.under_kanamode("S-Left", IME_CONTROL.reconv_key, IME_CONTROL.cancel_key)
+    keymap_global["U1-U"] = keymap_global["U1-B"]
 
     # select last with skk-abbrev-mode
     keymap_global["U1-N"] = SIMPLE_SKK.under_kanamode("S-Left", "Slash")
