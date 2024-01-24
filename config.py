@@ -988,13 +988,11 @@ def configure(keymap):
             "U0-8": ["\u300e", "\u300f"],  # WHITE CORNER BRACKET 『』
             "U0-9": ["\u3010", "\u3011"],  # BLACK LENTICULAR BRACKET 【】
             "U0-OpenBracket": ["\u300c", "\u300d"],  # CORNER BRACKET 「」
-            "U0-Y": ["\u300a", "\u300b"],  # DOUBLE ANGLE BRACKET 《》
             "U1-2": ["\u201c", "\u201d"],  # DOUBLE QUOTATION MARK “”
             "U1-7": ["\u2018", "\u2019"],  # SINGLE QUOTATION MARK ‘’
             "U0-T": ["\u3014", "\u3015"],  # TORTOISE SHELL BRACKET 〔〕
             "U1-8": ["\uff08", "\uff09"],  # FULLWIDTH PARENTHESIS （）
             "U1-OpenBracket": ["\uff3b", "\uff3d"],  # FULLWIDTH SQUARE BRACKET ［］
-            "U1-Y": ["\u3008", "\u3009"],  # ANGLE BRACKET 〈〉
         },
     )
 
