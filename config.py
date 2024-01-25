@@ -140,7 +140,9 @@ def configure(keymap):
     # keymap working on any window
     keymap_global = keymap.defineWindowKeymap(check_func=CheckWnd.is_global_target)
 
-    if 0:  # SandS
+    KEYHAC_SANDS = False
+
+    if KEYHAC_SANDS:
         keymap.replaceKey("Space", "RShift")
         keymap.replaceKey("RShift", "LShift")
         keymap_global["O-RShift"] = "Space"
@@ -211,6 +213,8 @@ def configure(keymap):
             "U0-X": ("Esc"),
             # close window
             "LC-Q": ("A-F4"),
+            # select last character
+            "U1-U": ("LS-Left"),
             # SKK: contbvert to first suggestion
             "U0-Tab": ("C-N", "C-J"),
             # line selection
@@ -928,7 +932,7 @@ def configure(keymap):
 
     # reconvert last char
     keymap_global["U1-B"] = SIMPLE_SKK.under_kanamode("S-Left", IME_CONTROL.reconv_key, IME_CONTROL.cancel_key)
-    keymap_global["U1-U"] = keymap_global["U1-B"]
+    # keymap_global["U1-U"] = keymap_global["U1-B"]
 
     # select last with skk-abbrev-mode
     keymap_global["U1-N"] = SIMPLE_SKK.under_kanamode("S-Left", "Slash")
