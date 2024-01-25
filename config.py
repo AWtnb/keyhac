@@ -1041,7 +1041,7 @@ def configure(keymap):
                 else:
                     SKK_TO_LATINMODE.send(*seq)()
 
-            return _input
+            return LazyFunc(_input).defer()
 
         @classmethod
         def apply(cls, km: WindowKeymap) -> None:
