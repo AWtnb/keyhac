@@ -223,6 +223,7 @@ def configure(keymap):
             "U0-Enter": ("Period"),
             "LS-U0-Enter": ("Comma"),
             "LC-U0-Enter": ("Slash"),
+            "U0-U": "S-BackSlash",
             "U0-Z": ("Minus"),
             "BackSlash": ("S-BackSlash"),
             # emacs-like backchar
@@ -1007,12 +1008,10 @@ def configure(keymap):
         {
             "U0-1": "S-1",
             "U0-4": "$_",
-            "U1-4": "$_.",
             "U0-Colon": "Colon",
             "U0-Comma": "Comma",
             "U0-Period": "Period",
             "U0-Slash": "Slash",
-            "U0-U": "S-BackSlash",
             "U1-Minus": "Minus",
             "U0-SemiColon": "SemiColon",
             "U1-SemiColon": "+:",
