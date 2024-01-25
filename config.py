@@ -935,7 +935,6 @@ def configure(keymap):
     keymap_global["U1-B"] = SIMPLE_SKK.under_kanamode(
         "S-Left", IME_CONTROL.reconv_key, IME_CONTROL.cancel_key
     )
-    # keymap_global["U1-U"] = keymap_global["U1-B"]
 
     # select last with skk-abbrev-mode
     keymap_global["U1-N"] = SIMPLE_SKK.under_kanamode("S-Left", "Slash")
@@ -1857,17 +1856,21 @@ def configure(keymap):
     keymap_sumatra_viewmode["L"] = "C-Tab"
     keymap_sumatra_viewmode["X"] = SIMPLE_SKK.under_latinmode("C-Home", "Esc", "C-F", "C-J")
 
+    def office_to_pdf(km: WindowKeymap, key: str = "F11") -> None:
+        km[key] = "A-F", "E", "P", "A"
+
     # word
     keymap_word = keymap.defineWindowKeymap(exe_name="WINWORD.EXE")
-    keymap_word["F11"] = "A-F", "E", "P", "A"
+    office_to_pdf(keymap_word)
 
     # powerpoint
     keymap_ppt = keymap.defineWindowKeymap(exe_name="powerpnt.exe")
-    keymap_ppt["F11"] = "A-F", "E", "P", "A"
+    office_to_pdf(keymap_ppt)
 
     # excel
     keymap_excel = keymap.defineWindowKeymap(exe_name="excel.exe")
-    keymap_excel["F11"] = "A-F", "E", "P", "A"
+    office_to_pdf(keymap_excel)
+
 
     def select_all() -> None:
         if keymap.getWindow().getClassName() == "EXCEL6":
