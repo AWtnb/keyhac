@@ -931,7 +931,9 @@ def configure(keymap):
     SIMPLE_SKK = SimpleSKK(keymap)
 
     # reconvert last char
-    keymap_global["U1-B"] = SIMPLE_SKK.under_kanamode("S-Left", IME_CONTROL.reconv_key, IME_CONTROL.cancel_key)
+    keymap_global["U1-B"] = SIMPLE_SKK.under_kanamode(
+        "S-Left", IME_CONTROL.reconv_key, IME_CONTROL.cancel_key
+    )
     # keymap_global["U1-U"] = keymap_global["U1-B"]
 
     # select last with skk-abbrev-mode
@@ -1031,6 +1033,9 @@ def configure(keymap):
     )
 
     class DateInput:
+        def __init__(self, km: WindowKeymap) -> None:
+            self._keymap = km
+
         @staticmethod
         def invoke(fmt: str, after_mode_is_kana: bool = False) -> Callable:
             def _input() -> None:
@@ -1043,8 +1048,7 @@ def configure(keymap):
 
             return LazyFunc(_input).defer()
 
-        @classmethod
-        def apply(cls, km: WindowKeymap) -> None:
+        def apply(self) -> None:
             for key, params in {
                 "1": ("%Y%m%d", False),
                 "2": ("%Y/%m/%d", False),
@@ -1059,10 +1063,10 @@ def configure(keymap):
                 "M": ("%Y%m", False),
                 "J": ("%Y年%#m月%#d日", True),
             }.items():
-                km[key] = cls.invoke(*params)
+                self._keymap[key] = self.invoke(*params)
 
     keymap_global["U1-D"] = keymap.defineMultiStrokeKeymap()
-    DateInput().apply(keymap_global["U1-D"])
+    DateInput(keymap_global["U1-D"]).apply()
 
     ################################
     # pseudo espanso
