@@ -991,7 +991,7 @@ def configure(keymap):
     SKK_TO_KANAMODE.apply_pair(
         keymap_global,
         {
-            "U1-AtMark": [" `", "` "],
+            "U1-AtMark": ["`", "`"],
             "U0-8": ["\u300e", "\u300f"],  # WHITE CORNER BRACKET 『』
             "U0-9": ["\u3010", "\u3011"],  # BLACK LENTICULAR BRACKET 【】
             "U0-OpenBracket": ["\u300c", "\u300d"],  # CORNER BRACKET 「」
