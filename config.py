@@ -259,11 +259,13 @@ def configure(keymap):
         }
     ).apply(keymap_global)
 
-    KeyAllocator({
-        "U0-2": "LS-2",
-        "U0-7": "LS-7",
-        "U0-AtMark": "LS-AtMark",
-    }).apply_quotation(keymap_global)
+    KeyAllocator(
+        {
+            "U0-2": "LS-2",
+            "U0-7": "LS-7",
+            "U0-AtMark": "LS-AtMark",
+        }
+    ).apply_quotation(keymap_global)
 
     ################################
     # functions for custom hotkey
@@ -1602,13 +1604,10 @@ def configure(keymap):
             return False
 
     class PseudoCuteExec:
-        def __init__(self, remap_table: dict = {}) -> None:
+        def __init__(self, keymap: Keymap) -> None:
             self._keymap = keymap
-            self._remap_table = remap_table
 
         def activate_wnd(self, target: pyauto.Window) -> bool:
-            if self._keymap.getWindow() == target:
-                return False
             interval = 10
             if target.isMinimized():
                 target.restore()
@@ -1632,7 +1631,9 @@ def configure(keymap):
             def _executer() -> None:
                 scanner.scan()
                 if scanner.found:
-                    if not self.activate_wnd(scanner.found):
+                    if scanner.found == self._keymap.getWindow() or not self.activate_wnd(
+                        scanner.found
+                    ):
                         VIRTUAL_FINGER.type_keys("LCtrl-LAlt-Tab")
                 else:
                     if exe_path:
@@ -1640,11 +1641,14 @@ def configure(keymap):
 
             return LazyFunc(_executer).defer(80)
 
-        def apply(self, km: WindowKeymap) -> None:
-            for key, params in self._remap_table.items():
-                km[key] = self.invoke(*params)
+        def apply(self, wnd_keymap: WindowKeymap, remap_table: dict = {}) -> None:
+            for key, params in remap_table.items():
+                wnd_keymap[key] = self.invoke(*params)
 
-    PseudoCuteExec(
+    PSEUDO_CUTEEXEC = PseudoCuteExec(keymap)
+
+    PSEUDO_CUTEEXEC.apply(
+        keymap_global,
         {
             "U1-T": ("TE64.exe", "TablacusExplorer"),
             "U1-P": ("SumatraPDF.exe", "SUMATRA_PDF_FRAME"),
@@ -1658,11 +1662,12 @@ def configure(keymap):
                 "Notepad",
                 r"C:\Windows\System32\notepad.exe",
             ),
-        }
-    ).apply(keymap_global)
+        },
+    )
 
     keymap_global["U1-C"] = keymap.defineMultiStrokeKeymap()
-    PseudoCuteExec(
+    PSEUDO_CUTEEXEC.apply(
+        keymap_global["U1-C"],
         {
             "Space": (
                 DEFAULT_BROWSER.get_exe_name(),
@@ -1718,8 +1723,8 @@ def configure(keymap):
                 PathHandler.resolve_user_profile(r"AppData\Local\Programs\Mery\Mery.exe"),
             ),
             "X": ("explorer.exe", "CabinetWClass", r"C:\Windows\explorer.exe"),
-        }
-    ).apply(keymap_global["U1-C"])
+        },
+    )
 
     keymap_global["LS-LC-U1-M"] = PathHandler(r"Personal\draft.txt", True).run
 
@@ -1741,9 +1746,8 @@ def configure(keymap):
         scanner = WndScanner("wezterm-gui.exe", "org.wezfurlong.wezterm")
         scanner.scan()
         if scanner.found:
-            if not PseudoCuteExec().activate_wnd(scanner.found):
-                VIRTUAL_FINGER.type_keys("C-AtMark")
-        else:
+            if PSEUDO_CUTEEXEC.activate_wnd(scanner.found):
+                return
             PathHandler(r"scoop\apps\wezterm\current\wezterm-gui.exe", True).run()
 
     keymap_global["LC-AtMark"] = LazyFunc(invoke_terminal).defer()
@@ -1755,8 +1759,7 @@ def configure(keymap):
             scanner = WndScanner(DEFAULT_BROWSER.get_exe_name(), DEFAULT_BROWSER.get_wnd_class())
             scanner.scan()
             if scanner.found:
-                if PseudoCuteExec().activate_wnd(scanner.found):
-                    delay()
+                if PSEUDO_CUTEEXEC.activate_wnd(scanner.found):
                     VIRTUAL_FINGER.type_keys("C-T")
                 else:
                     VIRTUAL_FINGER.type_keys("LCtrl-LAlt-Tab")
@@ -1876,7 +1879,6 @@ def configure(keymap):
     # excel
     keymap_excel = keymap.defineWindowKeymap(exe_name="excel.exe")
     office_to_pdf(keymap_excel)
-
 
     def select_all() -> None:
         if keymap.getWindow().getClassName() == "EXCEL6":
