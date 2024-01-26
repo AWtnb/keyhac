@@ -975,6 +975,8 @@ def configure(keymap):
     keymap_global["S-U0-8"] = SKK_TO_KANAMODE.send("- ")
     keymap_global["U1-1"] = SKK_TO_KANAMODE.send("1. ")
 
+    keymap_global["U0-AtMark"] = "S-AtMark", "S-AtMark", "Left"
+
     SKK_TO_KANAMODE.apply(
         keymap_global,
         {
@@ -991,7 +993,6 @@ def configure(keymap):
     SKK_TO_KANAMODE.apply_pair(
         keymap_global,
         {
-            "U1-AtMark": ["`", "`"],
             "U0-8": ["\u300e", "\u300f"],  # WHITE CORNER BRACKET 『』
             "U0-9": ["\u3010", "\u3011"],  # BLACK LENTICULAR BRACKET 【】
             "U0-OpenBracket": ["\u300c", "\u300d"],  # CORNER BRACKET 「」
@@ -1022,7 +1023,6 @@ def configure(keymap):
         {
             "U0-2": ['"', '"'],
             "U0-7": ["'", "'"],
-            "U0-AtMark": ["`", "`"],
             "U0-CloseBracket": ["[", "]"],
             "U1-9": ["(", ")"],
             "U1-CloseBracket": ["{", "}"],
