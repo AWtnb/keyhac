@@ -203,6 +203,10 @@ def configure(keymap):
             for key, value in self.dict.items():
                 km[key] = value
 
+        def apply_quotation(self, km: WindowKeymap):
+            for key, value in self.dict.items():
+                km[key] = value, value, "Left"
+
     KeyAllocator(
         {
             # delete to bol / eol
@@ -254,6 +258,12 @@ def configure(keymap):
             "LC-U0-P": ("LS-1"),
         }
     ).apply(keymap_global)
+
+    KeyAllocator({
+        "U0-2": "LS-2",
+        "U0-7": "LS-7",
+        "U0-AtMark": "LS-AtMark",
+    }).apply_quotation(keymap_global)
 
     ################################
     # functions for custom hotkey
@@ -975,8 +985,6 @@ def configure(keymap):
     keymap_global["S-U0-8"] = SKK_TO_KANAMODE.send("- ")
     keymap_global["U1-1"] = SKK_TO_KANAMODE.send("1. ")
 
-    keymap_global["U0-AtMark"] = "S-AtMark", "S-AtMark", "Left"
-
     SKK_TO_KANAMODE.apply(
         keymap_global,
         {
@@ -1021,8 +1029,6 @@ def configure(keymap):
     SKK_TO_LATINMODE.apply_pair(
         keymap_global,
         {
-            "U0-2": ['"', '"'],
-            "U0-7": ["'", "'"],
             "U0-CloseBracket": ["[", "]"],
             "U1-9": ["(", ")"],
             "U1-CloseBracket": ["{", "}"],
