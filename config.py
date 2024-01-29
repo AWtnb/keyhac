@@ -1101,7 +1101,6 @@ def configure(keymap):
         def __init__(self, keymap: Keymap) -> None:
             self._keymap = keymap
             self.mapping = self._keymap.defineMultiStrokeKeymap()
-            skk = SimpleSKK(self._keymap, defer_msec=50, inter_stroke_pause=0)
             for combo, stroke in {
                 "X,X": [".txt"],
                 "X,M": [".md"],
@@ -1128,7 +1127,7 @@ def configure(keymap):
                 "U,U": ["\u00fc"],
             }.items():
                 keys = combo.split(",")
-                self.mapping = combo_mapper(self.mapping, keys, skk.under_latinmode(*stroke))
+                self.mapping = combo_mapper(self.mapping, keys, SKK_TO_LATINMODE.send(*stroke))
 
             for combo, stroke in {
                 "Minus,F": ["\uff0d"],
@@ -1143,8 +1142,7 @@ def configure(keymap):
                 "M,6": ["###### "],
             }.items():
                 keys = combo.split(",")
-                stroke.append("C-J")
-                self.mapping = combo_mapper(self.mapping, keys, skk.under_latinmode(*stroke))
+                self.mapping = combo_mapper(self.mapping, keys, SKK_TO_KANAMODE.send(*stroke))
 
     keymap_global["U1-X"] = KeyCombo(keymap).mapping
 
