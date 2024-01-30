@@ -572,8 +572,8 @@ def configure(keymap):
             else:
                 IME_CONTROL.reconvert_with_skk()
 
-    keymap_global["U0-Back"] = LazyFunc(re_input_with_skk).defer()
     keymap_global["U1-Back"] = LazyFunc(re_input_with_skk).defer()
+    keymap_global["U1-F9"] = LazyFunc(re_input_with_skk).defer()
 
     def moko(search_all: bool = False) -> Callable:
         exe_path = PathHandler(r"Personal\tools\bin\moko.exe", True)
@@ -947,6 +947,7 @@ def configure(keymap):
     keymap_global["U1-B"] = SIMPLE_SKK.under_kanamode(
         "S-Left", IME_CONTROL.reconv_key, IME_CONTROL.cancel_key
     )
+    keymap_global["U0-Back"] = keymap_global["U1-B"]
 
     # select last with skk-abbrev-mode
     keymap_global["U1-N"] = SIMPLE_SKK.under_kanamode("S-Left", "Slash")
