@@ -318,12 +318,14 @@ def configure(keymap):
             latin_key: str = "L",
             cancel_key: str = "C-G",
             reconv_key: str = "LWin-Slash",
+            abbrev_key: str = "Slash",
         ) -> None:
             self._keymap = keymap
             self._kana_key = kana_key
             self._latin_key = latin_key
             self._cancel_key = cancel_key
             self._reconv_key = reconv_key
+            self._abbrev_key = abbrev_key
             self._finger = VirtualFinger(self._keymap, 0)
 
         @property
@@ -341,6 +343,10 @@ def configure(keymap):
         @property
         def reconv_key(self) -> str:
             return self._reconv_key
+
+        @property
+        def abbrev_key(self) -> str:
+            return self._abbrev_key
 
         def get_status(self) -> int:
             return self._keymap.getWindow().getImeStatus()
@@ -943,18 +949,13 @@ def configure(keymap):
 
     SIMPLE_SKK = SimpleSKK(keymap)
 
-    # reconvert last char
-    keymap_global["U1-B"] = SIMPLE_SKK.under_kanamode(
-        "S-Left", IME_CONTROL.reconv_key, IME_CONTROL.cancel_key
-    )
-    keymap_global["U0-Back"] = keymap_global["U1-B"]
 
-    # select last with skk-abbrev-mode
-    keymap_global["U1-N"] = SIMPLE_SKK.under_kanamode("S-Left", "Slash")
-
-    # select last word with ime control
+    # select left word with ime control
+    keymap_global["U1-B"] = SIMPLE_SKK.under_kanamode("S-Left")
+    keymap_global["S-U1-B"] = SIMPLE_SKK.under_latinmode("S-Left")
     keymap_global["U1-Space"] = SIMPLE_SKK.under_kanamode("C-S-Left")
     keymap_global["LS-U1-Space"] = SIMPLE_SKK.under_latinmode("C-S-Left")
+    keymap_global["U1-N"] = SIMPLE_SKK.under_kanamode("S-Left", IME_CONTROL.abbrev_key)
 
     class SKK:
         def __init__(self, keymap: Keymap, finish_with_kanamode: bool = True) -> None:
