@@ -949,12 +949,13 @@ def configure(keymap):
 
     SIMPLE_SKK = SimpleSKK(keymap)
 
-
-    # select left word with ime control
+    # select-to-left with ime control
     keymap_global["U1-B"] = SIMPLE_SKK.under_kanamode("S-Left")
-    keymap_global["S-U1-B"] = SIMPLE_SKK.under_latinmode("S-Left")
-    keymap_global["U1-Space"] = SIMPLE_SKK.under_kanamode("C-S-Left")
-    keymap_global["LS-U1-Space"] = SIMPLE_SKK.under_latinmode("C-S-Left")
+    keymap_global["LC-U1-B"] = SIMPLE_SKK.under_kanamode("C-S-Left")
+    keymap_global["U1-Space"] = keymap_global["LC-U1-B"]
+    keymap_global["LS-U1-B"] = SIMPLE_SKK.under_latinmode("S-Left")
+    keymap_global["LC-LS-U1-B"] = SIMPLE_SKK.under_latinmode("C-S-Left")
+    keymap_global["LS-U1-Space"] = keymap_global["LC-LS-U1-B"]
     keymap_global["U1-N"] = SIMPLE_SKK.under_kanamode("S-Left", IME_CONTROL.abbrev_key)
 
     class SKK:
