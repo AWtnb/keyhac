@@ -928,9 +928,7 @@ def configure(keymap):
             self,
             keymap: Keymap,
             inter_stroke_pause: int = 0,
-            defer_msec: int = 0,
         ) -> None:
-            self._defer_msec = defer_msec
             self._finger = VirtualFinger(keymap, inter_stroke_pause)
 
         def under_kanamode(self, *sequence) -> Callable:
