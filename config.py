@@ -230,6 +230,9 @@ def configure(keymap):
             "U0-U": "S-BackSlash",
             "U0-Z": ("Minus"),
             "BackSlash": ("S-BackSlash"),
+            "U1-S": ("Slash"),
+            "LS-U0-P": ("LS-Slash"),
+            "LC-U0-P": ("LS-1"),
             # emacs-like backchar
             "LC-H": ("Back"),
             # Insert line
@@ -251,11 +254,6 @@ def configure(keymap):
             "F1": ("C-P"),
             "U1-F1": ("F1"),
             "Insert": (lambda: None),
-            # punctuation
-            "U1-S": ("Slash"),
-            "O-(236)": ("Slash"),
-            "LS-U0-P": ("LS-Slash"),
-            "LC-U0-P": ("LS-1"),
         }
     ).apply(keymap_global)
 
@@ -460,6 +458,7 @@ def configure(keymap):
     keymap_global["U1-I"] = IME_CONTROL.reconvert_with_skk
     keymap_global["U1-R"] = IME_CONTROL.reconvert_with_skk
     keymap_global["U0-R"] = IME_CONTROL.reconvert_with_skk
+    keymap_global["O-(236)"] = IME_CONTROL.abbrev_key
 
     # paste as plaintext
     keymap_global["U0-V"] = LazyFunc(ClipHandler().paste_current).defer()
