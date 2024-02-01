@@ -444,13 +444,14 @@ def configure(keymap):
             self._recover_ime = recover_ime
             self._defer_msec = defer_msec
             self._finger = VirtualFinger(keymap, inter_stroke_pause)
+            self._control = ImeControl(keymap)
 
         def invoke(self, *sequence) -> Callable:
             def _input() -> None:
-                IME_CONTROL.disable()
+                self._control.disable()
                 self._finger.type_smart(*sequence)
                 if self._recover_ime:
-                    IME_CONTROL.enable()
+                    self._control.enable()
 
             return LazyFunc(_input).defer(self._defer_msec)
 
@@ -930,17 +931,18 @@ def configure(keymap):
             inter_stroke_pause: int = 0,
         ) -> None:
             self._finger = VirtualFinger(keymap, inter_stroke_pause)
+            self._control = ImeControl(keymap)
 
         def under_kanamode(self, *sequence) -> Callable:
             def _send() -> None:
-                IME_CONTROL.enable_skk()
+                self._control.enable_skk()
                 self._finger.type_smart(*sequence)
 
             return _send
 
         def under_latinmode(self, *sequence) -> Callable:
             def _send() -> None:
-                IME_CONTROL.to_skk_latin()
+                self._control.to_skk_latin()
                 self._finger.type_smart(*sequence)
 
             return _send
