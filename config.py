@@ -310,7 +310,7 @@ def configure(keymap):
 
     class ImeControl:
         kana_key = "C-J"
-        latin_key = "L"
+        latin_key = "S-L"
         cancel_key = "C-G"
         reconv_key = "LWin-Slash"
         abbrev_key = "Slash"
