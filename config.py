@@ -1928,9 +1928,9 @@ def configure(keymap):
         @staticmethod
         def get_time(s) -> str:
             try:
-                d = datetime.datetime.strptime(s, "時刻: %Y年%m月%d日 %I:%M %p 大阪、札幌、東京")
+                d = datetime.datetime.strptime(s, "時刻: %Y年%m月%d日 %H:%M 大阪、札幌、東京")
                 week = "月火水木金土日"[d.weekday()]
-                return (d.strftime("%Y年%m月%d日（{}） %p %I:%M～")).format(week)
+                return (d.strftime("%Y年%m月%d日（{}） %H:%M～")).format(week)
             except:
                 return ""
 
