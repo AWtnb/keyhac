@@ -1897,14 +1897,6 @@ def configure(keymap):
         }
     ).apply(keymap_filer)
 
-    keymap_tablacus = keymap.defineWindowKeymap(check_func=CheckWnd.is_tablacus_viewmode)
-
-    def tablacus_fuzzy_tools(wnd_keymap: WindowKeymap) -> None:
-        for key in ("Z", "A-Z", "S-Z", "A-U", "A-S-S", "A-S-D", "A-S-U"):
-            wnd_keymap["D-" + key] = key
-
-    tablacus_fuzzy_tools(keymap_tablacus)
-
     ################################
     # popup clipboard menu
     ################################
