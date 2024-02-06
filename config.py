@@ -2050,6 +2050,7 @@ def configure(keymap):
                     cls.replace_cb(r"[\uff08\u0028].+?[\uff09\u0029]", ""),
                 ),
                 ("         - Line-break ", cls.replace_cb(r"\r?\n", "")),
+                ("         - Non-digit-char ", cls.replace_cb(r"[^\d]", "")),
                 ("         - Quotations ", cls.replace_cb(r"[\u0022\u0027]", "")),
                 (" Fix: - Dumb Quotation ", cls.format_cb(cls.fix_dumb_quotation)),
                 ("      - MSWord-Bullet ", cls.replace_cb(r"\uf09f\u0009", "\u30fb")),
