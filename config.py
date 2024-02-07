@@ -1927,7 +1927,10 @@ def configure(keymap):
                 except:
                     return ""
             week = "月火水木金土日"[d.weekday()]
-            return (d.strftime("%Y年%m月%d日（{}） %p %I:%M～")).format(week)
+            ampm = ""
+            if d.hour < 12:
+                ampm = "AM "
+            return (d.strftime("%Y年%m月%d日（{}） {}%H:%M～")).format(week, ampm)
 
         @classmethod
         def to_field(cls, s: str, prefix: str) -> str:
