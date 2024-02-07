@@ -1920,16 +1920,14 @@ def configure(keymap):
         @staticmethod
         def get_time(s) -> str:
             try:
-                try:
-                    d = datetime.datetime.strptime(s, "時刻: %Y年%m月%d日 %I:%M %p 大阪、札幌、東京")
-                    week = "月火水木金土日"[d.weekday()]
-                    return (d.strftime("%Y年%m月%d日（{}） %p %I:%M～")).format(week)
-                except:
-                    d = datetime.datetime.strptime(s, "時刻: %Y年%m月%d日 %H:%M 大阪、札幌、東京")
-                    week = "月火水木金土日"[d.weekday()]
-                    return (d.strftime("%Y年%m月%d日（{}） %H:%M～")).format(week)
+                d = datetime.datetime.strptime(s, "時刻: %Y年%m月%d日 %I:%M %p 大阪、札幌、東京")
             except:
-                return ""
+                try:
+                    d = datetime.datetime.strptime(s, "時刻: %Y年%m月%d日 %H:%M 大阪、札幌、東京")
+                except:
+                    return ""
+            week = "月火水木金土日"[d.weekday()]
+            return (d.strftime("%Y年%m月%d日（{}） %p %I:%M～")).format(week)
 
         @classmethod
         def to_field(cls, s: str, prefix: str) -> str:
