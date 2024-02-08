@@ -1724,7 +1724,7 @@ def configure(keymap):
         if scanner.found:
             if PSEUDO_CUTEEXEC.activate_wnd(scanner.found):
                 return
-            PathHandler(r"scoop\apps\wezterm\current\wezterm-gui.exe", True).run()
+        PathHandler(r"scoop\apps\wezterm\current\wezterm-gui.exe", True).run()
 
     keymap_global["LC-AtMark"] = LazyFunc(invoke_terminal).defer()
 
