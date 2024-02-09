@@ -681,8 +681,7 @@ def configure(keymap):
             return []
 
     class MonitorRect:
-        def __init__(self, rect: list, is_primary: int) -> None:
-            self.is_primary = is_primary  # 0 or 1
+        def __init__(self, rect: list) -> None:
             self.left, self.top, self.right, self.bottom = rect
             self.max_width = self.right - self.left
             self.max_height = self.bottom - self.top
@@ -729,22 +728,20 @@ def configure(keymap):
 
     class CurrentMonitors:
         def __init__(self) -> None:
-            self.monitors = []
+            ms = []
             for mi in pyauto.Window.getMonitorInfo():
-                mr = MonitorRect(rect=mi[1], is_primary=mi[2])
+                mr = MonitorRect(rect=mi[1])
                 mr.set_center_rect()
                 mr.set_horizontal_rect()
                 mr.set_vertical_rect()
-                self.monitors.append(mr)
+                if mi[2] == 1:  # main monitor
+                    ms.insert(0, mr)
+                else:
+                    ms.append(mr)
+            self._monitors = ms
 
-        def is_multi_widths(self) -> bool:
-            variation = [m.max_width for m in self.monitors]
-            return len(set(variation)) != 1
-
-        def get_info(self) -> list:
-            if self.is_multi_widths():
-                return sorted(self.monitors, key=lambda x: x.max_width, reverse=True)
-            return sorted(self.monitors, key=lambda x: x.is_primary, reverse=True)
+        def monitors(self) -> list:
+            return self._monitors
 
     ################################
     # set cursor position
@@ -759,7 +756,7 @@ def configure(keymap):
         def __init__(self) -> None:
             self._keymap = keymap
             self.pos = []
-            monitors = CurrentMonitors().get_info()
+            monitors = CurrentMonitors().monitors()
             for monitor in monitors:
                 for i in (1, 3):
                     y = monitor.top + int(monitor.max_height / 2)
@@ -832,7 +829,7 @@ def configure(keymap):
             self._keymap = keymap
 
         def alloc_flexible(self, km: WindowKeymap) -> None:
-            monitors = CurrentMonitors().get_info()
+            monitors = CurrentMonitors().monitors()
             for mod_mntr, mntr_idx in self.monitor_dict.items():
                 for mod_area, size in self.size_dict.items():
                     for key, pos in self.snap_key_dict.items():
