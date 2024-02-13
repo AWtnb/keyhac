@@ -635,7 +635,12 @@ def configure(keymap):
     ################################
 
     class WndRect:
-        def __init__(self, left: int, top: int, right: int, bottom: int) -> None:
+        def __init__(self, keymap: Keymap) -> None:
+            self._keymap = keymap
+            self._rect = (0, 0, 0, 0)
+            self.left, self.top, self.right, self.bottom = self._rect
+
+        def set_rect(self, left: int, top: int, right: int, bottom: int) -> None:
             self._rect = (left, top, right, bottom)
             self.left, self.top, self.right, self.bottom = self._rect
 
@@ -643,7 +648,7 @@ def configure(keymap):
             return wnd.getRect() == self._rect
 
         def snap(self) -> None:
-            wnd = keymap.getTopLevelWindow()
+            wnd = self._keymap.getTopLevelWindow()
             if self.check_rect(wnd):
                 wnd.maximize()
                 return
@@ -681,7 +686,8 @@ def configure(keymap):
             return []
 
     class MonitorRect:
-        def __init__(self, rect: list) -> None:
+        def __init__(self, keymap: Keymap, rect: list) -> None:
+            self._keymap = keymap
             self.left, self.top, self.right, self.bottom = rect
             self.max_width = self.right - self.left
             self.max_height = self.bottom - self.top
@@ -693,7 +699,9 @@ def configure(keymap):
             d = {}
             for size, px in self.possible_width.items():
                 lx = self.left + int((self.max_width - px) / 2)
-                d[size] = WndRect(lx, self.top, lx + px, self.bottom)
+                wr = WndRect(self._keymap)
+                wr.set_rect(lx, self.top, lx + px, self.bottom)
+                d[size] = wr
             self.area_mapping["center"] = d
 
         def set_horizontal_rect(self) -> None:
@@ -704,7 +712,9 @@ def configure(keymap):
                         lx = self.right - px
                     else:
                         lx = self.left
-                    d[size] = WndRect(lx, self.top, lx + px, self.bottom)
+                    wr = WndRect(self._keymap)
+                    wr.set_rect(lx, self.top, lx + px, self.bottom)
+                    d[size] = wr
                 self.area_mapping[pos] = d
 
         def set_vertical_rect(self) -> None:
@@ -715,7 +725,9 @@ def configure(keymap):
                         ty = self.bottom - px
                     else:
                         ty = self.top
-                    d[size] = WndRect(self.left, ty, self.right, ty + px)
+                    wr = WndRect(self._keymap)
+                    wr.set_rect(self.left, ty, self.right, ty + px)
+                    d[size] = wr
                 self.area_mapping[pos] = d
 
         @staticmethod
@@ -727,10 +739,10 @@ def configure(keymap):
             }
 
     class CurrentMonitors:
-        def __init__(self) -> None:
+        def __init__(self, keymap: Keymap) -> None:
             ms = []
             for mi in pyauto.Window.getMonitorInfo():
-                mr = MonitorRect(rect=mi[1])
+                mr = MonitorRect(keymap, mi[1])
                 mr.set_center_rect()
                 mr.set_horizontal_rect()
                 mr.set_vertical_rect()
@@ -753,10 +765,10 @@ def configure(keymap):
     keymap_global["U0-Right"] = keymap.MouseHorizontalWheelCommand(+0.5)
 
     class CursorPos:
-        def __init__(self) -> None:
+        def __init__(self, keymap: Keymap) -> None:
             self._keymap = keymap
             self.pos = []
-            monitors = CurrentMonitors().monitors()
+            monitors = CurrentMonitors(keymap).monitors()
             for monitor in monitors:
                 for i in (1, 3):
                     y = monitor.top + int(monitor.max_height / 2)
@@ -789,9 +801,11 @@ def configure(keymap):
             to_y = int((wnd_bottom + wnd_top) / 2)
             self.set_position(to_x, to_y)
 
-    keymap_global["O-RCtrl"] = CursorPos().snap
+    CURSOR_POS = CursorPos(keymap)
 
-    keymap_global["U1-Enter"] = CursorPos().snap_to_center
+    keymap_global["O-RCtrl"] = CURSOR_POS.snap
+
+    keymap_global["U1-Enter"] = CURSOR_POS.snap_to_center
 
     ################################
     # set window position
@@ -825,11 +839,11 @@ def configure(keymap):
             "M": "center",
         }
 
-        def __init__(self) -> None:
+        def __init__(self, keymap: keymap) -> None:
             self._keymap = keymap
 
         def alloc_flexible(self, km: WindowKeymap) -> None:
-            monitors = CurrentMonitors().monitors()
+            monitors = CurrentMonitors(self._keymap).monitors()
             for mod_mntr, mntr_idx in self.monitor_dict.items():
                 for mod_area, size in self.size_dict.items():
                     for key, pos in self.snap_key_dict.items():
@@ -847,10 +861,11 @@ def configure(keymap):
 
                 km[key] = LazyFunc(_snap).defer()
 
-    WndPosAllocator().alloc_flexible(keymap_global["U1-M"])
+    WND_POS_ALLOCATOR = WndPosAllocator(keymap)
+    WND_POS_ALLOCATOR.alloc_flexible(keymap_global["U1-M"])
 
-    WndPosAllocator().alloc_maximize(keymap_global, {"LC-U1-L": "Right", "LC-U1-H": "Left"})
-    WndPosAllocator().alloc_maximize(
+    WND_POS_ALLOCATOR.alloc_maximize(keymap_global, {"LC-U1-L": "Right", "LC-U1-H": "Left"})
+    WND_POS_ALLOCATOR.alloc_maximize(
         keymap_global["U1-M"],
         {
             "U0-L": "Right",
@@ -861,13 +876,14 @@ def configure(keymap):
     )
 
     class WndShrinker:
-        def __init__(self) -> None:
+        def __init__(self, keymap: Keymap) -> None:
             self._keymap = keymap
 
         def invoke_snapper(self, horizontal: bool, default_pos: bool) -> Callable:
             def _snap() -> None:
                 wnd = self._keymap.getTopLevelWindow()
-                wr = WndRect(*wnd.getRect())
+                wr = WndRect(self._keymap)
+                wr.set_rect(*wnd.getRect())
                 rect = []
                 if horizontal:
                     rect = wr.get_horizontal_half(default_pos)
@@ -890,7 +906,7 @@ def configure(keymap):
             }.items():
                 km["U1-" + key] = self.invoke_snapper(**params)
 
-    WndShrinker().apply(keymap_global["U1-M"])
+    WndShrinker(keymap).apply(keymap_global["U1-M"])
 
     ################################
     # input customize
