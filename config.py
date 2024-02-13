@@ -559,11 +559,11 @@ def configure(keymap):
 
     def moko(search_all: bool = False) -> Callable:
         exe_path = PathHandler(r"Personal\tools\bin\moko.exe", True)
-        src_path = PathHandler.resolve_user_profile(r"Personal\launch.yaml")
+        src_path = PathHandler(r"Personal\launch.yaml", True)
 
         def _launcher() -> None:
             exe_path.run(
-                "-src={}".format(src_path),
+                "-src={}".format(src_path.path),
                 "-filer={}".format(KEYHAC_FILER),
                 "-all={}".format(search_all),
                 "-exclude=_obsolete,node_modules",
