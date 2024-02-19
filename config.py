@@ -806,6 +806,7 @@ def configure(keymap):
     keymap_global["O-RCtrl"] = CURSOR_POS.snap
 
     keymap_global["U1-Enter"] = CURSOR_POS.snap_to_center
+    keymap_global["O-RShift"] = CURSOR_POS.snap_to_center
 
     ################################
     # set window position
