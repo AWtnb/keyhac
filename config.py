@@ -229,7 +229,6 @@ def configure(keymap):
             "LC-U0-Enter": ("Slash"),
             "U0-U": "S-BackSlash",
             "U0-Z": ("Minus"),
-            "BackSlash": ("S-BackSlash"),
             "U1-S": ("Slash"),
             "LS-U0-P": ("LS-Slash"),
             "LC-U0-P": ("LS-1"),
