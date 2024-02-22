@@ -429,8 +429,15 @@ def configure(keymap):
 
             return LazyFunc(_input).defer(self._defer_msec)
 
-    LAZY_PUNCHER = KeyPuncher(keymap, defer_msec=20)
-    QUICK_PUNCHER = KeyPuncher(keymap)
+    MILD_PUNCHER = KeyPuncher(keymap, defer_msec=20)
+    SOFT_PUNCHER = KeyPuncher(keymap, defer_msec=50)
+
+    def defer_winnumkey(km: WindowKeymap) -> None:
+        for n in "123456789":
+            k = "LWin-" + n
+            km[k] = SOFT_PUNCHER.invoke(k)
+
+    defer_winnumkey(keymap_global)
 
     ################################
     # release CapsLock on reload
@@ -1788,7 +1795,7 @@ def configure(keymap):
 
     def remap_vscode(keys: list, km: WindowKeymap) -> Callable:
         for key in keys:
-            km[key] = LAZY_PUNCHER.invoke(key)
+            km[key] = MILD_PUNCHER.invoke(key)
 
     remap_vscode(
         [
