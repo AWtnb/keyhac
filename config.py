@@ -2018,6 +2018,10 @@ def configure(keymap):
             return ""
 
         @staticmethod
+        def as_codeblock(s: str) -> str:
+            return "\n".join(["```", s, "```"])
+
+        @staticmethod
         def skip_blank_line(s: str) -> str:
             lines = s.strip().splitlines()
             return os.linesep.join([l for l in lines if l.strip()])
@@ -2095,6 +2099,7 @@ def configure(keymap):
         @classmethod
         def get_menu_other(cls) -> list:
             return [
+                (" As md-codeblock ", cls.format_cb(cls.as_codeblock)),
                 (" Cat local file ", cls.format_cb(cls.catanate_file_content)),
                 (" Postalcode | Address ", cls.format_cb(cls.split_postalcode)),
                 (" URL: - Decode ", cls.format_cb(cls.decode_url)),
