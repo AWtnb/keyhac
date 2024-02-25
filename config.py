@@ -193,7 +193,7 @@ def configure(keymap):
 
     CoreKeys().cursor_keys(keymap_global)
     # CoreKeys().ignore_capslock(keymap_global)
-    CoreKeys().ignore_kanakey(keymap_global)
+    # CoreKeys().ignore_kanakey(keymap_global)
 
     class KeyAllocator:
         def __init__(self, mapping_dict: dict) -> None:
