@@ -230,6 +230,7 @@ def configure(keymap):
             "U0-U": "S-BackSlash",
             "U0-Z": ("Minus"),
             "U1-S": ("Slash"),
+            "U1-E": ("S-Minus"),
             "LS-U0-P": ("LS-Slash"),
             "LC-U0-P": ("LS-1"),
             # emacs-like backchar
