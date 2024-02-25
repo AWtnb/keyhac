@@ -192,7 +192,7 @@ def configure(keymap):
                         km[mod_key + stat + str(vk)] = lambda: None
 
     CoreKeys().cursor_keys(keymap_global)
-    CoreKeys().ignore_capslock(keymap_global)
+    # CoreKeys().ignore_capslock(keymap_global)
     CoreKeys().ignore_kanakey(keymap_global)
 
     class KeyAllocator:
