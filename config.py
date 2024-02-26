@@ -1034,22 +1034,22 @@ def configure(keymap):
     )
 
     class DateInput:
-        def __init__(self, km: WindowKeymap) -> None:
-            self._keymap = km
+        def __init__(self) -> None:
+            pass
 
         @staticmethod
-        def invoke(fmt: str, after_mode_is_kana: bool = False) -> Callable:
+        def invoke(fmt: str, finish_with_kanamode: bool = False) -> Callable:
             def _input() -> None:
                 d = datetime.datetime.today()
                 seq = [c for c in d.strftime(fmt)]
-                if after_mode_is_kana:
+                if finish_with_kanamode:
                     SKK_TO_KANAMODE.send(*seq)()
                 else:
                     SKK_TO_LATINMODE.send(*seq)()
 
-            return LazyFunc(_input).defer()
+            return LazyFunc(_input).defer(50)
 
-        def apply(self) -> None:
+        def apply(self, km: WindowKeymap) -> None:
             for key, params in {
                 "1": ("%Y%m%d", False),
                 "2": ("%Y/%m/%d", False),
@@ -1064,10 +1064,10 @@ def configure(keymap):
                 "M": ("%Y%m", False),
                 "J": ("%Y年%#m月%#d日", True),
             }.items():
-                self._keymap[key] = self.invoke(*params)
+                km[key] = self.invoke(*params)
 
     keymap_global["U1-D"] = keymap.defineMultiStrokeKeymap()
-    DateInput(keymap_global["U1-D"]).apply()
+    DateInput().apply(keymap_global["U1-D"])
 
     ################################
     # pseudo espanso
