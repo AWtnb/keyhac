@@ -436,12 +436,6 @@ def configure(keymap):
     MILD_PUNCHER = KeyPuncher(keymap, defer_msec=20)
     SOFT_PUNCHER = KeyPuncher(keymap, defer_msec=50)
 
-    def defer_winnumkey(km: WindowKeymap) -> None:
-        for n in "123456789":
-            k = "LWin-" + n
-            km[k] = SOFT_PUNCHER.invoke(k)
-
-    defer_winnumkey(keymap_global)
 
     ################################
     # release CapsLock on reload
