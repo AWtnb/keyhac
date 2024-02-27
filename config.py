@@ -457,13 +457,14 @@ def configure(keymap):
 
     # ime: Japanese / Foreign
     keymap_global["U1-J"] = IME_CONTROL.enable_skk
+    keymap_global["LC-U1-J"] = IME_CONTROL.to_skk_abbrev
     keymap_global["U0-F"] = IME_CONTROL.to_skk_latin
     keymap_global["S-U0-F"] = IME_CONTROL.enable_skk
     keymap_global["S-U1-J"] = IME_CONTROL.to_skk_latin
     keymap_global["U1-I"] = IME_CONTROL.reconvert_with_skk
     keymap_global["U1-R"] = IME_CONTROL.reconvert_with_skk
     keymap_global["U0-R"] = IME_CONTROL.reconvert_with_skk
-    keymap_global["O-(236)"] = IME_CONTROL.to_skk_abbrev
+    keymap_global["O-(236)"] = IME_CONTROL.abbrev_key
 
     # paste as plaintext
     keymap_global["U0-V"] = LazyFunc(ClipHandler().paste_current).defer()
