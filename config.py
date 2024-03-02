@@ -585,7 +585,7 @@ def configure(keymap):
     ################################
 
     class ConfigMenu:
-        def __init__(self) -> None:
+        def __init__(self, keymap: Keymap) -> None:
             self._keymap = keymap
 
         @staticmethod
@@ -638,9 +638,9 @@ def configure(keymap):
                 km[key] = LazyFunc(func).defer()
 
     keymap_global["LC-U0-X"] = keymap.defineMultiStrokeKeymap()
-    ConfigMenu().apply(keymap_global["LC-U0-X"])
+    ConfigMenu(keymap).apply(keymap_global["LC-U0-X"])
 
-    keymap_global["U1-F12"] = ConfigMenu().reload_config
+    keymap_global["U1-F12"] = ConfigMenu(keymap).reload_config
 
     ################################
     # class for position on monitor
