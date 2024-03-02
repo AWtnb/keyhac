@@ -589,8 +589,9 @@ def configure(keymap):
             self._keymap = keymap
 
         @staticmethod
-        def read_config() -> str:
-            return Path(getAppExePath(), "config.py").read_text("utf-8")
+        def paste_config() -> None:
+            s = Path(getAppExePath(), "config.py").read_text("utf-8")
+            ClipHandler().paste(s)
 
         def reload_config(self) -> None:
             self._keymap.configure()
@@ -616,6 +617,10 @@ def configure(keymap):
             skk_path.run()
 
         @staticmethod
+        def open_skk_lua() -> None:
+            PathHandler(r"AppData\Roaming\CorvusSKK\init.lua", True).run()
+
+        @staticmethod
         def open_skk_dir() -> None:
             skk_dir_path = PathHandler.resolve_user_profile(r"AppData\Roaming\CorvusSKK")
             PathHandler(KEYHAC_FILER).run(skk_dir_path)
@@ -624,9 +629,10 @@ def configure(keymap):
             for key, func in {
                 "R": self.reload_config,
                 "E": self.open_repo,
-                "P": lambda: ClipHandler().paste(self.read_config()),
+                "P": self.paste_config,
                 "S": self.open_skk_config,
                 "S-S": self.open_skk_dir,
+                "C-S": self.open_skk_lua,
                 "X": lambda: None,
             }.items():
                 km[key] = LazyFunc(func).defer()
