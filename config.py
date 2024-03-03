@@ -617,10 +617,6 @@ def configure(keymap):
             skk_path.run()
 
         @staticmethod
-        def open_skk_lua() -> None:
-            PathHandler(r"AppData\Roaming\CorvusSKK\init.lua", True).run()
-
-        @staticmethod
         def open_skk_dir() -> None:
             skk_dir_path = PathHandler.resolve_user_profile(r"AppData\Roaming\CorvusSKK")
             PathHandler(KEYHAC_FILER).run(skk_dir_path)
@@ -632,7 +628,6 @@ def configure(keymap):
                 "P": self.paste_config,
                 "S": self.open_skk_config,
                 "S-S": self.open_skk_dir,
-                "C-S": self.open_skk_lua,
                 "X": lambda: None,
             }.items():
                 km[key] = LazyFunc(func).defer()
