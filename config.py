@@ -600,8 +600,7 @@ def configure(keymap):
             print("\n{} reloaded config.py\n".format(ts))
 
         @staticmethod
-        def open_repo() -> None:
-            repo_path = PathHandler(r"Sync\develop\repo\keyhac", True)
+        def open_repo(repo_path: PathHandler) -> None:
             if repo_path.is_accessible():
                 if KEYHAC_EDITOR == "notepad.exe":
                     print("notepad.exe cannot open directory. instead, open directory on explorer.")
@@ -610,6 +609,14 @@ def configure(keymap):
                     PathHandler(KEYHAC_EDITOR).run(repo_path.path)
             else:
                 print("cannot find path: '{}'".format(repo_path.path))
+
+        def open_keyhac_repo(self) -> None:
+            repo_path = PathHandler(r"Sync\develop\repo\keyhac", True)
+            self.open_repo(repo_path)
+
+        def open_skk_repo(self) -> None:
+            repo_path = PathHandler(r"Sync\develop\repo\CorvusSKK", True)
+            self.open_repo(repo_path)
 
         @staticmethod
         def open_skk_config() -> None:
@@ -624,7 +631,8 @@ def configure(keymap):
         def apply(self, km: WindowKeymap) -> None:
             for key, func in {
                 "R": self.reload_config,
-                "E": self.open_repo,
+                "E": self.open_keyhac_repo,
+                "C-E": self.open_skk_repo,
                 "P": self.paste_config,
                 "S": self.open_skk_config,
                 "S-S": self.open_skk_dir,
