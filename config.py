@@ -464,7 +464,7 @@ def configure(keymap):
     keymap_global["U1-J"] = IME_CONTROL.enable_skk
     keymap_global["LC-U1-J"] = IME_CONTROL.to_skk_abbrev
     keymap_global["O-LCtrl"] = IME_CONTROL.to_skk_abbrev
-    keymap_global["LC-U1-I"] = IME_CONTROL.to_skk_kata
+    keymap_global["O-RShift"] = IME_CONTROL.to_skk_kata
     keymap_global["U0-F"] = IME_CONTROL.to_skk_latin
     keymap_global["S-U0-F"] = IME_CONTROL.enable_skk
     keymap_global["U1-I"] = IME_CONTROL.reconvert_with_skk
@@ -827,7 +827,6 @@ def configure(keymap):
     keymap_global["O-RCtrl"] = CURSOR_POS.snap
 
     keymap_global["U1-Enter"] = CURSOR_POS.snap_to_center
-    keymap_global["O-RShift"] = CURSOR_POS.snap_to_center
 
     ################################
     # set window position
