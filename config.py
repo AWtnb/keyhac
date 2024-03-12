@@ -1852,8 +1852,10 @@ def configure(keymap):
     # sumatra PDF
     keymap_sumatra = keymap.defineWindowKeymap(check_func=CheckWnd.is_sumatra)
 
-    keymap_sumatra["C-S-F"] = SIMPLE_SKK.under_latinmode("C-Home", "Esc", "C-F", "C-J")
-    keymap_sumatra["LA-X"] = SIMPLE_SKK.under_latinmode("C-Home", "Esc", "C-F", "C-J")
+    def search_from_top() -> None:
+        SIMPLE_SKK.under_latinmode("C-Home", "Esc", "C-F", "C-J")()
+    keymap_sumatra["C-S-F"] = search_from_top
+    keymap_sumatra["LC-E"] = search_from_top
 
     keymap_sumatra_inputmode = keymap.defineWindowKeymap(check_func=CheckWnd.is_sumatra_inputmode)
 
@@ -1874,7 +1876,7 @@ def configure(keymap):
     keymap_sumatra_viewmode["F"] = SIMPLE_SKK.under_kanamode("C-F")
     keymap_sumatra_viewmode["H"] = "C-S-Tab"
     keymap_sumatra_viewmode["L"] = "C-Tab"
-    keymap_sumatra_viewmode["X"] = SIMPLE_SKK.under_latinmode("C-Home", "Esc", "C-F", "C-J")
+    keymap_sumatra_viewmode["X"] = search_from_top
 
     def office_to_pdf(km: WindowKeymap, key: str = "F11") -> None:
         km[key] = "A-F", "E", "P", "A"
