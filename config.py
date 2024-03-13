@@ -436,7 +436,6 @@ def configure(keymap):
     MILD_PUNCHER = KeyPuncher(keymap, defer_msec=20)
     SOFT_PUNCHER = KeyPuncher(keymap, defer_msec=50)
 
-
     ################################
     # release CapsLock on reload
     ################################
@@ -990,7 +989,11 @@ def configure(keymap):
     SKK_TO_LATINMODE = SKK(keymap, False)
 
     # insert honorific
-    keymap_global["U0-Tab"] = SKK_TO_KANAMODE.send("\u5148\u751f") # 先生
+    def apply_honorific(km: WindowKeymap) -> None:
+        for key, hono in {"U0": "先生", "U1": "様"}.items():
+            for mod, suffix in {"": "", "C-": "方"}.items():
+                km[mod + key + "-Tab"] = SKK_TO_KANAMODE.send(hono + suffix)
+    apply_honorific(keymap_global)
 
     # markdown list
     keymap_global["S-U0-8"] = SKK_TO_KANAMODE.send("- ")
@@ -1852,6 +1855,7 @@ def configure(keymap):
 
     def search_from_top() -> None:
         SIMPLE_SKK.under_latinmode("C-Home", "Esc", "C-F", "C-J")()
+
     keymap_sumatra["C-S-F"] = search_from_top
     keymap_sumatra["LC-E"] = search_from_top
 
