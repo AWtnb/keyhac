@@ -241,9 +241,6 @@ def configure(keymap):
             # Context menu
             "U0-C": ("Apps"),
             "S-U0-C": ("S-F10"),
-            # indent / outdent
-            "U1-Tab": ("LC-CloseBracket"),
-            "LS-U1-Tab": ("LC-OpenBracket"),
             # rename
             "U0-N": ("F2", "Right"),
             "S-U0-N": ("F2", "C-Home"),
