@@ -219,8 +219,6 @@ def configure(keymap):
             "LC-Q": ("A-F4"),
             # select last character
             "U1-U": ("LS-Left"),
-            # SKK: contbvert to first suggestion
-            "U0-Tab": ("C-N", "C-J"),
             # line selection
             "U1-A": ("End", "S-Home"),
             # punctuation
@@ -993,6 +991,9 @@ def configure(keymap):
 
     SKK_TO_KANAMODE = SKK(keymap, True)
     SKK_TO_LATINMODE = SKK(keymap, False)
+
+    # insert honorific
+    keymap_global["U0-Tab"] = SKK_TO_KANAMODE.send("\u5148\u751f") # 先生
 
     # markdown list
     keymap_global["S-U0-8"] = SKK_TO_KANAMODE.send("- ")
