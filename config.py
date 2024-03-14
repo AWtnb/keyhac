@@ -991,6 +991,7 @@ def configure(keymap):
         for key, hono in {"U0": "先生", "U1": "様"}.items():
             for mod, suffix in {"": "", "C-": "方"}.items():
                 km[mod + key + "-Tab"] = SKK_TO_KANAMODE.send(hono + suffix)
+
     apply_honorific(keymap_global)
 
     # markdown list
@@ -1849,11 +1850,9 @@ def configure(keymap):
     # sumatra PDF
     keymap_sumatra = keymap.defineWindowKeymap(check_func=CheckWnd.is_sumatra)
 
-    def search_from_top() -> None:
-        SIMPLE_SKK.under_latinmode("C-Home", "Esc", "C-F", "C-J")()
-
-    keymap_sumatra["C-S-F"] = search_from_top
-    keymap_sumatra["LC-E"] = search_from_top
+    keymap_sumatra["LC-E"] = SIMPLE_SKK.under_latinmode("Esc", "C-Home", "C-F", "C-J")
+    keymap_sumatra["LC-LS-F"] = keymap_sumatra["LC-E"]
+    keymap_sumatra["O-LShift"] = keymap_sumatra["LC-E"]
 
     keymap_sumatra_inputmode = keymap.defineWindowKeymap(check_func=CheckWnd.is_sumatra_inputmode)
 
@@ -1874,7 +1873,7 @@ def configure(keymap):
     keymap_sumatra_viewmode["F"] = SIMPLE_SKK.under_kanamode("C-F")
     keymap_sumatra_viewmode["H"] = "C-S-Tab"
     keymap_sumatra_viewmode["L"] = "C-Tab"
-    keymap_sumatra_viewmode["X"] = search_from_top
+    keymap_sumatra_viewmode["X"] = keymap_sumatra["LC-E"]
 
     def office_to_pdf(km: WindowKeymap, key: str = "F11") -> None:
         km[key] = "A-F", "E", "P", "A"
