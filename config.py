@@ -10,8 +10,8 @@ from winreg import HKEY_CURRENT_USER, HKEY_CLASSES_ROOT, OpenKey, QueryValueEx
 
 import pyauto
 from keyhac import *
-from keyhac_keymap import Keymap, WindowKeymap
-
+from keyhac_keymap import Keymap, WindowKeymap, VK_CAPITAL
+from ckit import getClipboardText, setClipboardText, getAppExePath
 
 def configure(keymap):
     ################################
