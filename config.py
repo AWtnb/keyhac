@@ -209,6 +209,9 @@ def configure(keymap):
 
     KeyAllocator(
         {
+            # delete 2 or 3
+            "U0-Back": ("Back",) * 2,
+            "LS-U0-Back": ("Back",) * 3,
             # delete to bol / eol
             "S-U0-B": ("S-Home", "Delete"),
             "S-U0-D": ("S-End", "Delete"),
@@ -217,8 +220,6 @@ def configure(keymap):
             "U0-X": ("Esc"),
             # close window
             "LC-Q": ("A-F4"),
-            # select last character
-            "U1-U": ("LS-Left"),
             # line selection
             "U1-A": ("End", "S-Home"),
             # punctuation
