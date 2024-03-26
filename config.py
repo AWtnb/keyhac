@@ -323,7 +323,8 @@ def configure(keymap):
             return self._keymap.getWindow().getImeStatus()
 
         def set_status(self, mode: int) -> None:
-            self._keymap.getWindow().setImeStatus(mode)
+            if self.get_status() != mode:
+                self._keymap.getWindow().setImeStatus(mode)
 
         def is_enabled(self) -> bool:
             return self.get_status() == 1
