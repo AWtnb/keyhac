@@ -458,6 +458,7 @@ def configure(keymap):
     # ime: Japanese / Foreign
     keymap_global["U1-J"] = IME_CONTROL.enable_skk
     keymap_global["O-LCtrl"] = IME_CONTROL.to_skk_abbrev
+    keymap_global["BackSlash"] = IME_CONTROL.to_skk_kata
     keymap_global["U0-F"] = IME_CONTROL.to_skk_latin
     keymap_global["S-U0-F"] = IME_CONTROL.enable_skk
     keymap_global["U1-I"] = IME_CONTROL.reconvert_with_skk
@@ -1006,7 +1007,6 @@ def configure(keymap):
             "S-U0-Comma": "\uff0c",  # FULLWIDTH COMMA
             "S-U0-Minus": "\u3000\u2015\u2015",
             "S-U0-Period": "\uff0e",  # FULLWIDTH FULL STOP
-            "S-U0-U": "S-BackSlash",
             "U0-Minus": "\u2015\u2015",  # HORIZONTAL BAR * 2
             "U0-P": "\u30fb",  # KATAKANA MIDDLE DOT
             "S-U0-SemiColon": "+ ",
