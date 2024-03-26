@@ -1022,6 +1022,7 @@ def configure(keymap):
             "U1-7": ["\u2018", "\u2019"],  # SINGLE QUOTATION MARK ‘’
             "U0-T": ["\u3014", "\u3015"],  # TORTOISE SHELL BRACKET 〔〕
             "U1-8": ["\uff08", "\uff09"],  # FULLWIDTH PARENTHESIS （）
+            "U1-Atmark": ["\uff08`", "`\uff09"],  # FULLWIDTH PARENTHESIS and BackTick （``）
             "U1-OpenBracket": ["\uff3b", "\uff3d"],  # FULLWIDTH SQUARE BRACKET ［］
         },
     )
