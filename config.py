@@ -1852,7 +1852,7 @@ def configure(keymap):
     keymap_sumatra = keymap.defineWindowKeymap(check_func=CheckWnd.is_sumatra)
 
     keymap_sumatra["F4"] = SIMPLE_SKK.under_latinmode("Esc", "C-Home", "C-F", "C-J")
-    keymap_sumatra["U1-F3"] = keymap_sumatra["F4"]
+    keymap_sumatra["U0-X"] = keymap_sumatra["F4"]
 
     keymap_sumatra_inputmode = keymap.defineWindowKeymap(check_func=CheckWnd.is_sumatra_inputmode)
 
