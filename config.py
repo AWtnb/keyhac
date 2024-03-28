@@ -13,6 +13,7 @@ from keyhac import *
 from keyhac_keymap import Keymap, WindowKeymap, VK_CAPITAL
 from ckit import getClipboardText, setClipboardText, getAppExePath
 
+
 def configure(keymap):
     ################################
     # general setting
@@ -398,7 +399,7 @@ def configure(keymap):
             cls.set_string(org + cb)
 
     class LazyFunc:
-        def __init__(self, func: Callable) -> None:
+        def __init__(self, keymap: Keymap, func: Callable) -> None:
             self._keymap = keymap
 
             def _wrapper() -> None:
@@ -412,6 +413,15 @@ def configure(keymap):
                 self._keymap.delayedCall(self._func, msec)
 
             return _executer
+
+    class LazyKeymap:
+        def __init__(self, keymap: Keymap) -> None:
+            self._keymap = keymap
+
+        def wrap(self, func: Callable) -> LazyFunc:
+            return LazyFunc(self._keymap, func)
+
+    LAZY_KEYMAP = LazyKeymap(keymap)
 
     class KeyPuncher:
         def __init__(
@@ -433,7 +443,7 @@ def configure(keymap):
                 if self._recover_ime:
                     self._control.enable()
 
-            return LazyFunc(_input).defer(self._defer_msec)
+            return LAZY_KEYMAP.wrap(_input).defer(self._defer_msec)
 
     MILD_PUNCHER = KeyPuncher(keymap, defer_msec=20)
     SOFT_PUNCHER = KeyPuncher(keymap, defer_msec=50)
@@ -451,10 +461,12 @@ def configure(keymap):
     ################################
 
     # append clipboard
-    keymap_global["LC-U0-C"] = LazyFunc(ClipHandler.append).defer()
+    keymap_global["LC-U0-C"] = LAZY_KEYMAP.wrap(ClipHandler.append).defer()
 
     # listup Window
-    keymap_global["U0-W"] = LazyFunc(lambda: VIRTUAL_FINGER.type_keys("LCtrl-LAlt-Tab")).defer()
+    keymap_global["U0-W"] = LAZY_KEYMAP.wrap(
+        lambda: VIRTUAL_FINGER.type_keys("LCtrl-LAlt-Tab")
+    ).defer()
 
     # ime: Japanese / Foreign
     keymap_global["U1-J"] = IME_CONTROL.enable_skk
@@ -468,7 +480,7 @@ def configure(keymap):
     keymap_global["O-(236)"] = IME_CONTROL.to_skk_abbrev
 
     # paste as plaintext
-    keymap_global["U0-V"] = LazyFunc(ClipHandler().paste_current).defer()
+    keymap_global["U0-V"] = LAZY_KEYMAP.wrap(ClipHandler().paste_current).defer()
 
     # paste as plaintext (with trimming removable whitespaces)
     class StrCleaner:
@@ -489,7 +501,7 @@ def configure(keymap):
             def _paster() -> None:
                 ClipHandler().paste_current(_cleaner)
 
-            return LazyFunc(_paster).defer()
+            return LAZY_KEYMAP.wrap(_paster).defer()
 
         @classmethod
         def apply(cls, km: WindowKeymap, custom_key: str) -> None:
@@ -517,7 +529,7 @@ def configure(keymap):
             t = "total: {}(lines: {}), net: {}".format(total, lines, net)
             keymap.popBalloon("", t, 5000)
 
-    keymap_global["LC-U1-C"] = LazyFunc(count_chars).defer()
+    keymap_global["LC-U1-C"] = LAZY_KEYMAP.wrap(count_chars).defer()
 
     # wrap with quote mark
     def quote_selection() -> None:
@@ -525,7 +537,7 @@ def configure(keymap):
         if cb:
             ClipHandler().paste(cb, lambda x: ' "{}" '.format(x.strip()))
 
-    keymap_global["LC-U0-Q"] = LazyFunc(quote_selection).defer()
+    keymap_global["LC-U0-Q"] = LAZY_KEYMAP.wrap(quote_selection).defer()
 
     # paste with quote mark
     def paste_with_anchor(join_lines: bool = False) -> Callable:
@@ -538,13 +550,13 @@ def configure(keymap):
         def _paster() -> None:
             ClipHandler().paste_current(_formatter)
 
-        return LazyFunc(_paster).defer()
+        return LAZY_KEYMAP.wrap(_paster).defer()
 
     keymap_global["U1-Q"] = paste_with_anchor(False)
     keymap_global["C-U1-Q"] = paste_with_anchor(True)
 
     # open url in browser
-    keymap_global["C-U0-O"] = LazyFunc(
+    keymap_global["C-U0-O"] = LAZY_KEYMAP.wrap(
         lambda: PathHandler(ClipHandler().copy_string().strip()).run()
     ).defer()
 
@@ -561,8 +573,8 @@ def configure(keymap):
             else:
                 IME_CONTROL.reconvert_with_skk()
 
-    keymap_global["U1-Back"] = LazyFunc(re_input_with_skk).defer()
-    keymap_global["U1-F9"] = LazyFunc(re_input_with_skk).defer()
+    keymap_global["U1-Back"] = LAZY_KEYMAP.wrap(re_input_with_skk).defer()
+    keymap_global["U1-F9"] = LAZY_KEYMAP.wrap(re_input_with_skk).defer()
 
     def moko(search_all: bool = False) -> Callable:
         exe_path = PathHandler(r"Personal\tools\bin\moko.exe", True)
@@ -576,7 +588,7 @@ def configure(keymap):
                 "-exclude=_obsolete,node_modules",
             )
 
-        return LazyFunc(_launcher).defer()
+        return LAZY_KEYMAP.wrap(_launcher).defer()
 
     keymap_global["U1-Z"] = moko(False)
     keymap_global["LC-U1-Z"] = moko(True)
@@ -639,7 +651,7 @@ def configure(keymap):
                 "S-S": self.open_skk_dir,
                 "X": lambda: None,
             }.items():
-                km[key] = LazyFunc(func).defer()
+                km[key] = LAZY_KEYMAP.wrap(func).defer()
 
     keymap_global["LC-U0-X"] = keymap.defineMultiStrokeKeymap()
     ConfigMenu(keymap).apply(keymap_global["LC-U0-X"])
@@ -832,7 +844,9 @@ def configure(keymap):
     keymap_global["U1-H"] = "LWin-Left"
 
     keymap_global["U1-M"] = keymap.defineMultiStrokeKeymap()
-    keymap_global["U1-M"]["X"] = LazyFunc(lambda: keymap.getTopLevelWindow().maximize()).defer()
+    keymap_global["U1-M"]["X"] = LAZY_KEYMAP.wrap(
+        lambda: keymap.getTopLevelWindow().maximize()
+    ).defer()
 
     class WndPosAllocator:
         monitor_dict = {
@@ -866,7 +880,7 @@ def configure(keymap):
                     for key, pos in self.snap_key_dict.items():
                         if mntr_idx < len(monitors):
                             wnd_rect = monitors[mntr_idx].area_mapping[pos][size]
-                            km[mod_mntr + mod_area + key] = LazyFunc(wnd_rect.snap).defer()
+                            km[mod_mntr + mod_area + key] = LAZY_KEYMAP.wrap(wnd_rect.snap).defer()
 
         def alloc_maximize(self, km: WindowKeymap, mapping_dict: dict) -> None:
             for key, towards in mapping_dict.items():
@@ -876,7 +890,7 @@ def configure(keymap):
                     delay()
                     self._keymap.getTopLevelWindow().maximize()
 
-                km[key] = LazyFunc(_snap).defer()
+                km[key] = LAZY_KEYMAP.wrap(_snap).defer()
 
     WND_POS_ALLOCATOR = WndPosAllocator(keymap)
     WND_POS_ALLOCATOR.alloc_flexible(keymap_global["U1-M"])
@@ -912,7 +926,7 @@ def configure(keymap):
                         delay()
                     wnd.setRect(rect)
 
-            return LazyFunc(_snap).defer()
+            return LAZY_KEYMAP.wrap(_snap).defer()
 
         def apply(self, km: WindowKeymap) -> None:
             for key, params in {
@@ -1066,7 +1080,7 @@ def configure(keymap):
                 else:
                     SKK_TO_LATINMODE.send(*seq)()
 
-            return LazyFunc(_input).defer(50)
+            return LAZY_KEYMAP.wrap(_input).defer(50)
 
         def apply(self, km: WindowKeymap) -> None:
             for key, params in {
@@ -1516,7 +1530,7 @@ def configure(keymap):
                     query.remove_hiragana()
                 PathHandler(uri.format(query.encode(strict))).run()
 
-            return LazyFunc(_search).defer()
+            return LAZY_KEYMAP.wrap(_search).defer()
 
         @staticmethod
         def _mod_key(s: str) -> list:
@@ -1651,7 +1665,7 @@ def configure(keymap):
                     if exe_path:
                         PathHandler(exe_path).run()
 
-            return LazyFunc(_executer).defer(80)
+            return LAZY_KEYMAP.wrap(_executer).defer(80)
 
         def apply(self, wnd_keymap: WindowKeymap, remap_table: dict = {}) -> None:
             for key, params in remap_table.items():
@@ -1748,7 +1762,7 @@ def configure(keymap):
             else:
                 print("invalid-path: '{}'".format(dir_path))
 
-        return LazyFunc(_invoker).defer()
+        return LAZY_KEYMAP.wrap(_invoker).defer()
 
     keymap_global["U1-F"] = keymap.defineMultiStrokeKeymap()
     keymap_global["U1-F"]["D"] = invoke_filer(PathHandler.resolve_user_profile(r"Desktop"))
@@ -1762,7 +1776,7 @@ def configure(keymap):
                 return
         PathHandler(r"scoop\apps\wezterm\current\wezterm-gui.exe", True).run()
 
-    keymap_global["LC-AtMark"] = LazyFunc(invoke_terminal).defer()
+    keymap_global["LC-AtMark"] = LAZY_KEYMAP.wrap(invoke_terminal).defer()
 
     def search_on_browser() -> None:
         if keymap.getWindow().getProcessName() == DEFAULT_BROWSER.get_exe_name():
@@ -1778,7 +1792,7 @@ def configure(keymap):
             else:
                 PathHandler("https://duckduckgo.com").run()
 
-    keymap_global["U0-Q"] = LazyFunc(search_on_browser).defer(100)
+    keymap_global["U0-Q"] = LAZY_KEYMAP.wrap(search_on_browser).defer(100)
 
     ################################
     # application based remap
@@ -2141,4 +2155,4 @@ def configure(keymap):
                 km.cblisters += [(title, cblister_FixedPhrase(m))]
 
     ClipboardMenu().apply(keymap)
-    keymap_global["LC-LS-X"] = LazyFunc(keymap.command_ClipboardList).defer(msec=100)
+    keymap_global["LC-LS-X"] = LAZY_KEYMAP.wrap(keymap.command_ClipboardList).defer(msec=100)
