@@ -1007,7 +1007,6 @@ def configure(keymap):
     keymap_global["U0-M"] = SKK_TO_KANAMODE.send("先生")
     keymap_global["LC-U0-M"] = SKK_TO_KANAMODE.send("先生方")
 
-
     # markdown list
     keymap_global["S-U0-8"] = SKK_TO_KANAMODE.send("- ")
     keymap_global["U1-1"] = SKK_TO_KANAMODE.send("1. ")
@@ -1098,44 +1097,6 @@ def configure(keymap):
 
     keymap_global["U1-D"] = keymap.defineMultiStrokeKeymap()
     DateInput().apply(keymap_global["U1-D"])
-
-    ################################
-    # pseudo espanso
-    ################################
-
-    def combo_mapper(
-        root_map: Union[Callable, dict], keys: list, func: Callable
-    ) -> Union[Callable, dict, None]:
-        if callable(root_map):
-            return root_map
-        if len(keys) == 1:
-            root_map[keys[0]] = func
-            return root_map
-        if len(keys) < 1:
-            return None
-        head = keys[0]
-        rest = keys[1:]
-        try:
-            root_map[head] = combo_mapper(root_map[head], rest, func)
-        except:
-            sub_map = keymap.defineMultiStrokeKeymap()
-            root_map[head] = combo_mapper(sub_map, rest, func)
-        return root_map
-
-    class KeyCombo:
-        def __init__(self, keymap: Keymap) -> None:
-            self._keymap = keymap
-            self.mapping = self._keymap.defineMultiStrokeKeymap()
-            for combo, stroke in {
-                "X": ["先生"],
-                "K": ["方"],
-                "S": ["様"],
-                "I": ["いたします"],
-            }.items():
-                keys = combo.split(",")
-                self.mapping = combo_mapper(self.mapping, keys, SKK_TO_KANAMODE.send(*stroke))
-
-    keymap_global["U1-X"] = KeyCombo(keymap).mapping
 
     ################################
     # web search
@@ -1831,7 +1792,6 @@ def configure(keymap):
     keymap_sumatra = keymap.defineWindowKeymap(check_func=CheckWnd.is_sumatra)
 
     keymap_sumatra["F4"] = SIMPLE_SKK.under_latinmode("Esc", "C-Home", "C-F", "C-J")
-    keymap_sumatra["U0-X"] = keymap_sumatra["F4"]
     keymap_sumatra["O-LCtrl"] = keymap_sumatra["F4"]
 
     keymap_sumatra_inputmode = keymap.defineWindowKeymap(check_func=CheckWnd.is_sumatra_inputmode)
