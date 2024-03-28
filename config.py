@@ -1004,12 +1004,9 @@ def configure(keymap):
     SKK_TO_LATINMODE = SKK(keymap, False)
 
     # insert honorific
-    def apply_honorific(km: WindowKeymap) -> None:
-        for key, hono in {"U0": "先生", "U1": "様"}.items():
-            for mod, suffix in {"": "", "C-": "方"}.items():
-                km[mod + key + "-Tab"] = SKK_TO_KANAMODE.send(hono + suffix)
+    keymap_global["U0-M"] = SKK_TO_KANAMODE.send("先生")
+    keymap_global["LC-U0-M"] = SKK_TO_KANAMODE.send("先生方")
 
-    apply_honorific(keymap_global)
 
     # markdown list
     keymap_global["S-U0-8"] = SKK_TO_KANAMODE.send("- ")
@@ -1130,44 +1127,10 @@ def configure(keymap):
             self._keymap = keymap
             self.mapping = self._keymap.defineMultiStrokeKeymap()
             for combo, stroke in {
-                "X,X": [".txt"],
-                "X,M": [".md"],
-                "Minus,H": ["\u2010"],
-                "Minus,M": ["\u2014"],
-                "Minus,N": ["\u2013"],
-                "Minus,S": ["\u2212"],
-                "Minus,D": ["\u30a0"],
-                "R,B": [r"[\[［].+?[\]］]"],
-                "R,P": [r"[\(（].+?[\)）]"],
-                "C-R,S-Right": ["(?!)", "Left"],
-                "C-R,Right": ["(?=)", "Left"],
-                "C-R,S-Left": ["(?<!)", "Left"],
-                "C-R,Left": ["(?<=)", "Left"],
-                "A,E": ["\u00e9"],
-                "A,S-E": ["\u00c9"],
-                "C-A,E": ["\u00e8"],
-                "C-A,S-E": ["\u00c8"],
-                "U,S-A": ["\u00c4"],
-                "U,A": ["\u00e4"],
-                "U,S-O": ["\u00d6"],
-                "U,O": ["\u00f6"],
-                "U,S-U": ["\u00dc"],
-                "U,U": ["\u00fc"],
-            }.items():
-                keys = combo.split(",")
-                self.mapping = combo_mapper(self.mapping, keys, SKK_TO_LATINMODE.send(*stroke))
-
-            for combo, stroke in {
-                "Minus,F": ["\uff0d"],
-                "F,G": ["\u3013\u3013"],
-                "F,0": ["\u25cf\u25cf"],
-                "F,4": ["\u25a0\u25a0"],
-                "M,1": ["# "],
-                "M,2": ["## "],
-                "M,3": ["### "],
-                "M,4": ["#### "],
-                "M,5": ["##### "],
-                "M,6": ["###### "],
+                "X": ["先生"],
+                "K": ["方"],
+                "S": ["様"],
+                "I": ["いたします"],
             }.items():
                 keys = combo.split(",")
                 self.mapping = combo_mapper(self.mapping, keys, SKK_TO_KANAMODE.send(*stroke))
