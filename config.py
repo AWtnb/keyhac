@@ -1865,7 +1865,7 @@ def configure(keymap):
     keymap_filer = keymap.defineWindowKeymap(check_func=CheckWnd.is_filer_viewmode)
     KeyAllocator(
         {
-            "C-SemiColon": ("C-Add"),
+            "C-S-SemiColon": ("C-Add"),
             "C-L": ("A-D", "C-C"),
         }
     ).apply(keymap_filer)
