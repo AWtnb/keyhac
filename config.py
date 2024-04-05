@@ -1733,7 +1733,7 @@ def configure(keymap):
         elif wnd.getProcessName() == "firefox.exe":
             VIRTUAL_FINGER.type_keys("C-L", "F6")
 
-    keymap_browser["C-0"] = focus_main_pane
+    keymap_browser["RC-0"] = focus_main_pane
 
     # intra
     keymap_intra = keymap.defineWindowKeymap(exe_name="APARClientAWS.exe")
