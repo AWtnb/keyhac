@@ -210,9 +210,9 @@ def configure(keymap):
 
     KeyAllocator(
         {
-            # delete 2 or 3
+            # delete 2
             "LS-LC-U0-B": ("Back",) * 2,
-            "LS-LC-LA-U0-B": ("Back",) * 3,
+            "LS-LC-U0-D": ("Delete",) * 2,
             # delete to bol / eol
             "S-U0-B": ("S-Home", "Delete"),
             "S-U0-D": ("S-End", "Delete"),
