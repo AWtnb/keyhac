@@ -1030,9 +1030,10 @@ def configure(keymap):
             "U0-OpenBracket": ["\u300c", "\u300d"],  # CORNER BRACKET 「」
             "U1-2": ["\u201c", "\u201d"],  # DOUBLE QUOTATION MARK “”
             "U1-7": ["\u2018", "\u2019"],  # SINGLE QUOTATION MARK ‘’
-            "U0-T": ["\u3014", "\u3015"],  # TORTOISE SHELL BRACKET 〔〕
             "U1-8": ["\uff08", "\uff09"],  # FULLWIDTH PARENTHESIS （）
             "U1-Atmark": ["\uff08`", "`\uff09"],  # FULLWIDTH PARENTHESIS and BackTick （``）
+            "U0-Y": ["\u3008", "\u3009"],  # ANGLE BRACKET
+            "S-U0-Y": ["\u300a", "\u300b"],  # DOUBLE ANGLE BRACKET
             "U1-OpenBracket": ["\uff3b", "\uff3d"],  # FULLWIDTH SQUARE BRACKET ［］
         },
     )
@@ -1058,6 +1059,8 @@ def configure(keymap):
             "U1-9": ["(", ")"],
             "U1-CloseBracket": ["{", "}"],
             "U0-Caret": ["~~", "~~"],
+            "U0-T": ["<", ">"],
+            "LS-U0-T": ["</", ">"],
         },
     )
 
