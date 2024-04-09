@@ -970,9 +970,8 @@ def configure(keymap):
 
     # select-to-left with ime control
     keymap_global["U1-B"] = SIMPLE_SKK.under_kanamode("S-Left")
-    keymap_global["LS-U1-B"] = SIMPLE_SKK.under_latinmode("S-Left")
+    keymap_global["LC-U1-B"] = SIMPLE_SKK.under_kanamode("S-Left", "S-Left")
     keymap_global["U1-Space"] = SIMPLE_SKK.under_kanamode("C-S-Left")
-    keymap_global["LS-U1-Space"] = SIMPLE_SKK.under_latinmode("C-S-Left")
     keymap_global["U1-N"] = SIMPLE_SKK.under_kanamode("S-Left", ImeControl.abbrev_key)
 
     class SKK:
