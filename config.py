@@ -1874,6 +1874,20 @@ def configure(keymap):
         }
     ).apply(keymap_filer)
 
+    def call_fuzzy_tools(km: WindowKeymap) -> None:
+        for key in (
+            "Z",
+            "A-Z",
+            "S-Z",
+            "A-S-Z",
+            "A-S-D",
+            "A-S-S",
+            "A-F",
+        ):
+            km[key] = SOFT_PUNCHER.invoke(key)
+
+    call_fuzzy_tools(keymap_filer)
+
     ################################
     # popup clipboard menu
     ################################
