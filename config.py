@@ -1795,8 +1795,7 @@ def configure(keymap):
     # sumatra PDF
     keymap_sumatra = keymap.defineWindowKeymap(check_func=CheckWnd.is_sumatra)
 
-    keymap_sumatra["F4"] = SIMPLE_SKK.under_latinmode("Esc", "C-Home", "C-F", "C-J")
-    keymap_sumatra["O-LCtrl"] = keymap_sumatra["F4"]
+    keymap_sumatra["O-LCtrl"] = "Esc", "Esc", "C-Home", "C-F"
 
     keymap_sumatra_inputmode = keymap.defineWindowKeymap(check_func=CheckWnd.is_sumatra_inputmode)
 
