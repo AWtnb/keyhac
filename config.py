@@ -478,7 +478,6 @@ def configure(keymap):
     keymap_global["U1-R"] = IME_CONTROL.reconvert_with_skk
     keymap_global["U0-R"] = IME_CONTROL.reconvert_with_skk
     keymap_global["O-(236)"] = IME_CONTROL.to_skk_abbrev
-    keymap_global["U0-Tab"] = IME_CONTROL.abbrev_key
 
     # paste as plaintext
     keymap_global["U0-V"] = LAZY_KEYMAP.wrap(ClipHandler().paste_current).defer()
@@ -973,6 +972,8 @@ def configure(keymap):
     keymap_global["U1-B"] = SIMPLE_SKK.under_kanamode("S-Left")
     keymap_global["U1-Space"] = SIMPLE_SKK.under_kanamode("C-S-Left")
     keymap_global["U1-N"] = SIMPLE_SKK.under_kanamode("S-Left", ImeControl.abbrev_key)
+    keymap_global["U1-Tab"] = SIMPLE_SKK.under_kanamode("End", "S-Home")
+    keymap_global["U0-Tab"] = SIMPLE_SKK.under_latinmode("End", "S-Home")
 
     class SKK:
         def __init__(self, keymap: Keymap, finish_with_kanamode: bool = True) -> None:
