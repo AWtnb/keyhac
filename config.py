@@ -478,6 +478,7 @@ def configure(keymap):
     keymap_global["U1-R"] = IME_CONTROL.reconvert_with_skk
     keymap_global["U0-R"] = IME_CONTROL.reconvert_with_skk
     keymap_global["O-(236)"] = IME_CONTROL.to_skk_abbrev
+    keymap_global["U0-Tab"] = IME_CONTROL.to_skk_abbrev
 
     # paste as plaintext
     keymap_global["U0-V"] = LAZY_KEYMAP.wrap(ClipHandler().paste_current).defer()
