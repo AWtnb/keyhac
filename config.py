@@ -316,9 +316,10 @@ def configure(keymap):
         def __init__(
             self,
             keymap: Keymap,
+            inter_stroke_pause: int = 10
         ) -> None:
             self._keymap = keymap
-            self._finger = VirtualFinger(self._keymap, 0)
+            self._finger = VirtualFinger(self._keymap, inter_stroke_pause)
 
         def get_status(self) -> int:
             return self._keymap.getWindow().getImeStatus()
@@ -1826,6 +1827,7 @@ def configure(keymap):
     # powerpoint
     keymap_ppt = keymap.defineWindowKeymap(exe_name="powerpnt.exe")
     office_to_pdf(keymap_ppt)
+    keymap_ppt["O-(236)"] = ImeControl(keymap, 40).to_skk_abbrev
 
     # excel
     keymap_excel = keymap.defineWindowKeymap(exe_name="excel.exe")
