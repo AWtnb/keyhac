@@ -1005,8 +1005,12 @@ def configure(keymap):
     SKK_TO_LATINMODE = SKK(keymap, False)
 
     # insert honorific
-    keymap_global["U0-M"] = SKK_TO_KANAMODE.send("先生")
-    keymap_global["LC-U0-M"] = SKK_TO_KANAMODE.send("先生方")
+    def type_honorific(km: WindowKeymap) -> None:
+        for key, hono in {"U0": "先生", "U1": "様"}.items():
+            for mod, suffix in {"": "", "C-": "方"}.items():
+                km[mod + key + "-Tab"] = SKK_TO_KANAMODE.send(hono + suffix)
+
+    type_honorific(keymap_global)
 
     # markdown list
     keymap_global["S-U0-8"] = SKK_TO_KANAMODE.send("- ")
