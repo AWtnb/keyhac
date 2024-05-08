@@ -309,7 +309,7 @@ def configure(keymap):
         kata_key = "Q"
         kana_key = "C-J"
         latin_key = "S-L"
-        cancel_key = "C-G"
+        cancel_key = "Esc"
         reconv_key = "LWin-Slash"
         abbrev_key = "Slash"
 
@@ -476,8 +476,7 @@ def configure(keymap):
     keymap_global["S-U0-F"] = IME_CONTROL.enable_skk
     keymap_global["S-U1-J"] = IME_CONTROL.to_skk_latin
     keymap_global["U1-I"] = IME_CONTROL.reconvert_with_skk
-    keymap_global["U1-R"] = IME_CONTROL.reconvert_with_skk
-    keymap_global["U0-R"] = IME_CONTROL.reconvert_with_skk
+    keymap_global["LS-U1-I"] = IME_CONTROL.reconv_key
     keymap_global["O-(236)"] = IME_CONTROL.to_skk_abbrev
 
     # paste as plaintext
