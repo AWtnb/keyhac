@@ -846,7 +846,7 @@ def configure(keymap):
     keymap_global["U1-M"] = keymap.defineMultiStrokeKeymap()
     keymap_global["U1-M"]["X"] = LAZY_KEYMAP.wrap(
         lambda: keymap.getTopLevelWindow().maximize()
-    ).defer()
+    ).defer(40)
 
     class WndPosAllocator:
         monitor_dict = {
@@ -880,7 +880,7 @@ def configure(keymap):
                     for key, pos in self.snap_key_dict.items():
                         if mntr_idx < len(monitors):
                             wnd_rect = monitors[mntr_idx].area_mapping[pos][size]
-                            km[mod_mntr + mod_area + key] = LAZY_KEYMAP.wrap(wnd_rect.snap).defer()
+                            km[mod_mntr + mod_area + key] = LAZY_KEYMAP.wrap(wnd_rect.snap).defer(40)
 
         def alloc_maximize(self, km: WindowKeymap, mapping_dict: dict) -> None:
             for key, towards in mapping_dict.items():
