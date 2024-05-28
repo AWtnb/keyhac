@@ -313,11 +313,7 @@ def configure(keymap):
         reconv_key = "LWin-Slash"
         abbrev_key = "Slash"
 
-        def __init__(
-            self,
-            keymap: Keymap,
-            inter_stroke_pause: int = 10
-        ) -> None:
+        def __init__(self, keymap: Keymap, inter_stroke_pause: int = 10) -> None:
             self._keymap = keymap
             self._finger = VirtualFinger(self._keymap, inter_stroke_pause)
 
@@ -880,7 +876,9 @@ def configure(keymap):
                     for key, pos in self.snap_key_dict.items():
                         if mntr_idx < len(monitors):
                             wnd_rect = monitors[mntr_idx].area_mapping[pos][size]
-                            km[mod_mntr + mod_area + key] = LAZY_KEYMAP.wrap(wnd_rect.snap).defer(40)
+                            km[mod_mntr + mod_area + key] = LAZY_KEYMAP.wrap(wnd_rect.snap).defer(
+                                40
+                            )
 
         def alloc_maximize(self, km: WindowKeymap, mapping_dict: dict) -> None:
             for key, towards in mapping_dict.items():
@@ -966,6 +964,9 @@ def configure(keymap):
 
             return _send
 
+        def turnoff(self) -> None:
+            self._control.disable()
+
     SIMPLE_SKK = SimpleSKK(keymap)
 
     # select-to-left with ime control
@@ -976,22 +977,29 @@ def configure(keymap):
     keymap_global["U1-Tab"] = SIMPLE_SKK.under_kanamode("End", "S-Home")
     keymap_global["U0-Tab"] = SIMPLE_SKK.under_latinmode("End", "S-Home")
 
+    class SKKMode:
+        disabled = -1
+        latin = 0
+        kana = 1
+
     class SKK:
-        def __init__(self, keymap: Keymap, finish_with_kanamode: bool = True) -> None:
+        def __init__(self, keymap: Keymap, finish_mode: SKKMode = SKKMode.kana) -> None:
             self._base_skk = SimpleSKK(keymap)
-            self._finish_with_kanamode = finish_with_kanamode
+            self._finish_mode = finish_mode
+
+        @staticmethod
+        def append_finish_key(sequence: list) -> list:
+            return sequence + [ImeControl.kana_key]
 
         def send(self, *sequence) -> Callable:
-            if self._finish_with_kanamode:
-                sequence = list(sequence) + [ImeControl.kana_key]
+            if self._finish_mode == SKKMode.kana:
+                sequence = self.append_finish_key(list(sequence))
             return self._base_skk.under_latinmode(*sequence)
 
         def send_pair(self, pair: list) -> Callable:
             _, suffix = pair
             sequence = pair + ["Left"] * len(suffix)
-            if self._finish_with_kanamode:
-                sequence = sequence + [ImeControl.kana_key]
-            return self._base_skk.under_latinmode(*sequence)
+            return self.send(*sequence)
 
         def apply(self, km: WindowKeymap, mapping_dict: dict) -> None:
             for key, sent in mapping_dict.items():
