@@ -445,6 +445,10 @@ def configure(keymap):
     MILD_PUNCHER = KeyPuncher(keymap, defer_msec=20)
     SOFT_PUNCHER = KeyPuncher(keymap, defer_msec=50)
 
+    keymap_global["U0-4"] = MILD_PUNCHER.invoke("$_")
+    keymap_global["U0-Comma"] = MILD_PUNCHER.invoke("Comma")
+    keymap_global["U0-Period"] = MILD_PUNCHER.invoke("Period")
+
     ################################
     # release CapsLock on reload
     ################################
@@ -964,7 +968,7 @@ def configure(keymap):
 
             return _send
 
-        def turnoff(self) -> None:
+        def disable(self) -> None:
             self._control.disable()
 
     SIMPLE_SKK = SimpleSKK(keymap)
@@ -994,7 +998,15 @@ def configure(keymap):
         def send(self, *sequence) -> Callable:
             if self._finish_mode == SKKMode.kana:
                 sequence = self.append_finish_key(list(sequence))
-            return self._base_skk.under_latinmode(*sequence)
+            sender = self._base_skk.under_latinmode(*sequence)
+            if self._finish_mode == SKKMode.disabled:
+
+                def _sender():
+                    sender()
+                    self._base_skk.disable()
+
+                return _sender
+            return sender
 
         def send_pair(self, pair: list) -> Callable:
             _, suffix = pair
@@ -1009,8 +1021,9 @@ def configure(keymap):
             for key, sent in mapping_dict.items():
                 km[key] = self.send_pair(sent)
 
-    SKK_TO_KANAMODE = SKK(keymap, True)
-    SKK_TO_LATINMODE = SKK(keymap, False)
+    SKK_TO_KANAMODE = SKK(keymap, SKKMode.kana)
+    SKK_TO_LATINMODE = SKK(keymap, SKKMode.latin)
+    SKK_TO_DISABLE = SKK(keymap, SKKMode.disabled)
 
     # insert honorific
     def type_honorific(km: WindowKeymap) -> None:
@@ -1056,10 +1069,7 @@ def configure(keymap):
         keymap_global,
         {
             "U0-1": "S-1",
-            "U0-4": "$_",
             "U0-Colon": "Colon",
-            "U0-Comma": "Comma",
-            "U0-Period": "Period",
             "U0-Slash": "Slash",
             "U1-Minus": "Minus",
             "U0-SemiColon": "SemiColon",
