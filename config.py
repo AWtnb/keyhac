@@ -1502,7 +1502,6 @@ def configure(keymap):
             "B": "https://www.google.com/search?q=site%3Abooks.or.jp%20{}",
             "C": "https://ci.nii.ac.jp/books/search?q={}",
             "D": "https://duckduckgo.com/?q={}",
-            "E": "http://webcatplus.nii.ac.jp/pro/?q={}",
             "G": "http://www.google.co.jp/search?q={}",
             "H": "https://www.hanmoto.com/bd/search/order/desc/title/{}",
             "I": "https://www.google.com/search?tbm=isch&q={}",
