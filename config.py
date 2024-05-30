@@ -991,13 +991,10 @@ def configure(keymap):
             self._base_skk = SimpleSKK(keymap)
             self._finish_mode = finish_mode
 
-        @staticmethod
-        def append_finish_key(sequence: list) -> list:
-            return sequence + [ImeControl.kana_key]
-
-        def send(self, *sequence) -> Callable:
+        def invoke_sender(self, *sequence) -> Callable:
             if self._finish_mode == SKKMode.kana:
-                sequence = self.append_finish_key(list(sequence))
+                sequence = list(sequence) + [ImeControl.kana_key]
+
             sender = self._base_skk.under_latinmode(*sequence)
             if self._finish_mode == SKKMode.disabled:
 
@@ -1008,18 +1005,18 @@ def configure(keymap):
                 return _sender
             return sender
 
-        def send_pair(self, pair: list) -> Callable:
+        def invoke_pair_sender(self, pair: list) -> Callable:
             _, suffix = pair
             sequence = pair + ["Left"] * len(suffix)
-            return self.send(*sequence)
+            return self.invoke_sender(*sequence)
 
         def apply(self, km: WindowKeymap, mapping_dict: dict) -> None:
             for key, sent in mapping_dict.items():
-                km[key] = self.send(sent)
+                km[key] = self.invoke_sender(sent)
 
         def apply_pair(self, km: WindowKeymap, mapping_dict: dict) -> None:
             for key, sent in mapping_dict.items():
-                km[key] = self.send_pair(sent)
+                km[key] = self.invoke_pair_sender(sent)
 
     SKK_TO_KANAMODE = SKK(keymap, SKKMode.kana)
     SKK_TO_LATINMODE = SKK(keymap, SKKMode.latin)
@@ -1029,13 +1026,13 @@ def configure(keymap):
     def type_honorific(km: WindowKeymap) -> None:
         for key, hono in {"U0": "先生", "U1": "様"}.items():
             for mod, suffix in {"": "", "C-": "方"}.items():
-                km[mod + key + "-Tab"] = SKK_TO_KANAMODE.send(hono + suffix)
+                km[mod + key + "-Tab"] = SKK_TO_KANAMODE.invoke_sender(hono + suffix)
 
     type_honorific(keymap_global)
 
     # markdown list
-    keymap_global["S-U0-8"] = SKK_TO_KANAMODE.send("- ")
-    keymap_global["U1-1"] = SKK_TO_KANAMODE.send("1. ")
+    keymap_global["S-U0-8"] = SKK_TO_KANAMODE.invoke_sender("- ")
+    keymap_global["U1-1"] = SKK_TO_KANAMODE.invoke_sender("1. ")
 
     SKK_TO_KANAMODE.apply(
         keymap_global,
@@ -1098,9 +1095,9 @@ def configure(keymap):
                 d = datetime.datetime.today()
                 seq = [c for c in d.strftime(fmt)]
                 if finish_with_kanamode:
-                    SKK_TO_KANAMODE.send(*seq)()
+                    SKK_TO_KANAMODE.invoke_sender(*seq)()
                 else:
-                    SKK_TO_LATINMODE.send(*seq)()
+                    SKK_TO_LATINMODE.invoke_sender(*seq)()
 
             return LAZY_KEYMAP.wrap(_input).defer(50)
 
