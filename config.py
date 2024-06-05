@@ -780,6 +780,7 @@ def configure(keymap):
                     ms.append(mr)
             self._monitors = ms
 
+        @property
         def monitors(self) -> list:
             return self._monitors
 
@@ -796,7 +797,7 @@ def configure(keymap):
         def __init__(self, keymap: Keymap) -> None:
             self._keymap = keymap
             self.pos = []
-            monitors = CurrentMonitors(keymap).monitors()
+            monitors = CurrentMonitors(keymap).monitors
             for monitor in monitors:
                 for i in (1, 3):
                     y = monitor.top + int(monitor.max_height / 2)
@@ -874,7 +875,7 @@ def configure(keymap):
             self._keymap = keymap
 
         def alloc_flexible(self, km: WindowKeymap) -> None:
-            monitors = CurrentMonitors(self._keymap).monitors()
+            monitors = CurrentMonitors(self._keymap).monitors
             for mod_mntr, mntr_idx in self.monitor_dict.items():
                 for mod_area, size in self.size_dict.items():
                     for key, pos in self.snap_key_dict.items():
@@ -1367,7 +1368,8 @@ def configure(keymap):
             for pair in pairs:
                 self.register_range(pair)
 
-        def get_mapping(self) -> dict:
+        @property
+        def mapping(self) -> dict:
             return self._mapping
 
     class SearchNoiseMapping:
@@ -1406,7 +1408,7 @@ def configure(keymap):
                 ]
             )
 
-            self._mapping = _mapper.get_mapping()
+            self._mapping = _mapper.mapping
 
         def cleanup(self, s: str) -> str:
             return s.translate(str.maketrans(self._mapping))
