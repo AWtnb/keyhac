@@ -474,10 +474,11 @@ def configure(keymap):
     keymap_global["BackSlash"] = IME_CONTROL.to_skk_kata
     keymap_global["U0-F"] = IME_CONTROL.disable
     keymap_global["S-U0-F"] = IME_CONTROL.enable_skk
-    keymap_global["S-U1-J"] = IME_CONTROL.disable
+    keymap_global["S-U1-J"] = IME_CONTROL.to_skk_latin
     keymap_global["U1-I"] = IME_CONTROL.reconvert_with_skk
     keymap_global["LS-U1-I"] = IME_CONTROL.reconv_key
     keymap_global["O-(236)"] = IME_CONTROL.to_skk_abbrev
+    keymap_global["U0-(236)"] = IME_CONTROL.disable
 
     # paste as plaintext
     keymap_global["U0-V"] = LAZY_KEYMAP.wrap(ClipHandler().paste_current).defer()
