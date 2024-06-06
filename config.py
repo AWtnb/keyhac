@@ -479,6 +479,7 @@ def configure(keymap):
     keymap_global["LS-U1-I"] = IME_CONTROL.reconv_key
     keymap_global["O-(236)"] = IME_CONTROL.to_skk_abbrev
     keymap_global["U0-(236)"] = IME_CONTROL.disable
+    keymap_global["U1-(235)"] = IME_CONTROL.enable_skk
 
     # paste as plaintext
     keymap_global["U0-V"] = LAZY_KEYMAP.wrap(ClipHandler().paste_current).defer()
@@ -652,12 +653,12 @@ def configure(keymap):
                 "S-S": self.open_skk_dir,
                 "X": lambda: None,
             }.items():
-                km[key] = LAZY_KEYMAP.wrap(func).defer()
+                km[key] = LAZY_KEYMAP.wrap(func).defer(50)
 
     keymap_global["LC-U0-X"] = keymap.defineMultiStrokeKeymap()
     ConfigMenu(keymap).apply(keymap_global["LC-U0-X"])
 
-    keymap_global["U1-F12"] = ConfigMenu(keymap).reload_config
+    keymap_global["U1-F12"] = LAZY_KEYMAP.wrap(ConfigMenu(keymap).reload_config).defer(50)
 
     ################################
     # class for position on monitor
