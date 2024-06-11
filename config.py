@@ -1892,6 +1892,7 @@ def configure(keymap):
     KeyAllocator(
         {
             "C-S-SemiColon": ("C-Add"),
+            "C-S-L": ("C-Add"),
             "C-L": ("A-D", "C-C"),
         }
     ).apply(keymap_filer)
