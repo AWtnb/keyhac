@@ -1503,7 +1503,7 @@ def configure(keymap):
             "B": "https://www.google.com/search?nfpr=1&q=site%3Abooks.or.jp%20{}",
             "C": "https://ci.nii.ac.jp/books/search?q={}",
             "D": "https://duckduckgo.com/?q={}",
-            "G": "http://www.google.co.jp/search?nfpr=1&q={}",
+            "G": "http://www.google.com/search?nfpr=1&q={}",
             "H": "https://www.hanmoto.com/bd/search/order/desc/title/{}",
             "I": "https://www.google.com/search?tbm=isch&nfpr=1&q={}",
             "J": "https://eow.alc.co.jp/search?q={}",
