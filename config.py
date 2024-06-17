@@ -152,7 +152,7 @@ def configure(keymap):
     keymap_global["U0-0"] = keymap.command_RecordToggle
     keymap_global["S-U0-0"] = keymap.command_RecordClear
     keymap_global["U1-0"] = keymap.command_RecordPlay
-    keymap_global["U1-F4"] = keymap.command_RecordPlay
+    keymap_global["RAlt-P"] = keymap.command_RecordPlay
 
     # combination with modifier key
     class CoreKeys:
