@@ -790,10 +790,10 @@ def configure(keymap):
     # set cursor position
     ################################
 
-    keymap_global["U0-Up"] = keymap.MouseWheelCommand(+0.5)
-    keymap_global["U0-Down"] = keymap.MouseWheelCommand(-0.5)
-    keymap_global["U0-Left"] = keymap.MouseHorizontalWheelCommand(-0.5)
-    keymap_global["U0-Right"] = keymap.MouseHorizontalWheelCommand(+0.5)
+    keymap_global["U0-PageUp"] = keymap.MouseWheelCommand(+0.5)
+    keymap_global["U0-PageDown"] = keymap.MouseWheelCommand(-0.5)
+    keymap_global["LS-U0-PageUp"] = keymap.MouseHorizontalWheelCommand(-0.5)
+    keymap_global["LS-U0-PageDown"] = keymap.MouseHorizontalWheelCommand(+0.5)
 
     class CursorPos:
         def __init__(self, keymap: Keymap) -> None:
