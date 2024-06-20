@@ -473,6 +473,7 @@ def configure(keymap):
     keymap_global["U1-J"] = IME_CONTROL.enable_skk
     keymap_global["BackSlash"] = IME_CONTROL.to_skk_kata
     keymap_global["U0-F"] = IME_CONTROL.disable
+    keymap_global["U1-F"] = IME_CONTROL.enable_skk
     keymap_global["S-U0-F"] = IME_CONTROL.enable_skk
     keymap_global["S-U1-J"] = IME_CONTROL.to_skk_latin
     keymap_global["U1-I"] = IME_CONTROL.reconvert_with_skk
@@ -1714,9 +1715,9 @@ def configure(keymap):
 
         return LAZY_KEYMAP.wrap(_invoker).defer()
 
-    keymap_global["U1-F"] = keymap.defineMultiStrokeKeymap()
-    keymap_global["U1-F"]["D"] = invoke_filer(PathHandler.resolve_user_profile(r"Desktop"))
-    keymap_global["U1-F"]["S"] = invoke_filer(r"X:\scan")
+    keymap_global["U0-O"] = keymap.defineMultiStrokeKeymap()
+    keymap_global["U0-O"]["D"] = invoke_filer(PathHandler.resolve_user_profile(r"Desktop"))
+    keymap_global["U0-O"]["S"] = invoke_filer(r"X:\scan")
 
     def invoke_terminal() -> None:
         scanner = WndScanner("wezterm-gui.exe", "org.wezfurlong.wezterm")
