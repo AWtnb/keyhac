@@ -1715,9 +1715,9 @@ def configure(keymap):
 
         return LAZY_KEYMAP.wrap(_invoker).defer()
 
-    keymap_global["U0-O"] = keymap.defineMultiStrokeKeymap()
-    keymap_global["U0-O"]["D"] = invoke_filer(PathHandler.resolve_user_profile(r"Desktop"))
-    keymap_global["U0-O"]["S"] = invoke_filer(r"X:\scan")
+    keymap_global["U1-O"] = keymap.defineMultiStrokeKeymap()
+    keymap_global["U1-O"]["D"] = invoke_filer(PathHandler.resolve_user_profile(r"Desktop"))
+    keymap_global["U1-O"]["S"] = invoke_filer(r"X:\scan")
 
     def invoke_terminal() -> None:
         scanner = WndScanner("wezterm-gui.exe", "org.wezfurlong.wezterm")
