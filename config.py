@@ -473,7 +473,8 @@ def configure(keymap):
     keymap_global["U1-J"] = IME_CONTROL.enable_skk
     keymap_global["BackSlash"] = IME_CONTROL.to_skk_kata
     keymap_global["U0-F"] = IME_CONTROL.disable
-    keymap_global["U1-F"] = IME_CONTROL.enable_skk
+    keymap_global["U1-F"] = IME_CONTROL.to_skk_latin
+    keymap_global["S-U1-F"] = IME_CONTROL.enable_skk
     keymap_global["S-U0-F"] = IME_CONTROL.enable_skk
     keymap_global["S-U1-J"] = IME_CONTROL.to_skk_latin
     keymap_global["U1-I"] = IME_CONTROL.reconvert_with_skk
