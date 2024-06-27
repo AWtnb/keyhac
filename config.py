@@ -580,8 +580,8 @@ def configure(keymap):
     keymap_global["U1-Back"] = LAZY_KEYMAP.wrap(re_input_with_skk).defer()
     keymap_global["U1-F9"] = LAZY_KEYMAP.wrap(re_input_with_skk).defer()
 
-    def moko(search_all: bool = False) -> Callable:
-        exe_path = PathHandler(r"Personal\tools\bin\moko.exe", True)
+    def zyl(search_all: bool = False) -> Callable:
+        exe_path = PathHandler(r"Personal\tools\bin\zyl.exe", True)
         src_path = PathHandler(r"Personal\launch.yaml", True)
 
         def _launcher() -> None:
@@ -594,8 +594,8 @@ def configure(keymap):
 
         return LAZY_KEYMAP.wrap(_launcher).defer()
 
-    keymap_global["U1-Z"] = moko(False)
-    keymap_global["LC-U1-Z"] = moko(True)
+    keymap_global["U1-Z"] = zyl(False)
+    keymap_global["LC-U1-Z"] = zyl(True)
 
     ################################
     # config menu
