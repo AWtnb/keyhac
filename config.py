@@ -48,7 +48,7 @@ def configure(keymap):
                     if " " in arg:
                         params.append('"{}"'.format(arg))
                     else:
-                        params.append("{}".format(arg))
+                        params.append(arg)
             return " ".join(params)
 
         def run(self, *args) -> None:
@@ -617,23 +617,27 @@ def configure(keymap):
             print("\n{} reloaded config.py\n".format(ts))
 
         @staticmethod
-        def open_repo(repo_path: PathHandler) -> None:
-            if repo_path.is_accessible():
+        def open_dir(path: str, under_user_profile: bool) -> None:
+            path_handler = PathHandler(path, under_user_profile)
+            if path_handler.is_accessible():
                 if KEYHAC_EDITOR == "notepad.exe":
-                    print("notepad.exe cannot open directory. instead, open directory on explorer.")
-                    repo_path.run()
+                    print(
+                        "notepad.exe cannot open directory. => open directory on explorer instead."
+                    )
+                    path_handler.run()
                 else:
-                    PathHandler(KEYHAC_EDITOR).run(repo_path.path)
+                    PathHandler(KEYHAC_EDITOR).run(path_handler.path)
             else:
-                print("cannot find path: '{}'".format(repo_path.path))
+                print("cannot find path: '{}'".format(path_handler.path))
 
         def open_keyhac_repo(self) -> None:
-            repo_path = PathHandler(r"Sync\develop\repo\keyhac", True)
-            self.open_repo(repo_path)
+            self.open_dir(r"Sync\develop\repo\keyhac", True)
 
         def open_skk_repo(self) -> None:
-            repo_path = PathHandler(r"Sync\develop\repo\CorvusSKK", True)
-            self.open_repo(repo_path)
+            self.open_dir(r"Sync\develop\repo\CorvusSKK", True)
+
+        def open_cfiler_repo(self) -> None:
+            self.open_dir(r"Sync\develop\repo\cfiler", True)
 
         @staticmethod
         def open_skk_config() -> None:
@@ -649,6 +653,7 @@ def configure(keymap):
             for key, func in {
                 "R": self.reload_config,
                 "E": self.open_keyhac_repo,
+                "F": self.open_cfiler_repo,
                 "C-E": self.open_skk_repo,
                 "P": self.paste_config,
                 "S": self.open_skk_config,
