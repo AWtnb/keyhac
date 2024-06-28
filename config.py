@@ -1782,7 +1782,6 @@ def configure(keymap):
 
     remap_vscode(
         [
-            "C-F",
             "C-E",
             "C-S-F",
             "C-S-E",
