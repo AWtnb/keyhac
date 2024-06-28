@@ -20,11 +20,8 @@ def configure(keymap):
     ################################
 
     class PathHandler:
-        def __init__(self, s: str, under_user_profile: bool = False) -> None:
-            if under_user_profile:
-                self._path = self.resolve_user_profile(s)
-            else:
-                self._path = s
+        def __init__(self, path: str) -> None:
+            self._path = path
 
         @property
         def path(self) -> str:
@@ -36,7 +33,7 @@ def configure(keymap):
             return False
 
         @staticmethod
-        def resolve_user_profile(rel) -> str:
+        def resolve_user_profile(rel: str) -> str:
             user_prof = os.environ.get("USERPROFILE") or ""
             return str(Path(user_prof, rel))
 
@@ -57,17 +54,26 @@ def configure(keymap):
             else:
                 print("invalid-path: '{}'".format(self._path))
 
+    class UserPath:
+        def __init__(self, rel: str) -> None:
+            path = PathHandler.resolve_user_profile(rel)
+            self._handler = PathHandler(path)
+
+        @property
+        def handler(self) -> PathHandler:
+            return self._handler
+
     class KeyhacEnv:
         @staticmethod
         def get_filer() -> str:
-            tablacus = PathHandler(r"Sync\portable_app\tablacus\TE64.exe", True)
+            tablacus = UserPath(r"Sync\portable_app\tablacus\TE64.exe").handler
             if tablacus.is_accessible():
                 return tablacus.path
             return "explorer.exe"
 
         @staticmethod
         def get_editor() -> str:
-            vscode_path = PathHandler(r"scoop\apps\vscode\current\Code.exe", True)
+            vscode_path = UserPath(r"scoop\apps\vscode\current\Code.exe").handler
             if vscode_path.is_accessible():
                 return vscode_path.path
             return "notepad.exe"
@@ -581,12 +587,12 @@ def configure(keymap):
     keymap_global["U1-F9"] = LAZY_KEYMAP.wrap(re_input_with_skk).defer()
 
     def zyl(search_all: bool = False) -> Callable:
-        exe_path = PathHandler(r"Personal\tools\bin\zyl.exe", True)
-        src_path = PathHandler(r"Personal\launch.yaml", True)
+        exe_path = UserPath(r"Personal\tools\bin\zyl.exe")
+        src_path = UserPath(r"Personal\launch.yaml")
 
         def _launcher() -> None:
-            exe_path.run(
-                "-src={}".format(src_path.path),
+            exe_path.handler.run(
+                "-src={}".format(src_path.handler.path),
                 "-filer={}".format(KEYHAC_FILER),
                 "-all={}".format(search_all),
                 "-exclude=_obsolete,node_modules",
@@ -617,27 +623,27 @@ def configure(keymap):
             print("\n{} reloaded config.py\n".format(ts))
 
         @staticmethod
-        def open_dir(path: str, under_user_profile: bool) -> None:
-            path_handler = PathHandler(path, under_user_profile)
-            if path_handler.is_accessible():
+        def open_dir(path: str) -> None:
+            handler = UserPath(path).handler
+            if handler.is_accessible():
                 if KEYHAC_EDITOR == "notepad.exe":
                     print(
                         "notepad.exe cannot open directory. => open directory on explorer instead."
                     )
-                    path_handler.run()
+                    handler.run()
                 else:
-                    PathHandler(KEYHAC_EDITOR).run(path_handler.path)
+                    PathHandler(KEYHAC_EDITOR).run(handler.path)
             else:
-                print("cannot find path: '{}'".format(path_handler.path))
+                print("cannot find path: '{}'".format(handler.path))
 
         def open_keyhac_repo(self) -> None:
-            self.open_dir(r"Sync\develop\repo\keyhac", True)
+            self.open_dir(r"Sync\develop\repo\keyhac")
 
         def open_skk_repo(self) -> None:
-            self.open_dir(r"Sync\develop\repo\CorvusSKK", True)
+            self.open_dir(r"Sync\develop\repo\CorvusSKK")
 
         def open_cfiler_repo(self) -> None:
-            self.open_dir(r"Sync\develop\repo\cfiler", True)
+            self.open_dir(r"Sync\develop\repo\cfiler")
 
         @staticmethod
         def open_skk_config() -> None:
@@ -1709,7 +1715,7 @@ def configure(keymap):
         },
     )
 
-    keymap_global["LS-LC-U1-M"] = PathHandler(r"Personal\draft.txt", True).run
+    keymap_global["LS-LC-U1-M"] = UserPath(r"Personal\draft.txt").handler.run
 
     # invoke specific filer
     def invoke_filer(dir_path: str) -> Callable:
@@ -1731,7 +1737,7 @@ def configure(keymap):
         if scanner.found:
             if PSEUDO_CUTEEXEC.activate_wnd(scanner.found):
                 return
-        PathHandler(r"scoop\apps\wezterm\current\wezterm-gui.exe", True).run()
+        UserPath(r"scoop\apps\wezterm\current\wezterm-gui.exe").run()
 
     keymap_global["LC-AtMark"] = LAZY_KEYMAP.wrap(invoke_terminal).defer()
 
