@@ -54,10 +54,10 @@ def configure(keymap):
             else:
                 print("invalid-path: '{}'".format(self._path))
 
-    class UserPath:
+    class UserPath(PathHandler):
         def __init__(self, rel: str) -> None:
-            path = PathHandler.resolve_user_profile(rel)
-            self._handler = PathHandler(path)
+            path = self.resolve_user_profile(rel)
+            super().__init__(path)
 
         @property
         def handler(self) -> PathHandler:
@@ -66,14 +66,14 @@ def configure(keymap):
     class KeyhacEnv:
         @staticmethod
         def get_filer() -> str:
-            tablacus = UserPath(r"Sync\portable_app\tablacus\TE64.exe").handler
+            tablacus = UserPath(r"Sync\portable_app\tablacus\TE64.exe")
             if tablacus.is_accessible():
                 return tablacus.path
             return "explorer.exe"
 
         @staticmethod
         def get_editor() -> str:
-            vscode_path = UserPath(r"scoop\apps\vscode\current\Code.exe").handler
+            vscode_path = UserPath(r"scoop\apps\vscode\current\Code.exe")
             if vscode_path.is_accessible():
                 return vscode_path.path
             return "notepad.exe"
@@ -591,8 +591,8 @@ def configure(keymap):
         src_path = UserPath(r"Personal\launch.yaml")
 
         def _launcher() -> None:
-            exe_path.handler.run(
-                "-src={}".format(src_path.handler.path),
+            exe_path.run(
+                "-src={}".format(src_path.path),
                 "-filer={}".format(KEYHAC_FILER),
                 "-all={}".format(search_all),
                 "-exclude=_obsolete,node_modules",
@@ -624,7 +624,7 @@ def configure(keymap):
 
         @staticmethod
         def open_dir(path: str) -> None:
-            handler = UserPath(path).handler
+            handler = UserPath(path)
             if handler.is_accessible():
                 if KEYHAC_EDITOR == "notepad.exe":
                     print(
@@ -1715,7 +1715,7 @@ def configure(keymap):
         },
     )
 
-    keymap_global["LS-LC-U1-M"] = UserPath(r"Personal\draft.txt").handler.run
+    keymap_global["LS-LC-U1-M"] = UserPath(r"Personal\draft.txt").run
 
     # invoke specific filer
     def invoke_filer(dir_path: str) -> Callable:
@@ -1737,7 +1737,7 @@ def configure(keymap):
         if scanner.found:
             if PSEUDO_CUTEEXEC.activate_wnd(scanner.found):
                 return
-        UserPath(r"scoop\apps\wezterm\current\wezterm-gui.exe").handler.run()
+        UserPath(r"scoop\apps\wezterm\current\wezterm-gui.exe").run()
 
     keymap_global["LC-AtMark"] = LAZY_KEYMAP.wrap(invoke_terminal).defer()
 
