@@ -33,11 +33,6 @@ def configure(keymap):
             return False
 
         @staticmethod
-        def resolve_user_profile(rel: str) -> str:
-            user_prof = os.environ.get("USERPROFILE") or ""
-            return str(Path(user_prof, rel))
-
-        @staticmethod
         def args_to_param(args: tuple) -> str:
             params = []
             for arg in args:
@@ -56,12 +51,13 @@ def configure(keymap):
 
     class UserPath(PathHandler):
         def __init__(self, rel: str) -> None:
-            path = self.resolve_user_profile(rel)
+            path = self.resolve(rel)
             super().__init__(path)
 
-        @property
-        def handler(self) -> PathHandler:
-            return self._handler
+        @staticmethod
+        def resolve(rel: str) -> str:
+            user_prof = os.environ.get("USERPROFILE") or ""
+            return str(Path(user_prof, rel))
 
     class KeyhacEnv:
         @staticmethod
@@ -652,7 +648,7 @@ def configure(keymap):
 
         @staticmethod
         def open_skk_dir() -> None:
-            skk_dir_path = PathHandler.resolve_user_profile(r"AppData\Roaming\CorvusSKK")
+            skk_dir_path = UserPath.resolve(r"AppData\Roaming\CorvusSKK")
             PathHandler(KEYHAC_FILER).run(skk_dir_path)
 
         def apply(self, km: WindowKeymap) -> None:
@@ -1644,7 +1640,7 @@ def configure(keymap):
             "LC-U1-M": (
                 "Mery.exe",
                 "TChildForm",
-                PathHandler.resolve_user_profile(r"AppData\Local\Programs\Mery\Mery.exe"),
+                UserPath.resolve(r"AppData\Local\Programs\Mery\Mery.exe"),
             ),
             "LC-U1-N": (
                 "notepad.exe",
@@ -1676,12 +1672,12 @@ def configure(keymap):
             "D": (
                 "vivaldi.exe",
                 "Chrome_WidgetWin_1",
-                PathHandler.resolve_user_profile(r"AppData\Local\Vivaldi\Application\vivaldi.exe"),
+                UserPath.resolve(r"AppData\Local\Vivaldi\Application\vivaldi.exe"),
             ),
             "S": (
                 "slack.exe",
                 "Chrome_WidgetWin_1",
-                PathHandler.resolve_user_profile(r"AppData\Local\slack\slack.exe"),
+                UserPath.resolve(r"AppData\Local\slack\slack.exe"),
             ),
             "F": (
                 "firefox.exe",
@@ -1696,7 +1692,7 @@ def configure(keymap):
             "K": (
                 "ksnip.exe",
                 "Qt5152QWindowIcon",
-                PathHandler.resolve_user_profile(r"scoop\apps\ksnip\current\ksnip.exe"),
+                UserPath.resolve(r"scoop\apps\ksnip\current\ksnip.exe"),
             ),
             "O": ("Obsidian.exe", "Chrome_WidgetWin_1"),
             "P": ("SumatraPDF.exe", "SUMATRA_PDF_FRAME"),
@@ -1709,7 +1705,7 @@ def configure(keymap):
             "M": (
                 "Mery.exe",
                 "TChildForm",
-                PathHandler.resolve_user_profile(r"AppData\Local\Programs\Mery\Mery.exe"),
+                UserPath.resolve(r"AppData\Local\Programs\Mery\Mery.exe"),
             ),
             "X": ("explorer.exe", "CabinetWClass", r"C:\Windows\explorer.exe"),
         },
@@ -1728,7 +1724,7 @@ def configure(keymap):
         return LAZY_KEYMAP.wrap(_invoker).defer()
 
     keymap_global["U1-O"] = keymap.defineMultiStrokeKeymap()
-    keymap_global["U1-O"]["D"] = invoke_filer(PathHandler.resolve_user_profile(r"Desktop"))
+    keymap_global["U1-O"]["D"] = invoke_filer(UserPath.resolve(r"Desktop"))
     keymap_global["U1-O"]["S"] = invoke_filer(r"X:\scan")
 
     def invoke_terminal() -> None:
