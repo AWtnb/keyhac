@@ -77,8 +77,6 @@ def configure(keymap):
     KEYHAC_FILER = KeyhacEnv.get_filer()
     KEYHAC_EDITOR = KeyhacEnv.get_editor()
 
-    keymap.editor = KEYHAC_EDITOR
-
     # console theme
     keymap.setFont("HackGen", 16)
     keymap.setTheme("black")
@@ -664,8 +662,11 @@ def configure(keymap):
             }.items():
                 km[key] = LAZY_KEYMAP.wrap(func).defer(50)
 
+    CONFIG_MENU = ConfigMenu(keymap)
     keymap_global["LC-U0-X"] = keymap.defineMultiStrokeKeymap()
-    ConfigMenu(keymap).apply(keymap_global["LC-U0-X"])
+    CONFIG_MENU.apply(keymap_global["LC-U0-X"])
+
+    keymap.editor = lambda _: CONFIG_MENU.open_keyhac_repo()
 
     keymap_global["U1-F12"] = LAZY_KEYMAP.wrap(ConfigMenu(keymap).reload_config).defer(50)
 
