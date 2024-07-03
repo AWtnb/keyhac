@@ -633,11 +633,6 @@ def configure(keymap):
             skk_path = PathHandler(r"C:\Windows\System32\IME\IMCRVSKK\imcrvcnf.exe")
             skk_path.run()
 
-        @staticmethod
-        def open_skk_dir() -> None:
-            skk_dir_path = UserPath.resolve(r"AppData\Roaming\CorvusSKK")
-            PathHandler(KEYHAC_FILER).run(skk_dir_path)
-
         def apply(self, km: WindowKeymap) -> None:
             for key, func in {
                 "R": self.reload_config,
@@ -645,7 +640,6 @@ def configure(keymap):
                 "C-E": self.open_skk_repo,
                 "P": self.paste_config,
                 "S": self.open_skk_config,
-                "S-S": self.open_skk_dir,
                 "X": lambda: None,
             }.items():
                 km[key] = LAZY_KEYMAP.wrap(func).defer(50)
