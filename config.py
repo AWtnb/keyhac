@@ -123,10 +123,6 @@ def configure(keymap):
             return False
 
         @staticmethod
-        def is_tablacus_viewmode(wnd: pyauto.Window) -> bool:
-            return wnd.getProcessName() == "TE64.exe" and wnd.getClassName() == "SysListView32"
-
-        @staticmethod
         def is_sumatra(wnd: pyauto.Window) -> bool:
             return wnd.getProcessName() == "SumatraPDF.exe"
 
@@ -584,7 +580,6 @@ def configure(keymap):
         def _launcher() -> None:
             exe_path.run(
                 "-src={}".format(src_path.path),
-                "-filer={}".format(KEYHAC_FILER),
                 "-all={}".format(search_all),
                 "-exclude=_obsolete,node_modules",
             )
@@ -633,9 +628,6 @@ def configure(keymap):
         def open_skk_repo(self) -> None:
             self.open_dir(r"Sync\develop\repo\CorvusSKK")
 
-        def open_cfiler_repo(self) -> None:
-            self.open_dir(r"Sync\develop\repo\cfiler")
-
         @staticmethod
         def open_skk_config() -> None:
             skk_path = PathHandler(r"C:\Windows\System32\IME\IMCRVSKK\imcrvcnf.exe")
@@ -650,7 +642,6 @@ def configure(keymap):
             for key, func in {
                 "R": self.reload_config,
                 "E": self.open_keyhac_repo,
-                "F": self.open_cfiler_repo,
                 "C-E": self.open_skk_repo,
                 "P": self.paste_config,
                 "S": self.open_skk_config,
@@ -1633,7 +1624,6 @@ def configure(keymap):
     PSEUDO_CUTEEXEC.apply(
         keymap_global,
         {
-            "U1-T": ("TE64.exe", "TablacusExplorer"),
             "U1-F": (
                 "cfiler.exe",
                 "CfilerWindowClass",
@@ -1704,7 +1694,6 @@ def configure(keymap):
             "W": ("WINWORD.EXE", "OpusApp"),
             "V": ("Code.exe", "Chrome_WidgetWin_1", KEYHAC_EDITOR),
             "C-V": ("vivaldi.exe", "Chrome_WidgetWin_1"),
-            "T": ("TE64.exe", "", KEYHAC_FILER),
             "M": (
                 "Mery.exe",
                 "TChildForm",
