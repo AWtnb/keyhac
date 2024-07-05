@@ -240,9 +240,7 @@ def configure(keymap):
             "U0-C": ("Apps"),
             "S-U0-C": ("S-F10"),
             # rename
-            "U0-N": ("F2", "Right"),
-            "S-U0-N": ("F2", "C-Home"),
-            "C-U0-N": ("F2"),
+            "U0-N": ("F2"),
             # print
             "F1": ("C-P"),
             "U1-F1": ("F1"),
