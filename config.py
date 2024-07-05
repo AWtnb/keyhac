@@ -1597,9 +1597,7 @@ def configure(keymap):
             def _executer() -> None:
                 scanner.scan()
                 if scanner.found:
-                    if scanner.found == self._keymap.getWindow() or not self.activate_wnd(
-                        scanner.found
-                    ):
+                    if not self.activate_wnd(scanner.found):
                         VIRTUAL_FINGER.type_keys("LCtrl-LAlt-Tab")
                 else:
                     if exe_path:
