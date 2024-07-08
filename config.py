@@ -215,8 +215,6 @@ def configure(keymap):
             # escape
             "O-(235)": ("Esc"),
             "U0-X": ("Esc"),
-            # close window
-            "LC-Q": ("A-F4"),
             # line selection
             "U1-A": ("End", "S-Home"),
             # punctuation
@@ -436,8 +434,9 @@ def configure(keymap):
             return LAZY_KEYMAP.wrap(_input).defer(self._defer_msec)
 
     MILD_PUNCHER = KeyPuncher(keymap, defer_msec=20)
-    SOFT_PUNCHER = KeyPuncher(keymap, defer_msec=50)
+    GENTLE_PUNCHER = KeyPuncher(keymap, defer_msec=50)
 
+    keymap_global["LC-Q"] = GENTLE_PUNCHER.invoke("A-F4")
     keymap_global["U0-4"] = MILD_PUNCHER.invoke("$_")
     keymap_global["U0-Comma"] = MILD_PUNCHER.invoke("Comma")
     keymap_global["U0-Period"] = MILD_PUNCHER.invoke("Period")
