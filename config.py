@@ -234,8 +234,6 @@ def configure(keymap):
             # Insert line
             "U0-I": ("End", "Enter"),
             "S-U0-I": ("Home", "Enter", "Up"),
-            # as katakana suggestion
-            "C-U0-I": ("C-I", "S-Slash", "C-M"),
             # Context menu
             "U0-C": ("Apps"),
             "S-U0-C": ("S-F10"),
@@ -466,7 +464,7 @@ def configure(keymap):
 
     # ime: Japanese / Foreign
     keymap_global["U1-J"] = IME_CONTROL.enable_skk
-    keymap_global["LC-U1-I"] = IME_CONTROL.to_skk_kata
+    keymap_global["LC-U0-I"] = IME_CONTROL.to_skk_kata
     keymap_global["U0-F"] = IME_CONTROL.disable
     keymap_global["S-U1-J"] = IME_CONTROL.to_skk_latin
     keymap_global["U1-I"] = IME_CONTROL.reconvert_with_skk
