@@ -2025,7 +2025,7 @@ def configure(keymap):
             return urllib.parse.quote(s)
 
         @classmethod
-        def get_menu_noise_reduction(cls) -> list:
+        def get_noise_reduction_menu(cls) -> list:
             return [
                 (" Remove: - Blank lines ", cls.format_cb(cls.skip_blank_line)),
                 (
@@ -2042,7 +2042,7 @@ def configure(keymap):
             ]
 
         @classmethod
-        def get_menu_transform(cls) -> list:
+        def get_transform_menu(cls) -> list:
             return [
                 (" Transform: => A-Z/0-9 ", cls.format_cb(CharWidth().to_half_letter)),
                 (
@@ -2056,7 +2056,7 @@ def configure(keymap):
             ]
 
         @classmethod
-        def get_menu_other(cls) -> list:
+        def get_other_menu(cls) -> list:
             return [
                 (" As md-codeblock ", cls.format_cb(cls.as_codeblock)),
                 (" Cat local file ", cls.format_cb(cls.catanate_file_content)),
@@ -2075,9 +2075,9 @@ def configure(keymap):
         @classmethod
         def apply(cls, km: WindowKeymap) -> None:
             for title, menu in {
-                "Noise-Reduction": cls.get_menu_noise_reduction(),
-                "Transform Alphabet / Punctuation": cls.get_menu_transform(),
-                "Others": cls.get_menu_other(),
+                "Noise-Reduction": cls.get_noise_reduction_menu(),
+                "Transform Alphabet / Punctuation": cls.get_transform_menu(),
+                "Others": cls.get_other_menu(),
             }.items():
                 m = menu + [("---------------- EXIT ----------------", lambda: None)]
                 km.cblisters += [(title, cblister_FixedPhrase(m))]
