@@ -11,6 +11,7 @@ from winreg import HKEY_CURRENT_USER, HKEY_CLASSES_ROOT, OpenKey, QueryValueEx
 import pyauto
 from keyhac import *
 from keyhac_keymap import Keymap, WindowKeymap, VK_CAPITAL
+from keyhac_clipboard import cblister_FixedPhrase
 from ckit import getClipboardText, setClipboardText, getAppExePath
 
 
@@ -1946,29 +1947,9 @@ def configure(keymap):
                 ]
             )
 
-    class ClipboardMenu:
+    class FormatTools:
         def __init__(self) -> None:
             pass
-
-        @staticmethod
-        def format_cb(func: Callable) -> Callable:
-            def _formatter() -> str:
-                cb = ClipHandler.get_string()
-                if cb:
-                    return func(cb)
-
-            return _formatter
-
-        @staticmethod
-        def replace_cb(search: str, replace_to: str) -> Callable:
-            reg = re.compile(search)
-
-            def _replacer() -> str:
-                cb = ClipHandler.get_string()
-                if cb:
-                    return reg.sub(replace_to, cb)
-
-            return _replacer
 
         @staticmethod
         def catanate_file_content(s: str) -> str:
@@ -2024,60 +2005,74 @@ def configure(keymap):
         def encode_url(s: str) -> str:
             return urllib.parse.quote(s)
 
-        @classmethod
-        def get_noise_reduction_menu(cls) -> list:
+    class ClipboardMenu(ClipHandler):
+        def __init__(self) -> None:
+            self._tools = FormatTools()
+
+        def invoke_formatter(self, func: Callable) -> Callable:
+            def _formatter() -> str:
+                cb = self.get_string()
+                if cb:
+                    return func(cb)
+
+            return _formatter
+
+        def invoke_replacer(self, search: str, replace_to: str) -> Callable:
+            reg = re.compile(search)
+
+            def _replacer() -> str:
+                cb = self.get_string()
+                if cb:
+                    return reg.sub(replace_to, cb)
+
+            return _replacer
+
+        def noise_reduction(self) -> list:
             return [
-                (" Remove: - Blank lines ", cls.format_cb(cls.skip_blank_line)),
-                (
-                    "         - Inside Paren ",
-                    cls.replace_cb(r"[\uff08\u0028].+?[\uff09\u0029]", ""),
-                ),
-                ("         - Line-break ", cls.replace_cb(r"\r?\n", "")),
-                ("         - Non-digit-char ", cls.replace_cb(r"[^\d]", "")),
-                ("         - Quotations ", cls.replace_cb(r"[\u0022\u0027]", "")),
-                (" Fix: - Dumb Quotation ", cls.format_cb(cls.fix_dumb_quotation)),
-                ("      - MSWord-Bullet ", cls.replace_cb(r"\uf09f\u0009", "\u30fb")),
-                ("      - KANGXI RADICALS ", cls.format_cb(KangxiRadicals().fix)),
-                ("      - To-Double-Bracket ", cls.format_cb(cls.to_double_bracket)),
+                (" Remove Blank lines ", self.invoke_formatter(self._tools.skip_blank_line)),
+                (" Remove Line-break ", self.invoke_replacer(r"\r?\n", "")),
+                (" Remove Non-digit-char ", self.invoke_replacer(r"[^\d]", "")),
+                (" Remove Quotations ", self.invoke_replacer(r"[\u0022\u0027]", "")),
+                (" Fix Dumb Quotation ", self.invoke_formatter(self._tools.fix_dumb_quotation)),
+                (" Fix MSWord-Bullet ", self.invoke_replacer(r"\uf09f\u0009", "\u30fb")),
+                (" Fix KANGXI RADICALS ", self.invoke_formatter(KangxiRadicals().fix)),
+                (" Fix To-Double-Bracket ", self.invoke_formatter(self._tools.to_double_bracket)),
             ]
 
-        @classmethod
-        def get_transform_menu(cls) -> list:
+        def transform_menu(self) -> list:
             return [
-                (" Transform: => A-Z/0-9 ", cls.format_cb(CharWidth().to_half_letter)),
+                (" Transform to A-Z/0-9 ", self.invoke_formatter(CharWidth().to_half_letter)),
                 (
-                    "            => \uff21-\uff3a/\uff10-\uff19 ",
-                    cls.format_cb(CharWidth().to_full_letter),
+                    " Transform to \uff21-\uff3a/\uff10-\uff19 ",
+                    self.invoke_formatter(CharWidth().to_full_letter),
                 ),
-                ("            => abc ", lambda: ClipHandler.get_string().lower()),
-                ("            => ABC ", lambda: ClipHandler.get_string().upper()),
-                (" Comma: - Curly (\uff0c) ", cls.replace_cb(r"\u3001", "\uff0c")),
-                ("        - Straight (\u3001) ", cls.replace_cb(r"\uff0c", "\u3001")),
+                (" Transform to abc ", lambda: ClipHandler.get_string().lower()),
+                (" Transform to ABC ", lambda: ClipHandler.get_string().upper()),
+                (" To Curly-Comma (\uff0c) ", self.invoke_replacer(r"\u3001", "\uff0c")),
+                (" To Japanese-Comma (\u3001) ", self.invoke_replacer(r"\uff0c", "\u3001")),
             ]
 
-        @classmethod
-        def get_other_menu(cls) -> list:
+        def misc_menu(self) -> list:
             return [
-                (" As md-codeblock ", cls.format_cb(cls.as_codeblock)),
-                (" Cat local file ", cls.format_cb(cls.catanate_file_content)),
-                (" Postalcode | Address ", cls.format_cb(cls.split_postalcode)),
-                (" URL: - Decode ", cls.format_cb(cls.decode_url)),
-                ("      - Encode ", cls.format_cb(cls.encode_url)),
+                (" As md-codeblock ", self.invoke_formatter(self._tools.as_codeblock)),
+                (" Cat local file ", self.invoke_formatter(self._tools.catanate_file_content)),
+                (" Postalcode | Address ", self.invoke_formatter(self._tools.split_postalcode)),
+                (" URL Decode ", self.invoke_formatter(self._tools.decode_url)),
+                (" URL Encode ", self.invoke_formatter(self._tools.encode_url)),
                 (
-                    "      - Shorten Amazon ",
-                    cls.replace_cb(
+                    " Shorten Amazon URL ",
+                    self.invoke_replacer(
                         r"^.+amazon\.co\.jp/.+dp/(.{10}).*", r"https://www.amazon.jp/dp/\1"
                     ),
                 ),
-                (" Zoom invitation ", cls.format_cb(Zoom().format)),
+                (" Zoom invitation ", self.invoke_formatter(Zoom().format)),
             ]
 
-        @classmethod
-        def apply(cls, km: WindowKeymap) -> None:
+        def apply(self, km: WindowKeymap) -> None:
             for title, menu in {
-                "Noise-Reduction": cls.get_noise_reduction_menu(),
-                "Transform Alphabet / Punctuation": cls.get_transform_menu(),
-                "Others": cls.get_other_menu(),
+                "Noise-Reduction": self.noise_reduction(),
+                "Transform Alphabet / Punctuation": self.transform_menu(),
+                "Misc": self.misc_menu(),
             }.items():
                 m = menu + [("---------------- EXIT ----------------", lambda: None)]
                 km.cblisters += [(title, cblister_FixedPhrase(m))]
