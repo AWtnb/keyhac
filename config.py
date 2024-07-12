@@ -1959,7 +1959,7 @@ def configure(keymap):
 
         @staticmethod
         def as_codeblock(s: str) -> str:
-            return "\n".join(["```", s, "```"])
+            return "\n".join(["```", s, "```", ""])
 
         @staticmethod
         def skip_blank_line(s: str) -> str:
