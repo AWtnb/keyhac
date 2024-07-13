@@ -3,6 +3,7 @@ import os
 import fnmatch
 import re
 import time
+import subprocess
 import urllib.parse
 from typing import Union, Callable
 from pathlib import Path
@@ -11,8 +12,7 @@ from winreg import HKEY_CURRENT_USER, HKEY_CLASSES_ROOT, OpenKey, QueryValueEx
 import pyauto
 from keyhac import *
 from keyhac_keymap import Keymap, WindowKeymap, VK_CAPITAL
-from keyhac_clipboard import cblister_FixedPhrase
-from ckit import getClipboardText, setClipboardText, getAppExePath
+from ckit import getClipboardText, setClipboardText, getAppExePath, JobItem, JobQueue
 
 
 def configure(keymap):
@@ -138,12 +138,8 @@ def configure(keymap):
     # keymap working on any window
     keymap_global = keymap.defineWindowKeymap(check_func=CheckWnd.is_global_target)
 
-    KEYHAC_SANDS = False
-
-    if KEYHAC_SANDS:
-        keymap.replaceKey("Space", "RShift")
-        keymap.replaceKey("RShift", "LShift")
-        keymap_global["O-RShift"] = "Space"
+    # clipboard menu
+    keymap_global["LC-LS-X"] = keymap.command_ClipboardList
 
     # keyboard macro
     keymap_global["U0-0"] = keymap.command_RecordToggle
@@ -1929,11 +1925,11 @@ def configure(keymap):
             lines = copied.strip().splitlines()
             if len(lines) < 9:
                 print("ERROR: lack of lines.")
-                return ""
+                return copied
             due = cls.get_time(lines[3])
             if len(due) < 1:
                 print("ERROR: could not parse due date.")
-                return ""
+                return copied
             return os.linesep.join(
                 [
                     cls.hr,
@@ -1948,15 +1944,6 @@ def configure(keymap):
             )
 
     class FormatTools:
-        def __init__(self) -> None:
-            pass
-
-        @staticmethod
-        def catanate_file_content(s: str) -> str:
-            if PathHandler(s).is_accessible():
-                return Path(s).read_text("utf-8")
-            return ""
-
         @staticmethod
         def as_codeblock(s: str) -> str:
             return "\n".join(["```", s, "```", ""])
@@ -2007,7 +1994,7 @@ def configure(keymap):
 
     class ClipboardMenu(ClipHandler):
         def __init__(self) -> None:
-            self._tools = FormatTools()
+            self._table = {}
 
         def invoke_formatter(self, func: Callable) -> Callable:
             def _formatter() -> str:
@@ -2027,55 +2014,95 @@ def configure(keymap):
 
             return _replacer
 
-        def noise_reduction(self) -> list:
-            return [
-                (" Remove Blank lines ", self.invoke_formatter(self._tools.skip_blank_line)),
-                (" Remove Line-break ", self.invoke_replacer(r"\r?\n", "")),
-                (" Remove Non-digit-char ", self.invoke_replacer(r"[^\d]", "")),
-                (" Remove Quotations ", self.invoke_replacer(r"[\u0022\u0027]", "")),
-                (" Fix Dumb Quotation ", self.invoke_formatter(self._tools.fix_dumb_quotation)),
-                (" Fix MSWord-Bullet ", self.invoke_replacer(r"\uf09f\u0009", "\u30fb")),
-                (" Fix KANGXI RADICALS ", self.invoke_formatter(KangxiRadicals().fix)),
-                (" Fix To-Double-Bracket ", self.invoke_formatter(self._tools.to_double_bracket)),
-            ]
+        @property
+        def table(self) -> dict:
+            return self._table
 
-        def transform_menu(self) -> list:
-            return [
-                (" Transform to A-Z/0-9 ", self.invoke_formatter(CharWidth().to_half_letter)),
-                (
-                    " Transform to \uff21-\uff3a/\uff10-\uff19 ",
-                    self.invoke_formatter(CharWidth().to_full_letter),
-                ),
-                (" Transform to abc ", lambda: ClipHandler.get_string().lower()),
-                (" Transform to ABC ", lambda: ClipHandler.get_string().upper()),
-                (" To Curly-Comma (\uff0c) ", self.invoke_replacer(r"\u3001", "\uff0c")),
-                (" To Japanese-Comma (\u3001) ", self.invoke_replacer(r"\uff0c", "\u3001")),
-            ]
+        def set_formatter(self, mapping: dict) -> None:
+            for menu, func in mapping.items():
+                self._table[menu] = self.invoke_formatter(func)
 
-        def misc_menu(self) -> list:
-            return [
-                (" As md-codeblock ", self.invoke_formatter(self._tools.as_codeblock)),
-                (" Cat local file ", self.invoke_formatter(self._tools.catanate_file_content)),
-                (" Postalcode | Address ", self.invoke_formatter(self._tools.split_postalcode)),
-                (" URL Decode ", self.invoke_formatter(self._tools.decode_url)),
-                (" URL Encode ", self.invoke_formatter(self._tools.encode_url)),
-                (
-                    " Shorten Amazon URL ",
-                    self.invoke_replacer(
-                        r"^.+amazon\.co\.jp/.+dp/(.{10}).*", r"https://www.amazon.jp/dp/\1"
-                    ),
-                ),
-                (" Zoom invitation ", self.invoke_formatter(Zoom().format)),
-            ]
+        def set_replacer(self, mapping: dict) -> None:
+            for menu, args in mapping.items():
+                self._table[menu] = self.invoke_replacer(*args)
 
-        def apply(self, km: WindowKeymap) -> None:
-            for title, menu in {
-                "Noise-Reduction": self.noise_reduction(),
-                "Transform Alphabet / Punctuation": self.transform_menu(),
-                "Misc": self.misc_menu(),
-            }.items():
-                m = menu + [("---------------- EXIT ----------------", lambda: None)]
-                km.cblisters += [(title, cblister_FixedPhrase(m))]
+        def set_func(self, mapping: dict) -> None:
+            for menu, func in mapping.items():
+                self._table[menu] = func
 
-    ClipboardMenu().apply(keymap)
-    keymap_global["LC-LS-X"] = LAZY_KEYMAP.wrap(keymap.command_ClipboardList).defer(msec=100)
+    CLIPBOARD_MENU = ClipboardMenu()
+    CLIPBOARD_MENU.set_formatter(
+        {
+            "Remove Blank lines": FormatTools.skip_blank_line,
+            "Fix Dumb Quotation": FormatTools.fix_dumb_quotation,
+            "Fix KANGXI RADICALS": KangxiRadicals().fix,
+            "Fix to Double Bracket": FormatTools.to_double_bracket,
+            "To markdown codeblock": FormatTools.as_codeblock,
+            "Split Postalcode and Address": FormatTools.split_postalcode,
+            "Decode URL": FormatTools.decode_url,
+            "Encode URL": FormatTools.encode_url,
+            "To Halfwidth": CharWidth().to_half_letter,
+            "To Fullwidth": CharWidth().to_full_letter,
+            "Zoom invitation": Zoom().format,
+        }
+    )
+    CLIPBOARD_MENU.set_replacer(
+        {
+            "Remove Linebreak": (r"\r?\n", ""),
+            "Remove Non-digit-char": (r"[^\d]", ""),
+            "Remove Quotations": (r"[\u0022\u0027]", ""),
+            "Fix MSWord-Bullet": (r"\uf09f\u0009", "\u30fb"),
+            "To Curly-Comma (\uff0c)": (r"\u3001", "\uff0c"),
+            "To Japanese-Comma (\u3001)": (r"\uff0c", "\u3001"),
+            "Shorten Amazon URL": (
+                r"^.+amazon\.co\.jp/.+dp/(.{10}).*",
+                r"https://www.amazon.jp/dp/\1",
+            ),
+        }
+    )
+    CLIPBOARD_MENU.set_func(
+        {
+            "To lowercase": ClipHandler.get_string().lower,
+            "To UPPERCASE": ClipHandler.get_string().upper,
+        }
+    )
+
+    def fzfmenu() -> None:
+        fzf_path = UserPath.resolve(r"scoop\apps\fzf\current\fzf.exe")
+        if not Path(fzf_path).exists():
+            print("cannot find fzf on PC.")
+            return
+
+        origin = ClipHandler.get_string()
+        if not origin:
+            return
+
+        results = []
+        table = CLIPBOARD_MENU.table
+
+        def _fzf(_) -> None:
+            lines = "\n".join(table.keys())
+            proc = subprocess.run(fzf_path, input=lines, capture_output=True, encoding="utf-8")
+            result = proc.stdout.strip()
+            if proc.returncode == 0:
+                results.append(result)
+
+        def _finished(_) -> None:
+            if len(results):
+                menu = results[-1]
+                func = table.get(menu, None)
+                if func:
+                    fmt = func()
+                    if origin != fmt:
+                        ClipHandler.set_string(fmt)
+                        title = "clipboard-updated"
+                        msg = "clipboard updated!"
+                    else:
+                        title = "clipboard-non-updated"
+                        msg = "clipboard is untouched."
+                    keymap.popBalloon(title, msg, 2500)
+
+        job = JobItem(_fzf, _finished)
+        JobQueue.defaultQueue().enqueue(job)
+
+    keymap_global["U1-Z"] = fzfmenu
