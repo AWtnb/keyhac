@@ -2100,7 +2100,10 @@ def configure(keymap):
                     else:
                         title = "clipboard-non-updated"
                         msg = "clipboard is untouched."
-                    keymap.popBalloon(title, msg, 2500)
+                    try:
+                        keymap.popBalloon(title, msg, 2500)
+                    except:
+                        pass
 
         job = JobItem(_fzf, _finished)
         JobQueue.defaultQueue().enqueue(job)
