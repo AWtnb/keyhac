@@ -356,7 +356,7 @@ def configure(keymap):
                 cls.set_string(format_func(s))
             else:
                 cls.set_string(s)
-            VIRTUAL_FINGER_QUICK.type_keys("C-V")
+            VIRTUAL_FINGER.type_keys("C-V")
 
         @classmethod
         def paste_current(cls, format_func: Union[Callable, None] = None) -> None:
@@ -365,7 +365,7 @@ def configure(keymap):
         @classmethod
         def copy_string(cls) -> str:
             cls.set_string("")
-            VIRTUAL_FINGER_QUICK.type_keys("C-Insert")
+            VIRTUAL_FINGER.type_keys("C-Insert")
             interval = 10
             timeout = interval * 20
             while timeout > 0:
@@ -2031,14 +2031,15 @@ def configure(keymap):
     )
     CLIPBOARD_MENU.set_func(
         {
-            "To lowercase": ClipHandler.get_string().lower,
-            "To UPPERCASE": ClipHandler.get_string().upper,
+            "To lowercase": lambda: ClipHandler.get_string().lower(),
+            "To UPPERCASE": lambda: ClipHandler.get_string().upper(),
         }
     )
 
+    FZF_PATH = UserPath.resolve(r"scoop\apps\fzf\current\fzf.exe")
+
     def fzfmenu() -> None:
-        fzf_path = UserPath.resolve(r"scoop\apps\fzf\current\fzf.exe")
-        if not Path(fzf_path).exists():
+        if not Path(FZF_PATH).exists():
             popMessage("cannot find fzf on PC.")
             return
 
@@ -2052,7 +2053,7 @@ def configure(keymap):
 
         def _fzf(_) -> None:
             lines = "\n".join(table.keys())
-            proc = subprocess.run(fzf_path, input=lines, capture_output=True, encoding="utf-8")
+            proc = subprocess.run(FZF_PATH, input=lines, capture_output=True, encoding="utf-8")
             result = proc.stdout.strip()
             if proc.returncode == 0:
                 results.append(result)
@@ -2064,8 +2065,7 @@ def configure(keymap):
                 if func:
                     fmt = func()
                     if origin != fmt:
-                        ClipHandler.set_string(fmt)
-                        popMessage("clipboard updated!")
+                        ClipHandler.paste(fmt)
                     else:
                         popMessage("clipboard is untouched.")
 
