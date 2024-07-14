@@ -1570,15 +1570,21 @@ def configure(keymap):
             scanner = WndScanner(exe_name, class_name)
 
             def _executer() -> None:
-                scanner.scan()
-                if scanner.found:
-                    if not self.activate_wnd(scanner.found):
-                        VIRTUAL_FINGER.type_keys("LCtrl-LAlt-Tab")
-                else:
-                    if exe_path:
-                        PathHandler(exe_path).run()
+                def _scan(_) -> None:
+                    scanner.scan()
 
-            return LAZY_KEYMAP.wrap(_executer).defer(80)
+                def _activate(_) -> None:
+                    if scanner.found:
+                        if not self.activate_wnd(scanner.found):
+                            VIRTUAL_FINGER.type_keys("LCtrl-LAlt-Tab")
+                    else:
+                        if exe_path:
+                            PathHandler(exe_path).run()
+
+                job = JobItem(_scan, _activate)
+                JobQueue.defaultQueue().enqueue(job)
+
+            return _executer
 
         def apply(self, wnd_keymap: WindowKeymap, remap_table: dict = {}) -> None:
             for key, params in remap_table.items():
