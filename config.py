@@ -16,6 +16,14 @@ from ckit import getClipboardText, setClipboardText, getAppExePath, JobItem, Job
 
 
 def configure(keymap):
+
+    def popMessage(message: str) -> None:
+        title = datetime.datetime.today().strftime("%Y%m%d-%H%M%S-%f")
+        try:
+            keymap.popBalloon(title, message, 2500)
+        except:
+            print(message)
+
     ################################
     # general setting
     ################################
@@ -48,7 +56,7 @@ def configure(keymap):
             if self.is_accessible():
                 keymap.ShellExecuteCommand(None, self._path, self.args_to_param(args), None)()
             else:
-                print("invalid-path: '{}'".format(self._path))
+                popMessage("invalid-path: '{}'".format(self._path))
 
     class UserPath(PathHandler):
         def __init__(self, rel: str) -> None:
@@ -60,23 +68,13 @@ def configure(keymap):
             user_prof = os.environ.get("USERPROFILE") or ""
             return str(Path(user_prof, rel))
 
-    class KeyhacEnv:
-        @staticmethod
-        def get_filer() -> str:
-            tablacus = UserPath(r"Sync\portable_app\tablacus\TE64.exe")
-            if tablacus.is_accessible():
-                return tablacus.path
-            return "explorer.exe"
+    def get_editor() -> str:
+        vscode_path = UserPath(r"scoop\apps\vscode\current\Code.exe")
+        if vscode_path.is_accessible():
+            return vscode_path.path
+        return "notepad.exe"
 
-        @staticmethod
-        def get_editor() -> str:
-            vscode_path = UserPath(r"scoop\apps\vscode\current\Code.exe")
-            if vscode_path.is_accessible():
-                return vscode_path.path
-            return "notepad.exe"
-
-    KEYHAC_FILER = KeyhacEnv.get_filer()
-    KEYHAC_EDITOR = KeyhacEnv.get_editor()
+    KEYHAC_EDITOR = get_editor()
 
     # console theme
     keymap.setFont("HackGen", 16)
@@ -444,7 +442,7 @@ def configure(keymap):
 
     if pyauto.Input.getKeyState(VK_CAPITAL):
         VIRTUAL_FINGER_QUICK.type_keys("LS-CapsLock")
-        print("released CapsLock.")
+        popMessage("released CapsLock.")
 
     ################################
     # custom hotkey
@@ -566,22 +564,6 @@ def configure(keymap):
     keymap_global["U1-Back"] = LAZY_KEYMAP.wrap(re_input_with_skk).defer()
     keymap_global["U1-F9"] = LAZY_KEYMAP.wrap(re_input_with_skk).defer()
 
-    def zyl(search_all: bool = False) -> Callable:
-        exe_path = UserPath(r"Personal\tools\bin\zyl.exe")
-        src_path = UserPath(r"Personal\launch.yaml")
-
-        def _launcher() -> None:
-            exe_path.run(
-                "-src={}".format(src_path.path),
-                "-all={}".format(search_all),
-                "-exclude=_obsolete,node_modules",
-            )
-
-        return LAZY_KEYMAP.wrap(_launcher).defer()
-
-    keymap_global["U1-Z"] = zyl(False)
-    keymap_global["LC-U1-Z"] = zyl(True)
-
     ################################
     # config menu
     ################################
@@ -599,21 +581,19 @@ def configure(keymap):
             self._keymap.configure()
             self._keymap.updateKeymap()
             ts = datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S")
-            print("\n{} reloaded config.py\n".format(ts))
+            popMessage("{} reloaded config.py".format(ts))
 
         @staticmethod
         def open_dir(path: str) -> None:
             handler = UserPath(path)
             if handler.is_accessible():
                 if KEYHAC_EDITOR == "notepad.exe":
-                    print(
-                        "notepad.exe cannot open directory. => open directory on explorer instead."
-                    )
+                    popMessage("keyhac editor 'notepad.exe' cannot open directory.")
                     handler.run()
                 else:
                     PathHandler(KEYHAC_EDITOR).run(handler.path)
             else:
-                print("cannot find path: '{}'".format(handler.path))
+                popMessage("cannot find path: '{}'".format(handler.path))
 
         def open_keyhac_repo(self) -> None:
             self.open_dir(r"Sync\develop\repo\keyhac")
@@ -1688,21 +1668,10 @@ def configure(keymap):
         },
     )
 
-    keymap_global["LS-LC-U1-M"] = UserPath(r"Personal\draft.txt").run
-
-    # invoke specific filer
-    def invoke_filer(dir_path: str) -> Callable:
-        def _invoker() -> None:
-            if PathHandler(dir_path).is_accessible():
-                PathHandler(KEYHAC_FILER).run(dir_path)
-            else:
-                print("invalid-path: '{}'".format(dir_path))
-
-        return LAZY_KEYMAP.wrap(_invoker).defer()
-
     keymap_global["U1-O"] = keymap.defineMultiStrokeKeymap()
-    keymap_global["U1-O"]["D"] = invoke_filer(UserPath.resolve(r"Desktop"))
-    keymap_global["U1-O"]["S"] = invoke_filer(r"X:\scan")
+    keymap_global["U1-O"]["D"] = UserPath(r"Desktop").run
+    keymap_global["U1-O"]["S"] = PathHandler(r"X:\scan").run
+    keymap_global["LS-LC-U1-M"] = UserPath(r"Personal\draft.txt").run
 
     def invoke_terminal() -> None:
         scanner = WndScanner("wezterm-gui.exe", "org.wezfurlong.wezterm")
@@ -1924,11 +1893,11 @@ def configure(keymap):
         def format(cls, copied: str) -> str:
             lines = copied.strip().splitlines()
             if len(lines) < 9:
-                print("ERROR: lack of lines.")
+                popMessage("ERROR: lack of lines.")
                 return copied
             due = cls.get_time(lines[3])
             if len(due) < 1:
-                print("ERROR: could not parse due date.")
+                popMessage("ERROR: could not parse due date.")
                 return copied
             return os.linesep.join(
                 [
@@ -2070,11 +2039,12 @@ def configure(keymap):
     def fzfmenu() -> None:
         fzf_path = UserPath.resolve(r"scoop\apps\fzf\current\fzf.exe")
         if not Path(fzf_path).exists():
-            print("cannot find fzf on PC.")
+            popMessage("cannot find fzf on PC.")
             return
 
         origin = ClipHandler.get_string()
         if not origin:
+            popMessage("no text in clipboard.")
             return
 
         results = []
@@ -2095,15 +2065,9 @@ def configure(keymap):
                     fmt = func()
                     if origin != fmt:
                         ClipHandler.set_string(fmt)
-                        title = "clipboard-updated"
-                        msg = "clipboard updated!"
+                        popMessage("clipboard updated!")
                     else:
-                        title = "clipboard-non-updated"
-                        msg = "clipboard is untouched."
-                    try:
-                        keymap.popBalloon(title, msg, 2500)
-                    except:
-                        pass
+                        popMessage("clipboard is untouched.")
 
         job = JobItem(_fzf, _finished)
         JobQueue.defaultQueue().enqueue(job)
