@@ -562,22 +562,6 @@ def configure(keymap):
         lambda: PathHandler(ClipHandler().copy_string().strip()).run()
     ).defer()
 
-    # re-input selected string with skk
-    def re_input_with_skk() -> None:
-        selection = ClipHandler().copy_string()
-        if selection:
-            sequence = ["Minus" if c == "-" else c for c in StrCleaner.clear_space(selection)]
-            IME_CONTROL.enable_skk()
-            c = ord(sequence[0])
-            if ord("A") <= c <= ord("Z") or ord("a") <= c <= ord("z"):
-                sequence = ["LS-" + sequence[0]] + sequence[1:]
-                VIRTUAL_FINGER_QUICK.type_smart(*sequence)
-            else:
-                IME_CONTROL.reconvert_with_skk()
-
-    keymap_global["U1-Back"] = LAZY_KEYMAP.wrap(re_input_with_skk).defer()
-    keymap_global["U1-F9"] = LAZY_KEYMAP.wrap(re_input_with_skk).defer()
-
     ################################
     # config menu
     ################################
@@ -659,7 +643,7 @@ def configure(keymap):
 
         def snap(self) -> None:
 
-            def _snap(_) -> None:
+            def _snap() -> None:
                 wnd = self._keymap.getTopLevelWindow()
                 if self.check_rect(wnd):
                     wnd.maximize()
@@ -876,10 +860,10 @@ def configure(keymap):
             for key, towards in mapping_dict.items():
 
                 def _snap() -> None:
-                    def _maximize(_) -> None:
+                    def _maximize() -> None:
                         self._keymap.getTopLevelWindow().maximize()
 
-                    def _snapper(_) -> None:
+                    def _snapper() -> None:
                         VIRTUAL_FINGER.type_keys("LShift-LWin-" + towards)
 
                     JobRunner(_maximize, _snapper).run()
@@ -906,7 +890,7 @@ def configure(keymap):
 
         def invoke_snapper(self, horizontal: bool, default_pos: bool) -> Callable:
             def _snapper() -> None:
-                def _snap(_) -> None:
+                def _snap() -> None:
                     wnd = self._keymap.getTopLevelWindow()
                     wr = WndRect(self._keymap)
                     wr.set_rect(*wnd.getRect())
@@ -1089,12 +1073,12 @@ def configure(keymap):
             def _inputter() -> None:
                 seq = []
 
-                def _get_date(_) -> None:
+                def _get_date() -> None:
                     d = datetime.datetime.today()
                     for c in d.strftime(fmt):
                         seq.append(c)
 
-                def _input(_) -> None:
+                def _input() -> None:
                     if finish_with_kanamode:
                         SKK_TO_KANAMODE.invoke_sender(*seq)()
                     else:
@@ -1474,7 +1458,7 @@ def configure(keymap):
             def _searcher() -> None:
                 s = ClipHandler().copy_string()
 
-                def _search(_) -> None:
+                def _search() -> None:
                     query = SearchQuery(s)
                     query.fix_kangxi()
                     query.remove_honorific()
@@ -1609,13 +1593,13 @@ def configure(keymap):
             def _executer() -> None:
                 results = []
 
-                def _activate(_) -> None:
+                def _activate() -> None:
                     scanner = WndScanner(exe_name, class_name)
                     scanner.scan()
                     if scanner.found:
                         results.append(self.activate_wnd(scanner.found))
 
-                def _fallback(_) -> None:
+                def _fallback() -> None:
                     if len(results) < 1:
                         if exe_path:
                             PathHandler(exe_path).run()
@@ -1731,7 +1715,7 @@ def configure(keymap):
         else:
             results = []
 
-            def _activate(_) -> None:
+            def _activate() -> None:
                 scanner = WndScanner(
                     DEFAULT_BROWSER.get_exe_name(), DEFAULT_BROWSER.get_wnd_class()
                 )
@@ -1739,7 +1723,7 @@ def configure(keymap):
                 if scanner.found:
                     results.append(PSEUDO_CUTEEXEC.activate_wnd(scanner.found))
 
-            def _fallback(_) -> None:
+            def _fallback() -> None:
                 if len(results) < 1:
                     PathHandler("https://duckduckgo.com").run()
                     return
