@@ -1,6 +1,7 @@
 import datetime
 import os
 import fnmatch
+import inspect
 import re
 import time
 import subprocess
@@ -23,6 +24,32 @@ def configure(keymap):
             keymap.popBalloon(title, message, 2500)
         except:
             print(message)
+
+    class JobRunner:
+        def __init__(self, subthread_func: Callable, finished_func: Callable) -> None:
+            self._sub_func = subthread_func
+            self._fin_func = finished_func
+
+        @staticmethod
+        def wrap(func: Callable) -> Callable:
+            if inspect.signature(func).parameters.items():
+
+                def _func_with_arg(arg):
+                    func(arg)
+
+                return _func_with_arg
+
+            def _func(_):
+                func()
+
+            return _func
+
+        def run(self) -> None:
+            sub = self.wrap(self._sub_func)
+            fin = self.wrap(self._fin_func)
+            job = JobItem(sub, fin)
+            JobQueue.createDefaultQueue()
+            JobQueue.defaultQueue().enqueue(job)
 
     ################################
     # general setting
@@ -565,6 +592,7 @@ def configure(keymap):
             ClipHandler().paste(s)
 
         def reload_config(self) -> None:
+            JobQueue.cancelAll()
             self._keymap.configure()
             self._keymap.updateKeymap()
             ts = datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S")
@@ -647,8 +675,7 @@ def configure(keymap):
                         return
                     trial_limit -= 1
 
-            job = JobItem(_snap, lambda _: None)
-            JobQueue.defaultQueue().enqueue(job)
+            JobRunner(_snap, lambda: None).run()
 
         def get_vertical_half(self, upper: bool) -> list:
             half_height = int((self.bottom + self.top) / 2)
@@ -804,11 +831,10 @@ def configure(keymap):
     keymap_global["U1-M"] = keymap.defineMultiStrokeKeymap()
 
     def maximize_window():
-        def _maximize(_) -> None:
+        def _maximize() -> None:
             keymap.getTopLevelWindow().maximize()
 
-        job = JobItem(_maximize, lambda _: None)
-        JobQueue.defaultQueue().enqueue(job)
+        JobRunner(_maximize, lambda: None).run()
 
     keymap_global["U1-M"]["X"] = maximize_window
 
@@ -856,8 +882,7 @@ def configure(keymap):
                     def _snapper(_) -> None:
                         VIRTUAL_FINGER.type_keys("LShift-LWin-" + towards)
 
-                    job = JobItem(_maximize, _snapper)
-                    JobQueue.defaultQueue().enqueue(job)
+                    JobRunner(_maximize, _snapper).run()
 
                 km[key] = _snap
 
@@ -896,8 +921,7 @@ def configure(keymap):
                             delay()
                         wnd.setRect(rect)
 
-                job = JobItem(_snap, lambda _: None)
-                JobQueue.defaultQueue().enqueue(job)
+                JobRunner(_snap, lambda: None).run()
 
             return _snapper
 
@@ -1076,8 +1100,7 @@ def configure(keymap):
                     else:
                         SKK_TO_LATINMODE.invoke_sender(*seq)()
 
-                job = JobItem(_get_date, _input)
-                JobQueue.defaultQueue().enqueue(job)
+                JobRunner(_get_date, _input).run()
 
             return _inputter
 
@@ -1460,7 +1483,7 @@ def configure(keymap):
                         query.remove_hiragana()
                     PathHandler(uri.format(query.encode(strict))).run()
 
-                JobQueue.defaultQueue().enqueue(job)
+                JobRunner(_search, lambda: None).run()
 
             return _searcher
 
@@ -1600,8 +1623,7 @@ def configure(keymap):
                     if not results[-1]:
                         VIRTUAL_FINGER.type_keys("LCtrl-LAlt-Tab")
 
-                job = JobItem(_activate, _fallback)
-                JobQueue.defaultQueue().enqueue(job)
+                JobRunner(_activate, _fallback).run()
 
             return _executer
 
@@ -1726,8 +1748,7 @@ def configure(keymap):
                     return
                 VIRTUAL_FINGER.type_keys("C-T")
 
-            job = JobItem(_activate, _fallback)
-            JobQueue.defaultQueue().enqueue(job)
+            JobRunner(_activate, _fallback).run()
 
     keymap_global["U0-Q"] = search_on_browser
 
@@ -1925,11 +1946,11 @@ def configure(keymap):
         def format(cls, copied: str) -> str:
             lines = copied.strip().splitlines()
             if len(lines) < 9:
-                popMessage("ERROR: lack of lines.")
+                print("Zoom format ERROR: lack of lines.")
                 return copied
             due = cls.get_time(lines[3])
             if len(due) < 1:
-                popMessage("ERROR: could not parse due date.")
+                print("Zoom format ERROR: could not parse due date.")
                 return copied
             return os.linesep.join(
                 [
@@ -2080,28 +2101,28 @@ def configure(keymap):
             popMessage("no text in clipboard.")
             return
 
-        results = []
         table = CLIPBOARD_MENU.table
+        updated = []
 
-        def _fzf(_) -> None:
+        def _fzf() -> None:
             lines = "\n".join(table.keys())
             proc = subprocess.run(FZF_PATH, input=lines, capture_output=True, encoding="utf-8")
             result = proc.stdout.strip()
             if proc.returncode == 0:
-                results.append(result)
-
-        def _finished(_) -> None:
-            if len(results):
-                menu = results[-1]
-                func = table.get(menu, None)
+                func = table.get(result, None)
                 if func:
                     fmt = func()
-                    if origin != fmt:
-                        ClipHandler.paste(fmt)
-                    else:
-                        popMessage("clipboard is untouched.")
+                    if 0 < len(fmt) and fmt != origin:
+                        ClipHandler.set_string(fmt)
+                        delay(20)
+                        updated.append(True)
 
-        job = JobItem(_fzf, _finished)
-        JobQueue.defaultQueue().enqueue(job)
+        def _finished() -> None:
+            if len(updated) and updated[-1]:
+                ClipHandler.paste_current()
+            else:
+                popMessage("clipboard is unchanged!")
+
+        JobRunner(_fzf, _finished).run()
 
     keymap_global["U1-Z"] = fzfmenu
