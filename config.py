@@ -451,11 +451,6 @@ def configure(keymap):
     # append clipboard
     keymap_global["LC-U0-C"] = LAZY_KEYMAP.wrap(ClipHandler.append).defer()
 
-    # listup Window
-    keymap_global["U0-W"] = LAZY_KEYMAP.wrap(
-        lambda: VIRTUAL_FINGER.type_keys("LCtrl-LAlt-Tab")
-    ).defer()
-
     # ime: Japanese / Foreign
     keymap_global["U1-J"] = IME_CONTROL.enable_skk
     keymap_global["LC-U0-I"] = IME_CONTROL.to_skk_kata
@@ -489,7 +484,7 @@ def configure(keymap):
             def _paster() -> None:
                 ClipHandler().paste_current(_cleaner)
 
-            return LAZY_KEYMAP.wrap(_paster).defer()
+            return _paster
 
         @classmethod
         def apply(cls, km: WindowKeymap, custom_key: str) -> None:
@@ -519,14 +514,6 @@ def configure(keymap):
 
     keymap_global["LC-U1-C"] = LAZY_KEYMAP.wrap(count_chars).defer()
 
-    # wrap with quote mark
-    def quote_selection() -> None:
-        cb = ClipHandler().copy_string()
-        if cb:
-            ClipHandler().paste(cb, lambda x: ' "{}" '.format(x.strip()))
-
-    keymap_global["LC-U0-Q"] = LAZY_KEYMAP.wrap(quote_selection).defer()
-
     # paste with quote mark
     def paste_with_anchor(join_lines: bool = False) -> Callable:
         def _formatter(s: str) -> str:
@@ -538,7 +525,7 @@ def configure(keymap):
         def _paster() -> None:
             ClipHandler().paste_current(_formatter)
 
-        return LAZY_KEYMAP.wrap(_paster).defer()
+        return _paster
 
     keymap_global["U1-Q"] = paste_with_anchor(False)
     keymap_global["C-U1-Q"] = paste_with_anchor(True)
@@ -643,20 +630,25 @@ def configure(keymap):
             return wnd.getRect() == self._rect
 
         def snap(self) -> None:
-            wnd = self._keymap.getTopLevelWindow()
-            if self.check_rect(wnd):
-                wnd.maximize()
-                return
-            if wnd.isMaximized():
-                wnd.restore()
-                delay()
-            trial_limit = 2
-            while trial_limit > 0:
-                wnd.setRect(list(self._rect))
-                delay()
+
+            def _snap(_) -> None:
+                wnd = self._keymap.getTopLevelWindow()
                 if self.check_rect(wnd):
+                    wnd.maximize()
                     return
-                trial_limit -= 1
+                if wnd.isMaximized():
+                    wnd.restore()
+                    delay()
+                trial_limit = 2
+                while trial_limit > 0:
+                    wnd.setRect(list(self._rect))
+                    delay()
+                    if self.check_rect(wnd):
+                        return
+                    trial_limit -= 1
+
+            job = JobItem(_snap, lambda _: None)
+            JobQueue.defaultQueue().enqueue(job)
 
         def get_vertical_half(self, upper: bool) -> list:
             half_height = int((self.bottom + self.top) / 2)
@@ -800,8 +792,6 @@ def configure(keymap):
     CURSOR_POS = CursorPos(keymap)
 
     keymap_global["O-RCtrl"] = CURSOR_POS.snap
-
-    keymap_global["U1-Enter"] = CURSOR_POS.snap_to_center
     keymap_global["O-RShift"] = CURSOR_POS.snap_to_center
 
     ################################
@@ -848,19 +838,22 @@ def configure(keymap):
                     for key, pos in self.snap_key_dict.items():
                         if mntr_idx < len(monitors):
                             wnd_rect = monitors[mntr_idx].area_mapping[pos][size]
-                            km[mod_mntr + mod_area + key] = LAZY_KEYMAP.wrap(wnd_rect.snap).defer(
-                                40
-                            )
+                            km[mod_mntr + mod_area + key] = wnd_rect.snap
 
         def alloc_maximize(self, km: WindowKeymap, mapping_dict: dict) -> None:
             for key, towards in mapping_dict.items():
 
                 def _snap() -> None:
-                    VIRTUAL_FINGER.type_keys("LShift-LWin-" + towards)
-                    delay()
-                    self._keymap.getTopLevelWindow().maximize()
+                    def _maximize(_) -> None:
+                        self._keymap.getTopLevelWindow().maximize()
 
-                km[key] = LAZY_KEYMAP.wrap(_snap).defer()
+                    def _snapper(_) -> None:
+                        VIRTUAL_FINGER.type_keys("LShift-LWin-" + towards)
+
+                    job = JobItem(_maximize, _snapper)
+                    JobQueue.defaultQueue().enqueue(job)
+
+                km[key] = _snap
 
     WND_POS_ALLOCATOR = WndPosAllocator(keymap)
     WND_POS_ALLOCATOR.alloc_flexible(keymap_global["U1-M"])
@@ -881,22 +874,26 @@ def configure(keymap):
             self._keymap = keymap
 
         def invoke_snapper(self, horizontal: bool, default_pos: bool) -> Callable:
-            def _snap() -> None:
-                wnd = self._keymap.getTopLevelWindow()
-                wr = WndRect(self._keymap)
-                wr.set_rect(*wnd.getRect())
-                rect = []
-                if horizontal:
-                    rect = wr.get_horizontal_half(default_pos)
-                else:
-                    rect = wr.get_vertical_half(default_pos)
-                if len(rect):
-                    if wnd.isMaximized():
-                        wnd.restore()
-                        delay()
-                    wnd.setRect(rect)
+            def _snapper() -> None:
+                def _snap(_) -> None:
+                    wnd = self._keymap.getTopLevelWindow()
+                    wr = WndRect(self._keymap)
+                    wr.set_rect(*wnd.getRect())
+                    rect = []
+                    if horizontal:
+                        rect = wr.get_horizontal_half(default_pos)
+                    else:
+                        rect = wr.get_vertical_half(default_pos)
+                    if len(rect):
+                        if wnd.isMaximized():
+                            wnd.restore()
+                            delay()
+                        wnd.setRect(rect)
 
-            return LAZY_KEYMAP.wrap(_snap).defer()
+                job = JobItem(_snap, lambda _: None)
+                JobQueue.defaultQueue().enqueue(job)
+
+            return _snapper
 
         def apply(self, km: WindowKeymap) -> None:
             for key, params in {
@@ -1059,15 +1056,24 @@ def configure(keymap):
 
         @staticmethod
         def invoke(fmt: str, finish_with_kanamode: bool = False) -> Callable:
-            def _input() -> None:
-                d = datetime.datetime.today()
-                seq = [c for c in d.strftime(fmt)]
-                if finish_with_kanamode:
-                    SKK_TO_KANAMODE.invoke_sender(*seq)()
-                else:
-                    SKK_TO_LATINMODE.invoke_sender(*seq)()
+            def _inputter() -> None:
+                seq = []
 
-            return LAZY_KEYMAP.wrap(_input).defer(50)
+                def _get_date(_) -> None:
+                    d = datetime.datetime.today()
+                    for c in d.strftime(fmt):
+                        seq.append(c)
+
+                def _input(_) -> None:
+                    if finish_with_kanamode:
+                        SKK_TO_KANAMODE.invoke_sender(*seq)()
+                    else:
+                        SKK_TO_LATINMODE.invoke_sender(*seq)()
+
+                job = JobItem(_get_date, _input)
+                JobQueue.defaultQueue().enqueue(job)
+
+            return _inputter
 
         def apply(self, km: WindowKeymap) -> None:
             for key, params in {
@@ -1567,21 +1573,24 @@ def configure(keymap):
             return False
 
         def invoke(self, exe_name: str, class_name: str = "", exe_path: str = "") -> Callable:
-            scanner = WndScanner(exe_name, class_name)
-
             def _executer() -> None:
-                def _scan(_) -> None:
-                    scanner.scan()
+                results = []
 
                 def _activate(_) -> None:
+                    scanner = WndScanner(exe_name, class_name)
+                    scanner.scan()
                     if scanner.found:
-                        if not self.activate_wnd(scanner.found):
-                            VIRTUAL_FINGER.type_keys("LCtrl-LAlt-Tab")
-                    else:
+                        results.append(self.activate_wnd(scanner.found))
+
+                def _fallback(_) -> None:
+                    if len(results) < 1:
                         if exe_path:
                             PathHandler(exe_path).run()
+                            return
+                    if not results[-1]:
+                        VIRTUAL_FINGER.type_keys("LCtrl-LAlt-Tab")
 
-                job = JobItem(_scan, _activate)
+                job = JobItem(_activate, _fallback)
                 JobQueue.defaultQueue().enqueue(job)
 
             return _executer
@@ -1610,6 +1619,11 @@ def configure(keymap):
                 "notepad.exe",
                 "Notepad",
                 r"C:\Windows\System32\notepad.exe",
+            ),
+            "LC-AtMark": (
+                "wezterm-gui.exe",
+                "org.wezfurlong.wezterm",
+                UserPath.resolve(r"scoop\apps\wezterm\current\wezterm-gui.exe"),
             ),
         },
     )
@@ -1679,31 +1693,33 @@ def configure(keymap):
     keymap_global["U1-O"]["S"] = PathHandler(r"X:\scan").run
     keymap_global["LS-LC-U1-M"] = UserPath(r"Personal\draft.txt").run
 
-    def invoke_terminal() -> None:
-        scanner = WndScanner("wezterm-gui.exe", "org.wezfurlong.wezterm")
-        scanner.scan()
-        if scanner.found:
-            if PSEUDO_CUTEEXEC.activate_wnd(scanner.found):
-                return
-        UserPath(r"scoop\apps\wezterm\current\wezterm-gui.exe").run()
-
-    keymap_global["LC-AtMark"] = LAZY_KEYMAP.wrap(invoke_terminal).defer()
-
     def search_on_browser() -> None:
         if keymap.getWindow().getProcessName() == DEFAULT_BROWSER.get_exe_name():
             VIRTUAL_FINGER.type_keys("C-T")
         else:
-            scanner = WndScanner(DEFAULT_BROWSER.get_exe_name(), DEFAULT_BROWSER.get_wnd_class())
-            scanner.scan()
-            if scanner.found:
-                if PSEUDO_CUTEEXEC.activate_wnd(scanner.found):
-                    VIRTUAL_FINGER.type_keys("C-T")
-                else:
-                    VIRTUAL_FINGER.type_keys("LCtrl-LAlt-Tab")
-            else:
-                PathHandler("https://duckduckgo.com").run()
+            results = []
 
-    keymap_global["U0-Q"] = LAZY_KEYMAP.wrap(search_on_browser).defer(100)
+            def _activate(_) -> None:
+                scanner = WndScanner(
+                    DEFAULT_BROWSER.get_exe_name(), DEFAULT_BROWSER.get_wnd_class()
+                )
+                scanner.scan()
+                if scanner.found:
+                    results.append(PSEUDO_CUTEEXEC.activate_wnd(scanner.found))
+
+            def _fallback(_) -> None:
+                if len(results) < 1:
+                    PathHandler("https://duckduckgo.com").run()
+                    return
+                if not results[-1]:
+                    VIRTUAL_FINGER.type_keys("LCtrl-LAlt-Tab")
+                    return
+                VIRTUAL_FINGER.type_keys("C-T")
+
+            job = JobItem(_activate, _fallback)
+            JobQueue.defaultQueue().enqueue(job)
+
+    keymap_global["U0-Q"] = search_on_browser
 
     ################################
     # application based remap
