@@ -1,7 +1,6 @@
 import datetime
 import os
 import fnmatch
-import inspect
 import re
 import time
 import subprocess
@@ -18,38 +17,16 @@ from ckit import getClipboardText, setClipboardText, getAppExePath, JobItem, Job
 
 def configure(keymap):
 
-    def popMessage(message: str) -> None:
+    def balloon(message: str) -> None:
         title = datetime.datetime.today().strftime("%Y%m%d-%H%M%S-%f")
         try:
             keymap.popBalloon(title, message, 2500)
         except:
             print(message)
 
-    class JobRunner:
-        def __init__(self, subthread_func: Callable, finished_func: Callable) -> None:
-            self._sub_func = subthread_func
-            self._fin_func = finished_func
-
-        @staticmethod
-        def wrap(func: Callable) -> Callable:
-            if inspect.signature(func).parameters.items():
-
-                def _func_with_arg(arg):
-                    func(arg)
-
-                return _func_with_arg
-
-            def _func(_):
-                func()
-
-            return _func
-
-        def run(self) -> None:
-            sub = self.wrap(self._sub_func)
-            fin = self.wrap(self._fin_func)
-            job = JobItem(sub, fin)
-            JobQueue.createDefaultQueue()
-            JobQueue.defaultQueue().enqueue(job)
+    def subthread_run(func: Callable, finished: Union[Callable, None] = None) -> None:
+        job = JobItem(func, finished)
+        JobQueue.defaultQueue().enqueue(job)
 
     ################################
     # general setting
@@ -83,7 +60,7 @@ def configure(keymap):
             if self.is_accessible():
                 keymap.ShellExecuteCommand(None, self._path, self.args_to_param(args), None)()
             else:
-                popMessage("invalid-path: '{}'".format(self._path))
+                balloon("invalid-path: '{}'".format(self._path))
 
     class UserPath(PathHandler):
         def __init__(self, rel: str) -> None:
@@ -469,7 +446,7 @@ def configure(keymap):
 
     if pyauto.Input.getKeyState(VK_CAPITAL):
         VIRTUAL_FINGER_QUICK.type_keys("LS-CapsLock")
-        popMessage("released CapsLock.")
+        balloon("released CapsLock.")
 
     ################################
     # custom hotkey
@@ -580,19 +557,19 @@ def configure(keymap):
             self._keymap.configure()
             self._keymap.updateKeymap()
             ts = datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S")
-            popMessage("{} reloaded config.py".format(ts))
+            balloon("{} reloaded config.py".format(ts))
 
         @staticmethod
         def open_dir(path: str) -> None:
             handler = UserPath(path)
             if handler.is_accessible():
                 if KEYHAC_EDITOR == "notepad.exe":
-                    popMessage("keyhac editor 'notepad.exe' cannot open directory.")
+                    balloon("keyhac editor 'notepad.exe' cannot open directory.")
                     handler.run()
                 else:
                     PathHandler(KEYHAC_EDITOR).run(handler.path)
             else:
-                popMessage("cannot find path: '{}'".format(handler.path))
+                balloon("cannot find path: '{}'".format(handler.path))
 
         def open_keyhac_repo(self) -> None:
             self.open_dir(r"Sync\develop\repo\keyhac")
@@ -643,7 +620,7 @@ def configure(keymap):
 
         def snap(self) -> None:
 
-            def _snap() -> None:
+            def _snap(_) -> None:
                 wnd = self._keymap.getTopLevelWindow()
                 if self.check_rect(wnd):
                     wnd.maximize()
@@ -659,7 +636,7 @@ def configure(keymap):
                         return
                     trial_limit -= 1
 
-            JobRunner(_snap, lambda: None).run()
+            subthread_run(_snap)
 
         def get_vertical_half(self, upper: bool) -> list:
             half_height = int((self.bottom + self.top) / 2)
@@ -815,10 +792,10 @@ def configure(keymap):
     keymap_global["U1-M"] = keymap.defineMultiStrokeKeymap()
 
     def maximize_window():
-        def _maximize() -> None:
+        def _maximize(_) -> None:
             keymap.getTopLevelWindow().maximize()
 
-        JobRunner(_maximize, lambda: None).run()
+        subthread_run(_maximize)
 
     keymap_global["U1-M"]["X"] = maximize_window
 
@@ -860,13 +837,13 @@ def configure(keymap):
             for key, towards in mapping_dict.items():
 
                 def _snap() -> None:
-                    def _maximize() -> None:
+                    def _maximize(_) -> None:
                         self._keymap.getTopLevelWindow().maximize()
 
-                    def _snapper() -> None:
+                    def _snapper(_) -> None:
                         VIRTUAL_FINGER.type_keys("LShift-LWin-" + towards)
 
-                    JobRunner(_maximize, _snapper).run()
+                    subthread_run(_maximize, _snapper)
 
                 km[key] = _snap
 
@@ -890,7 +867,7 @@ def configure(keymap):
 
         def invoke_snapper(self, horizontal: bool, default_pos: bool) -> Callable:
             def _snapper() -> None:
-                def _snap() -> None:
+                def _snap(_) -> None:
                     wnd = self._keymap.getTopLevelWindow()
                     wr = WndRect(self._keymap)
                     wr.set_rect(*wnd.getRect())
@@ -905,7 +882,7 @@ def configure(keymap):
                             delay()
                         wnd.setRect(rect)
 
-                JobRunner(_snap, lambda: None).run()
+                subthread_run(_snap)
 
             return _snapper
 
@@ -1071,22 +1048,14 @@ def configure(keymap):
         @staticmethod
         def invoke(fmt: str, finish_with_kanamode: bool = False) -> Callable:
             def _inputter() -> None:
-                seq = []
+                d = datetime.datetime.today()
+                seq = [c for c in d.strftime(fmt)]
+                if finish_with_kanamode:
+                    SKK_TO_KANAMODE.invoke_sender(*seq)()
+                else:
+                    SKK_TO_LATINMODE.invoke_sender(*seq)()
 
-                def _get_date() -> None:
-                    d = datetime.datetime.today()
-                    for c in d.strftime(fmt):
-                        seq.append(c)
-
-                def _input() -> None:
-                    if finish_with_kanamode:
-                        SKK_TO_KANAMODE.invoke_sender(*seq)()
-                    else:
-                        SKK_TO_LATINMODE.invoke_sender(*seq)()
-
-                JobRunner(_get_date, _input).run()
-
-            return _inputter
+            return LAZY_KEYMAP.wrap(_inputter).defer()
 
         def apply(self, km: WindowKeymap) -> None:
             for key, params in {
@@ -1458,7 +1427,7 @@ def configure(keymap):
             def _searcher() -> None:
                 s = ClipHandler().copy_string()
 
-                def _search() -> None:
+                def _search(_) -> None:
                     query = SearchQuery(s)
                     query.fix_kangxi()
                     query.remove_honorific()
@@ -1467,7 +1436,7 @@ def configure(keymap):
                         query.remove_hiragana()
                     PathHandler(uri.format(query.encode(strict))).run()
 
-                JobRunner(_search, lambda: None).run()
+                subthread_run(_search)
 
             return _searcher
 
@@ -1593,13 +1562,13 @@ def configure(keymap):
             def _executer() -> None:
                 results = []
 
-                def _activate() -> None:
+                def _activate(_) -> None:
                     scanner = WndScanner(exe_name, class_name)
                     scanner.scan()
                     if scanner.found:
                         results.append(self.activate_wnd(scanner.found))
 
-                def _fallback() -> None:
+                def _finished(_) -> None:
                     if len(results) < 1:
                         if exe_path:
                             PathHandler(exe_path).run()
@@ -1607,7 +1576,7 @@ def configure(keymap):
                     if not results[-1]:
                         VIRTUAL_FINGER.type_keys("LCtrl-LAlt-Tab")
 
-                JobRunner(_activate, _fallback).run()
+                subthread_run(_activate, _finished)
 
             return _executer
 
@@ -1710,12 +1679,12 @@ def configure(keymap):
     keymap_global["LS-LC-U1-M"] = UserPath(r"Personal\draft.txt").run
 
     def search_on_browser() -> None:
-        if keymap.getWindow().getProcessName() == DEFAULT_BROWSER.get_exe_name():
-            VIRTUAL_FINGER.type_keys("C-T")
-        else:
-            results = []
+        results = []
 
-            def _activate() -> None:
+        def _activate(_) -> None:
+            if keymap.getWindow().getProcessName() == DEFAULT_BROWSER.get_exe_name():
+                VIRTUAL_FINGER.type_keys("C-T")
+            else:
                 scanner = WndScanner(
                     DEFAULT_BROWSER.get_exe_name(), DEFAULT_BROWSER.get_wnd_class()
                 )
@@ -1723,16 +1692,16 @@ def configure(keymap):
                 if scanner.found:
                     results.append(PSEUDO_CUTEEXEC.activate_wnd(scanner.found))
 
-            def _fallback() -> None:
-                if len(results) < 1:
-                    PathHandler("https://duckduckgo.com").run()
-                    return
-                if not results[-1]:
-                    VIRTUAL_FINGER.type_keys("LCtrl-LAlt-Tab")
-                    return
-                VIRTUAL_FINGER.type_keys("C-T")
+        def _finished(_) -> None:
+            if len(results) < 1:
+                PathHandler("https://duckduckgo.com").run()
+                return
+            if not results[-1]:
+                VIRTUAL_FINGER.type_keys("LCtrl-LAlt-Tab")
+                return
+            VIRTUAL_FINGER.type_keys("C-T")
 
-            JobRunner(_activate, _fallback).run()
+        subthread_run(_activate, _finished)
 
     keymap_global["U0-Q"] = search_on_browser
 
@@ -2077,18 +2046,18 @@ def configure(keymap):
 
     def fzfmenu() -> None:
         if not Path(FZF_PATH).exists():
-            popMessage("cannot find fzf on PC.")
+            balloon("cannot find fzf on PC.")
             return
 
         origin = ClipHandler.get_string()
         if not origin:
-            popMessage("no text in clipboard.")
+            balloon("no text in clipboard.")
             return
 
         table = CLIPBOARD_MENU.table
         updated = []
 
-        def _fzf() -> None:
+        def _fzf(_) -> None:
             lines = "\n".join(table.keys())
             proc = subprocess.run(FZF_PATH, input=lines, capture_output=True, encoding="utf-8")
             result = proc.stdout.strip()
@@ -2101,12 +2070,12 @@ def configure(keymap):
                         delay(20)
                         updated.append(True)
 
-        def _finished() -> None:
+        def _finished(_) -> None:
             if len(updated) and updated[-1]:
                 ClipHandler.paste_current()
             else:
-                popMessage("clipboard is unchanged!")
+                balloon("clipboard is unchanged!")
 
-        JobRunner(_fzf, _finished).run()
+        subthread_run(_fzf, _finished)
 
     keymap_global["U1-Z"] = fzfmenu
