@@ -802,9 +802,15 @@ def configure(keymap):
     keymap_global["U1-H"] = "LWin-Left"
 
     keymap_global["U1-M"] = keymap.defineMultiStrokeKeymap()
-    keymap_global["U1-M"]["X"] = LAZY_KEYMAP.wrap(
-        lambda: keymap.getTopLevelWindow().maximize()
-    ).defer(40)
+
+    def maximize_window():
+        def _maximize(_) -> None:
+            keymap.getTopLevelWindow().maximize()
+
+        job = JobItem(_maximize, lambda _: None)
+        JobQueue.defaultQueue().enqueue(job)
+
+    keymap_global["U1-M"]["X"] = maximize_window
 
     class WndPosAllocator:
         monitor_dict = {
@@ -1442,17 +1448,21 @@ def configure(keymap):
 
         @staticmethod
         def invoke(uri: str, strict: bool = False, strip_hiragana: bool = False) -> Callable:
-            def _search() -> None:
+            def _searcher() -> None:
                 s = ClipHandler().copy_string()
-                query = SearchQuery(s)
-                query.fix_kangxi()
-                query.remove_honorific()
-                query.remove_editorial_style()
-                if strip_hiragana:
-                    query.remove_hiragana()
-                PathHandler(uri.format(query.encode(strict))).run()
 
-            return LAZY_KEYMAP.wrap(_search).defer()
+                def _search(_) -> None:
+                    query = SearchQuery(s)
+                    query.fix_kangxi()
+                    query.remove_honorific()
+                    query.remove_editorial_style()
+                    if strip_hiragana:
+                        query.remove_hiragana()
+                    PathHandler(uri.format(query.encode(strict))).run()
+
+                JobQueue.defaultQueue().enqueue(job)
+
+            return _searcher
 
         @staticmethod
         def _mod_key(s: str) -> list:
