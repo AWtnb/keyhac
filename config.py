@@ -5,7 +5,8 @@ import re
 import time
 import subprocess
 import urllib.parse
-from typing import Union, Callable
+from collections import namedtuple
+from typing import Union, Callable, Dict
 from pathlib import Path
 from winreg import HKEY_CURRENT_USER, HKEY_CLASSES_ROOT, OpenKey, QueryValueEx
 
@@ -605,15 +606,12 @@ def configure(keymap):
     # class for position on monitor
     ################################
 
-    class WndRect:
-        def __init__(self, keymap: Keymap) -> None:
-            self._keymap = keymap
-            self._rect = (0, 0, 0, 0)
-            self.left, self.top, self.right, self.bottom = self._rect
+    Rect = namedtuple("Rect", ["left", "top", "right", "bottom"])
 
-        def set_rect(self, left: int, top: int, right: int, bottom: int) -> None:
-            self._rect = (left, top, right, bottom)
-            self.left, self.top, self.right, self.bottom = self._rect
+    class WndRect:
+        def __init__(self, keymap: Keymap, rect: Rect) -> None:
+            self._keymap = keymap
+            self._rect = rect
 
         def check_rect(self, wnd: pyauto.Window) -> bool:
             return wnd.getRect() == self._rect
@@ -630,7 +628,7 @@ def configure(keymap):
                     delay()
                 trial_limit = 2
                 while trial_limit > 0:
-                    wnd.setRect(list(self._rect))
+                    wnd.setRect(self._rect)
                     delay()
                     if self.check_rect(wnd):
                         return
@@ -639,7 +637,7 @@ def configure(keymap):
             subthread_run(_snap)
 
         def get_vertical_half(self, upper: bool) -> list:
-            half_height = int((self.bottom + self.top) / 2)
+            half_height = int((self._rect.bottom + self._rect.top) / 2)
             r = list(self._rect)
             if upper:
                 r[3] = half_height
@@ -650,7 +648,7 @@ def configure(keymap):
             return []
 
         def get_horizontal_half(self, leftward: bool) -> list:
-            half_width = int((self.right + self.left) / 2)
+            half_width = int((self._rect.right + self._rect.left) / 2)
             r = list(self._rect)
             if leftward:
                 r[2] = half_width
@@ -661,21 +659,28 @@ def configure(keymap):
             return []
 
     class MonitorRect:
-        def __init__(self, keymap: Keymap, rect: list) -> None:
+        def __init__(self, keymap: Keymap, rect: Rect) -> None:
             self._keymap = keymap
             self.left, self.top, self.right, self.bottom = rect
             self.max_width = self.right - self.left
             self.max_height = self.bottom - self.top
             self.possible_width = self.get_variation(self.max_width)
             self.possible_height = self.get_variation(self.max_height)
-            self.area_mapping = {}
+            self.area_mapping: Dict[str, Dict[str, WndRect]] = {}
+
+        @staticmethod
+        def get_variation(max_size: int) -> dict:
+            return {
+                "small": int(max_size / 3),
+                "middle": int(max_size / 2),
+                "large": int(max_size * 2 / 3),
+            }
 
         def set_center_rect(self) -> None:
             d = {}
             for size, px in self.possible_width.items():
                 lx = self.left + int((self.max_width - px) / 2)
-                wr = WndRect(self._keymap)
-                wr.set_rect(lx, self.top, lx + px, self.bottom)
+                wr = WndRect(self._keymap, Rect(lx, self.top, lx + px, self.bottom))
                 d[size] = wr
             self.area_mapping["center"] = d
 
@@ -687,8 +692,7 @@ def configure(keymap):
                         lx = self.right - px
                     else:
                         lx = self.left
-                    wr = WndRect(self._keymap)
-                    wr.set_rect(lx, self.top, lx + px, self.bottom)
+                    wr = WndRect(self._keymap, Rect(lx, self.top, lx + px, self.bottom))
                     d[size] = wr
                 self.area_mapping[pos] = d
 
@@ -700,24 +704,15 @@ def configure(keymap):
                         ty = self.bottom - px
                     else:
                         ty = self.top
-                    wr = WndRect(self._keymap)
-                    wr.set_rect(self.left, ty, self.right, ty + px)
+                    wr = WndRect(self._keymap, Rect(self.left, ty, self.right, ty + px))
                     d[size] = wr
                 self.area_mapping[pos] = d
-
-        @staticmethod
-        def get_variation(max_size: int) -> dict:
-            return {
-                "small": int(max_size / 3),
-                "middle": int(max_size / 2),
-                "large": int(max_size * 2 / 3),
-            }
 
     class CurrentMonitors:
         def __init__(self, keymap: Keymap) -> None:
             ms = []
             for mi in pyauto.Window.getMonitorInfo():
-                mr = MonitorRect(keymap, mi[1])
+                mr = MonitorRect(keymap, Rect(*mi[1]))
                 mr.set_center_rect()
                 mr.set_horizontal_rect()
                 mr.set_vertical_rect()
@@ -734,11 +729,6 @@ def configure(keymap):
     ################################
     # set cursor position
     ################################
-
-    keymap_global["U0-PageUp"] = keymap.MouseWheelCommand(+0.5)
-    keymap_global["U0-PageDown"] = keymap.MouseWheelCommand(-0.5)
-    keymap_global["LS-U0-PageUp"] = keymap.MouseHorizontalWheelCommand(-0.5)
-    keymap_global["LS-U0-PageDown"] = keymap.MouseHorizontalWheelCommand(+0.5)
 
     class CursorPos:
         def __init__(self, keymap: Keymap) -> None:
@@ -869,8 +859,7 @@ def configure(keymap):
             def _snapper() -> None:
                 def _snap(_) -> None:
                     wnd = self._keymap.getTopLevelWindow()
-                    wr = WndRect(self._keymap)
-                    wr.set_rect(*wnd.getRect())
+                    wr = WndRect(self._keymap, Rect(*wnd.getRect()))
                     rect = []
                     if horizontal:
                         rect = wr.get_horizontal_half(default_pos)
