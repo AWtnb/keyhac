@@ -1550,7 +1550,8 @@ def configure(keymap):
                 try:
                     target.setForeground()
                     if pyauto.Window.getForeground() == target:
-                        target.setForeground(True)
+                        # target.setForeground(True)
+                        delay()
                         return True
                 except:
                     return False
@@ -1560,20 +1561,21 @@ def configure(keymap):
 
         def invoke(self, exe_name: str, class_name: str = "", exe_path: str = "") -> Callable:
             def _executer() -> None:
-                results = []
 
-                def _activate(_) -> None:
+                def _activate(job_item: JobItem) -> None:
+                    job_item.results = []
                     scanner = WndScanner(exe_name, class_name)
                     scanner.scan()
                     if scanner.found:
-                        results.append(self.activate_wnd(scanner.found))
+                        result = self.activate_wnd(scanner.found)
+                        job_item.results.append(result)
 
-                def _finished(_) -> None:
-                    if len(results) < 1:
+                def _finished(job_item: JobItem) -> None:
+                    if len(job_item.results) < 1:
                         if exe_path:
                             PathHandler(exe_path).run()
                             return
-                    if not results[-1]:
+                    if not job_item.results[-1]:
                         VIRTUAL_FINGER.type_keys("LCtrl-LAlt-Tab")
 
                 subthread_run(_activate, _finished)
@@ -1679,9 +1681,9 @@ def configure(keymap):
     keymap_global["LS-LC-U1-M"] = UserPath(r"Personal\draft.txt").run
 
     def search_on_browser() -> None:
-        results = []
 
-        def _activate(_) -> None:
+        def _activate(job_item: JobItem) -> None:
+            job_item.results = []
             if keymap.getWindow().getProcessName() == DEFAULT_BROWSER.get_exe_name():
                 VIRTUAL_FINGER.type_keys("C-T")
             else:
@@ -1690,13 +1692,14 @@ def configure(keymap):
                 )
                 scanner.scan()
                 if scanner.found:
-                    results.append(PSEUDO_CUTEEXEC.activate_wnd(scanner.found))
+                    result = PSEUDO_CUTEEXEC.activate_wnd(scanner.found)
+                    job_item.results.append(result)
 
-        def _finished(_) -> None:
-            if len(results) < 1:
+        def _finished(job_item: JobItem) -> None:
+            if len(job_item.results) < 1:
                 PathHandler("https://duckduckgo.com").run()
                 return
-            if not results[-1]:
+            if not job_item.results[-1]:
                 VIRTUAL_FINGER.type_keys("LCtrl-LAlt-Tab")
                 return
             VIRTUAL_FINGER.type_keys("C-T")
@@ -2055,9 +2058,9 @@ def configure(keymap):
             return
 
         table = CLIPBOARD_MENU.table
-        updated = []
 
-        def _fzf(_) -> None:
+        def _fzf(job_item: JobItem) -> None:
+            job_item.result = False
             lines = "\n".join(table.keys())
             proc = subprocess.run(FZF_PATH, input=lines, capture_output=True, encoding="utf-8")
             result = proc.stdout.strip()
@@ -2068,13 +2071,11 @@ def configure(keymap):
                     if 0 < len(fmt) and fmt != origin:
                         ClipHandler.set_string(fmt)
                         delay(20)
-                        updated.append(True)
+                        job_item.result = True
 
-        def _finished(_) -> None:
-            if len(updated) and updated[-1]:
+        def _finished(job_item: JobItem) -> None:
+            if job_item.result:
                 ClipHandler.paste_current()
-            else:
-                balloon("clipboard is unchanged!")
 
         subthread_run(_fzf, _finished)
 
