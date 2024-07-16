@@ -1563,7 +1563,7 @@ def configure(keymap):
                     if len(job_item.results) < 1:
                         if exe_path:
                             PathHandler(exe_path).run()
-                            return
+                        return
                     if not job_item.results[-1]:
                         VIRTUAL_FINGER.type_keys("LCtrl-LAlt-Tab")
 
