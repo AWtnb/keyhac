@@ -1569,7 +1569,7 @@ def configure(keymap):
 
                 subthread_run(_activate, _finished)
 
-            return _executer
+            return LAZY_KEYMAP.wrap(_executer).defer()
 
         def apply(self, wnd_keymap: WindowKeymap, remap_table: dict = {}) -> None:
             for key, params in remap_table.items():
