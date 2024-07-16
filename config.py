@@ -2015,6 +2015,7 @@ def configure(keymap):
     )
     CLIPBOARD_MENU.set_replacer(
         {
+            "Escape Backslash": (r"\\", r"\\\\"),
             "Remove Linebreak": (r"\r?\n", ""),
             "Remove Non-digit-char": (r"[^\d]", ""),
             "Remove Quotations": (r"[\u0022\u0027]", ""),
