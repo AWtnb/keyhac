@@ -1539,8 +1539,8 @@ def configure(keymap):
                 try:
                     target.setForeground()
                     if pyauto.Window.getForeground() == target:
-                        target.setForeground(True)
                         delay()
+                        target.setForeground(True)
                         return True
                 except:
                     return False
