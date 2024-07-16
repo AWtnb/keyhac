@@ -1534,7 +1534,7 @@ def configure(keymap):
             if target.isMinimized():
                 target.restore()
                 delay(interval)
-            timeout = interval * 10
+            timeout = interval * 50
             while timeout > 0:
                 try:
                     target.setForeground()
