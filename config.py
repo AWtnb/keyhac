@@ -2042,8 +2042,7 @@ def configure(keymap):
             balloon("cannot find fzf on PC.")
             return
 
-        origin = ClipHandler.get_string()
-        if not origin:
+        if not ClipHandler.get_string():
             balloon("no text in clipboard.")
             return
 
@@ -2058,14 +2057,13 @@ def configure(keymap):
                 func = table.get(result, None)
                 if func:
                     fmt = func()
-                    if 0 < len(fmt) and fmt != origin:
-                        ClipHandler.set_string(fmt)
-                        delay(20)
+                    if 0 < len(fmt):
                         job_item.result = True
+                        job_item.paste_string = fmt
 
         def _finished(job_item: JobItem) -> None:
-            if job_item.result:
-                ClipHandler.paste_current()
+            if job_item.result and job_item.paste_string:
+                ClipHandler.paste(job_item.paste_string)
 
         subthread_run(_fzf, _finished)
 
