@@ -372,22 +372,22 @@ def configure(keymap):
             cls.paste(cls.get_string(), format_func)
 
         @classmethod
-        def after_copy(cls, callback: Callable) -> None:
-            origin = ClipHandler.get_string()
+        def after_copy(cls, deferred: Callable) -> None:
+            origin = cls.get_string()
             VIRTUAL_FINGER.type_keys("C-C")
 
-            def _copy(job_item: JobItem) -> None:
+            def _watch_clipboard(job_item: JobItem) -> None:
                 interval = 10
                 timeout = interval * 20
                 while timeout > 0:
                     delay(interval)
-                    if (s := ClipHandler.get_string()) != origin:
+                    if (s := cls.get_string()) != origin:
                         job_item.copied = s
                         return
                     timeout -= interval
                 job_item.copied = origin
 
-            subthread_run(_copy, callback)
+            subthread_run(_watch_clipboard, deferred)
 
     class LazyFunc:
         def __init__(self, keymap: Keymap, func: Callable) -> None:
