@@ -2050,6 +2050,7 @@ def configure(keymap):
 
         def _fzf(job_item: JobItem) -> None:
             job_item.result = False
+            job_item.paste_string = ""
             lines = "\n".join(table.keys())
             proc = subprocess.run(FZF_PATH, input=lines, capture_output=True, encoding="utf-8")
             result = proc.stdout.strip()
