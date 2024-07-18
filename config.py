@@ -1028,14 +1028,20 @@ def configure(keymap):
         @staticmethod
         def invoke(fmt: str, finish_with_kanamode: bool = False) -> Callable:
             def _inputter() -> None:
-                d = datetime.datetime.today()
-                seq = [c for c in d.strftime(fmt)]
-                if finish_with_kanamode:
-                    SKK_TO_KANAMODE.invoke_sender(*seq)()
-                else:
-                    SKK_TO_LATINMODE.invoke_sender(*seq)()
+                def _get_func(job_item: JobItem) -> None:
+                    d = datetime.datetime.today()
+                    seq = [c for c in d.strftime(fmt)]
+                    if finish_with_kanamode:
+                        job_item.func = SKK_TO_KANAMODE.invoke_sender(*seq)
+                    else:
+                        job_item.func = SKK_TO_LATINMODE.invoke_sender(*seq)
 
-            return LAZY_KEYMAP.wrap(_inputter).defer()
+                def _input(job_item: JobItem) -> None:
+                    job_item.func()
+
+                subthread_run(_get_func, _input)
+
+            return _inputter
 
         def apply(self, km: WindowKeymap) -> None:
             for key, params in {
@@ -1540,25 +1546,20 @@ def configure(keymap):
         def invoke(self, exe_name: str, class_name: str = "", exe_path: str = "") -> Callable:
             def _executer() -> None:
 
-                def _activate(job_item: JobItem) -> None:
-                    job_item.results = []
+                def _activate(_) -> None:
                     scanner = WndScanner(exe_name, class_name)
                     scanner.scan()
-                    if scanner.found:
-                        result = self.activate_wnd(scanner.found)
-                        job_item.results.append(result)
-
-                def _finished(job_item: JobItem) -> None:
-                    if len(job_item.results) < 1:
+                    if not scanner.found:
                         if exe_path:
                             PathHandler(exe_path).run()
                         return
-                    if not job_item.results[-1]:
+                    result = self.activate_wnd(scanner.found)
+                    if not result:
                         VIRTUAL_FINGER.type_keys("LCtrl-LAlt-Tab")
 
-                subthread_run(_activate, _finished)
+                subthread_run(_activate)
 
-            return LAZY_KEYMAP.wrap(_executer).defer()
+            return _executer
 
         def apply(self, wnd_keymap: WindowKeymap, remap_table: dict = {}) -> None:
             for key, params in remap_table.items():
@@ -1660,8 +1661,7 @@ def configure(keymap):
 
     def search_on_browser() -> None:
 
-        def _activate(job_item: JobItem) -> None:
-            job_item.results = []
+        def _activate(_) -> None:
             if keymap.getWindow().getProcessName() == DEFAULT_BROWSER.get_exe_name():
                 VIRTUAL_FINGER.type_keys("C-T")
             else:
@@ -1669,20 +1669,16 @@ def configure(keymap):
                     DEFAULT_BROWSER.get_exe_name(), DEFAULT_BROWSER.get_wnd_class()
                 )
                 scanner.scan()
-                if scanner.found:
-                    result = PSEUDO_CUTEEXEC.activate_wnd(scanner.found)
-                    job_item.results.append(result)
+                if not scanner.found:
+                    PathHandler("https://duckduckgo.com").run()
+                    return
+                result = PSEUDO_CUTEEXEC.activate_wnd(scanner.found)
+                if result:
+                    VIRTUAL_FINGER.type_keys("C-T")
+                else:
+                    VIRTUAL_FINGER.type_keys("LCtrl-LAlt-Tab")
 
-        def _finished(job_item: JobItem) -> None:
-            if len(job_item.results) < 1:
-                PathHandler("https://duckduckgo.com").run()
-                return
-            if not job_item.results[-1]:
-                VIRTUAL_FINGER.type_keys("LCtrl-LAlt-Tab")
-                return
-            VIRTUAL_FINGER.type_keys("C-T")
-
-        subthread_run(_activate, _finished)
+        subthread_run(_activate)
 
     keymap_global["U0-Q"] = search_on_browser
 
@@ -1974,19 +1970,21 @@ def configure(keymap):
         def __init__(self) -> None:
             self._table = {}
 
-        def invoke_formatter(self, func: Callable) -> Callable:
+        @classmethod
+        def invoke_formatter(cls, func: Callable) -> Callable:
             def _formatter() -> str:
-                cb = self.get_string()
+                cb = cls.get_string()
                 if cb:
                     return func(cb)
 
             return _formatter
 
-        def invoke_replacer(self, search: str, replace_to: str) -> Callable:
+        @classmethod
+        def invoke_replacer(cls, search: str, replace_to: str) -> Callable:
             reg = re.compile(search)
 
             def _replacer() -> str:
-                cb = self.get_string()
+                cb = cls.get_string()
                 if cb:
                     return reg.sub(replace_to, cb)
 
