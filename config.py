@@ -368,23 +368,22 @@ def configure(keymap):
             cls.paste(cls.get_string(), format_func)
 
         @classmethod
-        def copy_string(cls) -> str:
-            cls.set_string("")
-            VIRTUAL_FINGER.type_keys("C-Insert")
-            interval = 10
-            timeout = interval * 20
-            while timeout > 0:
-                if s := cls.get_string():
-                    return s
-                delay(interval)
-                timeout -= interval
-            return ""
+        def after_copy(cls, callback: Callable) -> None:
+            origin = ClipHandler.get_string()
+            VIRTUAL_FINGER.type_keys("C-C")
 
-        @classmethod
-        def append(cls) -> None:
-            org = cls.get_string()
-            cb = cls.copy_string()
-            cls.set_string(org + cb)
+            def _copy(job_item: JobItem) -> None:
+                interval = 10
+                timeout = interval * 20
+                while timeout > 0:
+                    delay(interval)
+                    if (s := ClipHandler.get_string()) != origin:
+                        job_item.copied = s
+                        return
+                    timeout -= interval
+                job_item.copied = origin
+
+            subthread_run(_copy, callback)
 
     class LazyFunc:
         def __init__(self, keymap: Keymap, func: Callable) -> None:
@@ -454,7 +453,7 @@ def configure(keymap):
     ################################
 
     # append clipboard
-    keymap_global["LC-U0-C"] = LAZY_KEYMAP.wrap(ClipHandler.append).defer()
+    # keymap_global["LC-U0-C"] = LAZY_KEYMAP.wrap(ClipHandler.append).defer()
 
     # ime: Japanese / Foreign
     keymap_global["U1-J"] = IME_CONTROL.enable_skk
@@ -507,18 +506,6 @@ def configure(keymap):
 
     StrCleaner().apply(keymap_global, "U1-V")
 
-    # count chars
-    def count_chars() -> None:
-        cb = ClipHandler().copy_string()
-        if cb:
-            total = len(cb)
-            lines = len(cb.strip().splitlines())
-            net = len(StrCleaner.clear_space(cb.strip()))
-            t = "total: {}(lines: {}), net: {}".format(total, lines, net)
-            keymap.popBalloon("", t, 5000)
-
-    keymap_global["LC-U1-C"] = LAZY_KEYMAP.wrap(count_chars).defer()
-
     # paste with quote mark
     def paste_with_anchor(join_lines: bool = False) -> Callable:
         def _formatter(s: str) -> str:
@@ -536,9 +523,9 @@ def configure(keymap):
     keymap_global["C-U1-Q"] = paste_with_anchor(True)
 
     # open url in browser
-    keymap_global["C-U0-O"] = LAZY_KEYMAP.wrap(
-        lambda: PathHandler(ClipHandler().copy_string().strip()).run()
-    ).defer()
+    keymap_global["C-U0-O"] = lambda: ClipHandler().after_copy(
+        lambda job: PathHandler(job.copied.strip()).run()
+    )
 
     ################################
     # config menu
@@ -1414,10 +1401,8 @@ def configure(keymap):
         @staticmethod
         def invoke(uri: str, strict: bool = False, strip_hiragana: bool = False) -> Callable:
             def _searcher() -> None:
-                s = ClipHandler().copy_string()
-
-                def _search(_) -> None:
-                    query = SearchQuery(s)
+                def _search(job_item: JobItem) -> None:
+                    query = SearchQuery(job_item.copied)
                     query.fix_kangxi()
                     query.remove_honorific()
                     query.remove_editorial_style()
@@ -1425,7 +1410,7 @@ def configure(keymap):
                         query.remove_hiragana()
                     PathHandler(uri.format(query.encode(strict))).run()
 
-                subthread_run(_search)
+                ClipHandler().after_copy(_search)
 
             return _searcher
 
