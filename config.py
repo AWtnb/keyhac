@@ -1948,6 +1948,28 @@ def configure(keymap):
         def encode_url(s: str) -> str:
             return urllib.parse.quote(s)
 
+        @staticmethod
+        def mdtable_from_tsv(s: str) -> str:
+            delim = "\t"
+
+            def _split(s: str) -> str:
+                return s.split(delim)
+
+            def _join(ss: list) -> str:
+                pipe = "|"
+                return pipe + pipe.join(ss) + pipe
+
+            lines = s.splitlines()
+            header = _join(_split(lines[0]))
+            sep = _join([":---:" for _ in lines[0].split(delim)])
+            table = [
+                header,
+                sep,
+            ]
+            for line in lines[1:]:
+                table.append(_join(_split(line)))
+            return os.linesep.join(table)
+
     class ClipboardMenu(ClipHandler):
         def __init__(self) -> None:
             self._table = {}
@@ -1986,32 +2008,56 @@ def configure(keymap):
             for menu, func in mapping.items():
                 self._table[menu] = func
 
+    def md_frontmatter() -> str:
+        return os.linesep.join(
+            [
+                "---",
+                "title:",
+                "styles:",
+                "  - h1:",
+                "      font-size: 2rem",
+                "  - blockquote > p:",
+                "      text-indent: -2em",
+                "      margin-left: 2.5em",
+                "      line-height: 1.5",
+                "  - blockquote p:",
+                "      text-wrap: pretty",
+                "      word-break: break-all",
+                "  - blockquote > p > em:",
+                '      background-color: "#d0ee23"',
+                "css-vars:",
+                "  # width-container: 50rem",
+                "---",
+            ]
+        )
+
     CLIPBOARD_MENU = ClipboardMenu()
     CLIPBOARD_MENU.set_formatter(
         {
-            "Remove Blank lines": FormatTools.skip_blank_line,
-            "Fix Dumb Quotation": FormatTools.fix_dumb_quotation,
-            "Fix KANGXI RADICALS": KangxiRadicals().fix,
-            "Fix to Double Bracket": FormatTools.to_double_bracket,
-            "To markdown codeblock": FormatTools.as_codeblock,
-            "Split Postalcode and Address": FormatTools.split_postalcode,
-            "Decode URL": FormatTools.decode_url,
-            "Encode URL": FormatTools.encode_url,
-            "To Halfwidth": CharWidth().to_half_letter,
-            "To Fullwidth": CharWidth().to_full_letter,
-            "Zoom invitation": Zoom().format,
+            "remove blank lines": FormatTools.skip_blank_line,
+            "fix dumb quotation": FormatTools.fix_dumb_quotation,
+            "fix KANGXI RADICALS": KangxiRadicals().fix,
+            "fix to double bracket": FormatTools.to_double_bracket,
+            "to markdown codeblock": FormatTools.as_codeblock,
+            "TSV to markdown table": FormatTools.mdtable_from_tsv,
+            "split postalcode and address": FormatTools.split_postalcode,
+            "decode url": FormatTools.decode_url,
+            "encode url": FormatTools.encode_url,
+            "to halfwidth": CharWidth().to_half_letter,
+            "to fullwidth": CharWidth().to_full_letter,
+            "zoom invitation": Zoom().format,
         }
     )
     CLIPBOARD_MENU.set_replacer(
         {
-            "Escape Backslash": (r"\\", r"\\\\"),
-            "Remove Linebreak": (r"\r?\n", ""),
-            "Remove Non-digit-char": (r"[^\d]", ""),
-            "Remove Quotations": (r"[\u0022\u0027]", ""),
-            "Fix MSWord-Bullet": (r"\uf09f\u0009", "\u30fb"),
-            "To Curly-Comma (\uff0c)": (r"\u3001", "\uff0c"),
-            "To Japanese-Comma (\u3001)": (r"\uff0c", "\u3001"),
-            "Shorten Amazon URL": (
+            "escape backslash": (r"\\", r"\\\\"),
+            "remove linebreak": (r"\r?\n", ""),
+            "remove non-digit-char": (r"[^\d]", ""),
+            "remove quotations": (r"[\u0022\u0027]", ""),
+            "fix msword-bullet": (r"\uf09f\u0009", "\u30fb"),
+            "to curly-comma (\uff0c)": (r"\u3001", "\uff0c"),
+            "to japanese-comma (\u3001)": (r"\uff0c", "\u3001"),
+            "shorten amazon url": (
                 r"^.+amazon\.co\.jp/.+dp/(.{10}).*",
                 r"https://www.amazon.jp/dp/\1",
             ),
@@ -2019,8 +2065,9 @@ def configure(keymap):
     )
     CLIPBOARD_MENU.set_func(
         {
-            "To lowercase": lambda: ClipHandler.get_string().lower(),
-            "To UPPERCASE": lambda: ClipHandler.get_string().upper(),
+            "to lowercase": lambda: ClipHandler.get_string().lower(),
+            "to uppercase": lambda: ClipHandler.get_string().upper(),
+            "my markdown frontmatter": md_frontmatter,
         }
     )
 
