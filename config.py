@@ -43,7 +43,11 @@ def configure(keymap):
 
         def is_accessible(self) -> bool:
             if self._path:
-                return self._path.startswith("http") or Path(self._path).exists()
+                try:
+                    return self._path.startswith("http") or Path(self._path).exists()
+                except Exception as e:
+                    print(e)
+                    return ""
             return False
 
         @staticmethod
