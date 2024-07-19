@@ -1546,18 +1546,23 @@ def configure(keymap):
         def invoke(self, exe_name: str, class_name: str = "", exe_path: str = "") -> Callable:
             def _executer() -> None:
 
-                def _activate(_) -> None:
+                def _activate(job_item: JobItem) -> None:
+                    job_item.results = []
                     scanner = WndScanner(exe_name, class_name)
                     scanner.scan()
-                    if not scanner.found:
+                    if scanner.found:
+                        result = self.activate_wnd(scanner.found)
+                        job_item.results.append(result)
+
+                def _finished(job_item: JobItem) -> None:
+                    if len(job_item.results) < 1:
                         if exe_path:
                             PathHandler(exe_path).run()
                         return
-                    result = self.activate_wnd(scanner.found)
-                    if not result:
+                    if not job_item.results[-1]:
                         VIRTUAL_FINGER.type_keys("LCtrl-LAlt-Tab")
 
-                subthread_run(_activate)
+                subthread_run(_activate, _finished)
 
             return _executer
 
@@ -1660,25 +1665,28 @@ def configure(keymap):
     keymap_global["LS-LC-U1-M"] = UserPath(r"Personal\draft.txt").run
 
     def search_on_browser() -> None:
+        if keymap.getWindow().getProcessName() == DEFAULT_BROWSER.get_exe_name():
+            VIRTUAL_FINGER.type_keys("C-T")
+            return
 
-        def _activate(_) -> None:
-            if keymap.getWindow().getProcessName() == DEFAULT_BROWSER.get_exe_name():
-                VIRTUAL_FINGER.type_keys("C-T")
-            else:
-                scanner = WndScanner(
-                    DEFAULT_BROWSER.get_exe_name(), DEFAULT_BROWSER.get_wnd_class()
-                )
-                scanner.scan()
-                if not scanner.found:
-                    PathHandler("https://duckduckgo.com").run()
-                    return
+        def _activate(job_item: JobItem) -> None:
+            job_item.results = []
+            scanner = WndScanner(DEFAULT_BROWSER.get_exe_name(), DEFAULT_BROWSER.get_wnd_class())
+            scanner.scan()
+            if scanner.found:
                 result = PSEUDO_CUTEEXEC.activate_wnd(scanner.found)
-                if result:
-                    VIRTUAL_FINGER.type_keys("C-T")
-                else:
-                    VIRTUAL_FINGER.type_keys("LCtrl-LAlt-Tab")
+                job_item.results.append(result)
 
-        subthread_run(_activate)
+        def _finished(job_item: JobItem) -> None:
+            if len(job_item.results) < 1:
+                PathHandler("https://duckduckgo.com").run()
+                return
+            if not job_item.results[-1]:
+                VIRTUAL_FINGER.type_keys("LCtrl-LAlt-Tab")
+                return
+            VIRTUAL_FINGER.type_keys("C-T")
+
+        subthread_run(_activate, _finished)
 
     keymap_global["U0-Q"] = search_on_browser
 
