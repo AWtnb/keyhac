@@ -1525,7 +1525,6 @@ def configure(keymap):
             self._keymap = keymap
 
         def activate_wnd(self, target: pyauto.Window) -> bool:
-            delay(40)
             interval = 20
             timeout = interval * 50
             while timeout > 0:
@@ -1567,7 +1566,8 @@ def configure(keymap):
 
         def apply(self, wnd_keymap: WindowKeymap, remap_table: dict = {}) -> None:
             for key, params in remap_table.items():
-                wnd_keymap[key] = self.invoke(*params)
+                func = self.invoke(*params)
+                wnd_keymap[key] = LAZY_KEYMAP.wrap(func).defer()
 
     PSEUDO_CUTEEXEC = PseudoCuteExec(keymap)
 
