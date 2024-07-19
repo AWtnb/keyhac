@@ -2071,6 +2071,7 @@ def configure(keymap):
             "remove linebreak": (r"\r?\n", ""),
             "remove non-digit-char": (r"[^\d]", ""),
             "remove quotations": (r"[\u0022\u0027]", ""),
+            "remove inside paren": (r"[（\(].+?[）\)]", ""),
             "fix msword-bullet": (r"\uf09f\u0009", "\u30fb"),
             "to curly-comma (\uff0c)": (r"\u3001", "\uff0c"),
             "to japanese-comma (\u3001)": (r"\uff0c", "\u3001"),
