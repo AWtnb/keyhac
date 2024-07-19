@@ -1895,6 +1895,29 @@ def configure(keymap):
                 ]
             )
 
+    def md_frontmatter() -> str:
+        return os.linesep.join(
+            [
+                "---",
+                "title:",
+                "styles:",
+                "  - h1:",
+                "      font-size: 2rem",
+                "  - blockquote > p:",
+                "      text-indent: -2em",
+                "      margin-left: 2.5em",
+                "      line-height: 1.5",
+                "  - blockquote p:",
+                "      text-wrap: pretty",
+                "      word-break: break-all",
+                "  - blockquote > p > em:",
+                '      background-color: "#d0ee23"',
+                "css-vars:",
+                "  # width-container: 50rem",
+                "---",
+            ]
+        )
+
     class FormatTools:
         @staticmethod
         def as_codeblock(s: str) -> str:
@@ -1913,6 +1936,17 @@ def configure(keymap):
                 if mo.group(0) == "\u300c":
                     return "\u300e"
                 return "\u300f"
+
+            return reg.sub(_replacer, s)
+
+        @staticmethod
+        def to_single_bracket(s: str) -> str:
+            reg = re.compile(r"[\u300e\u300f]")
+
+            def _replacer(mo: re.Match) -> str:
+                if mo.group(0) == "\u300e":
+                    return "\u300c"
+                return "\u300d"
 
             return reg.sub(_replacer, s)
 
@@ -2006,36 +2040,14 @@ def configure(keymap):
             for menu, func in mapping.items():
                 self._table[menu] = func
 
-    def md_frontmatter() -> str:
-        return os.linesep.join(
-            [
-                "---",
-                "title:",
-                "styles:",
-                "  - h1:",
-                "      font-size: 2rem",
-                "  - blockquote > p:",
-                "      text-indent: -2em",
-                "      margin-left: 2.5em",
-                "      line-height: 1.5",
-                "  - blockquote p:",
-                "      text-wrap: pretty",
-                "      word-break: break-all",
-                "  - blockquote > p > em:",
-                '      background-color: "#d0ee23"',
-                "css-vars:",
-                "  # width-container: 50rem",
-                "---",
-            ]
-        )
-
     CLIPBOARD_MENU = ClipboardMenu()
     CLIPBOARD_MENU.set_formatter(
         {
             "remove blank lines": FormatTools.skip_blank_line,
             "fix dumb quotation": FormatTools.fix_dumb_quotation,
             "fix KANGXI RADICALS": KangxiRadicals().fix,
-            "fix to double bracket": FormatTools.to_double_bracket,
+            "to double bracket": FormatTools.to_double_bracket,
+            "to single bracket": FormatTools.to_single_bracket,
             "to markdown codeblock": FormatTools.as_codeblock,
             "TSV to markdown table": FormatTools.mdtable_from_tsv,
             "split postalcode and address": FormatTools.split_postalcode,
