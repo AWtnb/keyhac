@@ -1525,8 +1525,9 @@ def configure(keymap):
             self._keymap = keymap
 
         def activate_wnd(self, target: pyauto.Window) -> bool:
+            delay(40)
             interval = 20
-            timeout = interval * 30
+            timeout = interval * 50
             while timeout > 0:
                 try:
                     target.setForeground()
@@ -1538,7 +1539,6 @@ def configure(keymap):
                         return True
                 except:
                     return False
-                delay(interval)
                 timeout -= interval
             return False
 
