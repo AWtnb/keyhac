@@ -6,13 +6,13 @@ import time
 import subprocess
 import urllib.parse
 from collections import namedtuple
-from typing import Union, Callable, Dict
+from typing import Union, Callable, Dict, List
 from pathlib import Path
 from winreg import HKEY_CURRENT_USER, HKEY_CLASSES_ROOT, OpenKey, QueryValueEx
 
 import pyauto
 from keyhac import *
-from keyhac_keymap import Keymap, WindowKeymap, VK_CAPITAL
+from keyhac_keymap import Keymap, KeyCondition, WindowKeymap, VK_CAPITAL
 from ckit import getClipboardText, setClipboardText, getAppExePath, JobItem, JobQueue
 
 
@@ -20,10 +20,11 @@ def configure(keymap):
 
     def balloon(message: str) -> None:
         title = datetime.datetime.today().strftime("%Y%m%d-%H%M%S-%f")
+        print(message)
         try:
             keymap.popBalloon(title, message, 2500)
         except:
-            print(message)
+            pass
 
     def subthread_run(func: Callable, finished: Union[Callable, None] = None) -> None:
         job = JobItem(func, finished)
@@ -264,6 +265,30 @@ def configure(keymap):
     def delay(msec: int = 50) -> None:
         time.sleep(msec / 1000)
 
+    Key = namedtuple("KeyPress", ["sent", "typable"])
+
+    class KeySequence:
+        def __init__(self) -> None:
+            pass
+
+        @staticmethod
+        def check(s: str) -> bool:
+            acceptable = (
+                list(KeyCondition.str_vk_table_common)
+                + list(KeyCondition.str_vk_table_std)
+                + list(KeyCondition.str_vk_table_jpn)
+            )
+            k = s.split("-")[-1].upper()
+            return k in acceptable
+
+        @classmethod
+        def wrap(cls, sequence: tuple) -> List[Key]:
+            seq = []
+            for elem in sequence:
+                press = Key(elem, cls.check(elem))
+                seq.append(press)
+            return seq
+
     class VirtualFinger:
         def __init__(self, keymap: Keymap, inter_stroke_pause: int = 10) -> None:
             self._keymap = keymap
@@ -296,6 +321,13 @@ def configure(keymap):
                     self.type_keys(elem)
                 except:
                     self.type_text(elem)
+
+        def type_sequence(self, sequence: List[Key]) -> None:
+            for k in sequence:
+                if k.typable:
+                    self.type_keys(k.sent)
+                else:
+                    self.type_text(k.sent)
 
     VIRTUAL_FINGER = VirtualFinger(keymap, 10)
     VIRTUAL_FINGER_QUICK = VirtualFinger(keymap, 0)
@@ -428,9 +460,11 @@ def configure(keymap):
             self._control = ImeControl(keymap)
 
         def invoke(self, *sequence) -> Callable:
+            seq = KeySequence().wrap(sequence)
+
             def _input() -> None:
                 self._control.disable()
-                self._finger.type_smart(*sequence)
+                self._finger.type_sequence(seq)
                 if self._recover_ime:
                     self._control.enable()
 
@@ -892,16 +926,20 @@ def configure(keymap):
             self._control = ImeControl(keymap)
 
         def under_kanamode(self, *sequence) -> Callable:
+            seq = KeySequence().wrap(sequence)
+
             def _send() -> None:
                 self._control.enable_skk()
-                self._finger.type_smart(*sequence)
+                self._finger.type_sequence(seq)
 
             return _send
 
         def under_latinmode(self, *sequence) -> Callable:
+            seq = KeySequence().wrap(sequence)
+
             def _send() -> None:
                 self._control.to_skk_latin()
-                self._finger.type_smart(*sequence)
+                self._finger.type_sequence(seq)
 
             return _send
 
@@ -1865,7 +1903,7 @@ def configure(keymap):
             ampm = ""
             if d.hour < 12:
                 ampm = "AM "
-            return (d.strftime("%Y年%m月%d日（{}） {}%H:%M～")).format(week, ampm)
+            return (d.strftime("%Y年%m月%d日（{}） {}%H:%M〜")).format(week, ampm)
 
         @classmethod
         def to_field(cls, s: str, prefix: str) -> str:
