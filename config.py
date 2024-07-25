@@ -268,25 +268,26 @@ def configure(keymap):
     Key = namedtuple("KeyPress", ["sent", "typable"])
 
     class KeySequence:
+        acceptable = (
+            list(KeyCondition.str_vk_table_common)
+            + list(KeyCondition.str_vk_table_std)
+            + list(KeyCondition.str_vk_table_jpn)
+        )
+
         def __init__(self) -> None:
             pass
 
-        @staticmethod
-        def check(s: str) -> bool:
-            acceptable = (
-                list(KeyCondition.str_vk_table_common)
-                + list(KeyCondition.str_vk_table_std)
-                + list(KeyCondition.str_vk_table_jpn)
-            )
+        @classmethod
+        def check(cls, s: str) -> bool:
             k = s.split("-")[-1].upper()
-            return k in acceptable
+            return k in cls.acceptable
 
         @classmethod
         def wrap(cls, sequence: tuple) -> List[Key]:
             seq = []
             for elem in sequence:
-                press = Key(elem, cls.check(elem))
-                seq.append(press)
+                key = Key(elem, cls.check(elem))
+                seq.append(key)
             return seq
 
     class VirtualFinger:
@@ -323,11 +324,11 @@ def configure(keymap):
                     self.type_text(elem)
 
         def type_sequence(self, sequence: List[Key]) -> None:
-            for k in sequence:
-                if k.typable:
-                    self.type_keys(k.sent)
+            for key in sequence:
+                if key.typable:
+                    self.type_keys(key.sent)
                 else:
-                    self.type_text(k.sent)
+                    self.type_text(key.sent)
 
     VIRTUAL_FINGER = VirtualFinger(keymap, 10)
     VIRTUAL_FINGER_QUICK = VirtualFinger(keymap, 0)
