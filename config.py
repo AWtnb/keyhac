@@ -1587,7 +1587,6 @@ def configure(keymap):
 
                 def _activate(job_item: JobItem) -> None:
                     job_item.results = []
-                    delay()
                     scanner = WndScanner(exe_name, class_name)
                     scanner.scan()
                     if scanner.found:
