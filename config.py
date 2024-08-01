@@ -810,6 +810,7 @@ def configure(keymap):
 
     def maximize_window():
         def _maximize(_) -> None:
+            delay()
             keymap.getTopLevelWindow().maximize()
 
         subthread_run(_maximize)
@@ -1586,6 +1587,7 @@ def configure(keymap):
 
                 def _activate(job_item: JobItem) -> None:
                     job_item.results = []
+                    delay()
                     scanner = WndScanner(exe_name, class_name)
                     scanner.scan()
                     if scanner.found:
@@ -1607,7 +1609,8 @@ def configure(keymap):
         def apply(self, wnd_keymap: WindowKeymap, remap_table: dict = {}) -> None:
             for key, params in remap_table.items():
                 func = self.invoke(*params)
-                wnd_keymap[key] = LAZY_KEYMAP.wrap(func).defer()
+                # wnd_keymap[key] = LAZY_KEYMAP.wrap(func).defer()
+                wnd_keymap[key] = func
 
     PSEUDO_CUTEEXEC = PseudoCuteExec(keymap)
 
@@ -1710,6 +1713,7 @@ def configure(keymap):
 
         def _activate(job_item: JobItem) -> None:
             job_item.results = []
+            delay()
             scanner = WndScanner(DEFAULT_BROWSER.get_exe_name(), DEFAULT_BROWSER.get_wnd_class())
             scanner.scan()
             if scanner.found:
