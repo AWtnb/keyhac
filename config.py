@@ -2003,12 +2003,20 @@ def configure(keymap):
 
         @staticmethod
         def split_postalcode(s: str) -> str:
-            reg = re.compile(r"(\d{3}).(\d{4})[\s\r\n]*(.+$)")
-            hankaku = CharWidth().to_half_letter(s.strip().strip("\u3012"))
-            m = reg.match(hankaku)
-            if m:
-                return "{}-{}\t{}".format(m.group(1), m.group(2), m.group(3))
-            return s
+            lines = s.splitlines()
+            if 1 < len(lines):
+                reg = re.compile(r"(\d{3}).(\d{4})[ 　]*(.+$)")
+            else:
+                reg = re.compile(r"(\d{3}).(\d{4})[\s]*(.+$)")
+            ss = []
+            for line in lines:
+                hankaku = CharWidth().to_half_letter(line.strip().strip("\u3012"))
+                m = reg.match(hankaku)
+                if m:
+                    ss.append("{}-{}\t{}".format(m.group(1), m.group(2), m.group(3)))
+                else:
+                    ss.append(line)
+            return os.linesep.join(ss)
 
         @staticmethod
         def fix_dumb_quotation(s: str) -> str:
