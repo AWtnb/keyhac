@@ -1586,6 +1586,7 @@ def configure(keymap):
             def _executer() -> None:
 
                 def _activate(job_item: JobItem) -> None:
+                    delay()
                     job_item.results = []
                     scanner = WndScanner(exe_name, class_name)
                     scanner.scan()
@@ -1711,8 +1712,8 @@ def configure(keymap):
             return
 
         def _activate(job_item: JobItem) -> None:
-            job_item.results = []
             delay()
+            job_item.results = []
             scanner = WndScanner(DEFAULT_BROWSER.get_exe_name(), DEFAULT_BROWSER.get_wnd_class())
             scanner.scan()
             if scanner.found:
