@@ -1609,8 +1609,7 @@ def configure(keymap):
         def apply(self, wnd_keymap: WindowKeymap, remap_table: dict = {}) -> None:
             for key, params in remap_table.items():
                 func = self.invoke(*params)
-                # wnd_keymap[key] = LAZY_KEYMAP.wrap(func).defer()
-                wnd_keymap[key] = func
+                wnd_keymap[key] = LAZY_KEYMAP.wrap(func).defer()
 
     PSEUDO_CUTEEXEC = PseudoCuteExec(keymap)
 
