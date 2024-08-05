@@ -491,8 +491,16 @@ def configure(keymap):
     # custom hotkey
     ################################
 
-    # append clipboard
-    # keymap_global["LC-U0-C"] = LAZY_KEYMAP.wrap(ClipHandler.append).defer()
+    def append_clipboard() -> None:
+        handler = ClipHandler()
+        origin = handler.get_string()
+
+        def _push(job_item: JobItem) -> None:
+            handler.set_string(origin + os.linesep + job_item.copied)
+
+        handler.after_copy(_push)
+
+    keymap_global["LC-U0-C"] = append_clipboard
 
     # ime: Japanese / Foreign
     keymap_global["U1-J"] = IME_CONTROL.enable_skk
