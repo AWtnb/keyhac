@@ -1609,7 +1609,7 @@ def configure(keymap):
         def apply(self, wnd_keymap: WindowKeymap, remap_table: dict = {}) -> None:
             for key, params in remap_table.items():
                 func = self.invoke(*params)
-                wnd_keymap[key] = LAZY_KEYMAP.wrap(func).defer()
+                wnd_keymap[key] = LAZY_KEYMAP.wrap(func).defer(10)
 
     PSEUDO_CUTEEXEC = PseudoCuteExec(keymap)
 
@@ -1730,7 +1730,7 @@ def configure(keymap):
 
         subthread_run(_activate, _finished)
 
-    keymap_global["U0-Q"] = search_on_browser
+    keymap_global["U0-Q"] = LAZY_KEYMAP.wrap(search_on_browser).defer(10)
 
     ################################
     # application based remap
