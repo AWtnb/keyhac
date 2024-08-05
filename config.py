@@ -2121,6 +2121,8 @@ def configure(keymap):
         {
             "escape backslash": (r"\\", r"\\\\"),
             "remove linebreak": (r"\r?\n", ""),
+            "remove whitespaces": (r"[\u200b\u3000\u0009\u0020]", ""),
+            "remove whitespaces (including linebreak)": (r"\s", ""),
             "remove non-digit-char": (r"[^\d]", ""),
             "remove quotations": (r"[\u0022\u0027]", ""),
             "remove inside paren": (r"[（\(].+?[）\)]", ""),
