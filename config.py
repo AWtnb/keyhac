@@ -414,7 +414,8 @@ def configure(keymap):
                 timeout = interval * 20
                 while timeout > 0:
                     delay(interval)
-                    if (s := cls.get_string()) != origin:
+                    s = cls.get_string()
+                    if 0 < len(s.strip()) and s != origin:
                         job_item.copied = s
                         return
                     timeout -= interval
