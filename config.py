@@ -22,7 +22,7 @@ def configure(keymap):
         title = datetime.datetime.today().strftime("%Y%m%d-%H%M%S-%f")
         print(message)
         try:
-            keymap.popBalloon(title, message, 2500)
+            keymap.popBalloon(title, message, 1500)
         except:
             pass
 
@@ -811,6 +811,19 @@ def configure(keymap):
     ################################
     # set window position
     ################################
+
+    def apply_window_mover(km: WindowKeymap) -> None:
+        for key, delta in {
+            "Left": (-10, 0),
+            "Right": (+10, 0),
+            "Up": (0, -10),
+            "Down": (0, +10),
+        }.items():
+            x, y = delta
+            for mod, scale in {"": 1, "C-": 4, "S-C-": 8}.items():
+                km[mod + "U0-" + key] = keymap.MoveWindowCommand(x * scale, y * scale)
+
+    apply_window_mover(keymap_global)
 
     keymap_global["U1-L"] = "LWin-Right"
     keymap_global["U1-H"] = "LWin-Left"
