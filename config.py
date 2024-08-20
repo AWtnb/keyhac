@@ -821,7 +821,7 @@ def configure(keymap):
             "Down": (0, +10),
         }.items():
             x, y = delta
-            for mod, scale in {"": 1, "C-": 4, "S-C-": 8}.items():
+            for mod, scale in {"": 15, "S-": 5, "C-": 5, "S-C-": 1}.items():
                 km[mod + "U0-" + key] = keymap.MoveWindowCommand(x * scale, y * scale)
 
     apply_window_mover(keymap_global)
