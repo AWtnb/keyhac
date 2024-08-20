@@ -424,6 +424,15 @@ def configure(keymap):
 
             subthread_run(_watch_clipboard, deferred)
 
+        @classmethod
+        def append(cls) -> None:
+            origin = cls.get_string()
+
+            def _push(job_item: JobItem) -> None:
+                cls.set_string(origin + os.linesep + job_item.copied)
+
+            cls.after_copy(_push)
+
     class LazyFunc:
         def __init__(self, keymap: Keymap, func: Callable) -> None:
             self._keymap = keymap
@@ -493,16 +502,7 @@ def configure(keymap):
     # custom hotkey
     ################################
 
-    def append_clipboard() -> None:
-        handler = ClipHandler()
-        origin = handler.get_string()
-
-        def _push(job_item: JobItem) -> None:
-            handler.set_string(origin + os.linesep + job_item.copied)
-
-        handler.after_copy(_push)
-
-    keymap_global["LC-U0-C"] = append_clipboard
+    keymap_global["LC-U0-C"] = ClipHandler().append
 
     # ime: Japanese / Foreign
     keymap_global["U1-J"] = IME_CONTROL.enable_skk
