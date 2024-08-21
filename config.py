@@ -470,6 +470,7 @@ def configure(keymap):
             self._defer_msec = defer_msec
             self._finger = VirtualFinger(keymap, inter_stroke_pause)
             self._control = ImeControl(keymap)
+            self._lazy_keymap = LazyKeymap(keymap)
 
         def invoke(self, *sequence) -> Callable:
             seq = KeySequence().wrap(sequence)
@@ -480,7 +481,7 @@ def configure(keymap):
                 if self._recover_ime:
                     self._control.enable()
 
-            return LAZY_KEYMAP.wrap(_input).defer(self._defer_msec)
+            return self._lazy_keymap.wrap(_input).defer(self._defer_msec)
 
     MILD_PUNCHER = KeyPuncher(keymap, defer_msec=20)
     GENTLE_PUNCHER = KeyPuncher(keymap, defer_msec=50)
@@ -1841,7 +1842,7 @@ def configure(keymap):
 
     def sumatra_view_key(km: WindowKeymap) -> None:
         for key in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
-            km[key] = SIMPLE_SKK.under_latinmode(key)
+            km[key] = GENTLE_PUNCHER.invoke(key)
 
     sumatra_view_key(keymap_sumatra_viewmode)
 
