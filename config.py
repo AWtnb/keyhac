@@ -1939,7 +1939,7 @@ def configure(keymap):
             ampm = ""
             if d.hour < 12:
                 ampm = "AM "
-            return (d.strftime("%Y年%m月%d日（{}） {}%H:%M〜")).format(week, ampm)
+            return (d.strftime("%Y年%m月%d日（{}） {}%H:%M開始")).format(week, ampm)
 
         @classmethod
         def to_field(cls, s: str, prefix: str) -> str:
