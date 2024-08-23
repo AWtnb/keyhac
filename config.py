@@ -120,30 +120,6 @@ def configure(keymap):
         def is_global_target(cls, wnd: pyauto.Window) -> bool:
             return not (cls.is_browser(wnd) and wnd.getText().startswith("ESET - "))
 
-        @staticmethod
-        def is_filer_viewmode(wnd: pyauto.Window) -> bool:
-            if wnd.getProcessName() == "explorer.exe":
-                return wnd.getClassName() not in (
-                    "Edit",
-                    "LauncherTipWnd",
-                    "Windows.UI.Input.InputSite.WindowClass",
-                )
-            if wnd.getProcessName() == "TE64.exe":
-                return wnd.getClassName() == "SysListView32"
-            return False
-
-        @staticmethod
-        def is_sumatra(wnd: pyauto.Window) -> bool:
-            return wnd.getProcessName() == "SumatraPDF.exe"
-
-        @classmethod
-        def is_sumatra_viewmode(cls, wnd: pyauto.Window) -> bool:
-            return cls.is_sumatra(wnd) and wnd.getClassName() != "Edit"
-
-        @classmethod
-        def is_sumatra_inputmode(cls, wnd: pyauto.Window) -> bool:
-            return cls.is_sumatra(wnd) and wnd.getClassName() == "Edit"
-
     # keymap working on any window
     keymap_global = keymap.defineWindowKeymap(check_func=CheckWnd.is_global_target)
 
@@ -1826,19 +1802,21 @@ def configure(keymap):
     )
 
     # sumatra PDF
-    keymap_sumatra = keymap.defineWindowKeymap(check_func=CheckWnd.is_sumatra)
+    def sumatra_checker(viewmode: bool = False) -> Callable:
+        def _checker(wnd: pyauto.Window) -> bool:
+            if wnd.getProcessName() == "SumatraPDF.exe":
+                if viewmode:
+                    return wnd.getClassName() != "Edit"
+                return True
+            return False
+
+        return _checker
+
+    keymap_sumatra = keymap.defineWindowKeymap(check_func=sumatra_checker(False))
 
     keymap_sumatra["O-LCtrl"] = "Esc", "Esc", "C-Home", "C-F"
 
-    keymap_sumatra_inputmode = keymap.defineWindowKeymap(check_func=CheckWnd.is_sumatra_inputmode)
-
-    def sumatra_change_tab(km: WindowKeymap) -> None:
-        for key in ["C-Tab", "C-S-Tab"]:
-            km[key] = "Esc", key
-
-    sumatra_change_tab(keymap_sumatra_inputmode)
-
-    keymap_sumatra_viewmode = keymap.defineWindowKeymap(check_func=CheckWnd.is_sumatra_viewmode)
+    keymap_sumatra_viewmode = keymap.defineWindowKeymap(check_func=sumatra_checker(True))
 
     def sumatra_view_key(km: WindowKeymap) -> None:
         for key in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
