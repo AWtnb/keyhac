@@ -383,29 +383,29 @@ def configure(keymap):
 
         @classmethod
         def after_copy(cls, deferred: Callable) -> None:
-            origin = cls.get_string()
+            cb = cls.get_string()
             VIRTUAL_FINGER.type_keys("C-C")
 
             def _watch_clipboard(job_item: JobItem) -> None:
+                job_item.origin = cb
+                job_item.copied = ""
                 interval = 10
                 timeout = interval * 20
                 while timeout > 0:
                     delay(interval)
                     s = cls.get_string()
-                    if 0 < len(s.strip()) and s != origin:
+                    if 0 < len(s.strip()) and s != job_item.origin:
                         job_item.copied = s
                         return
                     timeout -= interval
-                job_item.copied = origin
 
             subthread_run(_watch_clipboard, deferred)
 
         @classmethod
         def append(cls) -> None:
-            origin = cls.get_string()
 
             def _push(job_item: JobItem) -> None:
-                cls.set_string(origin + os.linesep + job_item.copied)
+                cls.set_string(job_item.origin + os.linesep + job_item.copied)
 
             cls.after_copy(_push)
 
