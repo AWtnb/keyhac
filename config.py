@@ -2028,6 +2028,15 @@ def configure(keymap):
             return os.linesep.join(ss)
 
         @staticmethod
+        def fix_paren_inside_bracket(s: str) -> str:
+            reg = re.compile(r"(\(.+?\)|（.+?）)」")
+
+            def _replacer(mo: re.Match) -> str:
+                return "」" + mo.group(1)
+
+            return reg.sub(_replacer, s)
+
+        @staticmethod
         def fix_dumb_quotation(s: str) -> str:
             reg = re.compile(r"\"([^\"]+?)\"|'([^']+?)'")
 
@@ -2114,6 +2123,7 @@ def configure(keymap):
             "remove blank lines": FormatTools.skip_blank_line,
             "fix dumb quotation": FormatTools.fix_dumb_quotation,
             "fix KANGXI RADICALS": KangxiRadicals().fix,
+            "fix paren inside bracket": FormatTools.fix_paren_inside_bracket,
             "to double bracket": FormatTools.to_double_bracket,
             "to single bracket": FormatTools.to_single_bracket,
             "to markdown codeblock": FormatTools.as_codeblock,
