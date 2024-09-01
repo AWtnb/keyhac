@@ -11,11 +11,10 @@ from typing import Union, Callable, Dict, List
 from pathlib import Path
 from winreg import HKEY_CURRENT_USER, HKEY_CLASSES_ROOT, OpenKey, QueryValueEx
 
+import ckit
 import pyauto
 from keyhac import *
 from keyhac_keymap import Keymap, KeyCondition, WindowKeymap, VK_CAPITAL
-from ckit import getClipboardText, setClipboardText, getAppExePath, JobItem, JobQueue
-
 
 def configure(keymap):
 
@@ -28,8 +27,8 @@ def configure(keymap):
             pass
 
     def subthread_run(func: Callable, finished: Union[Callable, None] = None) -> None:
-        job = JobItem(func, finished)
-        JobQueue.defaultQueue().enqueue(job)
+        job = ckit.JobItem(func, finished)
+        ckit.JobQueue.defaultQueue().enqueue(job)
 
     ################################
     # general setting
@@ -363,11 +362,11 @@ def configure(keymap):
     class ClipHandler:
         @staticmethod
         def get_string() -> str:
-            return getClipboardText() or ""
+            return ckit.getClipboardText() or ""
 
         @staticmethod
         def set_string(s: str) -> None:
-            setClipboardText(str(s))
+            ckit.setClipboardText(str(s))
 
         @classmethod
         def paste(cls, s: str, format_func: Union[Callable, None] = None) -> None:
@@ -386,7 +385,7 @@ def configure(keymap):
             cb = cls.get_string()
             VIRTUAL_FINGER.type_keys("C-C")
 
-            def _watch_clipboard(job_item: JobItem) -> None:
+            def _watch_clipboard(job_item: ckit.JobItem) -> None:
                 job_item.origin = cb
                 job_item.copied = ""
                 interval = 10
@@ -404,7 +403,7 @@ def configure(keymap):
         @classmethod
         def append(cls) -> None:
 
-            def _push(job_item: JobItem) -> None:
+            def _push(job_item: ckit.JobItem) -> None:
                 cls.set_string(job_item.origin + os.linesep + job_item.copied)
 
             cls.after_copy(_push)
@@ -564,11 +563,11 @@ def configure(keymap):
 
         @staticmethod
         def paste_config() -> None:
-            s = Path(getAppExePath(), "config.py").read_text("utf-8")
+            s = Path(ckit.dataPath(), "config.py").read_text("utf-8")
             ClipHandler().paste(s)
 
         def reload_config(self) -> None:
-            JobQueue.cancelAll()
+            ckit.JobQueue.cancelAll()
             self._keymap.configure()
             self._keymap.updateKeymap()
             ts = datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S")
@@ -1069,7 +1068,7 @@ def configure(keymap):
         @staticmethod
         def invoke(fmt: str, finish_with_kanamode: bool = False) -> Callable:
             def _inputter() -> None:
-                def _get_func(job_item: JobItem) -> None:
+                def _get_func(job_item: ckit.JobItem) -> None:
                     d = datetime.datetime.today()
                     seq = [c for c in d.strftime(fmt)]
                     if finish_with_kanamode:
@@ -1077,7 +1076,7 @@ def configure(keymap):
                     else:
                         job_item.func = SKK_TO_LATINMODE.invoke_sender(*seq)
 
-                def _input(job_item: JobItem) -> None:
+                def _input(job_item: ckit.JobItem) -> None:
                     job_item.func()
 
                 subthread_run(_get_func, _input)
@@ -1452,7 +1451,7 @@ def configure(keymap):
         @staticmethod
         def invoke(uri: str, strict: bool = False, strip_hiragana: bool = False) -> Callable:
             def _searcher() -> None:
-                def _search(job_item: JobItem) -> None:
+                def _search(job_item: ckit.JobItem) -> None:
                     query = SearchQuery(job_item.copied)
                     query.fix_kangxi()
                     query.remove_honorific()
@@ -1585,7 +1584,7 @@ def configure(keymap):
         def invoke(self, exe_name: str, class_name: str = "", exe_path: str = "") -> Callable:
             def _executer() -> None:
 
-                def _activate(job_item: JobItem) -> None:
+                def _activate(job_item: ckit.JobItem) -> None:
                     delay()
                     job_item.results = []
                     scanner = WndScanner(exe_name, class_name)
@@ -1594,7 +1593,7 @@ def configure(keymap):
                         result = self.activate_wnd(scanner.found)
                         job_item.results.append(result)
 
-                def _finished(job_item: JobItem) -> None:
+                def _finished(job_item: ckit.JobItem) -> None:
                     if len(job_item.results) < 1:
                         if exe_path:
                             PathHandler(exe_path).run()
@@ -1710,7 +1709,7 @@ def configure(keymap):
             VIRTUAL_FINGER.type_keys("C-T")
             return
 
-        def _activate(job_item: JobItem) -> None:
+        def _activate(job_item: ckit.JobItem) -> None:
             delay()
             job_item.results = []
             scanner = WndScanner(DEFAULT_BROWSER.get_exe_name(), DEFAULT_BROWSER.get_wnd_class())
@@ -1719,7 +1718,7 @@ def configure(keymap):
                 result = PSEUDO_CUTEEXEC.activate_wnd(scanner.found)
                 job_item.results.append(result)
 
-        def _finished(job_item: JobItem) -> None:
+        def _finished(job_item: ckit.JobItem) -> None:
             if len(job_item.results) < 1:
                 PathHandler("https://duckduckgo.com").run()
                 return
@@ -2177,7 +2176,7 @@ def configure(keymap):
 
         table = CLIPBOARD_MENU.table
 
-        def _fzf(job_item: JobItem) -> None:
+        def _fzf(job_item: ckit.JobItem) -> None:
             job_item.result = False
             job_item.paste_string = ""
             lines = "\n".join(table.keys())
@@ -2191,7 +2190,7 @@ def configure(keymap):
                         job_item.result = True
                         job_item.paste_string = fmt
 
-        def _finished(job_item: JobItem) -> None:
+        def _finished(job_item: ckit.JobItem) -> None:
             if job_item.result and job_item.paste_string:
                 ClipHandler.paste(job_item.paste_string)
 
