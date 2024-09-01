@@ -1,16 +1,18 @@
 # keyhac customization
 
+1. Place (or make junction of) [`Keyhac`](Keyhac) on `%APPDATA%` .
+1. Place (or make symlink of) [`theme.ini`](theme.ini) on `theme/black`
+
+With [Syncthing](https://syncthing.net/), append below on `.stignore` to skip syncing local history.
+
+```
+keyhac.ini
+```
+
 Environment:
 
 - [CorvusSKK](https://github.com/nathancorvussolis/corvusskk)
-- JIS 配列キーボード
-
-
-On the same directory as `keyhac.exe` :
-
-1. Place [`config.py`](config.py) (or overwrite `_config.py`) .
-1. Place (or make junction of) [`setting`](setting) .
-1. Place (or make symlink of) [`theme.ini`](theme.ini) to `theme/black`
+- JIS keyboard
 
 ---
 
