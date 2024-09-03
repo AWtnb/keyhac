@@ -463,9 +463,6 @@ def configure(keymap):
     GENTLE_PUNCHER = KeyPuncher(keymap, defer_msec=50)
 
     keymap_global["LC-Q"] = GENTLE_PUNCHER.invoke("A-F4")
-    keymap_global["U0-4"] = MILD_PUNCHER.invoke("$_")
-    keymap_global["U0-Comma"] = MILD_PUNCHER.invoke("Comma")
-    keymap_global["U0-Period"] = MILD_PUNCHER.invoke("Period")
 
     ################################
     # release CapsLock on reload
@@ -1056,6 +1053,10 @@ def configure(keymap):
             "U1-Minus": "Minus",
             "U0-SemiColon": "SemiColon",
             "U1-SemiColon": "+:",
+            "U0-4": "$_",
+            "U1-4": "$_.",
+            "U0-Comma": "Comma",
+            "U0-Period": "Period",
         },
     )
     SKK_TO_LATINMODE.apply_pair(
