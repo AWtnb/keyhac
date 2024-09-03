@@ -550,9 +550,17 @@ def configure(keymap):
     keymap_global["C-U1-Q"] = paste_with_anchor(True)
 
     # open url in browser
-    keymap_global["C-U0-O"] = lambda: ClipHandler().after_copy(
-        lambda job: PathHandler(job.copied.strip()).run()
-    )
+    def open_selected_url():
+        def _open(job_item: ckit.JobItem) -> None:
+            if job_item.copied:
+                u = job_item.copied
+            else:
+                u = job_item.origin
+            PathHandler(u.strip()).run()
+
+        ClipHandler().after_copy(_open)
+
+    keymap_global["C-U0-O"] = open_selected_url
 
     ################################
     # config menu
@@ -1453,7 +1461,10 @@ def configure(keymap):
         def invoke(uri: str, strict: bool = False, strip_hiragana: bool = False) -> Callable:
             def _searcher() -> None:
                 def _search(job_item: ckit.JobItem) -> None:
-                    query = SearchQuery(job_item.copied)
+                    s = job_item.copied
+                    if len(s) < 1:
+                        s = job_item.origin
+                    query = SearchQuery(s)
                     query.fix_kangxi()
                     query.remove_honorific()
                     query.remove_editorial_style()
