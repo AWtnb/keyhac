@@ -1,13 +1,20 @@
 # keyhac customization
 
-1. Place (or make junction of) [`Keyhac`](Keyhac) on `%APPDATA%` .
-1. Place (or make symlink of) [`theme.ini`](theme.ini) on `theme/black`
-
 With [Syncthing](https://syncthing.net/), append below on `.stignore` to skip syncing local history.
 
 ```
 keyhac.ini
 ```
+
+
+## Install
+
+```PowerShell
+$d = "Keyhac"; New-Item -Path ($env:APPDATA | Join-Path -ChildPath $d) -Value ($pwd.Path | Join-Path -ChildPath $d) -ItemType Junction
+```
+
+If necessary, place (or make symlink of) [`theme.ini`](theme.ini) on `theme/black` .
+
 
 Environment:
 
