@@ -16,6 +16,7 @@ import pyauto
 from keyhac import *
 from keyhac_keymap import Keymap, KeyCondition, WindowKeymap, VK_CAPITAL
 
+
 def configure(keymap):
 
     def balloon(message: str) -> None:
@@ -1882,6 +1883,8 @@ def configure(keymap):
     class CharWidth:
         full_letters = "\uff41\uff42\uff43\uff44\uff45\uff46\uff47\uff48\uff49\uff4a\uff4b\uff4c\uff4d\uff4e\uff4f\uff50\uff51\uff52\uff53\uff54\uff55\uff56\uff57\uff58\uff59\uff5a\uff21\uff22\uff23\uff24\uff25\uff26\uff27\uff28\uff29\uff2a\uff2b\uff2c\uff2d\uff2e\uff2f\uff30\uff31\uff32\uff33\uff34\uff35\uff36\uff37\uff38\uff39\uff3a\uff10\uff11\uff12\uff13\uff14\uff15\uff16\uff17\uff18\uff19\uff0d"
         half_letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-"
+        full_symbols = "\uff01\uff02\uff03\uff04\uff05\uff06\uff07\uff08\uff09\uff0a\uff0b\uff0c\uff0d\uff0e\uff0f\uff1a\uff1b\uff1c\uff1d\uff1e\uff1f\uff20\uff3b\uff3c\uff3d\uff3e\uff3f\uff40\uff5b\uff5c\uff5d\uff5e"
+        half_symbols = "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
 
         def __init__(self, totally: bool = False) -> None:
             self._totally = totally
@@ -1895,9 +1898,15 @@ def configure(keymap):
             s = s.translate(str.maketrans(self.half_letters, self.full_letters))
             if not self._totally:
                 return s
-            half_symbols = "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
-            full_symbols = "\uff01\uff02\uff03\uff04\uff05\uff06\uff07\uff08\uff09\uff0a\uff0b\uff0c\uff0d\uff0e\uff0f\uff1a\uff1b\uff1c\uff1d\uff1e\uff1f\uff20\uff3b\uff3c\uff3d\uff3e\uff3f\uff40\uff5b\uff5c\uff5d\uff5e"
-            return s.translate(str.maketrans(half_symbols, full_symbols))
+            return self.to_full_symbol(s)
+
+        @classmethod
+        def to_half_symbol(cls, s: str) -> str:
+            return s.translate(str.maketrans(cls.full_symbols, cls.half_symbols))
+
+        @classmethod
+        def to_full_symbol(cls, s: str) -> str:
+            return s.translate(str.maketrans(cls.half_symbols, cls.full_symbols))
 
     class Zoom:
         separator = ": "
@@ -2132,8 +2141,10 @@ def configure(keymap):
             "encode url": FormatTools.encode_url,
             "to halfwidth": CharWidth().to_half_letter,
             "to halfwidth (including symbols)": CharWidth(True).to_half_letter,
+            "to halfwidth symbols": CharWidth().to_half_symbol,
             "to fullwidth": CharWidth().to_full_letter,
             "to fullwidth (including symbols)": CharWidth(True).to_full_letter,
+            "to fullwidth symbols": CharWidth().to_full_symbol,
             "zoom invitation": Zoom().format,
         }
     )
