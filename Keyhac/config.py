@@ -856,7 +856,7 @@ def configure(keymap):
                     for key, pos in self.snap_key_dict.items():
                         if mntr_idx < len(monitors):
                             wnd_rect = monitors[mntr_idx].area_mapping[pos][size]
-                            km[mod_mntr + mod_area + key] = wnd_rect.snap
+                            km[mod_mntr + mod_area + key] = LAZY_KEYMAP.wrap(wnd_rect.snap).defer(50)
 
         def alloc_maximize(self, km: WindowKeymap, mapping_dict: dict) -> None:
             for key, towards in mapping_dict.items():
@@ -908,7 +908,7 @@ def configure(keymap):
 
                 subthread_run(_snap)
 
-            return _snapper
+            return LAZY_KEYMAP.wrap(_snapper).defer(50)
 
         def apply(self, km: WindowKeymap) -> None:
             for key, params in {
