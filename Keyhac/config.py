@@ -499,7 +499,7 @@ def configure(keymap):
     class StrCleaner:
         @staticmethod
         def clear_space(s: str) -> str:
-            return s.strip().translate(str.maketrans("", "", "\u200b\u3000\u0009\u0020"))
+            return s.strip().translate(str.maketrans("", "", "\u200b\u3000\u0009\u0020\u00a0"))
 
         @classmethod
         def invoke(cls, remove_white: bool = False, include_linebreak: bool = False) -> Callable:
