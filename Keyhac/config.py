@@ -856,7 +856,9 @@ def configure(keymap):
                     for key, pos in self.snap_key_dict.items():
                         if mntr_idx < len(monitors):
                             wnd_rect = monitors[mntr_idx].area_mapping[pos][size]
-                            km[mod_mntr + mod_area + key] = LAZY_KEYMAP.wrap(wnd_rect.snap).defer(50)
+                            km[mod_mntr + mod_area + key] = LAZY_KEYMAP.wrap(wnd_rect.snap).defer(
+                                50
+                            )
 
         def alloc_maximize(self, km: WindowKeymap, mapping_dict: dict) -> None:
             for key, towards in mapping_dict.items():
@@ -2076,6 +2078,11 @@ def configure(keymap):
             return urllib.parse.quote(s)
 
         @staticmethod
+        def trim_honorific(s: str) -> str:
+            reg = re.compile(r"先生$|様$|(先生|様)(?=[、。：；（）［］・！？])")
+            return reg.sub("", s)
+
+        @staticmethod
         def mdtable_from_tsv(s: str) -> str:
             delim = "\t"
 
@@ -2157,6 +2164,7 @@ def configure(keymap):
             "to fullwidth": CharWidth().to_full_letter,
             "to fullwidth (including symbols)": CharWidth(True).to_full_letter,
             "to fullwidth symbols": CharWidth().to_full_symbol,
+            "trim honorific": FormatTools.trim_honorific,
             "zoom invitation": Zoom().format,
         }
     )
