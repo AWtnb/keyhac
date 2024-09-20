@@ -2233,4 +2233,4 @@ def configure(keymap):
 
         subthread_run(_fzf, _finished)
 
-    keymap_global["U1-Z"] = fzfmenu
+    keymap_global["U1-Z"] = LAZY_KEYMAP.wrap(fzfmenu).defer(80)
