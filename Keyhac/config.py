@@ -2003,6 +2003,10 @@ def configure(keymap):
 
     class FormatTools:
         @staticmethod
+        def colon_to_doubledash(s: str) -> str:
+            return re.sub(r"[:：]\s*", "\u2015\u2015", s)
+
+        @staticmethod
         def as_codeblock(s: str) -> str:
             return "\n".join(["```", s, "```", ""])
 
@@ -2148,6 +2152,7 @@ def configure(keymap):
     CLIPBOARD_MENU = ClipboardMenu()
     CLIPBOARD_MENU.set_formatter(
         {
+            "colon to double-dash": FormatTools.colon_to_doubledash,
             "remove blank lines": FormatTools.skip_blank_line,
             "fix dumb quotation": FormatTools.fix_dumb_quotation,
             "fix KANGXI RADICALS": KangxiRadicals().fix,
