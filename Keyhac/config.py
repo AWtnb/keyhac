@@ -1756,21 +1756,13 @@ def configure(keymap):
     keymap_browser["LC-F"] = KeyPuncher(keymap, defer_msec=50, recover_ime=False).invoke("C-F")
     keymap_browser["F3"] = KeyPuncher(keymap, defer_msec=50, recover_ime=True).invoke("C-F")
 
-    def focus_main_pane() -> None:
-        wnd = keymap.getWindow()
-        if wnd.getProcessName() == "chrome.exe":
-            VIRTUAL_FINGER.type_keys("S-A-B", "F6")
-        elif wnd.getProcessName() == "firefox.exe":
-            VIRTUAL_FINGER.type_keys("C-L", "F6")
-
-    keymap_browser["RC-0"] = focus_main_pane
-
     # intra
     keymap_intra = keymap.defineWindowKeymap(exe_name="APARClientAWS.exe")
     keymap_intra["O-(235)"] = lambda: None
 
     # slack
     keymap_slack = keymap.defineWindowKeymap(exe_name="slack.exe", class_name="Chrome_WidgetWin_1")
+    keymap_slack["C-S-K"] = GENTLE_PUNCHER.invoke("C-S-K")
     keymap_slack["F3"] = GENTLE_PUNCHER.invoke("C-K")
     keymap_slack["C-E"] = keymap_slack["F3"]
     keymap_slack["C-K"] = keymap_slack["F3"]
