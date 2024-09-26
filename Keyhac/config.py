@@ -89,7 +89,77 @@ def configure(keymap):
 
     # console theme
     keymap.setFont("HackGen", 16)
-    keymap.setTheme("black")
+
+    KEYHAC_THEME = "black"
+
+    class Themer:
+        def __init__(self, color: str) -> None:
+
+            if color == "black":
+                colortable = {
+                    "bg": (0, 0, 0),
+                    "fg": (255, 255, 255),
+                    "cursor0": (255, 255, 255),
+                    "cursor1": (255, 64, 64),
+                    "bar_fg": (0, 0, 0),
+                    "bar_error_fg": (200, 0, 0),
+                    "select_bg": (30, 100, 150),
+                    "select_fg": (255, 255, 255),
+                }
+            else:
+                colortable = {
+                    "bg": (255, 255, 255),
+                    "fg": (0, 0, 0),
+                    "cursor0": (255, 255, 255),
+                    "cursor1": (0, 255, 255),
+                    "bar_fg": (255, 255, 255),
+                    "bar_error_fg": (255, 0, 0),
+                    "select_bg": (70, 200, 255),
+                    "select_fg": (0, 0, 0),
+                }
+            self._theme_path = Path(ckit.getAppExePath(), "theme", color, "theme.ini")
+            self._data = colortable
+
+        def update(self, key: str, value: str) -> None:
+            if key in self._data:
+                if type(value) is tuple:
+                    self._data[key] = value
+                else:
+                    colorcode = value.strip("#")
+                    if len(colorcode) == 6:
+                        r, g, b = colorcode[:2], colorcode[2:4], colorcode[4:6]
+                        self._data[key] = (int(r, 16), int(g, 16), int(b, 16))
+
+        def to_string(self) -> str:
+            lines = ["[COLOR]"]
+            for key, value in self._data.items():
+                line = "{} = {}".format(key, value)
+                lines.append(line)
+            return "\n".join(lines)
+
+        def overwrite(self) -> None:
+            theme = self.to_string()
+            if not self._theme_path.exists() or self._theme_path.read_text() != theme:
+                self._theme_path.write_text(theme)
+
+    def set_theme(theme_table: dict):
+        t = Themer(KEYHAC_THEME)
+        for k, v in theme_table.items():
+            t.update(k, v)
+        t.overwrite()
+        keymap.setTheme(KEYHAC_THEME)
+
+    CUSTOM_THEME = {
+        "bg": "#3F3B39",
+        "fg": "#A0B4A7",
+        "cursor0": "#FFFFFF",
+        "cursor1": "#FF4040",
+        "bar_fg": "#000000",
+        "bar_error_fg": "#FF4040",
+        "select_bg": "#DFF477",
+        "select_fg": "#3F3B39",
+    }
+    set_theme(CUSTOM_THEME)
 
     # user modifier
     keymap.replaceKey("(29)", 235)  # "muhenkan" => 235
@@ -578,6 +648,7 @@ def configure(keymap):
             ckit.JobQueue.cancelAll()
             self._keymap.configure()
             self._keymap.updateKeymap()
+            self._keymap.console_window.reloadTheme()
             ts = datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S")
             balloon("{} reloaded config.py".format(ts))
 
