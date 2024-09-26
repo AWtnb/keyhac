@@ -15,6 +15,7 @@ import ckit
 import pyauto
 from keyhac import *
 from keyhac_keymap import Keymap, KeyCondition, WindowKeymap, VK_CAPITAL
+from keyhac_listwindow import ListWindow
 
 
 def configure(keymap):
@@ -2299,3 +2300,12 @@ def configure(keymap):
         subthread_run(_fzf, _finished)
 
     keymap_global["U1-Z"] = LAZY_KEYMAP.wrap(fzfmenu).defer(80)
+
+
+def configure_ListWindow(window: ListWindow) -> None:
+    window.keymap["J"] = window.command_CursorDown
+    window.keymap["K"] = window.command_CursorUp
+    window.keymap["L"] = window.command_Enter
+    for mod in ["", "S-", "C-", "C-S-"]:
+        for key in ["L", "Space"]:
+            window.keymap[mod + key] = window.command_Enter
