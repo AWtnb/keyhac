@@ -2290,20 +2290,32 @@ def configure(keymap):
         def _fzf(job_item: ckit.JobItem) -> None:
             job_item.result = False
             job_item.paste_string = ""
+            job_item.skip_paste = False
             lines = "\n".join(table.keys())
-            proc = subprocess.run(FZF_PATH, input=lines, capture_output=True, encoding="utf-8")
+            proc = subprocess.run(
+                [FZF_PATH, "--expect", "ctrl-space"],
+                input=lines,
+                capture_output=True,
+                encoding="utf-8",
+            )
             result = proc.stdout.strip()
             if proc.returncode == 0:
-                func = table.get(result, None)
+                result_lines = result.splitlines()
+                result_func = result_lines[-1]
+                func = table.get(result_func, None)
                 if func:
                     fmt = func()
                     if 0 < len(fmt):
                         job_item.result = True
                         job_item.paste_string = fmt
+                        job_item.skip_paste = 1 < len(result_lines)
 
         def _finished(job_item: ckit.JobItem) -> None:
             if job_item.result and job_item.paste_string:
-                ClipHandler.paste(job_item.paste_string)
+                if job_item.skip_paste:
+                    ClipHandler.set_string(job_item.paste_string)
+                else:
+                    ClipHandler.paste(job_item.paste_string)
 
         subthread_run(_fzf, _finished)
 
