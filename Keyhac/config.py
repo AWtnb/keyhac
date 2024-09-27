@@ -2069,6 +2069,13 @@ def configure(keymap):
 
     class FormatTools:
         @staticmethod
+        def swap_abbreviation(s: str) -> str:
+            ss = re.split(r"[:：]\s*", s)
+            if len(ss) == 2:
+                return ss[1] + "：" + ss[0]
+            return ""
+
+        @staticmethod
         def colon_to_doubledash(s: str) -> str:
             return re.sub(r"[:：]\s*", "\u2015\u2015", s)
 
@@ -2218,6 +2225,7 @@ def configure(keymap):
     CLIPBOARD_MENU = ClipboardMenu()
     CLIPBOARD_MENU.set_formatter(
         {
+            "swap abbreviation around colon": FormatTools.swap_abbreviation,
             "colon to double-dash": FormatTools.colon_to_doubledash,
             "remove blank lines": FormatTools.skip_blank_line,
             "fix dumb quotation": FormatTools.fix_dumb_quotation,
