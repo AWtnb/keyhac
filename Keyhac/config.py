@@ -1549,7 +1549,7 @@ def configure(keymap):
 
                 ClipHandler().after_copy(_search)
 
-            return _searcher
+            return LAZY_KEYMAP.wrap(_searcher).defer()
 
         @staticmethod
         def _mod_key(s: str) -> list:
