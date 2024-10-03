@@ -1807,7 +1807,7 @@ def configure(keymap):
 
         def _finished(job_item: ckit.JobItem) -> None:
             if len(job_item.results) < 1:
-                PathHandler("https://duckduckgo.com").run()
+                PathHandler(DEFAULT_BROWSER.get_exe_path()).run()
                 return
             if not job_item.results[-1]:
                 VIRTUAL_FINGER.type_keys("LCtrl-LAlt-Tab")
