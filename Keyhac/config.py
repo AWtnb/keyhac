@@ -122,14 +122,19 @@ def configure(keymap):
             self._data = colortable
 
         def update(self, key: str, value: str) -> None:
-            if key in self._data:
-                if type(value) is tuple:
-                    self._data[key] = value
-                else:
-                    colorcode = value.strip("#")
-                    if len(colorcode) == 6:
-                        r, g, b = colorcode[:2], colorcode[2:4], colorcode[4:6]
-                        self._data[key] = (int(r, 16), int(g, 16), int(b, 16))
+            if key not in self._data:
+                return
+            if type(value) is tuple:
+                self._data[key] = value
+                return
+            colorcode = value.strip("#")
+            if len(colorcode) == 6:
+                r, g, b = colorcode[:2], colorcode[2:4], colorcode[4:6]
+                try:
+                    rgb = tuple(int(c, 16) for c in [r, g, b])
+                    self._data[key] = rgb
+                except Exception as e:
+                    print(e)
 
         def to_string(self) -> str:
             lines = ["[COLOR]"]
