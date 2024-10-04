@@ -2330,6 +2330,8 @@ def configure(keymap):
 def configure_ListWindow(window: ListWindow) -> None:
     window.keymap["J"] = window.command_CursorDown
     window.keymap["K"] = window.command_CursorUp
+    window.keymap["C-J"] = window.command_CursorPageDown
+    window.keymap["C-K"] = window.command_CursorPageUp
     window.keymap["L"] = window.command_Enter
     for mod in ["", "S-", "C-", "C-S-"]:
         for key in ["L", "Space"]:
