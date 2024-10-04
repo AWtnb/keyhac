@@ -2075,6 +2075,19 @@ def configure(keymap):
 
     class FormatTools:
         @staticmethod
+        def to_deepl_friendly(s: str) -> str:
+            ss = []
+            lines = s.splitlines()
+            for line in lines:
+                if line.endswith(" "):
+                    ss.append(line)
+                elif line.endswith("-"):
+                    ss.append(line[0:-1])
+                else:
+                    ss.append(line + " ")
+            return "".join(ss).strip()
+
+        @staticmethod
         def swap_abbreviation(s: str) -> str:
             ss = re.split(r"[:：]\s*", s)
             if len(ss) == 2:
@@ -2231,6 +2244,7 @@ def configure(keymap):
     CLIPBOARD_MENU = ClipboardMenu()
     CLIPBOARD_MENU.set_formatter(
         {
+            "to deepl-friendly": FormatTools.to_deepl_friendly,
             "swap abbreviation around colon": FormatTools.swap_abbreviation,
             "colon to double-dash": FormatTools.colon_to_doubledash,
             "remove blank lines": FormatTools.skip_blank_line,
