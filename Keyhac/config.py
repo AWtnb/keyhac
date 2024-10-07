@@ -2327,7 +2327,7 @@ def configure(keymap):
                     if 0 < len(fmt):
                         job_item.result = True
                         job_item.paste_string = fmt
-                        job_item.skip_paste = 1 < len(mod)
+                        job_item.skip_paste = 0 < len(mod)
 
         def _finished(job_item: ckit.JobItem) -> None:
             if job_item.result and job_item.paste_string:
