@@ -2319,7 +2319,7 @@ def configure(keymap):
                 encoding="utf-8",
             )
             result = proc.stdout
-            if proc.returncode == 0:
+            if result and proc.returncode == 0:
                 mod, result_func = result.splitlines()[:2]
                 func = table.get(result_func, None)
                 if func:
