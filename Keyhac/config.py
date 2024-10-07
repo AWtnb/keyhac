@@ -2318,17 +2318,16 @@ def configure(keymap):
                 capture_output=True,
                 encoding="utf-8",
             )
-            result = proc.stdout.strip()
+            result = proc.stdout
             if proc.returncode == 0:
-                result_lines = result.splitlines()
-                result_func = result_lines[-1]
+                mod, result_func = result.splitlines()[:2]
                 func = table.get(result_func, None)
                 if func:
                     fmt = func()
                     if 0 < len(fmt):
                         job_item.result = True
                         job_item.paste_string = fmt
-                        job_item.skip_paste = 1 < len(result_lines)
+                        job_item.skip_paste = 1 < len(mod)
 
         def _finished(job_item: ckit.JobItem) -> None:
             if job_item.result and job_item.paste_string:
