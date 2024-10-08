@@ -1831,8 +1831,8 @@ def configure(keymap):
     # browser
     keymap_browser = keymap.defineWindowKeymap(check_func=CheckWnd.is_browser)
     keymap_browser["LC-LS-W"] = "A-Left"
+    keymap_browser["LC-L"] = KeyPuncher(keymap, defer_msec=50, recover_ime=False).invoke("C-L")
     keymap_browser["LC-F"] = KeyPuncher(keymap, defer_msec=50, recover_ime=False).invoke("C-F")
-    keymap_browser["F3"] = KeyPuncher(keymap, defer_msec=50, recover_ime=True).invoke("C-F")
 
     # intra
     keymap_intra = keymap.defineWindowKeymap(exe_name="APARClientAWS.exe")
