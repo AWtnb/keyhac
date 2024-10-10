@@ -6,8 +6,7 @@ import time
 import subprocess
 import urllib.parse
 import unicodedata
-from collections import namedtuple
-from typing import Union, Callable, Dict, List
+from typing import Union, Callable, Dict, List, NamedTuple
 from pathlib import Path
 from winreg import HKEY_CURRENT_USER, HKEY_CLASSES_ROOT, OpenKey, QueryValueEx
 
@@ -319,7 +318,9 @@ def configure(keymap):
     def delay(msec: int = 50) -> None:
         time.sleep(msec / 1000)
 
-    Key = namedtuple("KeyPress", ["sent", "typable"])
+    class Key(NamedTuple):
+        sent: str
+        typable: bool
 
     class KeySequence:
         acceptable = (
@@ -705,7 +706,11 @@ def configure(keymap):
     # class for position on monitor
     ################################
 
-    Rect = namedtuple("Rect", ["left", "top", "right", "bottom"])
+    class Rect(NamedTuple):
+        left: int
+        top: int
+        right: int
+        bottom: int
 
     class WndRect:
         def __init__(self, keymap: Keymap, rect: Rect) -> None:
