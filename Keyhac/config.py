@@ -2301,6 +2301,24 @@ def configure(keymap):
 
     FZF_PATH = UserPath.resolve(r"scoop\apps\fzf\current\fzf.exe")
 
+    class FzfResult(NamedTuple):
+        text: str
+        modified: bool
+
+    class FzfResultParser:
+        def __init__(self, expect: bool) -> None:
+            self.expect = expect
+
+        def parse(self, stdout: str) -> FzfResult:
+            if len(stdout) < 1:
+                return FzfResult("", False)
+            lines = stdout.splitlines()
+            if self.expect:
+                if len(lines) != 2:
+                    return FzfResult("", False)
+                return FzfResult(lines[1], 0 < len(lines[0]))
+            return FzfResult(lines[0], False)
+
     def fzfmenu() -> None:
         if not Path(FZF_PATH).exists():
             balloon("cannot find fzf on PC.")
@@ -2326,17 +2344,16 @@ def configure(keymap):
             result = proc.stdout
             if len(result) < 1 or proc.returncode != 0:
                 return
-            result_lines = result.splitlines()
-            if 2 < len(result_lines):
-                return
-            result_func = result_lines[-1]
+            fr = FzfResultParser(True).parse(result)
+            result_func = fr.text
+            skip = fr.modified
             func = table.get(result_func, None)
             if func:
                 fmt = func()
                 if 0 < len(fmt):
                     job_item.result = True
                     job_item.paste_string = fmt
-                    job_item.skip_paste = 0 < len(result_lines[0])
+                    job_item.skip_paste = skip
 
         def _finished(job_item: ckit.JobItem) -> None:
             if job_item.result and job_item.paste_string:
