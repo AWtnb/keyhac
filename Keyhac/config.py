@@ -1977,6 +1977,8 @@ def configure(keymap):
         half_letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-"
         full_symbols = "\uff01\uff02\uff03\uff04\uff05\uff06\uff07\uff08\uff09\uff0a\uff0b\uff0c\uff0d\uff0e\uff0f\uff1a\uff1b\uff1c\uff1d\uff1e\uff1f\uff20\uff3b\uff3c\uff3d\uff3e\uff3f\uff40\uff5b\uff5c\uff5d\uff5e"
         half_symbols = "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
+        full_brackets = "\uff08\uff09\uff3b\uff3d\uff5b\uff5d"
+        half_brackets = "()[]{}"
 
         def __init__(self, totally: bool = False) -> None:
             self._totally = totally
@@ -1999,6 +2001,14 @@ def configure(keymap):
         @classmethod
         def to_full_symbol(cls, s: str) -> str:
             return s.translate(str.maketrans(cls.half_symbols, cls.full_symbols))
+
+        @classmethod
+        def to_half_brackets(cls, s: str) -> str:
+            return s.translate(str.maketrans(cls.full_brackets, cls.half_brackets))
+
+        @classmethod
+        def to_full_brackets(cls, s: str) -> str:
+            return s.translate(str.maketrans(cls.half_brackets, cls.full_brackets))
 
     class Zoom:
         separator = ": "
@@ -2266,9 +2276,11 @@ def configure(keymap):
             "to halfwidth": CharWidth().to_half_letter,
             "to halfwidth (including symbols)": CharWidth(True).to_half_letter,
             "to halfwidth symbols": CharWidth().to_half_symbol,
+            "to halfwidth bracktets": CharWidth().to_half_brackets,
             "to fullwidth": CharWidth().to_full_letter,
             "to fullwidth (including symbols)": CharWidth(True).to_full_letter,
             "to fullwidth symbols": CharWidth().to_full_symbol,
+            "to fullwidth bracktets": CharWidth().to_full_brackets,
             "trim honorific": FormatTools.trim_honorific,
             "zoom invitation": Zoom().format,
         }
