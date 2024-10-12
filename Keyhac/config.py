@@ -17,6 +17,13 @@ from keyhac_keymap import Keymap, KeyCondition, WindowKeymap, VK_CAPITAL
 from keyhac_listwindow import ListWindow
 
 
+def smart_check_path(path: Union[str, Path]) -> bool:
+    p = Path(path) if type(path) is str else path
+    if p.drive == "C:":
+        return p.exists()
+    return os.path.exists(path)
+
+
 def configure(keymap):
 
     def balloon(message: str) -> None:
@@ -46,7 +53,7 @@ def configure(keymap):
         def is_accessible(self) -> bool:
             if self._path:
                 try:
-                    return self._path.startswith("http") or Path(self._path).exists()
+                    return self._path.startswith("http") or smart_check_path(self._path)
                 except Exception as e:
                     print(e)
                     return ""
@@ -144,7 +151,7 @@ def configure(keymap):
 
         def overwrite(self) -> None:
             theme = self.to_string()
-            if not self._theme_path.exists() or self._theme_path.read_text() != theme:
+            if not smart_check_path(self._theme_path) or self._theme_path.read_text() != theme:
                 self._theme_path.write_text(theme)
 
     def set_theme(theme_table: dict):
