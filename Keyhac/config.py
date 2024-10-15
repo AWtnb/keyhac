@@ -1,5 +1,6 @@
 import datetime
 import os
+import sys
 import fnmatch
 import re
 import time
@@ -2321,22 +2322,31 @@ def configure(keymap):
     FZF_PATH = UserPath.resolve(r"scoop\apps\fzf\current\fzf.exe")
 
     class FzfResult(NamedTuple):
+        finisher: str
         text: str
-        modified: bool
 
     class FzfResultParser:
+        default_finisher = "enter"
+
         def __init__(self, expect: bool) -> None:
             self.expect = expect
 
         def parse(self, stdout: str) -> FzfResult:
             if len(stdout) < 1:
-                return FzfResult("", False)
+                return FzfResult(self.default_finisher, "")
+            if not self.expect:
+                return FzfResult(self.default_finisher, stdout)
             lines = stdout.splitlines()
-            if self.expect:
-                if len(lines) != 2:
-                    return FzfResult("", False)
-                return FzfResult(lines[1], 0 < len(lines[0]))
-            return FzfResult(lines[0], False)
+            try:
+                assert (
+                    len(lines) == 2
+                ), "with --expect option, 2 lines should be returned, but 3 or more lines are returned"
+            except AssertionError as err:
+                print(err, file=sys.stderr)
+                return FzfResult(self.default_finisher, "")
+            if len(lines[0]) < 1:
+                return FzfResult(self.default_finisher, lines[1])
+            return FzfResult(*lines)
 
     def fzfmenu() -> None:
         if not Path(FZF_PATH).exists():
@@ -2365,7 +2375,7 @@ def configure(keymap):
                 return
             fr = FzfResultParser(True).parse(result)
             result_func = fr.text
-            skip = fr.modified
+            skip = fr.finisher != FzfResultParser.default_finisher
             func = table.get(result_func, None)
             if func:
                 fmt = func()
