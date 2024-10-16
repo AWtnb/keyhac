@@ -1592,7 +1592,7 @@ def configure(keymap):
             "D": "https://duckduckgo.com/?q={}",
             "G": "http://www.google.com/search?nfpr=1&q={}",
             "H": "https://www.hanmoto.com/bd/search/order/desc/title/{}",
-            "I": "https://www.google.com/search?tbm=isch&nfpr=1&q={}",
+            "I": "https://www.google.com/search?udm=2&nfpr=1&q={}",
             "J": "https://eow.alc.co.jp/search?q={}",
             "K": "https://www.kinokuniya.co.jp/disp/CSfDispListPage_001.jsp?qs=true&ptk=01&q={}",
             "M": "https://www.google.co.jp/maps/search/{}",
