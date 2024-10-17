@@ -2131,6 +2131,14 @@ def configure(keymap):
             return os.linesep.join([l for l in lines if l.strip()])
 
         @staticmethod
+        def insert_blank_line(s: str) -> str:
+            lines = []
+            for line in s.strip().splitlines():
+                lines.append(line.strip())
+                lines.append("")
+            return os.linesep.join(lines)
+
+        @staticmethod
         def to_double_bracket(s: str) -> str:
             reg = re.compile(r"[\u300c\u300d]")
 
@@ -2270,7 +2278,8 @@ def configure(keymap):
             "to deepl-friendly": FormatTools.to_deepl_friendly,
             "swap abbreviation around colon": FormatTools.swap_abbreviation,
             "colon to double-dash": FormatTools.colon_to_doubledash,
-            "remove blank lines": FormatTools.skip_blank_line,
+            "insert blank line": FormatTools.insert_blank_line,
+            "remove blank line": FormatTools.skip_blank_line,
             "fix dumb quotation": FormatTools.fix_dumb_quotation,
             "fix KANGXI RADICALS": KangxiRadicals().fix,
             "fix paren inside bracket": FormatTools.fix_paren_inside_bracket,
