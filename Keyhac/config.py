@@ -307,7 +307,6 @@ def configure(keymap):
             # print
             "F1": ("C-P"),
             "U1-F1": ("F1"),
-            "Insert": (lambda: None),
         }
     ).apply(keymap_global)
 
