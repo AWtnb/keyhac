@@ -300,7 +300,7 @@ def configure(keymap):
             "S-U0-I": ("Home", "Enter", "Up"),
             # Context menu
             "U0-C": ("Apps"),
-            "S-U0-C": ("S-F10"),
+            "S-U0-C": ("S-Apps"),
             # rename
             "U0-N": ("F2"),
             "LC-U0-N": ("F2"),
