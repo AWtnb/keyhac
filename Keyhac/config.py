@@ -19,10 +19,14 @@ from keyhac_listwindow import ListWindow
 
 
 def smart_check_path(path: Union[str, Path]) -> bool:
+    # case sensitive path check
     p = Path(path) if type(path) is str else path
-    if p.drive == "C:":
-        return p.exists()
-    return os.path.exists(path)
+    if len(p.parents) < 1:
+        return True
+    try:
+        return p.name in [c.name for c in p.parent.iterdir()]
+    except:
+        return False
 
 
 def configure(keymap):
