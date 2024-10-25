@@ -58,7 +58,7 @@ def configure(keymap):
         def is_accessible(self) -> bool:
             if self._path:
                 try:
-                    return self._path.startswith("http") or smart_check_path(self._path)
+                    return smart_check_path(self._path)
                 except Exception as e:
                     print(e)
                     return ""
@@ -673,7 +673,14 @@ def configure(keymap):
 
         @staticmethod
         def open_dir(path: str) -> None:
-            handler = UserPath(path)
+            if not smart_check_path(path):
+                balloon("config not found: {}".format(path))
+                return
+            real_path = os.path.realpath(path)
+            dir_path = path
+            if (real_path := os.path.dirname(real_path)) != path:
+                dir_path = real_path
+            handler = PathHandler(dir_path)
             if handler.is_accessible():
                 if KEYHAC_EDITOR == "notepad.exe":
                     balloon("keyhac editor 'notepad.exe' cannot open directory.")
@@ -684,10 +691,12 @@ def configure(keymap):
                 balloon("cannot find path: '{}'".format(handler.path))
 
         def open_keyhac_repo(self) -> None:
-            self.open_dir(r"Sync\develop\repo\keyhac")
+            config_path = os.path.join(os.environ.get("APPDATA"), "Keyhac")
+            self.open_dir(config_path)
 
         def open_skk_repo(self) -> None:
-            self.open_dir(r"Sync\develop\repo\CorvusSKK")
+            config_path = os.path.join(os.environ.get("APPDATA"), "CorvusSKK")
+            self.open_dir(config_path)
 
         @staticmethod
         def open_skk_config() -> None:
@@ -1567,7 +1576,7 @@ def configure(keymap):
                     query.remove_editorial_style()
                     if strip_hiragana:
                         query.remove_hiragana()
-                    PathHandler(uri.format(query.encode(strict))).run()
+                    keymap.ShellExecuteCommand(None, uri.format(query.encode(strict)), None, None)()
 
                 ClipHandler().after_copy(_search)
 
@@ -1808,9 +1817,6 @@ def configure(keymap):
         },
     )
 
-    keymap_global["U1-O"] = keymap.defineMultiStrokeKeymap()
-    keymap_global["U1-O"]["D"] = UserPath(r"Desktop").run
-    keymap_global["U1-O"]["S"] = PathHandler(r"X:\scan").run
     keymap_global["LS-LC-U1-M"] = UserPath(r"Personal\draft.txt").run
 
     def search_on_browser() -> None:
