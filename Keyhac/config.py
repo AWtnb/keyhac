@@ -676,10 +676,9 @@ def configure(keymap):
             if not smart_check_path(path):
                 balloon("config not found: {}".format(path))
                 return
-            real_path = os.path.realpath(path)
             dir_path = path
-            if (real_path := os.path.dirname(real_path)) != path:
-                dir_path = real_path
+            if (real_path := os.path.realpath(path)) != dir_path:
+                dir_path = os.path.dirname(real_path)
             handler = PathHandler(dir_path)
             if handler.is_accessible():
                 if KEYHAC_EDITOR == "notepad.exe":
