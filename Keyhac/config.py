@@ -36,6 +36,21 @@ def configure(keymap):
         except:
             pass
 
+    def shell_exec(path: str, *args) -> None:
+        if type(path) is not str:
+            path = str(path)
+        params = []
+        for arg in args:
+            if len(arg.strip()):
+                if " " in arg:
+                    params.append('"{}"'.format(arg))
+                else:
+                    params.append(arg)
+        try:
+            pyauto.shellExecute(None, path, " ".join(params), "")
+        except:
+            balloon("invalid path: '{}'".format(path))
+
     def subthread_run(func: Callable, finished: Union[Callable, None] = None) -> None:
         job = ckit.JobItem(func, finished)
         ckit.JobQueue.defaultQueue().enqueue(job)
@@ -74,7 +89,7 @@ def configure(keymap):
 
         def run(self, *args) -> None:
             if self.is_accessible():
-                keymap.ShellExecuteCommand(None, self._path, self.args_to_param(args), None)()
+                shell_exec(self._path, *args)
             else:
                 balloon("invalid-path: '{}'".format(self._path))
 
@@ -641,7 +656,7 @@ def configure(keymap):
                 u = job_item.copied
             else:
                 u = job_item.origin
-            PathHandler(u.strip()).run()
+            shell_exec(u.strip())
 
         ClipHandler().after_copy(_open)
 
@@ -1572,7 +1587,7 @@ def configure(keymap):
                     query.remove_editorial_style()
                     if strip_hiragana:
                         query.remove_hiragana()
-                    keymap.ShellExecuteCommand(None, uri.format(query.encode(strict)), None, None)()
+                    shell_exec(uri.format(query.encode(strict)))
 
                 ClipHandler().after_copy(_search)
 
