@@ -568,14 +568,6 @@ def configure(keymap):
     keymap_global["U1-4"] = GENTLE_PUNCHER.invoke("$_.")
 
     ################################
-    # release CapsLock on reload
-    ################################
-
-    if pyauto.Input.getKeyState(VK_CAPITAL):
-        VIRTUAL_FINGER_QUICK.type_keys("LS-CapsLock")
-        balloon("released CapsLock.")
-
-    ################################
     # custom hotkey
     ################################
 
