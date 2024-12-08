@@ -2090,20 +2090,8 @@ def configure(keymap):
             [
                 "---",
                 "title:",
-                "styles:",
-                "  - h1:",
-                "      font-size: 2rem",
-                "  - blockquote > p:",
-                "      text-indent: -2em",
-                "      margin-left: 2.5em",
-                "      line-height: 1.5",
-                "  - blockquote p:",
-                "      text-wrap: pretty",
-                "      word-break: break-all",
-                "  - blockquote > p > em:",
-                '      background-color: "#d0ee23"',
-                "css-vars:",
-                "  # width-container: 50rem",
+                "load:",
+                "  - style.css",
                 "---",
             ]
         )
@@ -2340,7 +2328,12 @@ def configure(keymap):
         }
     )
 
-    FZF_PATH = UserPath.resolve(r"scoop\apps\fzf\current\fzf.exe")
+    def check_fzf() -> bool:
+        paths = os.environ.get("PATH", "").split(os.pathsep)
+        for path in paths:
+            if Path(path, "fzf.exe").exists():
+                return True
+        return False
 
     class FzfResult(NamedTuple):
         finisher: str
@@ -2370,7 +2363,7 @@ def configure(keymap):
             return FzfResult(*lines)
 
     def fzfmenu() -> None:
-        if not Path(FZF_PATH).exists():
+        if not check_fzf():
             balloon("cannot find fzf on PC.")
             return
 
@@ -2386,7 +2379,7 @@ def configure(keymap):
             job_item.skip_paste = False
             lines = "\n".join(table.keys())
             proc = subprocess.run(
-                [FZF_PATH, "--expect", "ctrl-space"],
+                ["fzf.exe", "--expect", "ctrl-space"],
                 input=lines,
                 capture_output=True,
                 encoding="utf-8",
