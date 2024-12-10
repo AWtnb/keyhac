@@ -2305,6 +2305,9 @@ def configure(keymap):
     CLIPBOARD_MENU.set_replacer(
         {
             "escape backslash": (r"\\", r"\\\\"),
+            "escape double-quotation": (r"\"", r'\\"'),
+            "remove double-quotation": (r'"', ""),
+            "remove single-quotation": (r"'", ""),
             "remove linebreak": (r"\r?\n", ""),
             "remove whitespaces": (r"[\u200b\u3000\u0009\u0020]", ""),
             "remove whitespaces (including linebreak)": (r"\s", ""),
