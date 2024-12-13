@@ -1970,24 +1970,6 @@ def configure(keymap):
 
     keymap_excel["LC-U0-N"] = select_cell_content
 
-    # Thunderbird
-    def thunderbird_new_mail(sequence: list, alt_sequence: list) -> Callable:
-        def _sender():
-            wnd = keymap.getWindow()
-            if wnd.getProcessName() == "thunderbird.exe":
-                if wnd.getText().startswith("作成: (件名なし)"):
-                    VIRTUAL_FINGER.type_keys(*sequence)
-                else:
-                    VIRTUAL_FINGER.type_keys(*alt_sequence)
-
-        return _sender
-
-    keymap_tb = keymap.defineWindowKeymap(exe_name="thunderbird.exe")
-    keymap_tb["C-S-V"] = thunderbird_new_mail(["A-S", "Tab", "C-V", "C-Home"], ["C-V"])
-    keymap_tb["C-S-S"] = thunderbird_new_mail(
-        ["C-Home", "S-End", "C-X", "Delete", "A-S", "C-V"], ["A-S"]
-    )
-
     ################################
     # popup clipboard menu
     ################################
