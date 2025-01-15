@@ -19,11 +19,12 @@ from keyhac_listwindow import ListWindow
 
 
 def smart_check_path(path: Union[str, Path]) -> bool:
-    # case insensitive path check
+    """CASE-INSENSITIVE path check"""
     p = Path(path) if type(path) is str else path
-    if p.drive == "C:":
+    try:
         return p.exists()
-    return os.path.exists(path)
+    except:
+        return False
 
 
 def configure(keymap):
