@@ -10,6 +10,7 @@ import unicodedata
 from typing import Union, Callable, Dict, List, NamedTuple
 from pathlib import Path
 from winreg import HKEY_CURRENT_USER, HKEY_CLASSES_ROOT, OpenKey, QueryValueEx
+from concurrent.futures import ThreadPoolExecutor, TimeoutError
 
 import ckit
 import pyauto
@@ -18,14 +19,15 @@ from keyhac_keymap import Keymap, KeyCondition, WindowKeymap, VK_CAPITAL
 from keyhac_listwindow import ListWindow
 
 
-def smart_check_path(path: Union[str, Path]) -> bool:
-    """CASE-INSENSITIVE path check"""
-    p = Path(path) if type(path) is str else path
+def smart_check_path(
+    path: Union[str, Path], timeout_sec: Union[float, None] = None
+) -> bool:
+    """CASE-INSENSITIVE path check with timeout"""
+    p = Path(path) if type(path) is not Path else path
     try:
-        if p.drive == "C:":
-            return p.exists()
-        return os.path.exists(p)
-    except:
+        future = ThreadPoolExecutor(max_workers=1).submit(p.exists)
+        return future.result(timeout_sec)
+    except TimeoutError:
         return False
 
 
