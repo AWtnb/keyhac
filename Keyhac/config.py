@@ -10,7 +10,7 @@ import unicodedata
 from typing import Union, Callable, Dict, List, NamedTuple
 from pathlib import Path
 from winreg import HKEY_CURRENT_USER, HKEY_CLASSES_ROOT, OpenKey, QueryValueEx
-from concurrent.futures import ThreadPoolExecutor, TimeoutError
+from concurrent.futures import ThreadPoolExecutor
 
 import ckit
 import pyauto
@@ -25,7 +25,7 @@ def smart_check_path(path: Union[str, Path], timeout_sec: Union[int, float, None
     try:
         future = ThreadPoolExecutor(max_workers=1).submit(p.exists)
         return future.result(timeout_sec)
-    except TimeoutError:
+    except:
         return False
 
 
