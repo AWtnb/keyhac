@@ -2317,7 +2317,8 @@ def configure(keymap):
     def check_fzf() -> bool:
         paths = os.environ.get("PATH", "").split(os.pathsep)
         for path in paths:
-            if Path(path, "fzf.exe").exists():
+            p = Path(path, "fzf.exe")
+            if smart_check_path(p):
                 return True
         return False
 
