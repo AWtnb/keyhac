@@ -22,7 +22,9 @@ def smart_check_path(path: Union[str, Path]) -> bool:
     """CASE-INSENSITIVE path check"""
     p = Path(path) if type(path) is str else path
     try:
-        return p.exists()
+        if p.drive == "C:":
+            return p.exists()
+        return os.path.exists(p)
     except:
         return False
 
