@@ -19,11 +19,9 @@ from keyhac_keymap import Keymap, KeyCondition, WindowKeymap, VK_CAPITAL
 from keyhac_listwindow import ListWindow
 
 
-def smart_check_path(
-    path: Union[str, Path], timeout_sec: Union[float, None] = None
-) -> bool:
+def smart_check_path(path: Union[str, Path], timeout_sec: Union[int, float, None] = None) -> bool:
     """CASE-INSENSITIVE path check with timeout"""
-    p = Path(path) if type(path) is not Path else path
+    p = path if type(path) is Path else Path(path)
     try:
         future = ThreadPoolExecutor(max_workers=1).submit(p.exists)
         return future.result(timeout_sec)
