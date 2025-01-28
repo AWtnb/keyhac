@@ -15,7 +15,7 @@ from concurrent.futures import ThreadPoolExecutor
 import ckit
 import pyauto
 from keyhac import *
-from keyhac_keymap import Keymap, KeyCondition, WindowKeymap, VK_CAPITAL
+from keyhac_keymap import Keymap, KeyCondition, WindowKeymap
 from keyhac_listwindow import ListWindow
 
 
@@ -2324,33 +2324,6 @@ def configure(keymap):
                 return True
         return False
 
-    class FzfResult(NamedTuple):
-        finisher: str
-        text: str
-
-    class FzfResultParser:
-        default_finisher = "enter"
-
-        def __init__(self, expect: bool) -> None:
-            self.expect = expect
-
-        def parse(self, stdout: str) -> FzfResult:
-            if len(stdout) < 1:
-                return FzfResult(self.default_finisher, "")
-            if not self.expect:
-                return FzfResult(self.default_finisher, stdout)
-            lines = stdout.splitlines()
-            try:
-                assert (
-                    len(lines) == 2
-                ), "with --expect option, 2 lines should be returned, but 3 or more lines are returned"
-            except AssertionError as err:
-                print(err, file=sys.stderr)
-                return FzfResult(self.default_finisher, "")
-            if len(lines[0]) < 1:
-                return FzfResult(self.default_finisher, lines[1])
-            return FzfResult(*lines)
-
     def fzfmenu() -> None:
         if not check_fzf():
             balloon("cannot find fzf on PC.")
@@ -2368,31 +2341,24 @@ def configure(keymap):
             job_item.skip_paste = False
             lines = "\n".join(table.keys())
             proc = subprocess.run(
-                ["fzf.exe", "--expect", "ctrl-space"],
+                ["fzf.exe"],
                 input=lines,
                 capture_output=True,
                 encoding="utf-8",
             )
-            result = proc.stdout
+            result = proc.stdout.strip()
             if len(result) < 1 or proc.returncode != 0:
                 return
-            fr = FzfResultParser(True).parse(result)
-            result_func = fr.text
-            skip = fr.finisher != FzfResultParser.default_finisher
-            func = table.get(result_func, None)
+            func = table.get(result, None)
             if func:
                 fmt = func()
                 if 0 < len(fmt):
                     job_item.result = True
                     job_item.paste_string = fmt
-                    job_item.skip_paste = skip
 
         def _finished(job_item: ckit.JobItem) -> None:
             if job_item.result and job_item.paste_string:
-                if job_item.skip_paste:
-                    ClipHandler.set_string(job_item.paste_string)
-                else:
-                    ClipHandler.paste(job_item.paste_string)
+                ClipHandler.paste(job_item.paste_string)
 
         subthread_run(_fzf, _finished)
 
