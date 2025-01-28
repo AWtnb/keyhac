@@ -235,14 +235,15 @@ def configure(keymap):
     keymap_global["U1-F4"] = keymap.command_RecordPlay
     keymap_global["C-U0-0"] = keymap.command_RecordPlay
 
-    # combination with modifier key
-    class CoreKeys:
+    class KeyAllocator:
         mod_keys = ("", "S-", "C-", "A-", "C-S-", "C-A-", "S-A-", "C-A-S-")
         key_status = ("D-", "U-")
 
-        @classmethod
-        def cursor_keys(cls, km: WindowKeymap) -> None:
-            for mod_key in cls.mod_keys:
+        def __init__(self, km: WindowKeymap) -> None:
+            self._keymap = km
+
+        def cursor_keys(self) -> None:
+            for mod_key in self.mod_keys:
                 for key, value in {
                     # move cursor
                     "H": "Left",
@@ -258,38 +259,30 @@ def configure(keymap):
                     # Enter
                     "Space": "Enter",
                 }.items():
-                    km[mod_key + "U0-" + key] = mod_key + value
+                    self._keymap[mod_key + "U0-" + key] = mod_key + value
 
-        @classmethod
-        def ignore_capslock(cls, km: WindowKeymap) -> None:
-            for stat in cls.key_status:
-                for mod_key in cls.mod_keys:
-                    km[mod_key + stat + "Capslock"] = lambda: None
+        def apply(self, mapping_dict: dict) -> None:
+            for key, value in mapping_dict.items():
+                self._keymap[key] = value
 
-        @classmethod
-        def ignore_kanakey(cls, km: WindowKeymap) -> None:
-            for stat in cls.key_status:
-                for mod_key in cls.mod_keys:
+        def apply_quotation(self, mapping_dict: dict) -> None:
+            for key, value in mapping_dict.items():
+                self._keymap[key] = value, value, "Left"
+
+        def ignore_capslock(self) -> None:
+            for stat in self.key_status:
+                for mod_key in self.mod_keys:
+                    self._keymap[mod_key + stat + "Capslock"] = lambda: None
+
+        def ignore_kanakey(self) -> None:
+            for stat in self.key_status:
+                for mod_key in self.mod_keys:
                     for vk in list(range(124, 136)) + list(range(240, 243)) + list(range(245, 254)):
-                        km[mod_key + stat + str(vk)] = lambda: None
+                        self._keymap[mod_key + stat + str(vk)] = lambda: None
 
-    CoreKeys().cursor_keys(keymap_global)
-    # CoreKeys().ignore_capslock(keymap_global)
-    # CoreKeys().ignore_kanakey(keymap_global)
-
-    class KeyAllocator:
-        def __init__(self, mapping_dict: dict) -> None:
-            self.dict = mapping_dict
-
-        def apply(self, km: WindowKeymap):
-            for key, value in self.dict.items():
-                km[key] = value
-
-        def apply_quotation(self, km: WindowKeymap):
-            for key, value in self.dict.items():
-                km[key] = value, value, "Left"
-
-    KeyAllocator(
+    GLOBAL_KEY_ALLOCATOR = KeyAllocator(keymap_global)
+    GLOBAL_KEY_ALLOCATOR.cursor_keys()
+    GLOBAL_KEY_ALLOCATOR.apply(
         {
             # delete 2
             "LS-LC-U0-B": ("Back",) * 2,
@@ -300,6 +293,8 @@ def configure(keymap):
             # escape
             "O-(235)": ("Esc"),
             "U0-X": ("Esc"),
+            # focus taskbar
+            "U1-T": ("LWin-T"),
             # line selection
             "U1-A": ("End", "S-Home"),
             # punctuation
@@ -327,15 +322,15 @@ def configure(keymap):
             "F1": ("C-P"),
             "U1-F1": ("F1"),
         }
-    ).apply(keymap_global)
+    )
 
-    KeyAllocator(
+    GLOBAL_KEY_ALLOCATOR.apply_quotation(
         {
             "U0-2": "LS-2",
             "U0-7": "LS-7",
             "U0-AtMark": "LS-AtMark",
         }
-    ).apply_quotation(keymap_global)
+    )
 
     ################################
     # functions for custom hotkey
