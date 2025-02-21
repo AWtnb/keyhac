@@ -2010,60 +2010,28 @@ def configure(keymap):
         def to_full_brackets(cls, s: str) -> str:
             return s.translate(str.maketrans(cls.half_brackets, cls.full_brackets))
 
-    class Zoom:
-        separator = ": "
+    def format_zoom_invitation(s: str) -> None:
+
+        def _is_ignorable(line: str) -> bool:
+            phrases = [
+                "あなたをスケジュール済みの",
+                "ミーティングに参加する",
+            ]
+            for p in phrases:
+                if p in line:
+                    return True
+            return False
+
+        stack = []
+        lines = s.strip().splitlines()
+        for line in lines:
+            if _is_ignorable(line):
+                stack.append("")
+            else:
+                stack.append(line)
+        content = os.linesep.join(stack).strip()
         hr = "=============================="
-
-        @staticmethod
-        def get_time(s) -> str:
-            try:
-                d = datetime.datetime.strptime(s, "時刻: %Y年%m月%d日 %I:%M %p 大阪、札幌、東京")
-            except:
-                try:
-                    d = datetime.datetime.strptime(s, "時刻: %Y年%m月%d日 %H:%M 大阪、札幌、東京")
-                except:
-                    return ""
-            week = "月火水木金土日"[d.weekday()]
-            ampm = ""
-            if d.hour < 12:
-                ampm = "AM "
-            return (d.strftime("%Y年%m月%d日（{}） {}%H:%M開始")).format(week, ampm)
-
-        @classmethod
-        def to_field(cls, s: str, prefix: str) -> str:
-            i = s.find(cls.separator)
-            if -1 < i:
-                v = s[(i + len(cls.separator)) :].strip()
-            else:
-                v = s
-            if 0 < len(prefix):
-                c = ": "
-            else:
-                c = ""
-            return prefix + c + v
-
-        @classmethod
-        def format(cls, copied: str) -> str:
-            lines = copied.strip().splitlines()
-            if len(lines) < 9:
-                print("Zoom format ERROR: lack of lines.")
-                return copied
-            due = cls.get_time(lines[3])
-            if len(due) < 1:
-                print("Zoom format ERROR: could not parse due date.")
-                return copied
-            return os.linesep.join(
-                [
-                    cls.hr,
-                    cls.to_field(lines[2], ""),
-                    cls.to_field(due, ""),
-                    cls.to_field(lines[6], ""),
-                    "",
-                    cls.to_field(lines[8], "meeting ID"),
-                    cls.to_field(lines[9], "passcode"),
-                    cls.hr,
-                ]
-            )
+        return os.linesep.join([hr, content, hr])
 
     def md_frontmatter() -> str:
         return os.linesep.join(
@@ -2279,7 +2247,7 @@ def configure(keymap):
             "to fullwidth symbols": CharWidth().to_full_symbol,
             "to fullwidth bracktets": CharWidth().to_full_brackets,
             "trim honorific": FormatTools.trim_honorific,
-            "zoom invitation": Zoom().format,
+            "zoom invitation": format_zoom_invitation,
         }
     )
     CLIPBOARD_MENU.set_replacer(
