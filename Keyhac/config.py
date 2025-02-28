@@ -504,7 +504,7 @@ def configure(keymap):
         def append(cls) -> None:
 
             def _push(job_item: ckit.JobItem) -> None:
-                cls.set_string(job_item.origin + os.linesep + job_item.copied)
+                cls.set_string(job_item.origin + "\n" + job_item.copied)
 
             cls.after_copy(_push)
 
@@ -629,7 +629,7 @@ def configure(keymap):
             lines = s.strip().splitlines()
             if join_lines:
                 return "> " + "".join([line.strip() for line in lines])
-            return os.linesep.join(["> " + line for line in lines])
+            return "\n".join(["> " + line for line in lines])
 
         def _paster() -> None:
             ClipHandler().paste_current(_formatter)
@@ -2029,12 +2029,12 @@ def configure(keymap):
                 stack.append("")
             else:
                 stack.append(line)
-        content = os.linesep.join(stack).strip()
+        content = "\n".join(stack).strip()
         hr = "=============================="
-        return os.linesep.join([hr, content, hr])
+        return "\n".join([hr, content, hr])
 
     def md_frontmatter() -> str:
-        return os.linesep.join(
+        return "\n".join(
             [
                 "---",
                 "title:",
@@ -2076,7 +2076,7 @@ def configure(keymap):
         @staticmethod
         def skip_blank_line(s: str) -> str:
             lines = s.strip().splitlines()
-            return os.linesep.join([l for l in lines if l.strip()])
+            return "\n".join([l for l in lines if l.strip()])
 
         @staticmethod
         def insert_blank_line(s: str) -> str:
@@ -2084,7 +2084,7 @@ def configure(keymap):
             for line in s.strip().splitlines():
                 lines.append(line.strip())
                 lines.append("")
-            return os.linesep.join(lines)
+            return "\n".join(lines)
 
         @staticmethod
         def to_double_bracket(s: str) -> str:
@@ -2123,7 +2123,7 @@ def configure(keymap):
                     ss.append("{}-{}\t{}".format(m.group(1), m.group(2), m.group(3)))
                 else:
                     ss.append(line)
-            return os.linesep.join(ss)
+            return "\n".join(ss)
 
         @staticmethod
         def fix_paren_inside_bracket(s: str) -> str:
@@ -2178,7 +2178,7 @@ def configure(keymap):
             ]
             for line in lines[1:]:
                 table.append(_join(_split(line)))
-            return os.linesep.join(table)
+            return "\n".join(table)
 
     class ClipboardMenu(ClipHandler):
         def __init__(self) -> None:
