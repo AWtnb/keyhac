@@ -13,6 +13,8 @@ keyhac.ini
 $d = "Keyhac"; New-Item -Path ($env:APPDATA | Join-Path -ChildPath $d) -Value ($pwd.Path | Join-Path -ChildPath $d) -ItemType Junction
 ```
 
+Run [`set-startup.ps1`](set-startup.ps1) makes shortcut (.lnk) to windows startup.
+
 Environment:
 
 - [CorvusSKK](https://github.com/nathancorvussolis/corvusskk)
