@@ -1727,14 +1727,14 @@ def configure(keymap):
         def apply(self, wnd_keymap: WindowKeymap, remap_table: dict = {}) -> None:
             for key, params in remap_table.items():
                 func = self.invoke(*params)
-                wnd_keymap[key] = LAZY_KEYMAP.wrap(func).defer(10)
+                wnd_keymap[key] = LAZY_KEYMAP.wrap(func).defer(80)
 
     PSEUDO_CUTEEXEC = PseudoCuteExec(keymap)
 
     PSEUDO_CUTEEXEC.apply(
         keymap_global,
         {
-            "U0-BackSlash": (
+            "U1-F": (
                 "cfiler.exe",
                 "CfilerWindowClass",
                 UserPath.resolve(r"Sync\portable_app\cfiler\cfiler.exe"),
