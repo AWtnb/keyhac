@@ -1734,7 +1734,7 @@ def configure(keymap):
     PSEUDO_CUTEEXEC.apply(
         keymap_global,
         {
-            "U1-F": (
+            "U0-BackSlash": (
                 "cfiler.exe",
                 "CfilerWindowClass",
                 UserPath.resolve(r"Sync\portable_app\cfiler\cfiler.exe"),
