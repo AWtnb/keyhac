@@ -293,8 +293,6 @@ def configure(keymap):
             # escape
             "O-(235)": ("Esc"),
             "U0-X": ("Esc"),
-            # focus taskbar
-            "U1-T": ("LWin-T"),
             # line selection
             "U1-A": ("End", "S-Home"),
             # punctuation
@@ -1176,48 +1174,6 @@ def configure(keymap):
             "LS-U0-T": ["</", ">"],
         },
     )
-
-    class DateInput:
-        def __init__(self) -> None:
-            pass
-
-        @staticmethod
-        def invoke(fmt: str, finish_with_kanamode: bool = False) -> Callable:
-            def _inputter() -> None:
-                def _get_func(job_item: ckit.JobItem) -> None:
-                    d = datetime.datetime.today()
-                    seq = [c for c in d.strftime(fmt)]
-                    if finish_with_kanamode:
-                        job_item.func = SKK_TO_KANAMODE.invoke_sender(*seq)
-                    else:
-                        job_item.func = SKK_TO_LATINMODE.invoke_sender(*seq)
-
-                def _input(job_item: ckit.JobItem) -> None:
-                    job_item.func()
-
-                subthread_run(_get_func, _input)
-
-            return _inputter
-
-        def apply(self, km: WindowKeymap) -> None:
-            for key, params in {
-                "1": ("%Y%m%d", False),
-                "2": ("%Y/%m/%d", False),
-                "3": ("%Y.%m.%d", False),
-                "4": ("%Y-%m-%d", False),
-                "5": ("%Y年%#m月%#d日", True),
-                "D": ("%Y%m%d", False),
-                "S": ("%Y/%m/%d", False),
-                "P": ("%Y.%m.%d", False),
-                "H": ("%Y-%m-%d", False),
-                "U": ("%Y_%m_%d", False),
-                "M": ("%Y%m", False),
-                "J": ("%Y年%#m月%#d日", True),
-            }.items():
-                km[key] = self.invoke(*params)
-
-    keymap_global["U1-D"] = keymap.defineMultiStrokeKeymap()
-    DateInput().apply(keymap_global["U1-D"])
 
     ################################
     # web search
