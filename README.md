@@ -1,10 +1,11 @@
-# keyhac customization
+# README
 
-With [Syncthing](https://syncthing.net/), append below on `.stignore` to skip syncing local history.
+[keyhac](https://github.com/crftwr/keyhac) customization.
 
-```
-keyhac.ini
-```
+Environment:
+
+- [CorvusSKK](https://github.com/nathancorvussolis/corvusskk)
+- JIS keyboard
 
 
 ## Install
@@ -19,13 +20,12 @@ Running [`set-startup.ps1`](set-startup.ps1) with `keyhac.exe` path makes shortc
 .\set-startup.ps1 "$env:USERPROFILE\Sync\portable_app\keyhac\keyhac.exe"
 ```
 
-Environment:
+With [Syncthing](https://syncthing.net/), append below on `.stignore` to skip syncing local history.
 
-- [CorvusSKK](https://github.com/nathancorvussolis/corvusskk)
-- JIS keyboard
+```
+(?d)keyhac.ini
+```
 
----
 
-https://sites.google.com/site/craftware/keyhac-en
 
-https://github.com/crftwr/keyhac
+
