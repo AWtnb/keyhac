@@ -742,6 +742,8 @@ def configure(keymap):
 
             def _snap(_) -> None:
                 wnd = self._keymap.getTopLevelWindow()
+                if not wnd:
+                    return
                 if self.check_rect(wnd):
                     wnd.maximize()
                     return
