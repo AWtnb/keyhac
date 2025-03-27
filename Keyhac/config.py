@@ -591,7 +591,7 @@ def configure(keymap):
                 str.maketrans(
                     "",
                     "",
-                    "\u0009\u0020\u00a0\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u200b\u200c\u200d\u200e\u200f\u202f\u205f\u3000",
+                    "\u0009\u0020\u00a0\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u200b\u200c\u200d\u200e\u200f\u202f\u205f\u3000\ufeff",
                 )
             )
 
@@ -2221,7 +2221,7 @@ def configure(keymap):
             "remove single-quotation": (r"'", ""),
             "remove linebreak": (r"\r?\n", ""),
             "to sigle line": (r"\r?\n", ""),
-            "remove whitespaces": (r"[\u0009\u0020\u00a0\u2000-\u200f\u202f\u205f\u3000]", ""),
+            "remove whitespaces": (r"[\u0009\u0020\u00a0\u2000-\u200f\u202f\u205f\u3000\ufeff]", ""),
             "remove whitespaces (including linebreak)": (r"\s", ""),
             "remove non-digit-char": (r"[^\d]", ""),
             "remove quotations": (r"[\u0022\u0027]", ""),
