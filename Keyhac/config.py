@@ -954,7 +954,7 @@ def configure(keymap):
             "M": "center",
         }
 
-        def __init__(self, keymap: keymap) -> None:
+        def __init__(self, keymap: Keymap) -> None:
             self._keymap = keymap
 
         def alloc_flexible(self, km: WindowKeymap) -> None:
