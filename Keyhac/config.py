@@ -1,6 +1,5 @@
 import datetime
 import os
-import sys
 import fnmatch
 import re
 import time
@@ -1073,8 +1072,6 @@ def configure(keymap):
     keymap_global["LS-U1-B"] = SIMPLE_SKK.under_kanamode("S-Right")
     keymap_global["U1-Space"] = SIMPLE_SKK.under_kanamode("C-S-Left")
     keymap_global["U1-N"] = SIMPLE_SKK.under_kanamode("S-Left", ImeControl.abbrev_key)
-    keymap_global["U1-Tab"] = SIMPLE_SKK.under_kanamode("End", "S-Home")
-    keymap_global["U0-Tab"] = SIMPLE_SKK.under_latinmode("End", "S-Home")
 
     class SKKMode:
         disabled = -1
