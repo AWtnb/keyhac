@@ -1574,7 +1574,7 @@ def configure(keymap):
             "R": "https://researchmap.jp/researchers?q={}",
             "S": "https://scholar.google.com/scholar?nfpr=1&as_vis=1&q={}",
             "T": "https://twitter.com/search?q={}",
-            "Y": "http://www.google.co.jp/search?q=site%3Ayuhikaku.co.jp%20{}",
+            "Y": "https://duckduckgo.com/?q=site%3Ayuhikaku.co.jp%20{}",
             "W": "https://www.worldcat.org/search?q={}",
         }
     ).apply(keymap_global)
