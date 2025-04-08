@@ -2218,12 +2218,16 @@ def configure(keymap):
             "remove single-quotation": (r"'", ""),
             "remove linebreak": (r"\r?\n", ""),
             "to sigle line": (r"\r?\n", ""),
-            "remove whitespaces": (r"[\u0009\u0020\u00a0\u2000-\u200f\u202f\u205f\u3000\ufeff]", ""),
+            "remove whitespaces": (
+                r"[\u0009\u0020\u00a0\u2000-\u200f\u202f\u205f\u3000\ufeff]",
+                "",
+            ),
             "remove whitespaces (including linebreak)": (r"\s", ""),
             "remove non-digit-char": (r"[^\d]", ""),
             "remove quotations": (r"[\u0022\u0027]", ""),
             "remove inside paren": (r"[（\(].+?[）\)]", ""),
-            "fix msword-bullet": (r"\uf09f\u0009", "\u30fb"),
+            "fix msword-bullet": (r"[\uF06C\uF0D8\uF0B2\uF09F\u25E6\uF0A7\uF06C]\u0009", "\u30fb"),
+            "remove msword-bullet": (r"[\uF06C\uF0D8\uF0B2\uF09F\u25E6\uF0A7\uF06C]\u0009", ""),
             "to curly-comma (\uff0c)": (r"\u3001", "\uff0c"),
             "to japanese-comma (\u3001)": (r"\uff0c", "\u3001"),
             "shorten amazon url": (
