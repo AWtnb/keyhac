@@ -440,6 +440,10 @@ def configure(keymap):
             self.enable_skk()
             self._finger.type_keys(self.kata_key)
 
+        def start_skk_conv(self) -> None:
+            self.enable_skk()
+            self._finger.type_keys(self.convpoint_key)
+
         def reconvert_with_skk(self) -> None:
             self.enable_skk()
             self._finger.type_keys(self.reconv_key, self.cancel_key)
@@ -569,8 +573,7 @@ def configure(keymap):
     keymap_global["U1-I"] = IME_CONTROL.reconvert_with_skk
     keymap_global["LS-U1-I"] = IME_CONTROL.reconv_key
     keymap_global["O-(236)"] = IME_CONTROL.to_skk_abbrev
-    keymap_global["U0-(236)"] = IME_CONTROL.enable_skk
-    keymap_global["U1-(235)"] = IME_CONTROL.disable
+    keymap_global["LS-(236)"] = IME_CONTROL.start_skk_conv
 
     # paste as plaintext
     keymap_global["U0-V"] = LAZY_KEYMAP.wrap(ClipHandler().paste_current).defer()
