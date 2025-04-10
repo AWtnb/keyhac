@@ -339,7 +339,7 @@ def configure(keymap):
         sent: str
         typable: bool
 
-    class KeySequence:
+    class Keys:
         acceptable = (
             list(KeyCondition.str_vk_table_common)
             + list(KeyCondition.str_vk_table_std)
@@ -355,7 +355,7 @@ def configure(keymap):
             return k in cls.acceptable
 
         @classmethod
-        def wrap(cls, sequence: tuple) -> List[Key]:
+        def from_sequence(cls, sequence: tuple) -> List[Key]:
             seq = []
             for elem in sequence:
                 key = Key(elem, cls.check(elem))
@@ -388,13 +388,6 @@ def configure(keymap):
                 self._keymap.input_seq.append(pyauto.Char(c))
             self._finish()
 
-        def type_smart(self, *sequence) -> None:
-            for elem in sequence:
-                try:
-                    self.type_keys(elem)
-                except:
-                    self.type_text(elem)
-
         def type_sequence(self, sequence: List[Key]) -> None:
             for key in sequence:
                 if key.typable:
@@ -412,6 +405,7 @@ def configure(keymap):
         cancel_key = "Esc"
         reconv_key = "LWin-Slash"
         abbrev_key = "Slash"
+        convpoint_key = "F6"
 
         def __init__(self, keymap: Keymap, inter_stroke_pause: int = 10) -> None:
             self._keymap = keymap
@@ -544,7 +538,7 @@ def configure(keymap):
             self._lazy_keymap = LazyKeymap(keymap)
 
         def invoke(self, *sequence) -> Callable:
-            seq = KeySequence().wrap(sequence)
+            seq = Keys().from_sequence(sequence)
 
             def _input() -> None:
                 self._control.disable()
@@ -559,7 +553,6 @@ def configure(keymap):
 
     keymap_global["LC-Q"] = GENTLE_PUNCHER.invoke("A-F4")
     keymap_global["U0-4"] = GENTLE_PUNCHER.invoke("$_")
-    keymap_global["U1-4"] = GENTLE_PUNCHER.invoke("$_.")
 
     ################################
     # custom hotkey
@@ -1045,7 +1038,7 @@ def configure(keymap):
             self._control = ImeControl(keymap)
 
         def under_kanamode(self, *sequence) -> Callable:
-            seq = KeySequence().wrap(sequence)
+            seq = Keys().from_sequence(sequence)
 
             def _send() -> None:
                 self._control.enable_skk()
@@ -1054,7 +1047,7 @@ def configure(keymap):
             return _send
 
         def under_latinmode(self, *sequence) -> Callable:
-            seq = KeySequence().wrap(sequence)
+            seq = Keys().from_sequence(sequence)
 
             def _send() -> None:
                 self._control.to_skk_latin()
@@ -1072,6 +1065,7 @@ def configure(keymap):
     keymap_global["LS-U1-B"] = SIMPLE_SKK.under_kanamode("S-Right")
     keymap_global["U1-Space"] = SIMPLE_SKK.under_kanamode("C-S-Left")
     keymap_global["U1-N"] = SIMPLE_SKK.under_kanamode("S-Left", ImeControl.abbrev_key)
+    keymap_global["U1-4"] = SIMPLE_SKK.under_kanamode(IME_CONTROL.convpoint_key, "S-4")
 
     class SKKMode:
         disabled = -1
@@ -1135,7 +1129,6 @@ def configure(keymap):
             "S-U0-Period": "\uff0e",  # FULLWIDTH FULL STOP
             "U0-Minus": "\u2015\u2015",  # HORIZONTAL BAR * 2
             "U0-P": "\u30fb",  # KATAKANA MIDDLE DOT
-            "S-U0-SemiColon": "+ ",
         },
     )
     SKK_TO_KANAMODE.apply_pair(
