@@ -335,11 +335,11 @@ def configure(keymap):
     def delay(msec: int = 50) -> None:
         time.sleep(msec / 1000)
 
-    class Key(NamedTuple):
-        sent: str
-        typable: bool
+    class Tap(NamedTuple):
+        send: str
+        has_real_key: bool
 
-    class Keys:
+    class Taps:
         acceptable = (
             list(KeyCondition.str_vk_table_common)
             + list(KeyCondition.str_vk_table_std)
@@ -355,10 +355,10 @@ def configure(keymap):
             return k in cls.acceptable
 
         @classmethod
-        def from_sequence(cls, sequence: tuple) -> List[Key]:
+        def from_sequence(cls, sequence: tuple) -> List[Tap]:
             seq = []
             for elem in sequence:
-                key = Key(elem, cls.check(elem))
+                key = Tap(elem, cls.check(elem))
                 seq.append(key)
             return seq
 
@@ -374,39 +374,40 @@ def configure(keymap):
         def _finish(self) -> None:
             self._keymap.endInput()
 
-        def type_keys(self, *keys) -> None:
+        def tap_keys(self, *keys) -> None:
             self._prepare()
             for key in keys:
                 delay(self._inter_stroke_pause)
                 self._keymap.setInput_FromString(str(key))
             self._finish()
 
-        def type_text(self, s: str) -> None:
+        def tap_text(self, s: str) -> None:
             self._prepare()
             for c in str(s):
                 delay(self._inter_stroke_pause)
                 self._keymap.input_seq.append(pyauto.Char(c))
             self._finish()
 
-        def type_sequence(self, sequence: List[Key]) -> None:
-            for key in sequence:
-                if key.typable:
-                    self.type_keys(key.sent)
+        def tap_sequence(self, taps: List[Tap]) -> None:
+            for tap in taps:
+                if tap.has_real_key:
+                    self.tap_keys(tap.send)
                 else:
-                    self.type_text(key.sent)
+                    self.tap_text(tap.send)
 
     VIRTUAL_FINGER = VirtualFinger(keymap, 10)
     VIRTUAL_FINGER_QUICK = VirtualFinger(keymap, 0)
 
-    class ImeControl:
+    class SKKKey:
         kata_key = "Q"
         kana_key = "C-J"
         latin_key = "S-L"
         cancel_key = "Esc"
         reconv_key = "LWin-Slash"
         abbrev_key = "Slash"
-        convpoint_key = "F6"
+        convpoint_key = "S-0"
 
+    class ImeControl(SKKKey):
         def __init__(self, keymap: Keymap, inter_stroke_pause: int = 10) -> None:
             self._keymap = keymap
             self._finger = VirtualFinger(self._keymap, inter_stroke_pause)
@@ -426,27 +427,27 @@ def configure(keymap):
 
         def enable_skk(self) -> None:
             self.enable()
-            self._finger.type_keys(self.kana_key)
+            self._finger.tap_keys(self.kana_key)
 
         def to_skk_latin(self) -> None:
             self.enable_skk()
-            self._finger.type_keys(self.latin_key)
+            self._finger.tap_keys(self.latin_key)
 
         def to_skk_abbrev(self) -> None:
             self.enable_skk()
-            self._finger.type_keys(self.abbrev_key)
+            self._finger.tap_keys(self.abbrev_key)
 
         def to_skk_kata(self) -> None:
             self.enable_skk()
-            self._finger.type_keys(self.kata_key)
+            self._finger.tap_keys(self.kata_key)
 
         def start_skk_conv(self) -> None:
             self.enable_skk()
-            self._finger.type_keys(self.convpoint_key)
+            self._finger.tap_keys(self.convpoint_key)
 
         def reconvert_with_skk(self) -> None:
             self.enable_skk()
-            self._finger.type_keys(self.reconv_key, self.cancel_key)
+            self._finger.tap_keys(self.reconv_key, self.cancel_key)
 
         def disable(self) -> None:
             self.set_status(0)
@@ -468,7 +469,7 @@ def configure(keymap):
                 cls.set_string(format_func(s))
             else:
                 cls.set_string(s)
-            VIRTUAL_FINGER.type_keys("C-V")
+            VIRTUAL_FINGER.tap_keys("C-V")
 
         @classmethod
         def paste_current(cls, format_func: Union[Callable, None] = None) -> None:
@@ -477,7 +478,7 @@ def configure(keymap):
         @classmethod
         def after_copy(cls, deferred: Callable) -> None:
             cb = cls.get_string()
-            VIRTUAL_FINGER.type_keys("C-C")
+            VIRTUAL_FINGER.tap_keys("C-C")
 
             def _watch_clipboard(job_item: ckit.JobItem) -> None:
                 job_item.origin = cb
@@ -542,11 +543,11 @@ def configure(keymap):
             self._lazy_keymap = LazyKeymap(keymap)
 
         def invoke(self, *sequence) -> Callable:
-            seq = Keys().from_sequence(sequence)
+            seq = Taps().from_sequence(sequence)
 
             def _input() -> None:
                 self._control.disable()
-                self._finger.type_sequence(seq)
+                self._finger.tap_sequence(seq)
                 if self._recover_ime:
                     self._control.enable()
 
@@ -972,7 +973,7 @@ def configure(keymap):
                         self._keymap.getTopLevelWindow().maximize()
 
                     def _snapper(_) -> None:
-                        VIRTUAL_FINGER.type_keys("LShift-LWin-" + towards)
+                        VIRTUAL_FINGER.tap_keys("LShift-LWin-" + towards)
 
                     subthread_run(_maximize, _snapper)
 
@@ -1031,7 +1032,7 @@ def configure(keymap):
     # input customize
     ################################
 
-    class SimpleSKK:
+    class SKKSender:
         def __init__(
             self,
             keymap: Keymap,
@@ -1041,89 +1042,64 @@ def configure(keymap):
             self._control = ImeControl(keymap)
 
         def under_kanamode(self, *sequence) -> Callable:
-            seq = Keys().from_sequence(sequence)
+            taps = Taps().from_sequence(sequence)
 
             def _send() -> None:
                 self._control.enable_skk()
-                self._finger.type_sequence(seq)
+                self._finger.tap_sequence(taps)
 
             return _send
 
         def under_latinmode(self, *sequence) -> Callable:
-            seq = Keys().from_sequence(sequence)
+            taps = Taps().from_sequence(sequence)
 
             def _send() -> None:
                 self._control.to_skk_latin()
-                self._finger.type_sequence(seq)
+                self._finger.tap_sequence(taps)
 
             return _send
 
-        def disable(self) -> None:
-            self._control.disable()
-
-    SIMPLE_SKK = SimpleSKK(keymap)
-
     # select-to-left with ime control
-    keymap_global["U1-B"] = SIMPLE_SKK.under_kanamode("S-Left")
-    keymap_global["LS-U1-B"] = SIMPLE_SKK.under_kanamode("S-Right")
-    keymap_global["U1-Space"] = SIMPLE_SKK.under_kanamode("C-S-Left")
-    keymap_global["U1-N"] = SIMPLE_SKK.under_kanamode("S-Left", ImeControl.abbrev_key)
-    keymap_global["U1-4"] = SIMPLE_SKK.under_kanamode(IME_CONTROL.convpoint_key, "S-4")
+    keymap_global["U1-B"] = SKKSender(keymap).under_kanamode("S-Left")
+    keymap_global["LS-U1-B"] = SKKSender(keymap).under_kanamode("S-Right")
+    keymap_global["U1-Space"] = SKKSender(keymap).under_kanamode("C-S-Left")
+    keymap_global["U1-N"] = SKKSender(keymap).under_kanamode("S-Left", ImeControl.abbrev_key)
+    keymap_global["U1-4"] = SKKSender(keymap).under_kanamode(SKKKey.convpoint_key, "S-4")
 
-    class SKKMode:
-        disabled = -1
-        latin = 0
-        kana = 1
+    class SKKFinisher:
+        def __init__(self, keymap: Keymap, to_kanamode: bool = True) -> None:
+            self._base_skk = SKKSender(keymap)
+            self._to_kanamode = to_kanamode
 
-    class SKK:
-        def __init__(self, keymap: Keymap, finish_mode: SKKMode = SKKMode.kana) -> None:
-            self._base_skk = SimpleSKK(keymap)
-            self._finish_mode = finish_mode
-
-        def invoke_sender(self, *sequence) -> Callable:
-            if self._finish_mode == SKKMode.kana:
+        def invoke(self, *sequence) -> Callable:
+            if self._to_kanamode:
                 sequence = list(sequence) + [ImeControl.kana_key]
-
-            sender = self._base_skk.under_latinmode(*sequence)
-            if self._finish_mode == SKKMode.disabled:
-
-                def _sender():
-                    sender()
-                    self._base_skk.disable()
-
-                return _sender
-            return sender
-
-        def invoke_pair_sender(self, pair: list) -> Callable:
-            _, suffix = pair
-            sequence = pair + ["Left"] * len(suffix)
-            return self.invoke_sender(*sequence)
+            return self._base_skk.under_latinmode(*sequence)
 
         def apply(self, km: WindowKeymap, mapping_dict: dict) -> None:
             for key, sent in mapping_dict.items():
-                km[key] = self.invoke_sender(sent)
+                km[key] = self.invoke(sent)
 
-        def apply_pair(self, km: WindowKeymap, mapping_dict: dict) -> None:
-            for key, sent in mapping_dict.items():
-                km[key] = self.invoke_pair_sender(sent)
-
-    SKK_TO_KANAMODE = SKK(keymap, SKKMode.kana)
-    SKK_TO_LATINMODE = SKK(keymap, SKKMode.latin)
-    SKK_TO_DISABLE = SKK(keymap, SKKMode.disabled)
+        def apply_circumfix(self, km: WindowKeymap, mapping_dict: dict) -> None:
+            for key, circumfix in mapping_dict.items():
+                _, suffix = circumfix
+                sequence = circumfix + ["Left"] * len(suffix)
+                km[key] = self.invoke(*sequence)
 
     # insert honorific
-    def type_honorific(km: WindowKeymap) -> None:
+    def invoke_honorific_sender(km: WindowKeymap) -> None:
+        finisher = SKKFinisher(keymap)
         for key, hono in {"U0": "先生", "U1": "様"}.items():
             for mod, suffix in {"": "", "C-": "方"}.items():
-                km[mod + key + "-Tab"] = SKK_TO_KANAMODE.invoke_sender(hono + suffix)
+                km[mod + key + "-Tab"] = finisher.invoke(hono + suffix)
 
-    type_honorific(keymap_global)
+    invoke_honorific_sender(keymap_global)
 
     # markdown list
-    keymap_global["S-U0-8"] = SKK_TO_KANAMODE.invoke_sender("- ")
-    keymap_global["U1-1"] = SKK_TO_KANAMODE.invoke_sender("1. ")
+    keymap_global["S-U0-8"] = SKKFinisher(keymap).invoke("- ")
+    keymap_global["U1-1"] = SKKFinisher(keymap).invoke("1. ")
 
-    SKK_TO_KANAMODE.apply(
+    SKKFinisher(keymap).apply(
         keymap_global,
         {
             "S-U0-Colon": "\uff1a",  # FULLWIDTH COLON
@@ -1131,10 +1107,10 @@ def configure(keymap):
             "S-U0-Minus": "\u3000\u2015\u2015",
             "S-U0-Period": "\uff0e",  # FULLWIDTH FULL STOP
             "U0-Minus": "\u2015\u2015",  # HORIZONTAL BAR * 2
-            "U0-P": "\u30fb",  # KATAKANA MIDDLE DOT
         },
     )
-    SKK_TO_KANAMODE.apply_pair(
+
+    SKKFinisher(keymap).apply_circumfix(
         keymap_global,
         {
             "U0-8": ["\u300e", "\u300f"],  # WHITE CORNER BRACKET 『』
@@ -1150,7 +1126,7 @@ def configure(keymap):
         },
     )
 
-    SKK_TO_LATINMODE.apply(
+    SKKFinisher(keymap, False).apply(
         keymap_global,
         {
             "U0-1": "S-1",
@@ -1163,7 +1139,7 @@ def configure(keymap):
             "U0-Period": "Period",
         },
     )
-    SKK_TO_LATINMODE.apply_pair(
+    SKKFinisher(keymap, False).apply_circumfix(
         keymap_global,
         {
             "U0-CloseBracket": ["[", "]"],
@@ -1674,7 +1650,7 @@ def configure(keymap):
                             PathHandler(exe_path).run()
                         return
                     if not job_item.results[-1]:
-                        VIRTUAL_FINGER.type_keys("LCtrl-LAlt-Tab")
+                        VIRTUAL_FINGER.tap_keys("LCtrl-LAlt-Tab")
 
                 subthread_run(_activate, _finished)
 
@@ -1778,7 +1754,7 @@ def configure(keymap):
 
     def search_on_browser() -> None:
         if keymap.getWindow().getProcessName() == DEFAULT_BROWSER.get_exe_name():
-            VIRTUAL_FINGER.type_keys("C-T")
+            VIRTUAL_FINGER.tap_keys("C-T")
             return
 
         def _activate(job_item: ckit.JobItem) -> None:
@@ -1795,9 +1771,9 @@ def configure(keymap):
                 PathHandler(DEFAULT_BROWSER.get_exe_path()).run()
                 return
             if not job_item.results[-1]:
-                VIRTUAL_FINGER.type_keys("LCtrl-LAlt-Tab")
+                VIRTUAL_FINGER.tap_keys("LCtrl-LAlt-Tab")
                 return
-            VIRTUAL_FINGER.type_keys("C-T")
+            VIRTUAL_FINGER.tap_keys("C-T")
 
         subthread_run(_activate, _finished)
 
@@ -1890,7 +1866,6 @@ def configure(keymap):
 
     sumatra_view_key(keymap_sumatra_viewmode)
 
-    keymap_sumatra_viewmode["F"] = SIMPLE_SKK.under_kanamode("C-F")
     keymap_sumatra_viewmode["H"] = "C-S-Tab"
     keymap_sumatra_viewmode["L"] = "C-Tab"
 
@@ -1912,15 +1887,15 @@ def configure(keymap):
 
     def select_all() -> None:
         if keymap.getWindow().getClassName() == "EXCEL6":
-            VIRTUAL_FINGER.type_keys("C-End", "C-S-Home")
+            VIRTUAL_FINGER.tap_keys("C-End", "C-S-Home")
         else:
-            VIRTUAL_FINGER.type_keys("C-A")
+            VIRTUAL_FINGER.tap_keys("C-A")
 
     keymap_excel["C-A"] = select_all
 
     def select_cell_content() -> None:
         if keymap.getWindow().getClassName() == "EXCEL7":
-            VIRTUAL_FINGER.type_keys("F2", "C-S-Home")
+            VIRTUAL_FINGER.tap_keys("F2", "C-S-Home")
 
     keymap_excel["LC-U0-N"] = select_cell_content
 
