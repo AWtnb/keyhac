@@ -1064,7 +1064,7 @@ def configure(keymap):
     keymap_global["LS-U1-B"] = SKKSender(keymap).under_kanamode("S-Right")
     keymap_global["U1-Space"] = SKKSender(keymap).under_kanamode("C-S-Left")
     keymap_global["U1-N"] = SKKSender(keymap).under_kanamode("S-Left", ImeControl.abbrev_key)
-    keymap_global["U1-4"] = SKKSender(keymap).under_kanamode(SKKKey.convpoint_key, "S-4")
+    keymap_global["U1-E"] = SKKSender(keymap).under_kanamode(SKKKey.convpoint_key, "S-4")
 
     class SKKFinisher:
         def __init__(self, keymap: Keymap, to_kanamode: bool = True) -> None:
