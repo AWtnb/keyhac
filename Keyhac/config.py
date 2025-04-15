@@ -63,26 +63,20 @@ def configure(keymap):
 
     class PathHandler:
         def __init__(self, path: str) -> None:
-            self._path = path
+            self._path = os.path.expandvars(path)
 
         @property
         def path(self) -> str:
             return self._path
 
         def is_accessible(self) -> bool:
-            if self._path:
-                try:
-                    return smart_check_path(self._path)
-                except Exception as e:
-                    print(e)
-                    return ""
-            return False
+            return smart_check_path(self._path)
 
         @staticmethod
         def args_to_param(args: tuple) -> str:
             params = []
             for arg in args:
-                if len(arg.strip()):
+                if 0 < len(arg.strip()):
                     if " " in arg:
                         params.append('"{}"'.format(arg))
                     else:
@@ -95,18 +89,8 @@ def configure(keymap):
             else:
                 balloon("invalid-path: '{}'".format(self._path))
 
-    class UserPath(PathHandler):
-        def __init__(self, rel: str) -> None:
-            path = self.resolve(rel)
-            super().__init__(path)
-
-        @staticmethod
-        def resolve(rel: str) -> str:
-            user_prof = os.environ.get("USERPROFILE") or ""
-            return str(Path(user_prof, rel))
-
     def get_editor() -> str:
-        vscode_path = UserPath(r"scoop\apps\vscode\current\Code.exe")
+        vscode_path = PathHandler(r"${USERPROFILE}\scoop\apps\vscode\current\Code.exe")
         if vscode_path.is_accessible():
             return vscode_path.path
         return "notepad.exe"
@@ -1616,13 +1600,13 @@ def configure(keymap):
             "U1-F": (
                 "cfiler.exe",
                 "CfilerWindowClass",
-                UserPath.resolve(r"Sync\portable_app\cfiler\cfiler.exe"),
+                r"${USERPROFILE}\Sync\portable_app\cfiler\cfiler.exe",
             ),
             "U1-P": ("SumatraPDF.exe", "SUMATRA_PDF_FRAME"),
             "LC-U1-M": (
                 "Mery.exe",
                 "TChildForm",
-                UserPath.resolve(r"AppData\Local\Programs\Mery\Mery.exe"),
+                r"${USERPROFILE}\AppData\Local\Programs\Mery\Mery.exe",
             ),
             "LC-U1-N": (
                 "notepad.exe",
@@ -1632,7 +1616,7 @@ def configure(keymap):
             "LC-AtMark": (
                 "wezterm-gui.exe",
                 "org.wezfurlong.wezterm",
-                UserPath.resolve(r"scoop\apps\wezterm\current\wezterm-gui.exe"),
+                r"${USERPROFILE}\scoop\apps\wezterm\current\wezterm-gui.exe",
             ),
         },
     )
@@ -1659,12 +1643,12 @@ def configure(keymap):
             "D": (
                 "vivaldi.exe",
                 "Chrome_WidgetWin_1",
-                UserPath.resolve(r"AppData\Local\Vivaldi\Application\vivaldi.exe"),
+                r"${USERPROFILE}\AppData\Local\Vivaldi\Application\vivaldi.exe",
             ),
             "S": (
                 "slack.exe",
                 "Chrome_WidgetWin_1",
-                UserPath.resolve(r"AppData\Local\slack\slack.exe"),
+                r"${USERPROFILE}\AppData\Local\slack\slack.exe",
             ),
             "F": (
                 "firefox.exe",
@@ -1679,7 +1663,7 @@ def configure(keymap):
             "K": (
                 "ksnip.exe",
                 "Qt5152QWindowIcon",
-                UserPath.resolve(r"scoop\apps\ksnip\current\ksnip.exe"),
+                r"${USERPROFILE}\scoop\apps\ksnip\current\ksnip.exe",
             ),
             "O": ("Obsidian.exe", "Chrome_WidgetWin_1"),
             "P": ("SumatraPDF.exe", "SUMATRA_PDF_FRAME"),
@@ -1691,13 +1675,13 @@ def configure(keymap):
             "M": (
                 "Mery.exe",
                 "TChildForm",
-                UserPath.resolve(r"AppData\Local\Programs\Mery\Mery.exe"),
+                r"${USERPROFILE}\AppData\Local\Programs\Mery\Mery.exe",
             ),
             "X": ("explorer.exe", "CabinetWClass", r"C:\Windows\explorer.exe"),
         },
     )
 
-    keymap_global["LS-LC-U1-M"] = UserPath(r"Personal\draft.txt").run
+    keymap_global["LS-LC-U1-M"] = PathHandler(r"${USERPROFILE}\Personal\draft.txt").run
 
     def search_on_browser() -> None:
         if keymap.getWindow().getProcessName() == DEFAULT_BROWSER.get_exe_name():
