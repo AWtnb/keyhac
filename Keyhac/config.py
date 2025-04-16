@@ -994,18 +994,20 @@ def configure(keymap):
     keymap_global["U1-B"] = SKKSender(keymap).under_kanamode("S-Left")
     keymap_global["LS-U1-B"] = SKKSender(keymap).under_kanamode("S-Right")
     keymap_global["U1-Space"] = SKKSender(keymap).under_kanamode("C-S-Left")
-    keymap_global["U1-N"] = SKKSender(keymap).under_kanamode("S-Left", ImeControl.abbrev_key)
-    keymap_global["U1-E"] = SKKSender(keymap).under_kanamode(SKKKey.convpoint_key, "S-4")
+    keymap_global["U1-N"] = SKKSender(keymap).under_kanamode(
+        "C-S-Left", ImeControl.convpoint_key, "S-4"
+    )
+    keymap_global["U1-4"] = SKKSender(keymap).under_kanamode(SKKKey.convpoint_key, "S-4")
 
     class SKKFinisher:
         def __init__(self, keymap: Keymap, to_kanamode: bool = True) -> None:
-            self._base_skk = SKKSender(keymap)
+            self._skk_sender = SKKSender(keymap)
             self._to_kanamode = to_kanamode
 
         def invoke(self, *sequence) -> Callable:
             if self._to_kanamode:
                 sequence = list(sequence) + [ImeControl.kana_key]
-            return self._base_skk.under_latinmode(*sequence)
+            return self._skk_sender.under_latinmode(*sequence)
 
         def apply(self, km: WindowKeymap, mapping_dict: dict) -> None:
             for key, sent in mapping_dict.items():
