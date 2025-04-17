@@ -1727,10 +1727,11 @@ def configure(keymap):
                 return True
             if not wnd.isEnabled():
                 return True
-            if not wnd.getFirstChild():
+            exe_name = wnd.getProcessName()
+            if exe_name == "keyhac.exe" and not wnd.getFirstChild():
                 # In order to avoid hang when keyhac console window is open
                 return True
-            if wnd.getProcessName() in self.black_list:
+            if exe_name in self.black_list:
                 return True
             if wnd == self.active_wnd:
                 return True
