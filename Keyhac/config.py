@@ -28,6 +28,15 @@ def smart_check_path(path: Union[str, Path], timeout_sec: Union[int, float, None
         return False
 
 
+def check_fzf() -> bool:
+    paths = os.environ.get("PATH", "").split(os.pathsep)
+    for path in paths:
+        p = Path(path, "fzf.exe")
+        if smart_check_path(p):
+            return True
+    return False
+
+
 def configure(keymap):
 
     def balloon(message: str) -> None:
@@ -1520,6 +1529,69 @@ def configure(keymap):
 
     DEFAULT_BROWSER = SystemBrowser()
 
+    def fuzzy_window_switcher() -> None:
+        if not check_fzf():
+            balloon("cannot find fzf on PC.")
+            return
+
+        executor = PseudoCuteExec(keymap)
+        active_wnd = pyauto.Window.getForeground()
+        black_list = [
+            "explorer.exe",
+            "MouseGestureL.exe",
+            "TextInputHost.exe",
+            "SystemSettings.exe",
+            "ApplicationFrameHost.exe",
+        ]
+
+        def _listup_wnd(job_item: ckit.JobItem) -> None:
+            job_item.found = None
+            wnds = []
+
+            def __walk(wnd: pyauto.Window, _) -> bool:
+                if not wnd:
+                    return False
+                if not wnd.isVisible():
+                    return True
+                if not wnd.isEnabled():
+                    return True
+                if len(wnd.getText()) < 1:
+                    return True
+                if wnd.getProcessName() in black_list:
+                    return True
+                if wnd == active_wnd:
+                    return True
+                if popup := wnd.getLastActivePopup():
+                    wnds.append(popup)
+                return True
+
+            pyauto.Window.enum(__walk, None)
+
+            if len(wnds) < 1:
+                return
+
+            table = {"{} [{}]".format(w.getProcessName(), w.getText()): w for w in wnds}
+            lines = "\n".join(table.keys())
+            proc = subprocess.run(
+                ["fzf.exe"],
+                input=lines,
+                capture_output=True,
+                encoding="utf-8",
+            )
+            result = proc.stdout.strip()
+            if len(result) < 1 or proc.returncode != 0:
+                return
+            if result in table:
+                job_item.found = table[result]
+
+        def _finished(job_item: ckit.JobItem) -> None:
+            if job_item.found is not None:
+                executor.activate_wnd(job_item.found)
+
+        subthread_run(_listup_wnd, _finished)
+
+    keymap_global["U1-E"] = fuzzy_window_switcher
+
     class WndScanner:
         def __init__(self, exe_name: str, class_name: str = "") -> None:
             self.exe_name = exe_name
@@ -1528,9 +1600,11 @@ def configure(keymap):
 
         def scan(self) -> None:
             self.found = None
-            pyauto.Window.enum(self.traverse_wnd, None)
+            pyauto.Window.enum(self.walk, None)
 
-        def traverse_wnd(self, wnd: pyauto.Window, _) -> bool:
+        def walk(self, wnd: pyauto.Window, _) -> bool:
+            if not wnd:
+                return False
             if not wnd.isVisible():
                 return True
             if not wnd.isEnabled():
@@ -1541,7 +1615,10 @@ def configure(keymap):
                 return True
             if len(wnd.getText()) < 1:
                 return True
-            self.found = wnd.getLastActivePopup()
+            popup = wnd.getLastActivePopup()
+            if not popup:
+                return True
+            self.found = popup
             return False
 
     class PseudoCuteExec:
@@ -2147,14 +2224,6 @@ def configure(keymap):
             "my markdown frontmatter": md_frontmatter,
         }
     )
-
-    def check_fzf() -> bool:
-        paths = os.environ.get("PATH", "").split(os.pathsep)
-        for path in paths:
-            p = Path(path, "fzf.exe")
-            if smart_check_path(p):
-                return True
-        return False
 
     def fzfmenu() -> None:
         if not check_fzf():
