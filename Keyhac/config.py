@@ -1774,8 +1774,9 @@ def configure(keymap):
                 balloon(e)
 
         def _finished(job_item: ckit.JobItem) -> None:
-            if len(job_item.result) < 1 or not job_item.result[0]:
-                VIRTUAL_FINGER.tap_keys("LCtrl-LAlt-Tab")
+            if 0 < len(job_item.result):
+                if not job_item.result[0]:
+                    VIRTUAL_FINGER.tap_keys("LCtrl-LAlt-Tab")
 
         subthread_run(_fzf_wnd, _finished)
 
