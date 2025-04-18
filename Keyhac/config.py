@@ -1738,6 +1738,8 @@ def configure(keymap):
                 return True
             if exe_name in self.black_list:
                 return True
+            if len(wnd.getText()) < 1:
+                return True
             if popup := wnd.getLastActivePopup():
                 self.wnds.append(popup)
             return True
@@ -1750,7 +1752,7 @@ def configure(keymap):
         executor = PseudoCuteExec(keymap)
         lister = WndLister()
 
-        def _listup_wnd(job_item: ckit.JobItem) -> None:
+        def _fzf_wnd(job_item: ckit.JobItem) -> None:
             job_item.found = None
             lister.scan()
             wnds = lister.wnds
@@ -1759,23 +1761,26 @@ def configure(keymap):
 
             table = {"{} [{}]".format(w.getProcessName(), w.getText()): w for w in wnds}
             lines = "\n".join(table.keys())
-            proc = subprocess.run(
-                ["fzf.exe"],
-                input=lines,
-                capture_output=True,
-                encoding="utf-8",
-            )
-            result = proc.stdout.strip()
-            if len(result) < 1 or proc.returncode != 0:
-                return
-            if result in table:
-                job_item.found = table[result]
+            try:
+                proc = subprocess.run(
+                    ["fzf.exe"],
+                    input=lines,
+                    capture_output=True,
+                    encoding="utf-8",
+                )
+                result = proc.stdout.strip()
+                if len(result) < 1 or proc.returncode != 0:
+                    return
+                if result in table:
+                    job_item.found = table[result]
+            except Exception as e:
+                balloon(e)
 
         def _finished(job_item: ckit.JobItem) -> None:
             if job_item.found is not None:
                 executor.activate_wnd(job_item.found)
 
-        subthread_run(_listup_wnd, _finished)
+        subthread_run(_fzf_wnd, _finished)
 
     keymap_global["U1-E"] = fuzzy_window_switcher
 
@@ -2260,21 +2265,24 @@ def configure(keymap):
             job_item.paste_string = ""
             job_item.skip_paste = False
             lines = "\n".join(table.keys())
-            proc = subprocess.run(
-                ["fzf.exe"],
-                input=lines,
-                capture_output=True,
-                encoding="utf-8",
-            )
-            result = proc.stdout.strip()
-            if len(result) < 1 or proc.returncode != 0:
-                return
-            func = table.get(result, None)
-            if func:
-                fmt = func()
-                if 0 < len(fmt):
-                    job_item.result = True
-                    job_item.paste_string = fmt
+            try:
+                proc = subprocess.run(
+                    ["fzf.exe"],
+                    input=lines,
+                    capture_output=True,
+                    encoding="utf-8",
+                )
+                result = proc.stdout.strip()
+                if len(result) < 1 or proc.returncode != 0:
+                    return
+                func = table.get(result, None)
+                if func:
+                    fmt = func()
+                    if 0 < len(fmt):
+                        job_item.result = True
+                        job_item.paste_string = fmt
+            except Exception as e:
+                balloon(e)
 
         def _finished(job_item: ckit.JobItem) -> None:
             if job_item.result and job_item.paste_string:
