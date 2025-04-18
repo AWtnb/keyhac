@@ -161,8 +161,12 @@ def configure(keymap):
         def is_global_target(cls, wnd: pyauto.Window) -> bool:
             return not (cls.is_browser(wnd) and wnd.getText().startswith("ESET - "))
 
+        @staticmethod
+        def is_keyhac_console(wnd: pyauto.Window) -> bool:
+            return wnd.getProcessName() == "keyhac.exe" and not wnd.getFirstChild()
+
     # keymap working on any window
-    keymap_global = keymap.defineWindowKeymap(check_func=CheckWnd.is_global_target)
+    keymap_global = keymap.defineWindowKeymap(check_func=CheckWnd().is_global_target)
 
     # clipboard menu
     keymap_global["LC-LS-X"] = keymap.command_ClipboardList
@@ -675,6 +679,8 @@ def configure(keymap):
             def _snap(_) -> None:
                 wnd = self._keymap.getTopLevelWindow()
                 if not wnd:
+                    return
+                if CheckWnd.is_keyhac_console(wnd):
                     return
                 if self.check_rect(wnd):
                     wnd.maximize()
@@ -1720,11 +1726,9 @@ def configure(keymap):
                 return True
             if not wnd.isEnabled():
                 return True
-            exe_name = wnd.getProcessName()
-            if exe_name == "keyhac.exe" and not wnd.getFirstChild():
-                # In order to avoid hang when keyhac console window is open
+            if CheckWnd.is_keyhac_console(wnd):
                 return True
-            if exe_name in self.black_list:
+            if wnd.getProcessName() in self.black_list:
                 return True
             if len(wnd.getText()) < 1:
                 return True
@@ -1770,7 +1774,7 @@ def configure(keymap):
 
         subthread_run(_fzf_wnd, _finished)
 
-    keymap_global["U1-E"] = LAZY_KEYMAP.defer(fuzzy_window_switcher)
+    keymap_global["U1-E"] = fuzzy_window_switcher
 
     keymap_global["LS-LC-U1-M"] = PathHandler(r"${USERPROFILE}\Personal\draft.txt").run
 
