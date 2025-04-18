@@ -1736,6 +1736,10 @@ def configure(keymap):
                 self.wnds.append(popup)
             return True
 
+        @property
+        def found(self) -> List[pyauto.Window]:
+            return self.wnds
+
     def fuzzy_window_switcher() -> None:
         if not check_fzf():
             balloon("cannot find fzf on PC.")
@@ -1745,13 +1749,13 @@ def configure(keymap):
         lister = WndLister()
 
         def _fzf_wnd(job_item: ckit.JobItem) -> None:
-            job_item.found = None
+            job_item.result = []
             lister.scan()
-            wnds = lister.wnds
-            if len(wnds) < 1:
+            found = lister.found
+            if len(found) < 1:
                 return
 
-            table = {"{} [{}]".format(w.getProcessName(), w.getText()): w for w in wnds}
+            table = {"{} [{}]".format(w.getProcessName(), w.getText()): w for w in found}
             lines = "\n".join(table.keys())
             try:
                 proc = subprocess.run(
@@ -1764,13 +1768,14 @@ def configure(keymap):
                 if len(result) < 1 or proc.returncode != 0:
                     return
                 if result in table:
-                    job_item.found = table[result]
+                    target = table[result]
+                    job_item.result.append(executer.activate_wnd(target))
             except Exception as e:
                 balloon(e)
 
         def _finished(job_item: ckit.JobItem) -> None:
-            if job_item.found is not None:
-                executer.activate_wnd(job_item.found)
+            if len(job_item.result) < 1 or not job_item.result[0]:
+                VIRTUAL_FINGER.tap_keys("LCtrl-LAlt-Tab")
 
         subthread_run(_fzf_wnd, _finished)
 
