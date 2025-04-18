@@ -1565,7 +1565,13 @@ def configure(keymap):
         def __init__(self, keymap: Keymap) -> None:
             self._keymap = keymap
 
+        @staticmethod
+        def is_already_active(wnd: pyauto.Window) -> bool:
+            return pyauto.Window.getForeground() == wnd
+
         def activate_wnd(self, target: pyauto.Window) -> bool:
+            if self.is_already_active(target):
+                return True
             if target.isMinimized():
                 target.restore()
             interval = 20
@@ -1574,7 +1580,7 @@ def configure(keymap):
                 try:
                     target.setForeground()
                     delay(interval)
-                    if pyauto.Window.getForeground() == target:
+                    if self.is_already_active(target):
                         target.setForeground(True)
                         return True
                 except:
@@ -1710,7 +1716,6 @@ def configure(keymap):
         ]
 
         def __init__(self) -> None:
-            self.active_wnd = pyauto.Window.getForeground()
             self.wnds = []
 
         def reset(self) -> None:
@@ -1732,8 +1737,6 @@ def configure(keymap):
                 # In order to avoid hang when keyhac console window is open
                 return True
             if exe_name in self.black_list:
-                return True
-            if wnd == self.active_wnd:
                 return True
             if popup := wnd.getLastActivePopup():
                 self.wnds.append(popup)
