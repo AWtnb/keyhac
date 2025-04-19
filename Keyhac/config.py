@@ -1696,7 +1696,13 @@ def configure(keymap):
         },
     )
 
-    class WndLister:
+    def fuzzy_window_switcher() -> None:
+        if not check_fzf():
+            balloon("cannot find fzf on PC.")
+            return
+
+        executer = PseudoCuteExec(keymap)
+
         black_list = [
             "explorer.exe",
             "MouseGestureL.exe",
@@ -1705,72 +1711,53 @@ def configure(keymap):
             "ApplicationFrameHost.exe",
         ]
 
-        def __init__(self) -> None:
-            self.wnds = []
-
-        def reset(self) -> None:
-            self.wnds = []
-
-        def scan(self) -> None:
-            self.reset()
-            pyauto.Window.enum(self.walk, None)
-
-        def walk(self, wnd: pyauto.Window, _) -> bool:
-            if not wnd:
-                return False
-            if not wnd.isVisible():
-                return True
-            if not wnd.isEnabled():
-                return True
-            if CheckWnd.is_keyhac_console(wnd):
-                return True
-            if wnd.getProcessName() in self.black_list:
-                return True
-            if len(wnd.getText()) < 1:
-                return True
-            if popup := wnd.getLastActivePopup():
-                self.wnds.append(popup)
-            return True
-
-        @property
-        def found(self) -> List[pyauto.Window]:
-            return self.wnds
-
-    def fuzzy_window_switcher() -> None:
-        if not check_fzf():
-            balloon("cannot find fzf on PC.")
-            return
-
-        executer = PseudoCuteExec(keymap)
-        lister = WndLister()
-
         def _fzf_wnd(job_item: ckit.JobItem) -> None:
             job_item.result = []
-            lister.scan()
-            found = lister.found
-            if len(found) < 1:
-                return
+            d = {}
+            proc = subprocess.Popen(
+                ["fzf.exe"],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                encoding="utf-8",
+            )
 
-            table = {
-                "{} [{}]".format(w.getProcessName().replace(".exe", ""), w.getText()): w
-                for w in found
-            }
-            lines = "\n".join(table.keys())
+            def _walk(wnd: pyauto.Window, _) -> bool:
+                if not wnd:
+                    return False
+                if not wnd.isVisible():
+                    return True
+                if not wnd.isEnabled():
+                    return True
+                if CheckWnd.is_keyhac_console(wnd):
+                    return True
+                if wnd.getProcessName() in black_list:
+                    return True
+                if len(wnd.getText()) < 1:
+                    return True
+                if popup := wnd.getLastActivePopup():
+                    n = "{} [{}]".format(
+                        popup.getProcessName().replace(".exe", ""), popup.getText()
+                    )
+                    d[n] = popup
+                    proc.stdin.write(n + "\n")
+                return True
+
             try:
-                proc = subprocess.run(
-                    ["fzf.exe"],
-                    input=lines,
-                    capture_output=True,
-                    encoding="utf-8",
-                )
-                result = proc.stdout.strip()
-                if len(result) < 1 or proc.returncode != 0:
+                pyauto.Window.enum(_walk, None)
+                proc.stdin.close()
+                result, err = proc.communicate()
+                if proc.returncode != 0:
+                    if err:
+                        print(err)
                     return
-                if result in table:
-                    target = table[result]
-                    job_item.result.append(executer.activate_wnd(target))
+                result = result.strip()
+                if len(result) < 1:
+                    return
+                found = d[result]
+                job_item.result.append(executer.activate_wnd(found))
             except Exception as e:
-                balloon(e)
+                print(e)
 
         def _finished(job_item: ckit.JobItem) -> None:
             if 0 < len(job_item.result):
@@ -1779,7 +1766,7 @@ def configure(keymap):
 
         subthread_run(_fzf_wnd, _finished)
 
-    keymap_global["U1-E"] = fuzzy_window_switcher
+    keymap_global["U1-E"] = LAZY_KEYMAP.defer(fuzzy_window_switcher, 80)
 
     keymap_global["LS-LC-U1-M"] = PathHandler(r"${USERPROFILE}\Personal\draft.txt").run
 
