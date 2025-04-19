@@ -1755,7 +1755,10 @@ def configure(keymap):
             if len(found) < 1:
                 return
 
-            table = {"{} [{}]".format(w.getProcessName(), w.getText()): w for w in found}
+            table = {
+                "{} [{}]".format(w.getProcessName().replace(".exe", ""), w.getText()): w
+                for w in found
+            }
             lines = "\n".join(table.keys())
             try:
                 proc = subprocess.run(
