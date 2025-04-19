@@ -3,6 +3,7 @@ import os
 import fnmatch
 import re
 import time
+import shutil
 import subprocess
 import urllib.parse
 import unicodedata
@@ -29,12 +30,7 @@ def smart_check_path(path: Union[str, Path], timeout_sec: Union[int, float, None
 
 
 def check_fzf() -> bool:
-    paths = os.environ.get("PATH", "").split(os.pathsep)
-    for path in paths:
-        p = Path(path, "fzf.exe")
-        if smart_check_path(p):
-            return True
-    return False
+    return shutil.which("fzf.exe") is not None
 
 
 def configure(keymap):
