@@ -1766,7 +1766,7 @@ def configure(keymap):
 
         subthread_run(_fzf_wnd, _finished)
 
-    keymap_global["U1-E"] = LAZY_KEYMAP.defer(fuzzy_window_switcher, 80)
+    keymap_global["U1-E"] = fuzzy_window_switcher
 
     keymap_global["LS-LC-U1-M"] = PathHandler(r"${USERPROFILE}\Personal\draft.txt").run
 
