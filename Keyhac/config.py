@@ -2248,17 +2248,28 @@ def configure(keymap):
             job_item.result = False
             job_item.paste_string = ""
             job_item.skip_paste = False
-            lines = "\n".join(table.keys())
             try:
-                proc = subprocess.run(
+                proc = subprocess.Popen(
                     ["fzf.exe"],
-                    input=lines,
-                    capture_output=True,
+                    stdin=subprocess.PIPE,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
                     encoding="utf-8",
                 )
-                result = proc.stdout.strip()
-                if len(result) < 1 or proc.returncode != 0:
+
+                for k in table.keys():
+                    proc.stdin.write(k + "\n")
+                proc.stdin.close()
+
+                result, err = proc.communicate()
+                if proc.returncode != 0:
+                    if err:
+                        print(err)
                     return
+                result = result.strip()
+                if len(result) < 1:
+                    return
+
                 func = table.get(result, None)
                 if func:
                     fmt = func()
