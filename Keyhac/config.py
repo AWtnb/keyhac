@@ -1741,18 +1741,15 @@ def configure(keymap):
                         popup.getProcessName().replace(".exe", ""), popup.getText()
                     )
                     d[n] = popup
-                    if proc.stdin:
-                        proc.stdin.write(n + "\n")
+                    proc.stdin.write(n + "\n")
                 return True
 
             try:
                 pyauto.Window.enum(_walk, None)
+                proc.stdin.close()
             except Exception as e:
                 print(e)
                 return
-            finally:
-                if proc.stdin:
-                    proc.stdin.close()
 
             result, err = proc.communicate()
             if proc.returncode != 0:
@@ -1767,6 +1764,8 @@ def configure(keymap):
                 job_item.result.append(executer.activate_wnd(found))
 
         def _finished(job_item: ckit.JobItem) -> None:
+            if job_item.isCanceled():
+                return
             if 0 < len(job_item.result):
                 if not job_item.result[0]:
                     VIRTUAL_FINGER.tap_keys("LCtrl-LAlt-Tab")
@@ -2265,12 +2264,10 @@ def configure(keymap):
             try:
                 for k in table.keys():
                     proc.stdin.write(k + "\n")
+                proc.stdin.close()
             except Exception as e:
                 balloon(e)
                 return
-            finally:
-                if proc.stdin:
-                    proc.stdin.close()
 
             result, err = proc.communicate()
             if proc.returncode != 0:
