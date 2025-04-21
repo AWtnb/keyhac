@@ -1745,19 +1745,23 @@ def configure(keymap):
 
             try:
                 pyauto.Window.enum(_walk, None)
-                proc.stdin.close()
-                result, err = proc.communicate()
-                if proc.returncode != 0:
-                    if err:
-                        print(err)
-                    return
-                result = result.strip()
-                if len(result) < 1:
-                    return
-                found = d[result]
-                job_item.result.append(executer.activate_wnd(found))
             except Exception as e:
                 print(e)
+                return
+            finally:
+                if proc.stdin:
+                    proc.stdin.close()
+
+            result, err = proc.communicate()
+            if proc.returncode != 0:
+                if err:
+                    print(err)
+                return
+            result = result.strip()
+            if len(result) < 1:
+                return
+            found = d[result]
+            job_item.result.append(executer.activate_wnd(found))
 
         def _finished(job_item: ckit.JobItem) -> None:
             if 0 < len(job_item.result):
@@ -2248,36 +2252,38 @@ def configure(keymap):
             job_item.result = False
             job_item.paste_string = ""
             job_item.skip_paste = False
+            proc = subprocess.Popen(
+                ["fzf.exe"],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                encoding="utf-8",
+            )
             try:
-                proc = subprocess.Popen(
-                    ["fzf.exe"],
-                    stdin=subprocess.PIPE,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    encoding="utf-8",
-                )
-
                 for k in table.keys():
                     proc.stdin.write(k + "\n")
-                proc.stdin.close()
-
-                result, err = proc.communicate()
-                if proc.returncode != 0:
-                    if err:
-                        print(err)
-                    return
-                result = result.strip()
-                if len(result) < 1:
-                    return
-
-                func = table.get(result, None)
-                if func:
-                    fmt = func()
-                    if 0 < len(fmt):
-                        job_item.result = True
-                        job_item.paste_string = fmt
             except Exception as e:
                 balloon(e)
+                return
+            finally:
+                if proc.stdin:
+                    proc.stdin.close()
+
+            result, err = proc.communicate()
+            if proc.returncode != 0:
+                if err:
+                    print(err)
+                return
+            result = result.strip()
+            if len(result) < 1:
+                return
+
+            func = table.get(result, None)
+            if func:
+                fmt = func()
+                if 0 < len(fmt):
+                    job_item.result = True
+                    job_item.paste_string = fmt
 
         def _finished(job_item: ckit.JobItem) -> None:
             if job_item.result and job_item.paste_string:
