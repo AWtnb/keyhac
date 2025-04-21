@@ -448,11 +448,8 @@ def configure(keymap):
             self._keymap = keymap
 
         def defer(self, func: Callable, msec: int = 20) -> Callable:
-            def __inhook_executer() -> None:
-                self._keymap.hookCall(func)
-
             def _wrapper() -> None:
-                self._keymap.delayedCall(__inhook_executer, msec)
+                self._keymap.delayedCall(func, msec)
 
             return _wrapper
 
@@ -468,9 +465,10 @@ def configure(keymap):
         ) -> None:
             self._recover_ime = recover_ime
             self._defer_msec = defer_msec
-            self._finger = VirtualFinger(keymap, inter_stroke_pause)
-            self._control = ImeControl(keymap)
-            self._lazy_keymap = LazyKeymap(keymap)
+            self._keymap = keymap
+            self._finger = VirtualFinger(self._keymap, inter_stroke_pause)
+            self._control = ImeControl(self._keymap)
+            self._lazy_keymap = LazyKeymap(self._keymap)
 
         def invoke(self, *sequence) -> Callable:
             seq = Taps().from_sequence(sequence)
@@ -481,7 +479,10 @@ def configure(keymap):
                 if self._recover_ime:
                     self._control.enable()
 
-            return self._lazy_keymap.defer(_input, self._defer_msec)
+            def __inhook_executer() -> None:
+                self._keymap.hookCall(_input)
+
+            return self._lazy_keymap.defer(__inhook_executer, self._defer_msec)
 
     MILD_PUNCHER = KeyPuncher(keymap, defer_msec=20)
     GENTLE_PUNCHER = KeyPuncher(keymap, defer_msec=50)
