@@ -1741,7 +1741,8 @@ def configure(keymap):
                         popup.getProcessName().replace(".exe", ""), popup.getText()
                     )
                     d[n] = popup
-                    proc.stdin.write(n + "\n")
+                    if proc.stdin:
+                        proc.stdin.write(n + "\n")
                 return True
 
             try:
@@ -1761,8 +1762,9 @@ def configure(keymap):
             result = result.strip()
             if len(result) < 1:
                 return
-            found = d[result]
-            job_item.result.append(executer.activate_wnd(found))
+            found = d.get(result, None)
+            if found:
+                job_item.result.append(executer.activate_wnd(found))
 
         def _finished(job_item: ckit.JobItem) -> None:
             if 0 < len(job_item.result):
