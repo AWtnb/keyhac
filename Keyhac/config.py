@@ -1770,7 +1770,7 @@ def configure(keymap):
 
         subthread_run(_fzf_wnd, _finished)
 
-    keymap_global["U1-E"] = fuzzy_window_switcher
+    keymap_global["U1-E"] = LAZY_KEYMAP.defer(fuzzy_window_switcher, 120)
 
     keymap_global["LS-LC-U1-M"] = PathHandler(r"${USERPROFILE}\Personal\draft.txt").run
 
@@ -2291,7 +2291,7 @@ def configure(keymap):
 
         subthread_run(_fzf, _finished)
 
-    keymap_global["U1-Z"] = LAZY_KEYMAP.defer(fzfmenu, 80)
+    keymap_global["U1-Z"] = LAZY_KEYMAP.defer(fzfmenu, 120)
 
 
 def configure_ListWindow(window: ListWindow) -> None:
