@@ -1713,6 +1713,8 @@ def configure(keymap):
             "ApplicationFrameHost.exe",
         ]
 
+        current = pyauto.Window.getForeground()
+
         def _fzf_wnd(job_item: ckit.JobItem) -> None:
             job_item.result = []
             d = {}
@@ -1736,6 +1738,8 @@ def configure(keymap):
                 if wnd.getProcessName() in black_list:
                     return True
                 if len(wnd.getText()) < 1:
+                    return True
+                if wnd == current:
                     return True
                 if popup := wnd.getLastActivePopup():
                     n = "{} [{}]".format(
