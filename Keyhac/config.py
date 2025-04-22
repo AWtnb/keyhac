@@ -1597,7 +1597,7 @@ def configure(keymap):
                             PathHandler(exe_path).run()
                         return
                     if not job_item.results[-1]:
-                        VIRTUAL_FINGER.tap_keys("LCtrl-LAlt-Tab")
+                        VirtualFinger(self._keymap).tap_keys("LCtrl-LAlt-Tab")
 
                 subthread_run(_activate, _finished)
 
@@ -1774,7 +1774,13 @@ def configure(keymap):
 
     keymap_global["U1-E"] = LAZY_KEYMAP.defer(fuzzy_window_switcher, 120)
 
-    keymap_global["LS-LC-U1-M"] = PathHandler(r"${USERPROFILE}\Personal\draft.txt").run
+    def invoke_draft() -> None:
+        def _invoke(_) -> None:
+            PathHandler(r"${USERPROFILE}\Personal\draft.txt").run()
+
+        subthread_run(_invoke)
+
+    keymap_global["LS-LC-U1-M"] = invoke_draft
 
     def search_on_browser() -> None:
         if keymap.getWindow().getProcessName() == DEFAULT_BROWSER.get_exe_name():
