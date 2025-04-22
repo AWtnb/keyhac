@@ -223,6 +223,8 @@ def configure(keymap):
     GLOBAL_KEY_ALLOCATOR.cursor_keys()
     GLOBAL_KEY_ALLOCATOR.apply(
         {
+            # close
+            "LC-Q": ("A-F4"),
             # delete 2
             "LS-LC-U0-B": ("Back",) * 2,
             "LS-LC-U0-D": ("Delete",) * 2,
@@ -487,7 +489,6 @@ def configure(keymap):
     MILD_PUNCHER = KeyPuncher(keymap, defer_msec=20)
     GENTLE_PUNCHER = KeyPuncher(keymap, defer_msec=50)
 
-    keymap_global["LC-Q"] = GENTLE_PUNCHER.invoke("A-F4")
     keymap_global["U0-4"] = GENTLE_PUNCHER.invoke("$_")
 
     ################################
