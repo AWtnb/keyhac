@@ -658,33 +658,42 @@ def configure(keymap):
     # class for position on monitor
     ################################
 
+    class RectEdge:
+        left = 0
+        top = 1
+        right = 2
+        bottom = 3
+
     class Rect(NamedTuple):
         left: int
         top: int
         right: int
         bottom: int
 
-        def get_vertical_half(self, upper: bool) -> List[int]:
-            half_height = int((self.bottom + self.top) / 2)
-            r = list(self)
-            if upper:
-                r[3] = half_height
-            else:
-                r[1] = half_height
-            if 200 < abs(r[3] - r[1]):
-                return r
-            return []
+        def get_height(self) -> int:
+            return self.bottom - self.top
 
-        def get_horizontal_half(self, leftward: bool) -> List[int]:
-            half_width = int((self.right + self.left) / 2)
+        def get_width(self) -> int:
+            return self.right - self.left
+
+        def get_vertical_offset(self) -> int:
+            return self.top + self.bottom
+
+        def get_horizontal_offset(self) -> int:
+            return self.left + self.right
+
+        def get_half_rect(self, toward: RectEdge) -> List[int]:
             r = list(self)
-            if leftward:
-                r[2] = half_width
+            if toward in [RectEdge.top, RectEdge.bottom]:
+                dim = self.get_vertical_offset()
             else:
-                r[0] = half_width
-            if 300 < abs(r[0] - r[2]):
-                return r
-            return []
+                dim = self.get_horizontal_offset()
+            r[(toward + 2) % 4] = int(dim / 2)
+
+            check_rect = Rect(*r)
+            if check_rect.get_width() < 200 or check_rect.get_height() < 300:
+                return []
+            return r
 
     class WndRect:
         def __init__(self, keymap: Keymap, rect: Rect) -> None:
@@ -922,34 +931,29 @@ def configure(keymap):
         def __init__(self, keymap: Keymap) -> None:
             self._keymap = keymap
 
-        def invoke_snapper(self, horizontal: bool, default_pos: bool) -> Callable:
+        def invoke_snapper(self, toward: RectEdge) -> Callable:
             def _snapper() -> None:
-                def _snap(_) -> None:
+                def __snap(_) -> None:
                     wnd = self._keymap.getTopLevelWindow()
-                    handler = Rect(*wnd.getRect())
-                    rect = (
-                        handler.get_horizontal_half(default_pos)
-                        if horizontal
-                        else handler.get_vertical_half(default_pos)
-                    )
+                    rect = Rect(*wnd.getRect()).get_half_rect(toward)
                     if len(rect):
                         if wnd.isMaximized():
                             wnd.restore()
                             delay()
                         wnd.setRect(rect)
 
-                subthread_run(_snap)
+                subthread_run(__snap)
 
             return _snapper
 
         def apply(self, km: WindowKeymap) -> None:
-            for key, params in {
-                "H": {"horizontal": True, "default_pos": True},
-                "L": {"horizontal": True, "default_pos": False},
-                "K": {"horizontal": False, "default_pos": True},
-                "J": {"horizontal": False, "default_pos": False},
+            for key, toward in {
+                "H": RectEdge.left,
+                "L": RectEdge.right,
+                "K": RectEdge.top,
+                "J": RectEdge.bottom,
             }.items():
-                km["U1-" + key] = self.invoke_snapper(**params)
+                km["U1-" + key] = self.invoke_snapper(toward)
 
     WndShrinker(keymap).apply(keymap_global["U1-M"])
 
