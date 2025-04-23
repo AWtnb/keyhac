@@ -664,6 +664,28 @@ def configure(keymap):
         right: int
         bottom: int
 
+        def get_vertical_half(self, upper: bool) -> List[int]:
+            half_height = int((self.bottom + self.top) / 2)
+            r = list(self)
+            if upper:
+                r[3] = half_height
+            else:
+                r[1] = half_height
+            if 200 < abs(r[3] - r[1]):
+                return r
+            return []
+
+        def get_horizontal_half(self, leftward: bool) -> List[int]:
+            half_width = int((self.right + self.left) / 2)
+            r = list(self)
+            if leftward:
+                r[2] = half_width
+            else:
+                r[0] = half_width
+            if 300 < abs(r[0] - r[2]):
+                return r
+            return []
+
     class WndRect:
         def __init__(self, keymap: Keymap, rect: Rect) -> None:
             self._keymap = keymap
@@ -673,50 +695,21 @@ def configure(keymap):
             return wnd.getRect() == self._rect
 
         def snap(self) -> None:
+            wnd = self._keymap.getTopLevelWindow()
+            if not wnd or CheckWnd.is_keyhac_console(wnd) or self.check_rect(wnd):
+                return
 
             def _snap(_) -> None:
-                wnd = self._keymap.getTopLevelWindow()
-                if not wnd:
-                    return
-                if CheckWnd.is_keyhac_console(wnd):
-                    return
-                if self.check_rect(wnd):
-                    wnd.maximize()
-                    return
                 if wnd.isMaximized():
                     wnd.restore()
                     delay()
-                trial_limit = 2
-                while trial_limit > 0:
+                wnd.setRect(self._rect)
+
+            def _finished(_) -> None:
+                if not self.check_rect(wnd):
                     wnd.setRect(self._rect)
-                    delay()
-                    if self.check_rect(wnd):
-                        return
-                    trial_limit -= 1
 
-            subthread_run(_snap)
-
-        def get_vertical_half(self, upper: bool) -> list:
-            half_height = int((self._rect.bottom + self._rect.top) / 2)
-            r = list(self._rect)
-            if upper:
-                r[3] = half_height
-            else:
-                r[1] = half_height
-            if 200 < abs(r[1] - r[3]):
-                return r
-            return []
-
-        def get_horizontal_half(self, leftward: bool) -> list:
-            half_width = int((self._rect.right + self._rect.left) / 2)
-            r = list(self._rect)
-            if leftward:
-                r[2] = half_width
-            else:
-                r[0] = half_width
-            if 300 < abs(r[0] - r[2]):
-                return r
-            return []
+            subthread_run(_snap, _finished)
 
     class MonitorRect:
         def __init__(self, keymap: Keymap, rect: Rect) -> None:
@@ -933,12 +926,12 @@ def configure(keymap):
             def _snapper() -> None:
                 def _snap(_) -> None:
                     wnd = self._keymap.getTopLevelWindow()
-                    wr = WndRect(self._keymap, Rect(*wnd.getRect()))
-                    rect = []
-                    if horizontal:
-                        rect = wr.get_horizontal_half(default_pos)
-                    else:
-                        rect = wr.get_vertical_half(default_pos)
+                    handler = Rect(*wnd.getRect())
+                    rect = (
+                        handler.get_horizontal_half(default_pos)
+                        if horizontal
+                        else handler.get_vertical_half(default_pos)
+                    )
                     if len(rect):
                         if wnd.isMaximized():
                             wnd.restore()
@@ -947,7 +940,7 @@ def configure(keymap):
 
                 subthread_run(_snap)
 
-            return LAZY_KEYMAP.defer(_snapper, 50)
+            return _snapper
 
         def apply(self, km: WindowKeymap) -> None:
             for key, params in {
