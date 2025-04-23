@@ -676,23 +676,30 @@ def configure(keymap):
         def get_width(self) -> int:
             return self.right - self.left
 
+        def is_valid(self) -> bool:
+            if self.bottom <= self.top:
+                return False
+            if self.right <= self.left:
+                return False
+            if self.get_width() < 300:
+                return False
+            if self.get_height() < 200:
+                return False
+            return True
+
         def get_vertical_offset(self) -> int:
             return self.top + self.bottom
 
         def get_horizontal_offset(self) -> int:
             return self.left + self.right
 
-        def get_half_rect(self, toward: RectEdge) -> List[int]:
+        def resize(self, scale: float, toward: RectEdge) -> List[int]:
             r = list(self)
             if toward in [RectEdge.top, RectEdge.bottom]:
-                dim = self.get_vertical_offset()
+                offset = self.get_vertical_offset()
             else:
-                dim = self.get_horizontal_offset()
-            r[(toward + 2) % 4] = int(dim / 2)
-
-            check_rect = Rect(*r)
-            if check_rect.get_width() < 200 or check_rect.get_height() < 300:
-                return []
+                offset = self.get_horizontal_offset()
+            r[(toward + 2) % 4] = int(offset * scale)
             return r
 
     class WndRect:
@@ -932,15 +939,17 @@ def configure(keymap):
             self._keymap = keymap
 
         def invoke_snapper(self, toward: RectEdge) -> Callable:
+
             def _snapper() -> None:
                 def __snap(_) -> None:
                     wnd = self._keymap.getTopLevelWindow()
-                    rect = Rect(*wnd.getRect()).get_half_rect(toward)
-                    if len(rect):
+                    rect = wnd.getRect()
+                    shrinked = Rect(*rect).resize(0.5, toward)
+                    if Rect(*shrinked).is_valid():
                         if wnd.isMaximized():
                             wnd.restore()
                             delay()
-                        wnd.setRect(rect)
+                        wnd.setRect(shrinked)
 
                 subthread_run(__snap)
 
