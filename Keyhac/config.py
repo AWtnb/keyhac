@@ -745,14 +745,6 @@ def configure(keymap):
                 "large": int(max_size * 2 / 3),
             }
 
-        def set_center_rect(self) -> None:
-            d = {}
-            for size, px in self.possible_width.items():
-                lx = self.left + int((self.max_width - px) / 2)
-                wr = WndRect(self._keymap, Rect(lx, self.top, lx + px, self.bottom))
-                d[size] = wr
-            self.area_mapping["center"] = d
-
         def set_horizontal_rect(self) -> None:
             for pos in ("left", "right"):
                 d = {}
@@ -782,7 +774,6 @@ def configure(keymap):
             ms = []
             for mi in pyauto.Window.getMonitorInfo():
                 mr = MonitorRect(keymap, Rect(*mi[1]))
-                mr.set_center_rect()
                 mr.set_horizontal_rect()
                 mr.set_vertical_rect()
                 if mi[2] == 1:  # main monitor
@@ -891,7 +882,6 @@ def configure(keymap):
             "Right": "right",
             "Down": "bottom",
             "Up": "top",
-            "M": "center",
         }
 
         def __init__(self, keymap: Keymap) -> None:
