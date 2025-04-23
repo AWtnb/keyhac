@@ -1826,11 +1826,9 @@ def configure(keymap):
 
     # slack
     keymap_slack = keymap.defineWindowKeymap(exe_name="slack.exe", class_name="Chrome_WidgetWin_1")
-    keymap_slack["C-S-K"] = GENTLE_PUNCHER.invoke("C-S-K")
-    keymap_slack["F3"] = GENTLE_PUNCHER.invoke("C-K")
-    keymap_slack["C-E"] = keymap_slack["F3"]
-    keymap_slack["C-K"] = keymap_slack["F3"]
-    keymap_slack["F1"] = GENTLE_PUNCHER.invoke("S-SemiColon", "Colon")
+    keymap_slack["F3"] = "C-K"
+    keymap_slack["C-E"] = "C-K"
+    keymap_slack["F1"] = SKKFinisher(keymap, False).invoke("S-SemiColon", "Colon")
 
     # vscode
     keymap_vscode = keymap.defineWindowKeymap(exe_name="Code.exe")
