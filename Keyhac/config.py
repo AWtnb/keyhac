@@ -719,12 +719,6 @@ def configure(keymap):
                 return False
             return True
 
-        def get_vertical_offset(self) -> int:
-            return self.top + self.bottom
-
-        def get_horizontal_offset(self) -> int:
-            return self.left + self.right
-
         def resize(self, scale: float, toward: RectEdge) -> List[int]:
             r = [
                 self.left,
@@ -743,7 +737,7 @@ def configure(keymap):
             r[i] = r[toward] + delta
             return r
 
-    class MonitorRect:
+    class KeyhacMonitor:
         _variants = {"small": 1 / 3, "middle": 1 / 2, "large": 2 / 3}
         _edges = ["left", "top", "right", "bottom"]
 
@@ -751,79 +745,31 @@ def configure(keymap):
             self._keymap = keymap
             self.mapping: Dict[str, Dict[str, Rectizor]] = {}
 
-        def allocate(self, rect: List[int]) -> None:
-            r = Rect(*rect)
+        def allocate(self, rect: Rect) -> None:
             for edge in [RectEdge.left, RectEdge.top, RectEdge.right, RectEdge.bottom]:
                 d: Dict[str, Rectizor] = {}
                 for size, scale in self._variants.items():
-                    print(r.get_horizontal_offset())
-                    resized = r.resize(scale, edge)
-                    print(self._edges[edge], size, scale, resized, Rect(*resized).is_valid())
+                    resized = rect.resize(scale, edge)
                     if Rect(*resized).is_valid():
                         d[size] = Rectizor(self._keymap, resized)
                 self.mapping[self._edges[edge]] = d
 
     class KeyhacMonitors:
         def __init__(self, keymap: Keymap) -> None:
-            ms = []
-            for mi in pyauto.Window.getMonitorInfo():
-                mr = MonitorRect(keymap)
-                mr.allocate(mi[1])
-                if mi[2] == 1:  # main monitor
-                    ms.insert(0, mr)
-                else:
-                    ms.append(mr)
-            self._monitors = ms
+            monitor_infos = self.get_sorted()
+            self._monitors = []
+            for mi in monitor_infos:
+                m = KeyhacMonitor(keymap)
+                m.allocate(Rect(*mi[1]))
+                self._monitors.append(m)
 
         @property
-        def monitors(self) -> List[MonitorRect]:
+        def monitors(self) -> List[KeyhacMonitor]:
             return self._monitors
 
-    ################################
-    # set cursor position
-    ################################
-
-    # class CursorPos:
-    #     def __init__(self, keymap: Keymap) -> None:
-    #         self._keymap = keymap
-    #         self.pos = []
-    #         monitors = CurrentMonitors(keymap).monitors
-    #         for monitor in monitors:
-    #             for i in (1, 3):
-    #                 y = monitor.top + int(monitor.max_height / 2)
-    #                 x = monitor.left + int(monitor.max_width / 4) * i
-    #                 self.pos.append([x, y])
-
-    #     def get_position_index(self) -> int:
-    #         x, y = pyauto.Input.getCursorPos()
-    #         for i, p in enumerate(self.pos):
-    #             if p[0] == x and p[1] == y:
-    #                 return i
-    #         return -1
-
-    #     def snap(self) -> None:
-    #         idx = self.get_position_index()
-    #         if idx < 0 or idx == len(self.pos) - 1:
-    #             self.set_position(*self.pos[0])
-    #         else:
-    #             self.set_position(*self.pos[idx + 1])
-
-    #     def set_position(self, x: int, y: int) -> None:
-    #         self._keymap.beginInput()
-    #         self._keymap.input_seq.append(pyauto.MouseMove(x, y))
-    #         self._keymap.endInput()
-
-    #     def snap_to_center(self) -> None:
-    #         wnd = self._keymap.getTopLevelWindow()
-    #         wnd_left, wnd_top, wnd_right, wnd_bottom = wnd.getRect()
-    #         to_x = int((wnd_left + wnd_right) / 2)
-    #         to_y = int((wnd_bottom + wnd_top) / 2)
-    #         self.set_position(to_x, to_y)
-
-    # CURSOR_POS = CursorPos(keymap)
-
-    # keymap_global["O-RCtrl"] = CURSOR_POS.snap
-    # keymap_global["O-RShift"] = CURSOR_POS.snap_to_center
+        @staticmethod
+        def get_sorted() -> List[list]:
+            return sorted(pyauto.Window.getMonitorInfo(), key=lambda x: x[2] != 1)
 
     ################################
     # set window position
@@ -949,6 +895,51 @@ def configure(keymap):
                 km["U1-" + key] = self.invoke_snapper(toward)
 
     WndShrinker(keymap).apply(keymap_global["U1-M"])
+
+    ################################
+    # set cursor position
+    ################################
+
+    class CursorPos:
+        def __init__(self, keymap: Keymap) -> None:
+            self._keymap = keymap
+            self.pos = []
+            monitor_infos = KeyhacMonitors.get_sorted()
+            for m in monitor_infos:
+                rect = Rect(*m[1])
+                for i in (1, 3):
+                    y = rect.top + int(rect.height / 2)
+                    x = rect.left + int(rect.width / 4) * i
+                    self.pos.append([x, y])
+
+        def get_position_index(self) -> int:
+            x, y = pyauto.Input.getCursorPos()
+            for i, p in enumerate(self.pos):
+                if p[0] == x and p[1] == y:
+                    return i
+            return -1
+
+        def snap(self) -> None:
+            idx = self.get_position_index()
+            if idx < 0 or idx == len(self.pos) - 1:
+                self.set_position(*self.pos[0])
+            else:
+                self.set_position(*self.pos[idx + 1])
+
+        def set_position(self, x: int, y: int) -> None:
+            self._keymap.beginInput()
+            self._keymap.input_seq.append(pyauto.MouseMove(x, y))
+            self._keymap.endInput()
+
+        def snap_to_center(self) -> None:
+            wnd = self._keymap.getTopLevelWindow()
+            wnd_left, wnd_top, wnd_right, wnd_bottom = wnd.getRect()
+            to_x = int((wnd_left + wnd_right) / 2)
+            to_y = int((wnd_bottom + wnd_top) / 2)
+            self.set_position(to_x, to_y)
+
+    keymap_global["O-RCtrl"] = CursorPos(keymap).snap
+    keymap_global["O-RShift"] = CursorPos(keymap).snap_to_center
 
     ################################
     # input customize
