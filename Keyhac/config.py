@@ -658,52 +658,8 @@ def configure(keymap):
     # class for position on monitor
     ################################
 
-    class RectEdge:
-        left = 0
-        top = 1
-        right = 2
-        bottom = 3
-
-    class Rect(NamedTuple):
-        left: int
-        top: int
-        right: int
-        bottom: int
-
-        def get_height(self) -> int:
-            return self.bottom - self.top
-
-        def get_width(self) -> int:
-            return self.right - self.left
-
-        def is_valid(self) -> bool:
-            if self.bottom <= self.top:
-                return False
-            if self.right <= self.left:
-                return False
-            if self.get_width() < 300:
-                return False
-            if self.get_height() < 200:
-                return False
-            return True
-
-        def get_vertical_offset(self) -> int:
-            return self.top + self.bottom
-
-        def get_horizontal_offset(self) -> int:
-            return self.left + self.right
-
-        def resize(self, scale: float, toward: RectEdge) -> List[int]:
-            r = list(self)
-            if toward in [RectEdge.top, RectEdge.bottom]:
-                offset = self.get_vertical_offset()
-            else:
-                offset = self.get_horizontal_offset()
-            r[(toward + 2) % 4] = int(offset * scale)
-            return r
-
-    class WndRect:
-        def __init__(self, keymap: Keymap, rect: Rect) -> None:
+    class Rectizor:
+        def __init__(self, keymap: Keymap, rect: List[int]) -> None:
             self._keymap = keymap
             self._rect = rect
 
@@ -727,55 +683,92 @@ def configure(keymap):
 
             subthread_run(_snap, _finished)
 
-    class MonitorRect:
-        def __init__(self, keymap: Keymap, rect: Rect) -> None:
-            self._keymap = keymap
-            self.left, self.top, self.right, self.bottom = rect
-            self.max_width = self.right - self.left
-            self.max_height = self.bottom - self.top
-            self.possible_width = self.get_variation(self.max_width)
-            self.possible_height = self.get_variation(self.max_height)
-            self.area_mapping: Dict[str, Dict[str, WndRect]] = {}
+    class RectEdge:
+        left = 0
+        top = 1
+        right = 2
+        bottom = 3
 
         @staticmethod
-        def get_variation(max_size: int) -> dict:
-            return {
-                "small": int(max_size / 3),
-                "middle": int(max_size / 2),
-                "large": int(max_size * 2 / 3),
-            }
+        def opposite_of(i: int) -> int:
+            return (i + 2) % 4
 
-        def set_horizontal_rect(self) -> None:
-            for pos in ("left", "right"):
-                d = {}
-                for size, px in self.possible_width.items():
-                    if pos == "right":
-                        lx = self.right - px
-                    else:
-                        lx = self.left
-                    wr = WndRect(self._keymap, Rect(lx, self.top, lx + px, self.bottom))
-                    d[size] = wr
-                self.area_mapping[pos] = d
+    class Rect:
+        def __init__(self, left: int, top: int, right: int, bottom: int) -> None:
+            self.left = left
+            self.top = top
+            self.right = right
+            self.bottom = bottom
+            self.width = right - left
+            self.height = bottom - top
 
-        def set_vertical_rect(self) -> None:
-            for pos in ("top", "bottom"):
-                d = {}
-                for size, px in self.possible_height.items():
-                    if pos == "bottom":
-                        ty = self.bottom - px
-                    else:
-                        ty = self.top
-                    wr = WndRect(self._keymap, Rect(self.left, ty, self.right, ty + px))
-                    d[size] = wr
-                self.area_mapping[pos] = d
+        def get_height(self) -> int:
+            return self.bottom - self.top
 
-    class CurrentMonitors:
+        def get_width(self) -> int:
+            return self.right - self.left
+
+        def is_valid(self) -> bool:
+            if self.width <= 0:
+                return False
+            if self.height <= 0:
+                return False
+            if self.get_width() < 300:
+                return False
+            if self.get_height() < 200:
+                return False
+            return True
+
+        def get_vertical_offset(self) -> int:
+            return self.top + self.bottom
+
+        def get_horizontal_offset(self) -> int:
+            return self.left + self.right
+
+        def resize(self, scale: float, toward: RectEdge) -> List[int]:
+            r = [
+                self.left,
+                self.top,
+                self.right,
+                self.bottom,
+            ]
+            i = RectEdge.opposite_of(toward)
+            if toward in [RectEdge.left, RectEdge.right]:
+                dim = self.width
+            else:
+                dim = self.height
+            delta = int(dim * scale)
+            if toward in [RectEdge.right, RectEdge.bottom]:
+                delta = delta * -1
+            r[i] = r[toward] + delta
+            return r
+
+    class MonitorRect:
+        _variants = {"small": 1 / 3, "middle": 1 / 2, "large": 2 / 3}
+        _edges = ["left", "top", "right", "bottom"]
+
+        def __init__(self, keymap: Keymap) -> None:
+            self._keymap = keymap
+            self.mapping: Dict[str, Dict[str, Rectizor]] = {}
+
+        def allocate(self, rect: List[int]) -> None:
+            r = Rect(*rect)
+            for edge in [RectEdge.left, RectEdge.top, RectEdge.right, RectEdge.bottom]:
+                d: Dict[str, Rectizor] = {}
+                for size, scale in self._variants.items():
+                    print(r.get_horizontal_offset())
+                    resized = r.resize(scale, edge)
+                    print(self._edges[edge], size, scale, resized, Rect(*resized).is_valid())
+                    if Rect(*resized).is_valid():
+                        d[size] = Rectizor(self._keymap, resized)
+                self.mapping[self._edges[edge]] = d
+
+    class KeyhacMonitors:
         def __init__(self, keymap: Keymap) -> None:
             ms = []
             for mi in pyauto.Window.getMonitorInfo():
-                mr = MonitorRect(keymap, Rect(*mi[1]))
-                mr.set_horizontal_rect()
-                mr.set_vertical_rect()
+                mr = MonitorRect(keymap)
+                mr.allocate(mi[1])
                 if mi[2] == 1:  # main monitor
                     ms.insert(0, mr)
                 else:
@@ -783,54 +776,54 @@ def configure(keymap):
             self._monitors = ms
 
         @property
-        def monitors(self) -> list:
+        def monitors(self) -> List[MonitorRect]:
             return self._monitors
 
     ################################
     # set cursor position
     ################################
 
-    class CursorPos:
-        def __init__(self, keymap: Keymap) -> None:
-            self._keymap = keymap
-            self.pos = []
-            monitors = CurrentMonitors(keymap).monitors
-            for monitor in monitors:
-                for i in (1, 3):
-                    y = monitor.top + int(monitor.max_height / 2)
-                    x = monitor.left + int(monitor.max_width / 4) * i
-                    self.pos.append([x, y])
+    # class CursorPos:
+    #     def __init__(self, keymap: Keymap) -> None:
+    #         self._keymap = keymap
+    #         self.pos = []
+    #         monitors = CurrentMonitors(keymap).monitors
+    #         for monitor in monitors:
+    #             for i in (1, 3):
+    #                 y = monitor.top + int(monitor.max_height / 2)
+    #                 x = monitor.left + int(monitor.max_width / 4) * i
+    #                 self.pos.append([x, y])
 
-        def get_position_index(self) -> int:
-            x, y = pyauto.Input.getCursorPos()
-            for i, p in enumerate(self.pos):
-                if p[0] == x and p[1] == y:
-                    return i
-            return -1
+    #     def get_position_index(self) -> int:
+    #         x, y = pyauto.Input.getCursorPos()
+    #         for i, p in enumerate(self.pos):
+    #             if p[0] == x and p[1] == y:
+    #                 return i
+    #         return -1
 
-        def snap(self) -> None:
-            idx = self.get_position_index()
-            if idx < 0 or idx == len(self.pos) - 1:
-                self.set_position(*self.pos[0])
-            else:
-                self.set_position(*self.pos[idx + 1])
+    #     def snap(self) -> None:
+    #         idx = self.get_position_index()
+    #         if idx < 0 or idx == len(self.pos) - 1:
+    #             self.set_position(*self.pos[0])
+    #         else:
+    #             self.set_position(*self.pos[idx + 1])
 
-        def set_position(self, x: int, y: int) -> None:
-            self._keymap.beginInput()
-            self._keymap.input_seq.append(pyauto.MouseMove(x, y))
-            self._keymap.endInput()
+    #     def set_position(self, x: int, y: int) -> None:
+    #         self._keymap.beginInput()
+    #         self._keymap.input_seq.append(pyauto.MouseMove(x, y))
+    #         self._keymap.endInput()
 
-        def snap_to_center(self) -> None:
-            wnd = self._keymap.getTopLevelWindow()
-            wnd_left, wnd_top, wnd_right, wnd_bottom = wnd.getRect()
-            to_x = int((wnd_left + wnd_right) / 2)
-            to_y = int((wnd_bottom + wnd_top) / 2)
-            self.set_position(to_x, to_y)
+    #     def snap_to_center(self) -> None:
+    #         wnd = self._keymap.getTopLevelWindow()
+    #         wnd_left, wnd_top, wnd_right, wnd_bottom = wnd.getRect()
+    #         to_x = int((wnd_left + wnd_right) / 2)
+    #         to_y = int((wnd_bottom + wnd_top) / 2)
+    #         self.set_position(to_x, to_y)
 
-    CURSOR_POS = CursorPos(keymap)
+    # CURSOR_POS = CursorPos(keymap)
 
-    keymap_global["O-RCtrl"] = CURSOR_POS.snap
-    keymap_global["O-RShift"] = CURSOR_POS.snap_to_center
+    # keymap_global["O-RCtrl"] = CURSOR_POS.snap
+    # keymap_global["O-RShift"] = CURSOR_POS.snap_to_center
 
     ################################
     # set window position
@@ -863,7 +856,7 @@ def configure(keymap):
 
     keymap_global["U1-M"]["X"] = maximize_window
 
-    class WndPosAllocator:
+    class RectizorAllocator:
         monitor_dict = {
             "": 0,
             "A-": 1,
@@ -887,16 +880,18 @@ def configure(keymap):
         def __init__(self, keymap: Keymap) -> None:
             self._keymap = keymap
 
-        def alloc_flexible(self, km: WindowKeymap) -> None:
-            monitors = CurrentMonitors(self._keymap).monitors
-            for mod_mntr, mntr_idx in self.monitor_dict.items():
-                for mod_area, size in self.size_dict.items():
+        def flexible(self, km: WindowKeymap) -> None:
+            monitors = KeyhacMonitors(self._keymap).monitors
+            for monitor_mod, monitor_idx in self.monitor_dict.items():
+                for area_mod, size in self.size_dict.items():
                     for key, pos in self.snap_key_dict.items():
-                        if mntr_idx < len(monitors):
-                            wnd_rect = monitors[mntr_idx].area_mapping[pos][size]
-                            km[mod_mntr + mod_area + key] = LAZY_KEYMAP.defer(wnd_rect.snap, 50)
+                        if monitor_idx < len(monitors):
+                            rectizor = monitors[monitor_idx].mapping[pos].get(size, None)
+                            func = rectizor.snap if rectizor else lambda: balloon("invalid rect.")
+                            if rectizor:
+                                km[monitor_mod + area_mod + key] = LAZY_KEYMAP.defer(func, 50)
 
-        def alloc_maximize(self, km: WindowKeymap, mapping_dict: dict) -> None:
+        def maximize(self, km: WindowKeymap, mapping_dict: dict) -> None:
             for key, towards in mapping_dict.items():
 
                 def _snap() -> None:
@@ -910,11 +905,10 @@ def configure(keymap):
 
                 km[key] = _snap
 
-    WND_POS_ALLOCATOR = WndPosAllocator(keymap)
-    WND_POS_ALLOCATOR.alloc_flexible(keymap_global["U1-M"])
+    RectizorAllocator(keymap).flexible(keymap_global["U1-M"])
 
-    WND_POS_ALLOCATOR.alloc_maximize(keymap_global, {"LC-U1-L": "Right", "LC-U1-H": "Left"})
-    WND_POS_ALLOCATOR.alloc_maximize(
+    RectizorAllocator(keymap).maximize(keymap_global, {"LC-U1-L": "Right", "LC-U1-H": "Left"})
+    RectizorAllocator(keymap).maximize(
         keymap_global["U1-M"],
         {
             "U0-L": "Right",
