@@ -658,10 +658,61 @@ def configure(keymap):
     # class for position on monitor
     ################################
 
+    class RectEdge:
+        left = 0
+        top = 1
+        right = 2
+        bottom = 3
+
+        @staticmethod
+        def opposite_of(i: int) -> int:
+            return (i + 2) % 4
+
+    class Rect:
+        def __init__(self, left: int, top: int, right: int, bottom: int) -> None:
+            self.left = left
+            self.top = top
+            self.right = right
+            self.bottom = bottom
+            self.width = right - left
+            self.height = bottom - top
+
+        def to_list(self) -> List[int]:
+            return [
+                self.left,
+                self.top,
+                self.right,
+                self.bottom,
+            ]
+
+        def is_valid(self) -> bool:
+            if self.width <= 0:
+                return False
+            if self.height <= 0:
+                return False
+            if self.width < 300:
+                return False
+            if self.height < 200:
+                return False
+            return True
+
+        def resize(self, scale: float, toward: RectEdge) -> "Rect":
+            r = self.to_list()
+            i = RectEdge.opposite_of(toward)
+            if toward in [RectEdge.left, RectEdge.right]:
+                dim = self.width
+            else:
+                dim = self.height
+            delta = int(dim * scale)
+            if toward in [RectEdge.right, RectEdge.bottom]:
+                delta = delta * -1
+            r[i] = r[toward] + delta
+            return Rect(*r)
+
     class Rectizor:
-        def __init__(self, keymap: Keymap, rect: List[int]) -> None:
+        def __init__(self, keymap: Keymap, rect: Rect) -> None:
             self._keymap = keymap
-            self._rect = rect
+            self._rect = rect.to_list()
 
         def check_rect(self, wnd: pyauto.Window) -> bool:
             return wnd.getRect() == self._rect
@@ -683,60 +734,6 @@ def configure(keymap):
 
             subthread_run(_snap, _finished)
 
-    class RectEdge:
-        left = 0
-        top = 1
-        right = 2
-        bottom = 3
-
-        @staticmethod
-        def opposite_of(i: int) -> int:
-            return (i + 2) % 4
-
-    class Rect:
-        def __init__(self, left: int, top: int, right: int, bottom: int) -> None:
-            self.left = left
-            self.top = top
-            self.right = right
-            self.bottom = bottom
-            self.width = right - left
-            self.height = bottom - top
-
-        def get_height(self) -> int:
-            return self.bottom - self.top
-
-        def get_width(self) -> int:
-            return self.right - self.left
-
-        def is_valid(self) -> bool:
-            if self.width <= 0:
-                return False
-            if self.height <= 0:
-                return False
-            if self.get_width() < 300:
-                return False
-            if self.get_height() < 200:
-                return False
-            return True
-
-        def resize(self, scale: float, toward: RectEdge) -> List[int]:
-            r = [
-                self.left,
-                self.top,
-                self.right,
-                self.bottom,
-            ]
-            i = RectEdge.opposite_of(toward)
-            if toward in [RectEdge.left, RectEdge.right]:
-                dim = self.width
-            else:
-                dim = self.height
-            delta = int(dim * scale)
-            if toward in [RectEdge.right, RectEdge.bottom]:
-                delta = delta * -1
-            r[i] = r[toward] + delta
-            return r
-
     class KeyhacMonitor:
         _variants = {"small": 1 / 3, "middle": 1 / 2, "large": 2 / 3}
         _edges = ["left", "top", "right", "bottom"]
@@ -750,7 +747,7 @@ def configure(keymap):
                 d: Dict[str, Rectizor] = {}
                 for size, scale in self._variants.items():
                     resized = rect.resize(scale, edge)
-                    if Rect(*resized).is_valid():
+                    if resized.is_valid():
                         d[size] = Rectizor(self._keymap, resized)
                 self.mapping[self._edges[edge]] = d
 
@@ -874,12 +871,12 @@ def configure(keymap):
                 def __snap(_) -> None:
                     wnd = self._keymap.getTopLevelWindow()
                     rect = wnd.getRect()
-                    shrinked = Rect(*rect).resize(0.5, toward)
-                    if Rect(*shrinked).is_valid():
+                    resized = Rect(*rect).resize(0.5, toward)
+                    if resized.is_valid():
                         if wnd.isMaximized():
                             wnd.restore()
                             delay()
-                        wnd.setRect(shrinked)
+                        wnd.setRect(resized.to_list())
 
                 subthread_run(__snap)
 
