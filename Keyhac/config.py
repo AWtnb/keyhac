@@ -998,15 +998,6 @@ def configure(keymap):
                 sequence = circumfix + ["Left"] * len(suffix)
                 km[key] = self.invoke(*sequence)
 
-    # insert honorific
-    def invoke_honorific_sender(km: WindowKeymap) -> None:
-        finisher = SKKFinisher(keymap)
-        for key, hono in {"U0": "先生", "U1": "様"}.items():
-            for mod, suffix in {"": "", "C-": "方"}.items():
-                km[mod + key + "-Tab"] = finisher.invoke(hono + suffix)
-
-    invoke_honorific_sender(keymap_global)
-
     # markdown list
     keymap_global["S-U0-8"] = SKKFinisher(keymap).invoke("- ")
     keymap_global["U1-1"] = SKKFinisher(keymap).invoke("1. ")
