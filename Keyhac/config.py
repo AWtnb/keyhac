@@ -1548,11 +1548,11 @@ def configure(keymap):
             def _executer() -> None:
 
                 def _activate(job_item: ckit.JobItem) -> None:
-                    delay()
                     job_item.results = []
                     scanner = WndScanner(exe_name, class_name)
                     scanner.scan()
                     if scanner.found:
+                        delay()
                         result = self.activate_wnd(scanner.found)
                         job_item.results.append(result)
 
