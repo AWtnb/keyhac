@@ -1527,22 +1527,17 @@ def configure(keymap):
             self._keymap = keymap
 
         @staticmethod
-        def is_already_active(wnd: pyauto.Window) -> bool:
-            return pyauto.Window.getForeground() == wnd
-
-        def activate_wnd(self, target: pyauto.Window) -> bool:
-            if self.is_already_active(target):
-                return True
-            if target.isMinimized():
-                target.restore()
+        def activate_wnd(wnd: pyauto.Window) -> bool:
+            if wnd.isMinimized():
+                wnd.restore()
             interval = 20
             timeout = interval * 50
             while timeout > 0:
                 try:
-                    target.setForeground()
+                    wnd.setForeground()
                     delay(interval)
-                    if self.is_already_active(target):
-                        target.setForeground(True)
+                    if pyauto.Window.getForeground() == wnd:
+                        wnd.setForeground(True)
                         return True
                 except:
                     return False
@@ -1672,9 +1667,7 @@ def configure(keymap):
             balloon("cannot find fzf on PC.")
             return
 
-        executer = PseudoCuteExec(keymap)
-
-        black_list = [
+        ignore_list = [
             "explorer.exe",
             "MouseGestureL.exe",
             "TextInputHost.exe",
@@ -1702,7 +1695,7 @@ def configure(keymap):
                     return True
                 if CheckWnd.is_keyhac_console(wnd):
                     return True
-                if wnd.getProcessName() in black_list:
+                if wnd.getProcessName() in ignore_list:
                     return True
                 if len(wnd.getText()) < 1:
                     return True
@@ -1729,9 +1722,9 @@ def configure(keymap):
             result = result.strip()
             if len(result) < 1:
                 return
-            found = d.get(result, None)
-            if found:
-                job_item.result.append(executer.activate_wnd(found))
+            if wnd := d.get(result, None):
+                delay(150)
+                job_item.result.append(PseudoCuteExec.activate_wnd(wnd))
 
         def _finished(job_item: ckit.JobItem) -> None:
             if job_item.isCanceled():
