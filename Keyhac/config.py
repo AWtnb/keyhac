@@ -974,7 +974,7 @@ def configure(keymap):
     keymap_global["LS-U1-B"] = SKKSender(keymap).under_kanamode("S-Right")
     keymap_global["U1-Space"] = SKKSender(keymap).under_kanamode("C-S-Left")
     keymap_global["U1-N"] = SKKSender(keymap).under_kanamode(
-        "C-S-Left", ImeControl.convpoint_key, "S-4"
+        "C-S-Left", ImeControl.convpoint_key, "S-4", "Tab"
     )
     keymap_global["U1-4"] = SKKSender(keymap).under_kanamode(SKKKey.convpoint_key, "S-4")
 
