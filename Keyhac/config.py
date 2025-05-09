@@ -2032,6 +2032,11 @@ def configure(keymap):
             return reg.sub(_replacer, s)
 
         @staticmethod
+        def to_list(s: str) -> str:
+            lines = s.splitlines()
+            return "\n".join(["- " + l for l in lines])
+
+        @staticmethod
         def split_postalcode(s: str) -> str:
             lines = s.splitlines()
             if 1 < len(lines):
@@ -2146,6 +2151,7 @@ def configure(keymap):
     CLIPBOARD_MENU = ClipboardMenu()
     CLIPBOARD_MENU.set_formatter(
         {
+            "to list": FormatTools.to_list,
             "to deepl-friendly": FormatTools.to_deepl_friendly,
             "swap abbreviation around colon": FormatTools.swap_abbreviation,
             "colon to double-dash": FormatTools.colon_to_doubledash,
