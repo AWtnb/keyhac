@@ -1531,8 +1531,8 @@ def configure(keymap):
             if wnd.isMinimized():
                 wnd.restore()
                 delay()
-            interval = 60
-            timeout = interval * 30
+            interval = 30
+            timeout = interval * 100
             while timeout > 0:
                 try:
                     wnd.setForeground()
