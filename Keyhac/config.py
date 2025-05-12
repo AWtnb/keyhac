@@ -1526,8 +1526,7 @@ def configure(keymap):
         def __init__(self, keymap: Keymap) -> None:
             self._keymap = keymap
 
-        @staticmethod
-        def activate_wnd(wnd: pyauto.Window) -> bool:
+        def activate_wnd(self, wnd: pyauto.Window) -> bool:
             if wnd.isMinimized():
                 wnd.restore()
                 delay()
@@ -1538,9 +1537,9 @@ def configure(keymap):
                     wnd.setForeground()
                     delay(interval)
                     if pyauto.Window.getForeground() == wnd:
-                        wnd.setForeground(True)
-                        wnd.setActive()
-                        delay()
+                        if top := self._keymap.getTopLevelWindow():
+                            top.setForeground(True)
+                            delay()
                         if pyauto.Window.getFocus():
                             return True
                 except Exception as e:
@@ -1730,7 +1729,7 @@ def configure(keymap):
                 return
             if wnd := d.get(result, None):
                 delay(150)
-                job_item.result.append(PseudoCuteExec.activate_wnd(wnd))
+                job_item.result.append(PseudoCuteExec(keymap).activate_wnd(wnd))
 
         def _finished(job_item: ckit.JobItem) -> None:
             if job_item.isCanceled():
@@ -1762,7 +1761,7 @@ def configure(keymap):
             scanner = WndScanner(DEFAULT_BROWSER.get_exe_name(), DEFAULT_BROWSER.get_wnd_class())
             scanner.scan()
             if scanner.found:
-                result = PseudoCuteExec.activate_wnd(scanner.found)
+                result = PseudoCuteExec(keymap).activate_wnd(scanner.found)
                 job_item.results.append(result)
 
         def _finished(job_item: ckit.JobItem) -> None:
