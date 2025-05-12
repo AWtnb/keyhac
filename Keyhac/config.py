@@ -1530,8 +1530,9 @@ def configure(keymap):
         def activate_wnd(wnd: pyauto.Window) -> bool:
             if wnd.isMinimized():
                 wnd.restore()
-            interval = 100
-            timeout = interval * 20
+                delay()
+            interval = 60
+            timeout = interval * 30
             while timeout > 0:
                 try:
                     wnd.setForeground()
@@ -1539,6 +1540,7 @@ def configure(keymap):
                     if pyauto.Window.getForeground() == wnd:
                         wnd.setForeground(True)
                         wnd.setActive()
+                        delay()
                         if pyauto.Window.getFocus():
                             return True
                 except Exception as e:
