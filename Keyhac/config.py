@@ -1538,7 +1538,9 @@ def configure(keymap):
                     delay(interval)
                     if pyauto.Window.getForeground() == wnd:
                         wnd.setForeground(True)
-                        return True
+                        wnd.setActive()
+                        if pyauto.Window.getFocus():
+                            return True
                 except Exception as e:
                     print("Failed to activate window due to exception:", e)
                     return False
