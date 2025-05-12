@@ -1532,19 +1532,14 @@ def configure(keymap):
                 wnd.restore()
                 delay()
             interval = 30
-            timeout = interval * 100
+            timeout = interval * 10
             while timeout > 0:
                 try:
                     wnd.setForeground()
                     delay(interval)
                     if pyauto.Window.getForeground() == wnd:
-                        if p := wnd.getLastActivePopup():
-                            p.setForeground(True)
-                        else:
-                            wnd.setForeground(True)
-                        delay()
-                        if pyauto.Window.getFocus():
-                            return True
+                        wnd.setForeground(True)
+                        return True
                 except Exception as e:
                     print("Failed to activate window due to exception:", e)
                     return False
