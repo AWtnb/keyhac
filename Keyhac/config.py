@@ -1530,8 +1530,8 @@ def configure(keymap):
         def activate_wnd(wnd: pyauto.Window) -> bool:
             if wnd.isMinimized():
                 wnd.restore()
-            interval = 20
-            timeout = interval * 50
+            interval = 100
+            timeout = interval * 20
             while timeout > 0:
                 try:
                     wnd.setForeground()
@@ -1539,9 +1539,11 @@ def configure(keymap):
                     if pyauto.Window.getForeground() == wnd:
                         wnd.setForeground(True)
                         return True
-                except:
+                except Exception as e:
+                    print("Failed to activate window due to exception:", e)
                     return False
                 timeout -= interval
+            print("Failed to activate window due to timeout.")
             return False
 
         def invoke(self, exe_name: str, class_name: str = "", exe_path: str = "") -> Callable:
@@ -1756,7 +1758,7 @@ def configure(keymap):
             scanner = WndScanner(DEFAULT_BROWSER.get_exe_name(), DEFAULT_BROWSER.get_wnd_class())
             scanner.scan()
             if scanner.found:
-                result = PSEUDO_CUTEEXEC.activate_wnd(scanner.found)
+                result = PseudoCuteExec.activate_wnd(scanner.found)
                 job_item.results.append(result)
 
         def _finished(job_item: ckit.JobItem) -> None:
