@@ -1536,8 +1536,9 @@ def configure(keymap):
             counter = 0
             finger = VirtualFinger(self._keymap, 20)
             while counter < trial:
-                if trial == 1:
-                    finger.tap_keys("O-Alt")
+                if counter == 1:
+                    # https://www.autohotkey.com/docs/v2/lib/WinActivate.htm
+                    finger.tap_keys("Alt")
                 try:
                     wnd.setForeground()
                     delay(interval)
