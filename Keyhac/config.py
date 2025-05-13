@@ -1537,8 +1537,7 @@ def configure(keymap):
             finger = VirtualFinger(self._keymap, 20)
             while counter < trial:
                 if counter == 1:
-                    # https://www.autohotkey.com/docs/v2/lib/WinActivate.htm
-                    finger.tap_keys("Alt")
+                    finger.tap_keys("A-Esc")
                 try:
                     wnd.setForeground()
                     delay(interval)
