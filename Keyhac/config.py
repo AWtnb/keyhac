@@ -164,9 +164,6 @@ def configure(keymap):
     # keymap working on any window
     keymap_global = keymap.defineWindowKeymap(check_func=CheckWnd().is_global_target)
 
-    # clipboard menu
-    keymap_global["LC-LS-X"] = keymap.command_ClipboardList
-
     # keyboard macro
     keymap_global["U0-0"] = keymap.command_RecordToggle
     keymap_global["S-U0-0"] = keymap.command_RecordClear
@@ -457,6 +454,9 @@ def configure(keymap):
 
     LAZY_KEYMAP = LazyKeymap(keymap)
 
+    # clipboard menu
+    keymap_global["LC-LS-X"] = LAZY_KEYMAP.defer(keymap.command_ClipboardList, 40)
+
     class KeyPuncher:
         def __init__(
             self,
@@ -481,10 +481,10 @@ def configure(keymap):
                 if self._recover_ime:
                     self._control.enable()
 
-            def __inhook_executer() -> None:
+            def _inhook_executer() -> None:
                 self._keymap.hookCall(_input)
 
-            return self._lazy_keymap.defer(__inhook_executer, self._defer_msec)
+            return self._lazy_keymap.defer(_inhook_executer, self._defer_msec)
 
     MILD_PUNCHER = KeyPuncher(keymap, defer_msec=20)
     GENTLE_PUNCHER = KeyPuncher(keymap, defer_msec=50)
