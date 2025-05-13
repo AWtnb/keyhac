@@ -423,14 +423,15 @@ def configure(keymap):
                 job_item.origin = cb
                 job_item.copied = ""
                 interval = 10
-                timeout = interval * 20
-                while timeout > 0:
+                trial = 20
+                counter = 0
+                while counter < trial:
                     delay(interval)
                     s = cls.get_string()
                     if 0 < len(s.strip()) and s != job_item.origin:
                         job_item.copied = s
                         return
-                    timeout -= interval
+                    counter += 1
 
             subthread_run(_watch_clipboard, deferred)
 
@@ -1526,14 +1527,17 @@ def configure(keymap):
         def __init__(self, keymap: Keymap) -> None:
             self._keymap = keymap
 
-        @staticmethod
-        def activate_wnd(wnd: pyauto.Window) -> bool:
+        def activate_wnd(self, wnd: pyauto.Window) -> bool:
             if wnd.isMinimized():
                 wnd.restore()
                 delay()
             interval = 30
-            timeout = interval * 10
-            while timeout > 0:
+            trial = 10
+            counter = 0
+            finger = VirtualFinger(self._keymap, 20)
+            while counter < trial:
+                if trial == 1:
+                    finger.tap_keys("O-Alt")
                 try:
                     wnd.setForeground()
                     delay(interval)
@@ -1543,7 +1547,7 @@ def configure(keymap):
                 except Exception as e:
                     print("Failed to activate window due to exception:", e)
                     return False
-                timeout -= interval
+                counter += 1
             print("Failed to activate window due to timeout.")
             return False
 
@@ -1565,7 +1569,7 @@ def configure(keymap):
                             PathHandler(exe_path).run()
                         return
                     if not job_item.results[-1]:
-                        VirtualFinger(self._keymap).tap_keys("LCtrl-LAlt-Tab")
+                        VirtualFinger(self._keymap).tap_keys("LWin-T")
 
                 subthread_run(_activate, _finished)
 
@@ -1727,14 +1731,14 @@ def configure(keymap):
                 return
             if wnd := d.get(result, None):
                 delay(150)
-                job_item.result.append(PseudoCuteExec.activate_wnd(wnd))
+                job_item.result.append(PseudoCuteExec(keymap).activate_wnd(wnd))
 
         def _finished(job_item: ckit.JobItem) -> None:
             if job_item.isCanceled():
                 return
             if 0 < len(job_item.result):
                 if not job_item.result[0]:
-                    VIRTUAL_FINGER.tap_keys("LCtrl-LAlt-Tab")
+                    VIRTUAL_FINGER.tap_keys("LWin-T")
 
         subthread_run(_fzf_wnd, _finished)
 
@@ -1749,8 +1753,9 @@ def configure(keymap):
     keymap_global["LS-LC-U1-M"] = invoke_draft
 
     def search_on_browser() -> None:
+        finger = VirtualFinger(keymap, 20)
         if keymap.getWindow().getProcessName() == DEFAULT_BROWSER.get_exe_name():
-            VIRTUAL_FINGER.tap_keys("C-T")
+            finger.tap_keys("C-T")
             return
 
         def _activate(job_item: ckit.JobItem) -> None:
@@ -1759,7 +1764,7 @@ def configure(keymap):
             scanner = WndScanner(DEFAULT_BROWSER.get_exe_name(), DEFAULT_BROWSER.get_wnd_class())
             scanner.scan()
             if scanner.found:
-                result = PseudoCuteExec.activate_wnd(scanner.found)
+                result = PseudoCuteExec(keymap).activate_wnd(scanner.found)
                 job_item.results.append(result)
 
         def _finished(job_item: ckit.JobItem) -> None:
@@ -1767,9 +1772,9 @@ def configure(keymap):
                 PathHandler(DEFAULT_BROWSER.get_exe_path()).run()
                 return
             if not job_item.results[-1]:
-                VIRTUAL_FINGER.tap_keys("LCtrl-LAlt-Tab")
+                finger.tap_keys("LWin-T")
                 return
-            VIRTUAL_FINGER.tap_keys("C-T")
+            finger.tap_keys("C-T")
 
         subthread_run(_activate, _finished)
 
