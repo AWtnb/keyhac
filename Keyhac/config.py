@@ -1531,8 +1531,8 @@ def configure(keymap):
             if wnd.isMinimized():
                 wnd.restore()
                 delay()
-            interval = 30
-            trial = 10
+            interval = 40
+            trial = 20
             counter = 0
             finger = VirtualFinger(self._keymap, 20)
             while counter < trial:
