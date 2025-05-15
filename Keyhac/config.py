@@ -1555,20 +1555,18 @@ def configure(keymap):
             def _executer() -> None:
 
                 def _activate(job_item: ckit.JobItem) -> None:
-                    job_item.results = []
+                    job_item.fuond = None
                     scanner = WndScanner(exe_name, class_name)
                     scanner.scan()
-                    if scanner.found:
-                        delay()
-                        result = self.activate_wnd(scanner.found)
-                        job_item.results.append(result)
+                    job_item.found = scanner.found
 
                 def _finished(job_item: ckit.JobItem) -> None:
-                    if len(job_item.results) < 1:
+                    if not job_item.found:
                         if exe_path:
                             PathHandler(exe_path).run()
                         return
-                    if not job_item.results[-1]:
+                    result = self.activate_wnd(job_item.found)
+                    if not result:
                         VirtualFinger(self._keymap).tap_keys("LWin-T")
 
                 subthread_run(_activate, _finished)
@@ -1684,6 +1682,7 @@ def configure(keymap):
 
         def _fzf_wnd(job_item: ckit.JobItem) -> None:
             job_item.result = []
+            job_item.found = None
             d = {}
             proc = subprocess.Popen(
                 ["fzf.exe"],
@@ -1729,15 +1728,12 @@ def configure(keymap):
             result = result.strip()
             if len(result) < 1:
                 return
-            if wnd := d.get(result, None):
-                delay(150)
-                job_item.result.append(PseudoCuteExec(keymap).activate_wnd(wnd))
+            job_item.found = d.get(result, None)
 
         def _finished(job_item: ckit.JobItem) -> None:
-            if job_item.isCanceled():
-                return
-            if 0 < len(job_item.result):
-                if not job_item.result[0]:
+            if job_item.found:
+                result = PseudoCuteExec(keymap).activate_wnd(job_item.found)
+                if not result:
                     VIRTUAL_FINGER.tap_keys("LWin-T")
 
         subthread_run(_fzf_wnd, _finished)
@@ -1760,21 +1756,20 @@ def configure(keymap):
 
         def _activate(job_item: ckit.JobItem) -> None:
             delay()
-            job_item.results = []
+            job_item.found = None
             scanner = WndScanner(DEFAULT_BROWSER.get_exe_name(), DEFAULT_BROWSER.get_wnd_class())
             scanner.scan()
-            if scanner.found:
-                result = PseudoCuteExec(keymap).activate_wnd(scanner.found)
-                job_item.results.append(result)
+            job_item.found = scanner.found
 
         def _finished(job_item: ckit.JobItem) -> None:
-            if len(job_item.results) < 1:
+            if not job_item.found:
                 PathHandler(DEFAULT_BROWSER.get_exe_path()).run()
                 return
-            if not job_item.results[-1]:
+            result = PseudoCuteExec(keymap).activate_wnd(job_item.found)
+            if result:
+                finger.tap_keys("C-T")
+            else:
                 finger.tap_keys("LWin-T")
-                return
-            finger.tap_keys("C-T")
 
         subthread_run(_activate, _finished)
 
