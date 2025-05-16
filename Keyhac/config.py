@@ -1439,7 +1439,7 @@ def configure(keymap):
             "J": "https://eow.alc.co.jp/search?q={}",
             "K": "https://www.kinokuniya.co.jp/disp/CSfDispListPage_001.jsp?qs=true&ptk=01&q={}",
             "M": "https://www.google.co.jp/maps/search/{}",
-            "N": "https://iss.ndl.go.jp/books?any={}",
+            "N": "https://ndlsearch.ndl.go.jp/search?cs=bib&f-ht=ndl&keyword={}",
             "P": "https://wordpress.org/openverse/search/?q={}",
             "R": "https://researchmap.jp/researchers?q={}",
             "S": "https://scholar.google.com/scholar?nfpr=1&as_vis=1&q={}",
