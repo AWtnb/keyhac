@@ -272,7 +272,8 @@ def configure(keymap):
     ################################
 
     def delay(msec: int = 50) -> None:
-        time.sleep(msec / 1000)
+        if 0 < msec:
+            time.sleep(msec / 1000)
 
     class Tap(NamedTuple):
         send: str
@@ -1527,10 +1528,10 @@ def configure(keymap):
             interval = 40
             trial = 20
             counter = 0
-            finger = VirtualFinger(self._keymap, 20)
+            finger = VirtualFinger(self._keymap)
             while counter < trial:
-                if counter == 1:
-                    finger.tap_keys("A-Esc")
+                if counter % 4 == 0:
+                    finger.tap_keys("Alt")
                 try:
                     wnd.setForeground()
                     delay(interval)
