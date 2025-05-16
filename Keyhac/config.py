@@ -394,6 +394,9 @@ def configure(keymap):
     IME_CONTROL = ImeControl(keymap)
 
     class ClipHandler:
+        def __init__(self, keymap: Keymap) -> None:
+            self.finger = VirtualFinger(keymap)
+
         @staticmethod
         def get_string() -> str:
             return ckit.getClipboardText() or ""
@@ -402,22 +405,19 @@ def configure(keymap):
         def set_string(s: str) -> None:
             ckit.setClipboardText(str(s))
 
-        @classmethod
-        def paste(cls, s: str, format_func: Union[Callable, None] = None) -> None:
+        def paste(self, s: str, format_func: Union[Callable, None] = None) -> None:
             if format_func is not None:
-                cls.set_string(format_func(s))
+                self.set_string(format_func(s))
             else:
-                cls.set_string(s)
-            VIRTUAL_FINGER.tap_keys("C-V")
+                self.set_string(s)
+            self.finger.tap_keys("C-V")
 
-        @classmethod
-        def paste_current(cls, format_func: Union[Callable, None] = None) -> None:
-            cls.paste(cls.get_string(), format_func)
+        def paste_current(self, format_func: Union[Callable, None] = None) -> None:
+            self.paste(self.get_string(), format_func)
 
-        @classmethod
-        def after_copy(cls, deferred: Callable) -> None:
-            cb = cls.get_string()
-            VIRTUAL_FINGER.tap_keys("C-C")
+        def after_copy(self, deferred: Callable) -> None:
+            cb = self.get_string()
+            self.finger.tap_keys("C-C")
 
             def _watch_clipboard(job_item: ckit.JobItem) -> None:
                 job_item.origin = cb
@@ -427,7 +427,7 @@ def configure(keymap):
                 counter = 0
                 while counter < trial:
                     delay(interval)
-                    s = cls.get_string()
+                    s = self.get_string()
                     if 0 < len(s.strip()) and s != job_item.origin:
                         job_item.copied = s
                         return
@@ -435,13 +435,12 @@ def configure(keymap):
 
             subthread_run(_watch_clipboard, deferred)
 
-        @classmethod
-        def append(cls) -> None:
+        def append(self) -> None:
 
             def _push(job_item: ckit.JobItem) -> None:
-                cls.set_string(job_item.origin + "\n" + job_item.copied)
+                self.set_string(job_item.origin + "\n" + job_item.copied)
 
-            cls.after_copy(_push)
+            self.after_copy(_push)
 
     class LazyKeymap:
         def __init__(self, keymap: Keymap) -> None:
@@ -496,7 +495,7 @@ def configure(keymap):
     # custom hotkey
     ################################
 
-    keymap_global["LC-U0-C"] = ClipHandler().append
+    keymap_global["LC-U0-C"] = ClipHandler(keymap).append
 
     # ime: Japanese / Foreign
     keymap_global["U1-J"] = IME_CONTROL.enable_skk
@@ -510,7 +509,7 @@ def configure(keymap):
     keymap_global["LS-(236)"] = IME_CONTROL.start_skk_conv
 
     # paste as plaintext
-    keymap_global["U0-V"] = LAZY_KEYMAP.defer(ClipHandler().paste_current)
+    keymap_global["U0-V"] = LAZY_KEYMAP.defer(ClipHandler(keymap).paste_current)
 
     # paste as plaintext (with trimming removable whitespaces)
     class StrCleaner:
@@ -525,17 +524,17 @@ def configure(keymap):
             )
 
         @classmethod
-        def invoke(cls, remove_white: bool = False, include_linebreak: bool = False) -> Callable:
+        def invoke(cls, remove_white: bool = False, to_sigleline: bool = False) -> Callable:
             def _cleaner(s: str) -> str:
                 s = s.strip()
                 if remove_white:
                     s = cls.clear_space(s)
-                if include_linebreak:
+                if to_sigleline:
                     s = "".join(s.splitlines())
                 return s
 
             def _paster() -> None:
-                ClipHandler().paste_current(_cleaner)
+                ClipHandler(keymap).paste_current(_cleaner)
 
             return _paster
 
@@ -564,7 +563,7 @@ def configure(keymap):
             return "\n".join(["> " + line for line in lines])
 
         def _paster() -> None:
-            ClipHandler().paste_current(_formatter)
+            ClipHandler(keymap).paste_current(_formatter)
 
         return _paster
 
@@ -580,7 +579,7 @@ def configure(keymap):
                 u = job_item.origin
             shell_exec(u.strip())
 
-        ClipHandler().after_copy(_open)
+        ClipHandler(keymap).after_copy(_open)
 
     keymap_global["C-U0-O"] = open_selected_url
 
@@ -591,11 +590,6 @@ def configure(keymap):
     class ConfigMenu:
         def __init__(self, keymap: Keymap) -> None:
             self._keymap = keymap
-
-        @staticmethod
-        def paste_config() -> None:
-            s = Path(ckit.dataPath(), "config.py").read_text("utf-8")
-            ClipHandler().paste(s)
 
         def reload_config(self) -> None:
             ckit.JobQueue.cancelAll()
@@ -641,7 +635,6 @@ def configure(keymap):
                 "R": self.reload_config,
                 "E": self.open_keyhac_repo,
                 "C-E": self.open_skk_repo,
-                "P": self.paste_config,
                 "S": self.open_skk_config,
                 "X": lambda: None,
             }.items():
@@ -1415,7 +1408,7 @@ def configure(keymap):
                         query.remove_hiragana()
                     shell_exec(uri.format(query.encode(strict)))
 
-                ClipHandler().after_copy(_search)
+                ClipHandler(keymap).after_copy(_search)
 
             return LAZY_KEYMAP.defer(_searcher)
 
