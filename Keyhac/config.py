@@ -314,29 +314,36 @@ def configure(keymap):
         def _finish(self) -> None:
             self._keymap.endInput()
 
-        def tap_keys(self, *keys) -> None:
-            self._prepare()
+        def _input_key(self, *keys) -> None:
             for key in keys:
                 delay(self._inter_stroke_pause)
                 self._keymap.setInput_FromString(str(key))
-            self._finish()
 
-        def tap_text(self, s: str) -> None:
-            self._prepare()
+        def _input_text(self, s: str) -> None:
             for c in str(s):
                 delay(self._inter_stroke_pause)
                 self._keymap.input_seq.append(pyauto.Char(c))
+
+        def input_key(self, *keys) -> None:
+            self._prepare()
+            self._input_key(*keys)
+            self._finish()
+
+        def input_text(self, s: str) -> None:
+            self._prepare()
+            self._input_text(s)
             self._finish()
 
         def tap_sequence(self, taps: List[Tap]) -> None:
+            self._prepare()
             for tap in taps:
                 if tap.has_real_key:
-                    self.tap_keys(tap.send)
+                    self._input_key(tap.send)
                 else:
-                    self.tap_text(tap.send)
+                    self._input_text(tap.send)
+            self._finish()
 
     VIRTUAL_FINGER = VirtualFinger(keymap, 10)
-    VIRTUAL_FINGER_QUICK = VirtualFinger(keymap, 0)
 
     class SKKKey:
         kata_key = "Q"
@@ -367,27 +374,27 @@ def configure(keymap):
 
         def enable_skk(self) -> None:
             self.enable()
-            self._finger.tap_keys(self.kana_key)
+            self._finger.input_key(self.kana_key)
 
         def to_skk_latin(self) -> None:
             self.enable_skk()
-            self._finger.tap_keys(self.latin_key)
+            self._finger.input_key(self.latin_key)
 
         def to_skk_abbrev(self) -> None:
             self.enable_skk()
-            self._finger.tap_keys(self.abbrev_key)
+            self._finger.input_key(self.abbrev_key)
 
         def to_skk_kata(self) -> None:
             self.enable_skk()
-            self._finger.tap_keys(self.kata_key)
+            self._finger.input_key(self.kata_key)
 
         def start_skk_conv(self) -> None:
             self.enable_skk()
-            self._finger.tap_keys(self.convpoint_key)
+            self._finger.input_key(self.convpoint_key)
 
         def reconvert_with_skk(self) -> None:
             self.enable_skk()
-            self._finger.tap_keys(self.reconv_key, self.cancel_key)
+            self._finger.input_key(self.reconv_key, self.cancel_key)
 
         def disable(self) -> None:
             self.set_status(0)
@@ -411,14 +418,14 @@ def configure(keymap):
                 self.set_string(format_func(s))
             else:
                 self.set_string(s)
-            self.finger.tap_keys("C-V")
+            self.finger.input_key("C-V")
 
         def paste_current(self, format_func: Union[Callable, None] = None) -> None:
             self.paste(self.get_string(), format_func)
 
         def after_copy(self, deferred: Callable) -> None:
             cb = self.get_string()
-            self.finger.tap_keys("C-C")
+            self.finger.input_key("C-C")
 
             def _watch_clipboard(job_item: ckit.JobItem) -> None:
                 job_item.origin = cb
@@ -837,7 +844,7 @@ def configure(keymap):
                         self._keymap.getTopLevelWindow().maximize()
 
                     def _snapper(_) -> None:
-                        VIRTUAL_FINGER.tap_keys("LShift-LWin-" + towards)
+                        VIRTUAL_FINGER.input_key("LShift-LWin-" + towards)
 
                     subthread_run(_maximize, _snapper)
 
@@ -1531,7 +1538,7 @@ def configure(keymap):
             finger = VirtualFinger(self._keymap)
             while counter < trial:
                 if counter % 4 == 0:
-                    finger.tap_keys("Alt")
+                    finger.input_key("Alt")
                 try:
                     wnd.setForeground()
                     delay(interval)
@@ -1561,7 +1568,7 @@ def configure(keymap):
                         return
                     result = self.activate_wnd(job_item.found)
                     if not result:
-                        VirtualFinger(self._keymap).tap_keys("LWin-T")
+                        VirtualFinger(self._keymap).input_key("LWin-T")
 
                 subthread_run(_activate, _finished)
 
@@ -1728,7 +1735,7 @@ def configure(keymap):
             if job_item.found:
                 result = PseudoCuteExec(keymap).activate_wnd(job_item.found)
                 if not result:
-                    VIRTUAL_FINGER.tap_keys("LWin-T")
+                    VIRTUAL_FINGER.input_key("LWin-T")
 
         subthread_run(_fzf_wnd, _finished)
 
@@ -1745,7 +1752,7 @@ def configure(keymap):
     def search_on_browser() -> None:
         finger = VirtualFinger(keymap, 20)
         if keymap.getWindow().getProcessName() == DEFAULT_BROWSER.get_exe_name():
-            finger.tap_keys("C-T")
+            finger.input_key("C-T")
             return
 
         def _activate(job_item: ckit.JobItem) -> None:
@@ -1761,9 +1768,9 @@ def configure(keymap):
                 return
             result = PseudoCuteExec(keymap).activate_wnd(job_item.found)
             if result:
-                finger.tap_keys("C-T")
+                finger.input_key("C-T")
             else:
-                finger.tap_keys("LWin-T")
+                finger.input_key("LWin-T")
 
         subthread_run(_activate, _finished)
 
@@ -1876,15 +1883,15 @@ def configure(keymap):
 
     def select_all() -> None:
         if keymap.getWindow().getClassName() == "EXCEL6":
-            VIRTUAL_FINGER.tap_keys("C-End", "C-S-Home")
+            VIRTUAL_FINGER.input_key("C-End", "C-S-Home")
         else:
-            VIRTUAL_FINGER.tap_keys("C-A")
+            VIRTUAL_FINGER.input_key("C-A")
 
     keymap_excel["C-A"] = select_all
 
     def select_cell_content() -> None:
         if keymap.getWindow().getClassName() == "EXCEL7":
-            VIRTUAL_FINGER.tap_keys("F2", "C-S-Home")
+            VIRTUAL_FINGER.input_key("F2", "C-S-Home")
 
     keymap_excel["LC-U0-N"] = select_cell_content
 
