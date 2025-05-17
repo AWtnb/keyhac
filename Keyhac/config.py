@@ -1524,33 +1524,33 @@ def configure(keymap):
             self.found = popup
             return False
 
+    def activate_wnd(wnd: pyauto.Window) -> bool:
+        if wnd.isMinimized():
+            wnd.restore()
+            delay()
+        interval = 40
+        trial = 20
+        counter = 0
+        finger = VirtualFinger(keymap)
+        while counter < trial:
+            if counter % 4 == 0:
+                finger.input_key("Alt")
+            try:
+                wnd.setForeground()
+                delay(interval)
+                if pyauto.Window.getForeground() == wnd:
+                    wnd.setForeground(True)
+                    return True
+            except Exception as e:
+                print("Failed to activate window due to exception:", e)
+                return False
+            counter += 1
+        print("Failed to activate window due to timeout.")
+        return False
+
     class PseudoCuteExec:
         def __init__(self, keymap: Keymap) -> None:
             self._keymap = keymap
-
-        def activate_wnd(self, wnd: pyauto.Window) -> bool:
-            if wnd.isMinimized():
-                wnd.restore()
-                delay()
-            interval = 40
-            trial = 20
-            counter = 0
-            finger = VirtualFinger(self._keymap)
-            while counter < trial:
-                if counter % 4 == 0:
-                    finger.input_key("Alt")
-                try:
-                    wnd.setForeground()
-                    delay(interval)
-                    if pyauto.Window.getForeground() == wnd:
-                        wnd.setForeground(True)
-                        return True
-                except Exception as e:
-                    print("Failed to activate window due to exception:", e)
-                    return False
-                counter += 1
-            print("Failed to activate window due to timeout.")
-            return False
 
         def invoke(self, exe_name: str, class_name: str = "", exe_path: str = "") -> Callable:
             def _executer() -> None:
@@ -1566,7 +1566,7 @@ def configure(keymap):
                         if exe_path:
                             PathHandler(exe_path).run()
                         return
-                    result = self.activate_wnd(job_item.found)
+                    result = activate_wnd(job_item.found)
                     if not result:
                         VirtualFinger(self._keymap).input_key("LWin-T")
 
@@ -1733,7 +1733,7 @@ def configure(keymap):
 
         def _finished(job_item: ckit.JobItem) -> None:
             if job_item.found:
-                result = PseudoCuteExec(keymap).activate_wnd(job_item.found)
+                result = activate_wnd(job_item.found)
                 if not result:
                     VIRTUAL_FINGER.input_key("LWin-T")
 
@@ -1766,7 +1766,7 @@ def configure(keymap):
             if not job_item.found:
                 PathHandler(DEFAULT_BROWSER.get_exe_path()).run()
                 return
-            result = PseudoCuteExec(keymap).activate_wnd(job_item.found)
+            result = activate_wnd(job_item.found)
             if result:
                 finger.input_key("C-T")
             else:
