@@ -1494,29 +1494,40 @@ def configure(keymap):
             self.found = popup
             return False
 
-    def activate_wnd(wnd: pyauto.Window) -> bool:
-        if wnd.isMinimized():
-            wnd.restore()
-            delay()
-        interval = 40
-        trial = 20
-        counter = 0
-        finger = VirtualFinger()
-        while counter < trial:
-            if counter % 4 == 0:
-                finger.input_key("Alt")
-            try:
-                wnd.setForeground()
-                delay(interval)
-                if pyauto.Window.getForeground() == wnd:
-                    wnd.setForeground(True)
-                    return True
-            except Exception as e:
-                print("Failed to activate window due to exception:", e)
-                return False
-            counter += 1
-        print("Failed to activate window due to timeout.")
-        return False
+    class WindowActivator:
+        def __init__(self, wnd: pyauto.Window) -> None:
+            self._target = wnd
+
+        def check(self) -> bool:
+            return pyauto.Window.getForeground() == self._target
+
+        def activate(self) -> bool:
+            if self.check():
+                return True
+
+            if self._target.isMinimized():
+                self._target.restore()
+                delay()
+
+            interval = 40
+            trial = 20
+            counter = 0
+            finger = VirtualFinger()
+            while counter < trial:
+                if counter % 4 == 0:
+                    finger.input_key("Alt")
+                try:
+                    self._target.setForeground()
+                    delay(interval)
+                    if self.check():
+                        self._target.setForeground(True)
+                        return True
+                except Exception as e:
+                    print("Failed to activate window due to exception:", e)
+                    return False
+                counter += 1
+            print("Failed to activate window due to timeout.")
+            return False
 
     class PseudoCuteExec:
         @staticmethod
@@ -1534,7 +1545,7 @@ def configure(keymap):
                         if exe_path:
                             PathHandler(exe_path).run()
                         return
-                    result = activate_wnd(job_item.found)
+                    result = WindowActivator(job_item.found).activate()
                     if not result:
                         VirtualFinger().input_key("LWin-T")
 
@@ -1700,7 +1711,7 @@ def configure(keymap):
 
         def _finished(job_item: ckit.JobItem) -> None:
             if job_item.found:
-                result = activate_wnd(job_item.found)
+                result = WindowActivator(job_item.found).activate()
                 if not result:
                     VirtualFinger().input_key("LWin-T")
 
@@ -1733,7 +1744,7 @@ def configure(keymap):
             if not job_item.found:
                 PathHandler(DEFAULT_BROWSER.get_exe_path()).run()
                 return
-            result = activate_wnd(job_item.found)
+            result = WindowActivator(job_item.found).activate()
             if result:
                 finger.input_key("C-T")
             else:
