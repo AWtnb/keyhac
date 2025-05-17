@@ -171,54 +171,34 @@ def configure(keymap):
     keymap_global["U1-F4"] = keymap.command_RecordPlay
     keymap_global["C-U0-0"] = keymap.command_RecordPlay
 
-    class KeyAllocator:
+    def bind_cursor_keys(wk: WindowKeymap) -> None:
         mod_keys = ("", "S-", "C-", "A-", "C-S-", "C-A-", "S-A-", "C-A-S-")
-        key_status = ("D-", "U-")
+        for mod_key in mod_keys:
+            for key, value in {
+                # move cursor
+                "H": "Left",
+                "J": "Down",
+                "K": "Up",
+                "L": "Right",
+                # Back / Delete
+                "B": "Back",
+                "D": "Delete",
+                # Home / End
+                "A": "Home",
+                "E": "End",
+                # Enter
+                "Space": "Enter",
+            }.items():
+                wk[mod_key + "U0-" + key] = mod_key + value
 
-        def __init__(self, km: WindowKeymap) -> None:
-            self._keymap = km
+    bind_cursor_keys(keymap_global)
 
-        def cursor_keys(self) -> None:
-            for mod_key in self.mod_keys:
-                for key, value in {
-                    # move cursor
-                    "H": "Left",
-                    "J": "Down",
-                    "K": "Up",
-                    "L": "Right",
-                    # Back / Delete
-                    "B": "Back",
-                    "D": "Delete",
-                    # Home / End
-                    "A": "Home",
-                    "E": "End",
-                    # Enter
-                    "Space": "Enter",
-                }.items():
-                    self._keymap[mod_key + "U0-" + key] = mod_key + value
+    def bind_keys(wk: WindowKeymap, mapping_dict: dict) -> None:
+        for key, value in mapping_dict.items():
+            wk[key] = value
 
-        def apply(self, mapping_dict: dict) -> None:
-            for key, value in mapping_dict.items():
-                self._keymap[key] = value
-
-        def apply_quotation(self, mapping_dict: dict) -> None:
-            for key, value in mapping_dict.items():
-                self._keymap[key] = value, value, "Left"
-
-        def ignore_capslock(self) -> None:
-            for stat in self.key_status:
-                for mod_key in self.mod_keys:
-                    self._keymap[mod_key + stat + "Capslock"] = lambda: None
-
-        def ignore_kanakey(self) -> None:
-            for stat in self.key_status:
-                for mod_key in self.mod_keys:
-                    for vk in list(range(124, 136)) + list(range(240, 243)) + list(range(245, 254)):
-                        self._keymap[mod_key + stat + str(vk)] = lambda: None
-
-    GLOBAL_KEY_ALLOCATOR = KeyAllocator(keymap_global)
-    GLOBAL_KEY_ALLOCATOR.cursor_keys()
-    GLOBAL_KEY_ALLOCATOR.apply(
+    bind_keys(
+        keymap_global,
         {
             # close
             "LC-Q": ("A-F4"),
@@ -256,15 +236,20 @@ def configure(keymap):
             # print
             "F1": ("C-P"),
             "U1-F1": ("F1"),
-        }
+        },
     )
 
-    GLOBAL_KEY_ALLOCATOR.apply_quotation(
+    def bind_paired_keys(wk: WindowKeymap, mapping_dict: dict) -> None:
+        for key, value in mapping_dict.items():
+            wk[key] = value, value, "Left"
+
+    bind_paired_keys(
+        keymap_global,
         {
             "U0-2": "LS-2",
             "U0-7": "LS-7",
             "U0-AtMark": "LS-AtMark",
-        }
+        },
     )
 
     ################################
@@ -303,26 +288,27 @@ def configure(keymap):
             return seq
 
     class VirtualFinger:
-        def __init__(self, keymap: Keymap, inter_stroke_pause: int = 10) -> None:
-            self._keymap = keymap
+        def __init__(self, inter_stroke_pause: int = 10) -> None:
             self._inter_stroke_pause = inter_stroke_pause
 
-        def _prepare(self) -> None:
-            self._keymap.setInput_Modifier(0)
-            self._keymap.beginInput()
+        @staticmethod
+        def _prepare() -> None:
+            keymap.setInput_Modifier(0)
+            keymap.beginInput()
 
-        def _finish(self) -> None:
-            self._keymap.endInput()
+        @staticmethod
+        def _finish() -> None:
+            keymap.endInput()
 
         def _input_key(self, *keys) -> None:
             for key in keys:
                 delay(self._inter_stroke_pause)
-                self._keymap.setInput_FromString(str(key))
+                keymap.setInput_FromString(str(key))
 
         def _input_text(self, s: str) -> None:
             for c in str(s):
                 delay(self._inter_stroke_pause)
-                self._keymap.input_seq.append(pyauto.Char(c))
+                keymap.input_seq.append(pyauto.Char(c))
 
         def input_key(self, *keys) -> None:
             self._prepare()
@@ -343,8 +329,6 @@ def configure(keymap):
                     self._input_text(tap.send)
             self._finish()
 
-    VIRTUAL_FINGER = VirtualFinger(keymap, 10)
-
     class SKKKey:
         kata_key = "Q"
         kana_key = "C-J"
@@ -355,16 +339,15 @@ def configure(keymap):
         convpoint_key = "S-0"
 
     class ImeControl(SKKKey):
-        def __init__(self, keymap: Keymap, inter_stroke_pause: int = 10) -> None:
-            self._keymap = keymap
-            self._finger = VirtualFinger(self._keymap, inter_stroke_pause)
+        def __init__(self, inter_stroke_pause: int = 10) -> None:
+            self._finger = VirtualFinger(inter_stroke_pause)
 
         def get_status(self) -> int:
-            return self._keymap.getWindow().getImeStatus()
+            return keymap.getWindow().getImeStatus()
 
         def set_status(self, mode: int) -> None:
             if self.get_status() != mode:
-                self._keymap.getWindow().setImeStatus(mode)
+                keymap.getWindow().setImeStatus(mode)
 
         def is_enabled(self) -> bool:
             return self.get_status() == 1
@@ -399,12 +382,7 @@ def configure(keymap):
         def disable(self) -> None:
             self.set_status(0)
 
-    IME_CONTROL = ImeControl(keymap)
-
     class ClipHandler:
-        def __init__(self, keymap: Keymap) -> None:
-            self.finger = VirtualFinger(keymap)
-
         @staticmethod
         def get_string() -> str:
             return ckit.getClipboardText() or ""
@@ -413,19 +391,22 @@ def configure(keymap):
         def set_string(s: str) -> None:
             ckit.setClipboardText(str(s))
 
-        def paste(self, s: str, format_func: Union[Callable, None] = None) -> None:
+        @classmethod
+        def paste(cls, s: str, format_func: Union[Callable, None] = None) -> None:
             if format_func is not None:
-                self.set_string(format_func(s))
+                cls.set_string(format_func(s))
             else:
-                self.set_string(s)
-            self.finger.input_key("C-V")
+                cls.set_string(s)
+            VirtualFinger().input_key("C-V")
 
-        def paste_current(self, format_func: Union[Callable, None] = None) -> None:
-            self.paste(self.get_string(), format_func)
+        @classmethod
+        def paste_current(cls, format_func: Union[Callable, None] = None) -> None:
+            cls.paste(cls.get_string(), format_func)
 
-        def after_copy(self, deferred: Callable) -> None:
-            cb = self.get_string()
-            self.finger.input_key("C-C")
+        @classmethod
+        def after_copy(cls, deferred: Callable) -> None:
+            cb = cls.get_string()
+            VirtualFinger().input_key("C-C")
 
             def _watch_clipboard(job_item: ckit.JobItem) -> None:
                 job_item.origin = cb
@@ -435,7 +416,7 @@ def configure(keymap):
                 counter = 0
                 while counter < trial:
                     delay(interval)
-                    s = self.get_string()
+                    s = cls.get_string()
                     if 0 < len(s.strip()) and s != job_item.origin:
                         job_item.copied = s
                         return
@@ -443,69 +424,59 @@ def configure(keymap):
 
             subthread_run(_watch_clipboard, deferred)
 
-        def append(self) -> None:
+        @classmethod
+        def append(cls) -> None:
 
             def _push(job_item: ckit.JobItem) -> None:
-                self.set_string(job_item.origin + "\n" + job_item.copied)
+                cls.set_string(job_item.origin + "\n" + job_item.copied)
 
-            self.after_copy(_push)
+            cls.after_copy(_push)
 
-    class LazyKeymap:
-        def __init__(self, keymap: Keymap) -> None:
-            self._keymap = keymap
+    def lazify(func: Callable, msec: int = 20) -> Callable:
+        def _wrapper() -> None:
+            keymap.delayedCall(func, msec)
 
-        def defer(self, func: Callable, msec: int = 20) -> Callable:
-            def _wrapper() -> None:
-                self._keymap.delayedCall(func, msec)
-
-            return _wrapper
-
-    LAZY_KEYMAP = LazyKeymap(keymap)
+        return _wrapper
 
     # clipboard menu
-    keymap_global["LC-LS-X"] = LAZY_KEYMAP.defer(keymap.command_ClipboardList, 40)
+    keymap_global["LC-LS-X"] = lazify(keymap.command_ClipboardList, 40)
 
-    class KeyPuncher:
+    class DirectInputter:
         def __init__(
             self,
-            keymap: Keymap,
             recover_ime: bool = False,
             inter_stroke_pause: int = 0,
             defer_msec: int = 0,
         ) -> None:
             self._recover_ime = recover_ime
             self._defer_msec = defer_msec
-            self._keymap = keymap
-            self._finger = VirtualFinger(self._keymap, inter_stroke_pause)
-            self._control = ImeControl(self._keymap)
-            self._lazy_keymap = LazyKeymap(self._keymap)
+            self._finger = VirtualFinger(inter_stroke_pause)
 
         def invoke(self, *sequence) -> Callable:
+            control = ImeControl()
             seq = Taps().from_sequence(sequence)
 
             def _input() -> None:
-                self._control.disable()
+                control.disable()
                 self._finger.tap_sequence(seq)
                 if self._recover_ime:
-                    self._control.enable()
+                    control.enable()
 
             def _inhook_executer() -> None:
-                self._keymap.hookCall(_input)
+                keymap.hookCall(_input)
 
-            return self._lazy_keymap.defer(_inhook_executer, self._defer_msec)
+            return lazify(_inhook_executer, self._defer_msec)
 
-    MILD_PUNCHER = KeyPuncher(keymap, defer_msec=20)
-    GENTLE_PUNCHER = KeyPuncher(keymap, defer_msec=50)
-
-    keymap_global["U0-4"] = GENTLE_PUNCHER.invoke("$_")
+    keymap_global["U0-4"] = DirectInputter(defer_msec=50).invoke("$_")
 
     ################################
     # custom hotkey
     ################################
 
-    keymap_global["LC-U0-C"] = ClipHandler(keymap).append
+    keymap_global["LC-U0-C"] = ClipHandler().append
 
     # ime: Japanese / Foreign
+    IME_CONTROL = ImeControl()
     keymap_global["U1-J"] = IME_CONTROL.enable_skk
     keymap_global["LC-U0-I"] = IME_CONTROL.to_skk_kata
     keymap_global["U0-F"] = IME_CONTROL.disable
@@ -517,7 +488,7 @@ def configure(keymap):
     keymap_global["LS-(236)"] = IME_CONTROL.start_skk_conv
 
     # paste as plaintext
-    keymap_global["U0-V"] = LAZY_KEYMAP.defer(ClipHandler(keymap).paste_current)
+    keymap_global["U0-V"] = lazify(ClipHandler().paste_current)
 
     # paste as plaintext (with trimming removable whitespaces)
     class StrCleaner:
@@ -542,7 +513,7 @@ def configure(keymap):
                 return s
 
             def _paster() -> None:
-                ClipHandler(keymap).paste_current(_cleaner)
+                ClipHandler().paste_current(_cleaner)
 
             return _paster
 
@@ -571,7 +542,7 @@ def configure(keymap):
             return "\n".join(["> " + line for line in lines])
 
         def _paster() -> None:
-            ClipHandler(keymap).paste_current(_formatter)
+            ClipHandler().paste_current(_formatter)
 
         return _paster
 
@@ -587,7 +558,7 @@ def configure(keymap):
                 u = job_item.origin
             shell_exec(u.strip())
 
-        ClipHandler(keymap).after_copy(_open)
+        ClipHandler().after_copy(_open)
 
     keymap_global["C-U0-O"] = open_selected_url
 
@@ -596,14 +567,12 @@ def configure(keymap):
     ################################
 
     class ConfigMenu:
-        def __init__(self, keymap: Keymap) -> None:
-            self._keymap = keymap
 
-        def reload_config(self) -> None:
+        @staticmethod
+        def reload_config() -> None:
             ckit.JobQueue.cancelAll()
-            self._keymap.configure()
-            self._keymap.updateKeymap()
-            # self._keymap.console_window.reloadTheme()
+            keymap.configure()
+            keymap.updateKeymap()
             ts = datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S")
             balloon("{} reloaded config.py".format(ts))
 
@@ -625,36 +594,38 @@ def configure(keymap):
             else:
                 balloon("cannot find path: '{}'".format(handler.path))
 
-        def open_keyhac_repo(self) -> None:
+        @classmethod
+        def open_keyhac_repo(cls) -> None:
             config_path = os.path.join(os.environ.get("APPDATA"), "Keyhac")
-            self.open_dir(config_path)
+            cls.open_dir(config_path)
 
-        def open_skk_repo(self) -> None:
+        @classmethod
+        def open_skk_repo(cls) -> None:
             config_path = os.path.join(os.environ.get("APPDATA"), "CorvusSKK")
-            self.open_dir(config_path)
+            cls.open_dir(config_path)
 
         @staticmethod
         def open_skk_config() -> None:
             skk_path = PathHandler(r"C:\Windows\System32\IME\IMCRVSKK\imcrvcnf.exe")
             skk_path.run()
 
-        def apply(self, km: WindowKeymap) -> None:
+        @classmethod
+        def apply(cls, km: WindowKeymap) -> None:
             for key, func in {
-                "R": self.reload_config,
-                "E": self.open_keyhac_repo,
-                "C-E": self.open_skk_repo,
-                "S": self.open_skk_config,
+                "R": cls.reload_config,
+                "E": cls.open_keyhac_repo,
+                "C-E": cls.open_skk_repo,
+                "S": cls.open_skk_config,
                 "X": lambda: None,
             }.items():
-                km[key] = LAZY_KEYMAP.defer(func, 50)
+                km[key] = lazify(func, 50)
 
-    CONFIG_MENU = ConfigMenu(keymap)
     keymap_global["LC-U0-X"] = keymap.defineMultiStrokeKeymap()
-    CONFIG_MENU.apply(keymap_global["LC-U0-X"])
+    ConfigMenu().apply(keymap_global["LC-U0-X"])
 
-    keymap.editor = lambda _: CONFIG_MENU.open_keyhac_repo()
+    keymap.editor = lambda _: ConfigMenu().open_keyhac_repo()
 
-    keymap_global["U1-F12"] = LAZY_KEYMAP.defer(ConfigMenu(keymap).reload_config, 50)
+    keymap_global["U1-F12"] = lazify(ConfigMenu().reload_config, 50)
 
     ################################
     # class for position on monitor
@@ -712,15 +683,14 @@ def configure(keymap):
             return Rect(*r)
 
     class Rectizor:
-        def __init__(self, keymap: Keymap, rect: Rect) -> None:
-            self._keymap = keymap
+        def __init__(self, rect: Rect) -> None:
             self._rect = rect.to_list()
 
         def check_rect(self, wnd: pyauto.Window) -> bool:
             return wnd.getRect() == self._rect
 
         def snap(self) -> None:
-            wnd = self._keymap.getTopLevelWindow()
+            wnd = keymap.getTopLevelWindow()
             if not wnd or CheckWnd.is_keyhac_console(wnd) or self.check_rect(wnd):
                 return
 
@@ -740,8 +710,7 @@ def configure(keymap):
         _variants = {"small": 1 / 3, "middle": 1 / 2, "large": 2 / 3}
         _edges = ["left", "top", "right", "bottom"]
 
-        def __init__(self, keymap: Keymap) -> None:
-            self._keymap = keymap
+        def __init__(self) -> None:
             self.mapping: Dict[str, Dict[str, Rectizor]] = {}
 
         def allocate(self, rect: Rect) -> None:
@@ -750,15 +719,15 @@ def configure(keymap):
                 for size, scale in self._variants.items():
                     resized = rect.resize(scale, edge)
                     if resized.is_valid():
-                        d[size] = Rectizor(self._keymap, resized)
+                        d[size] = Rectizor(resized)
                 self.mapping[self._edges[edge]] = d
 
     class KeyhacMonitors:
-        def __init__(self, keymap: Keymap) -> None:
+        def __init__(self) -> None:
             monitor_infos = self.get_sorted()
             self._monitors = []
             for mi in monitor_infos:
-                m = KeyhacMonitor(keymap)
+                m = KeyhacMonitor()
                 m.allocate(Rect(*mi[1]))
                 self._monitors.append(m)
 
@@ -822,38 +791,38 @@ def configure(keymap):
             "Up": "top",
         }
 
-        def __init__(self, keymap: Keymap) -> None:
-            self._keymap = keymap
-
-        def flexible(self, km: WindowKeymap) -> None:
-            monitors = KeyhacMonitors(self._keymap).monitors
-            for monitor_mod, monitor_idx in self.monitor_dict.items():
-                for area_mod, size in self.size_dict.items():
-                    for key, pos in self.snap_key_dict.items():
+        @classmethod
+        def flexible(cls, km: WindowKeymap) -> None:
+            monitors = KeyhacMonitors().monitors
+            for monitor_mod, monitor_idx in cls.monitor_dict.items():
+                for area_mod, size in cls.size_dict.items():
+                    for key, pos in cls.snap_key_dict.items():
                         if monitor_idx < len(monitors):
                             rectizor = monitors[monitor_idx].mapping[pos].get(size, None)
                             func = rectizor.snap if rectizor else lambda: balloon("invalid rect.")
                             if rectizor:
-                                km[monitor_mod + area_mod + key] = LAZY_KEYMAP.defer(func, 50)
+                                km[monitor_mod + area_mod + key] = lazify(func, 50)
 
-        def maximize(self, km: WindowKeymap, mapping_dict: dict) -> None:
+        @staticmethod
+        def maximize(km: WindowKeymap, mapping_dict: dict) -> None:
+            finger = VirtualFinger()
             for key, towards in mapping_dict.items():
 
                 def _snap() -> None:
                     def _maximize(_) -> None:
-                        self._keymap.getTopLevelWindow().maximize()
+                        keymap.getTopLevelWindow().maximize()
 
                     def _snapper(_) -> None:
-                        VIRTUAL_FINGER.input_key("LShift-LWin-" + towards)
+                        finger.input_key("LShift-LWin-" + towards)
 
                     subthread_run(_maximize, _snapper)
 
                 km[key] = _snap
 
-    RectizorAllocator(keymap).flexible(keymap_global["U1-M"])
+    RectizorAllocator().flexible(keymap_global["U1-M"])
 
-    RectizorAllocator(keymap).maximize(keymap_global, {"LC-U1-L": "Right", "LC-U1-H": "Left"})
-    RectizorAllocator(keymap).maximize(
+    RectizorAllocator.maximize(keymap_global, {"LC-U1-L": "Right", "LC-U1-H": "Left"})
+    RectizorAllocator.maximize(
         keymap_global["U1-M"],
         {
             "U0-L": "Right",
@@ -864,14 +833,13 @@ def configure(keymap):
     )
 
     class WndShrinker:
-        def __init__(self, keymap: Keymap) -> None:
-            self._keymap = keymap
 
-        def invoke_snapper(self, toward: RectEdge) -> Callable:
+        @staticmethod
+        def invoke_snapper(toward: RectEdge) -> Callable:
 
             def _snapper() -> None:
                 def __snap(_) -> None:
-                    wnd = self._keymap.getTopLevelWindow()
+                    wnd = keymap.getTopLevelWindow()
                     rect = wnd.getRect()
                     resized = Rect(*rect).resize(0.5, toward)
                     if resized.is_valid():
@@ -884,61 +852,64 @@ def configure(keymap):
 
             return _snapper
 
-        def apply(self, km: WindowKeymap) -> None:
+        @classmethod
+        def apply(cls, km: WindowKeymap) -> None:
             for key, toward in {
                 "H": RectEdge.left,
                 "L": RectEdge.right,
                 "K": RectEdge.top,
                 "J": RectEdge.bottom,
             }.items():
-                km["U1-" + key] = self.invoke_snapper(toward)
+                km["U1-" + key] = cls.invoke_snapper(toward)
 
-    WndShrinker(keymap).apply(keymap_global["U1-M"])
+    WndShrinker().apply(keymap_global["U1-M"])
 
     ################################
     # set cursor position
     ################################
 
     class CursorPos:
-        def __init__(self, keymap: Keymap) -> None:
-            self._keymap = keymap
-            self.pos = []
+        @staticmethod
+        def get_pos() -> list:
+            pos = []
             monitor_infos = KeyhacMonitors.get_sorted()
             for m in monitor_infos:
                 rect = Rect(*m[1])
                 for i in (1, 3):
                     y = rect.top + int(rect.height / 2)
                     x = rect.left + int(rect.width / 4) * i
-                    self.pos.append([x, y])
+                    pos.append([x, y])
+            return pos
 
-        def get_position_index(self) -> int:
+        @classmethod
+        def snap(cls) -> None:
+            pos = cls.get_pos()
             x, y = pyauto.Input.getCursorPos()
-            for i, p in enumerate(self.pos):
+            idx = -1
+            for i, p in enumerate(pos):
                 if p[0] == x and p[1] == y:
-                    return i
-            return -1
-
-        def snap(self) -> None:
-            idx = self.get_position_index()
-            if idx < 0 or idx == len(self.pos) - 1:
-                self.set_position(*self.pos[0])
+                    idx = i
+            if idx < 0 or idx == len(pos) - 1:
+                cls.set_position(*pos[0])
             else:
-                self.set_position(*self.pos[idx + 1])
+                cls.set_position(*pos[idx + 1])
 
-        def set_position(self, x: int, y: int) -> None:
-            self._keymap.beginInput()
-            self._keymap.input_seq.append(pyauto.MouseMove(x, y))
-            self._keymap.endInput()
+        @staticmethod
+        def set_position(x: int, y: int) -> None:
+            keymap.beginInput()
+            keymap.input_seq.append(pyauto.MouseMove(x, y))
+            keymap.endInput()
 
-        def snap_to_center(self) -> None:
-            wnd = self._keymap.getTopLevelWindow()
+        @classmethod
+        def snap_to_center(cls) -> None:
+            wnd = keymap.getTopLevelWindow()
             wnd_left, wnd_top, wnd_right, wnd_bottom = wnd.getRect()
             to_x = int((wnd_left + wnd_right) / 2)
             to_y = int((wnd_bottom + wnd_top) / 2)
-            self.set_position(to_x, to_y)
+            cls.set_position(to_x, to_y)
 
-    keymap_global["O-RCtrl"] = CursorPos(keymap).snap
-    keymap_global["O-RShift"] = CursorPos(keymap).snap_to_center
+    keymap_global["O-RCtrl"] = CursorPos().snap
+    keymap_global["O-RShift"] = CursorPos().snap_to_center
 
     ################################
     # input customize
@@ -947,11 +918,10 @@ def configure(keymap):
     class SKKSender:
         def __init__(
             self,
-            keymap: Keymap,
             inter_stroke_pause: int = 0,
         ) -> None:
-            self._finger = VirtualFinger(keymap, inter_stroke_pause)
-            self._control = ImeControl(keymap)
+            self._finger = VirtualFinger(inter_stroke_pause)
+            self._control = ImeControl(inter_stroke_pause)
 
         def under_kanamode(self, *sequence) -> Callable:
             taps = Taps().from_sequence(sequence)
@@ -972,23 +942,24 @@ def configure(keymap):
             return _send
 
     # select-to-left with ime control
-    keymap_global["U1-B"] = SKKSender(keymap).under_kanamode("S-Left")
-    keymap_global["LS-U1-B"] = SKKSender(keymap).under_kanamode("S-Right")
-    keymap_global["U1-Space"] = SKKSender(keymap).under_kanamode("C-S-Left")
-    keymap_global["U1-N"] = SKKSender(keymap).under_kanamode(
+    keymap_global["U1-B"] = SKKSender().under_kanamode("S-Left")
+    keymap_global["LS-U1-B"] = SKKSender().under_kanamode("S-Right")
+    keymap_global["U1-Space"] = SKKSender().under_kanamode("C-S-Left")
+    keymap_global["U1-N"] = SKKSender().under_kanamode(
         "C-S-Left", ImeControl.convpoint_key, "S-4", "Tab"
     )
-    keymap_global["U1-4"] = SKKSender(keymap).under_kanamode(SKKKey.convpoint_key, "S-4")
+    keymap_global["U1-4"] = SKKSender().under_kanamode(SKKKey.convpoint_key, "S-4")
 
-    class SKKFinisher:
-        def __init__(self, keymap: Keymap, to_kanamode: bool = True) -> None:
-            self._skk_sender = SKKSender(keymap)
-            self._to_kanamode = to_kanamode
+    class LatinSender(SKKSender):
+        def __init__(self, recover_mode: bool = True) -> None:
+            inter_stroke_pause = 0
+            super().__init__(inter_stroke_pause)
+            self._recover_mode = recover_mode
 
         def invoke(self, *sequence) -> Callable:
-            if self._to_kanamode:
+            if self._recover_mode:
                 sequence = list(sequence) + [ImeControl.kana_key]
-            return self._skk_sender.under_latinmode(*sequence)
+            return self.under_latinmode(*sequence)
 
         def apply(self, km: WindowKeymap, mapping_dict: dict) -> None:
             for key, sent in mapping_dict.items():
@@ -1001,10 +972,10 @@ def configure(keymap):
                 km[key] = self.invoke(*sequence)
 
     # markdown list
-    keymap_global["S-U0-8"] = SKKFinisher(keymap).invoke("- ")
-    keymap_global["U1-1"] = SKKFinisher(keymap).invoke("1. ")
+    keymap_global["S-U0-8"] = LatinSender().invoke("- ")
+    keymap_global["U1-1"] = LatinSender().invoke("1. ")
 
-    SKKFinisher(keymap).apply(
+    LatinSender().apply(
         keymap_global,
         {
             "S-U0-Colon": "\uff1a",  # FULLWIDTH COLON
@@ -1015,7 +986,7 @@ def configure(keymap):
         },
     )
 
-    SKKFinisher(keymap).apply_circumfix(
+    LatinSender().apply_circumfix(
         keymap_global,
         {
             "U0-8": ["\u300e", "\u300f"],  # WHITE CORNER BRACKET 『』
@@ -1031,7 +1002,7 @@ def configure(keymap):
         },
     )
 
-    SKKFinisher(keymap, False).apply(
+    LatinSender(False).apply(
         keymap_global,
         {
             "U0-1": "S-1",
@@ -1044,7 +1015,7 @@ def configure(keymap):
             "U0-Period": "Period",
         },
     )
-    SKKFinisher(keymap, False).apply_circumfix(
+    LatinSender(False).apply_circumfix(
         keymap_global,
         {
             "U0-CloseBracket": ["[", "]"],
@@ -1347,9 +1318,9 @@ def configure(keymap):
         def cleanup(self, s: str) -> str:
             return s.translate(str.maketrans(self._mapping))
 
-    SEARCH_NOISE_MAPPIING = SearchNoiseMapping(" ")
-
     class SearchQuery:
+        noise_mapping = SearchNoiseMapping(" ")
+
         def __init__(self, query: str) -> None:
             self._query = ""
             lines = (
@@ -1388,7 +1359,7 @@ def configure(keymap):
 
         def encode(self, strict: bool = False) -> str:
             words = []
-            for word in SEARCH_NOISE_MAPPIING.cleanup(self._query).split(" "):
+            for word in self.noise_mapping.cleanup(self._query).split(" "):
                 if len(word):
                     if strict:
                         words.append('"{}"'.format(word))
@@ -1398,7 +1369,6 @@ def configure(keymap):
 
     class WebSearcher:
         def __init__(self, uri_mapping: dict) -> None:
-            self._keymap = keymap
             self._uri_mapping = uri_mapping
 
         @staticmethod
@@ -1416,9 +1386,9 @@ def configure(keymap):
                         query.remove_hiragana()
                     shell_exec(uri.format(query.encode(strict)))
 
-                ClipHandler(keymap).after_copy(_search)
+                ClipHandler().after_copy(_search)
 
-            return LAZY_KEYMAP.defer(_searcher)
+            return lazify(_searcher)
 
         @staticmethod
         def _mod_key(s: str) -> list:
@@ -1430,7 +1400,7 @@ def configure(keymap):
                     is_strict = 0 < len(shift_key)
                     strip_hiragana = 0 < len(ctrl_key)
                     trigger_key = shift_key + ctrl_key + "U0-S"
-                    km[trigger_key] = self._keymap.defineMultiStrokeKeymap()
+                    km[trigger_key] = keymap.defineMultiStrokeKeymap()
                     for key, uri in self._uri_mapping.items():
                         km[trigger_key][key] = self.invoke(uri, is_strict, strip_hiragana)
 
@@ -1531,7 +1501,7 @@ def configure(keymap):
         interval = 40
         trial = 20
         counter = 0
-        finger = VirtualFinger(keymap)
+        finger = VirtualFinger()
         while counter < trial:
             if counter % 4 == 0:
                 finger.input_key("Alt")
@@ -1549,10 +1519,8 @@ def configure(keymap):
         return False
 
     class PseudoCuteExec:
-        def __init__(self, keymap: Keymap) -> None:
-            self._keymap = keymap
-
-        def invoke(self, exe_name: str, class_name: str = "", exe_path: str = "") -> Callable:
+        @staticmethod
+        def invoke(exe_name: str, class_name: str = "", exe_path: str = "") -> Callable:
             def _executer() -> None:
 
                 def _activate(job_item: ckit.JobItem) -> None:
@@ -1568,20 +1536,19 @@ def configure(keymap):
                         return
                     result = activate_wnd(job_item.found)
                     if not result:
-                        VirtualFinger(self._keymap).input_key("LWin-T")
+                        VirtualFinger().input_key("LWin-T")
 
                 subthread_run(_activate, _finished)
 
             return _executer
 
-        def apply(self, wnd_keymap: WindowKeymap, remap_table: dict = {}) -> None:
+        @classmethod
+        def apply(cls, wnd_keymap: WindowKeymap, remap_table: dict = {}) -> None:
             for key, params in remap_table.items():
-                func = self.invoke(*params)
-                wnd_keymap[key] = LAZY_KEYMAP.defer(func, 80)
+                func = cls.invoke(*params)
+                wnd_keymap[key] = lazify(func, 80)
 
-    PSEUDO_CUTEEXEC = PseudoCuteExec(keymap)
-
-    PSEUDO_CUTEEXEC.apply(
+    PseudoCuteExec().apply(
         keymap_global,
         {
             "U1-F": (
@@ -1609,7 +1576,7 @@ def configure(keymap):
     )
 
     keymap_global["U1-C"] = keymap.defineMultiStrokeKeymap()
-    PSEUDO_CUTEEXEC.apply(
+    PseudoCuteExec().apply(
         keymap_global["U1-C"],
         {
             "Space": (
@@ -1735,11 +1702,11 @@ def configure(keymap):
             if job_item.found:
                 result = activate_wnd(job_item.found)
                 if not result:
-                    VIRTUAL_FINGER.input_key("LWin-T")
+                    VirtualFinger().input_key("LWin-T")
 
         subthread_run(_fzf_wnd, _finished)
 
-    keymap_global["U1-E"] = LAZY_KEYMAP.defer(fuzzy_window_switcher, 120)
+    keymap_global["U1-E"] = lazify(fuzzy_window_switcher, 120)
 
     def invoke_draft() -> None:
         def _invoke(_) -> None:
@@ -1750,7 +1717,7 @@ def configure(keymap):
     keymap_global["LS-LC-U1-M"] = invoke_draft
 
     def search_on_browser() -> None:
-        finger = VirtualFinger(keymap, 20)
+        finger = VirtualFinger(20)
         if keymap.getWindow().getProcessName() == DEFAULT_BROWSER.get_exe_name():
             finger.input_key("C-T")
             return
@@ -1774,7 +1741,7 @@ def configure(keymap):
 
         subthread_run(_activate, _finished)
 
-    keymap_global["U0-Q"] = LAZY_KEYMAP.defer(search_on_browser, 10)
+    keymap_global["U0-Q"] = lazify(search_on_browser, 10)
 
     ################################
     # application based remap
@@ -1783,8 +1750,8 @@ def configure(keymap):
     # browser
     keymap_browser = keymap.defineWindowKeymap(check_func=CheckWnd.is_browser)
     keymap_browser["LC-LS-W"] = "A-Left"
-    keymap_browser["LC-L"] = KeyPuncher(keymap, defer_msec=50, recover_ime=False).invoke("C-L")
-    keymap_browser["LC-F"] = KeyPuncher(keymap, defer_msec=50, recover_ime=False).invoke("C-F")
+    keymap_browser["LC-L"] = DirectInputter(defer_msec=50, recover_ime=False).invoke("C-L")
+    keymap_browser["LC-F"] = DirectInputter(defer_msec=50, recover_ime=False).invoke("C-F")
 
     # intra
     keymap_intra = keymap.defineWindowKeymap(exe_name="APARClientAWS.exe")
@@ -1792,17 +1759,18 @@ def configure(keymap):
 
     # slack
     keymap_slack = keymap.defineWindowKeymap(exe_name="slack.exe", class_name="Chrome_WidgetWin_1")
-    keymap_slack["F3"] = KeyPuncher(keymap).invoke("C-K")
+    keymap_slack["F3"] = DirectInputter().invoke("C-K")
     keymap_slack["C-K"] = keymap_slack["F3"]
     keymap_slack["C-E"] = keymap_slack["F3"]
-    keymap_slack["F1"] = KeyPuncher(keymap).invoke("S-SemiColon", "Colon")
+    keymap_slack["F1"] = DirectInputter().invoke("S-SemiColon", "Colon")
 
     # vscode
     keymap_vscode = keymap.defineWindowKeymap(exe_name="Code.exe")
 
     def remap_vscode(keys: list, km: WindowKeymap) -> Callable:
+        inputter = DirectInputter(defer_msec=20)
         for key in keys:
-            km[key] = MILD_PUNCHER.invoke(key)
+            km[key] = inputter.invoke(key)
 
     remap_vscode(
         [
@@ -1857,8 +1825,9 @@ def configure(keymap):
     keymap_sumatra_viewmode = keymap.defineWindowKeymap(check_func=sumatra_checker(True))
 
     def sumatra_view_key(km: WindowKeymap) -> None:
+        inputter = DirectInputter(defer_msec=50)
         for key in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
-            km[key] = GENTLE_PUNCHER.invoke(key)
+            km[key] = inputter.invoke(key)
 
     sumatra_view_key(keymap_sumatra_viewmode)
 
@@ -1875,23 +1844,24 @@ def configure(keymap):
     # powerpoint
     keymap_ppt = keymap.defineWindowKeymap(exe_name="powerpnt.exe")
     office_to_pdf(keymap_ppt)
-    keymap_ppt["O-(236)"] = ImeControl(keymap, 40).to_skk_abbrev
+    keymap_ppt["O-(236)"] = ImeControl(40).to_skk_abbrev
 
     # excel
     keymap_excel = keymap.defineWindowKeymap(exe_name="excel.exe")
     office_to_pdf(keymap_excel)
 
     def select_all() -> None:
+        finger = VirtualFinger()
         if keymap.getWindow().getClassName() == "EXCEL6":
-            VIRTUAL_FINGER.input_key("C-End", "C-S-Home")
+            finger.input_key("C-End", "C-S-Home")
         else:
-            VIRTUAL_FINGER.input_key("C-A")
+            finger.input_key("C-A")
 
     keymap_excel["C-A"] = select_all
 
     def select_cell_content() -> None:
         if keymap.getWindow().getClassName() == "EXCEL7":
-            VIRTUAL_FINGER.input_key("F2", "C-S-Home")
+            VirtualFinger().input_key("F2", "C-S-Home")
 
     keymap_excel["LC-U0-N"] = select_cell_content
 
@@ -2265,11 +2235,11 @@ def configure(keymap):
 
         def _finished(job_item: ckit.JobItem) -> None:
             if job_item.result and job_item.paste_string:
-                ClipHandler.paste(job_item.paste_string)
+                ClipHandler().paste(job_item.paste_string)
 
         subthread_run(_fzf, _finished)
 
-    keymap_global["U1-Z"] = LAZY_KEYMAP.defer(fzfmenu, 120)
+    keymap_global["U1-Z"] = lazify(fzfmenu, 120)
 
 
 def configure_ListWindow(window: ListWindow) -> None:
