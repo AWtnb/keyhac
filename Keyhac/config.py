@@ -1515,7 +1515,8 @@ def configure(keymap):
             counter = 0
             finger = VirtualFinger(0)
             while counter < trial:
-                if counter % 4 == 0:
+                if counter % 5 == 0:
+                    # https://www.autohotkey.com/docs/v2/lib/WinActivate.htm
                     finger.input_key("Alt", "Alt")
                 try:
                     self._target.setForeground()
