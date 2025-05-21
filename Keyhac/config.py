@@ -1665,7 +1665,7 @@ def configure(keymap):
             job_item.found = None
             d = {}
             proc = subprocess.Popen(
-                ["fzf.exe"],
+                ["fzf.exe", "--no-mouse"],
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -2202,7 +2202,7 @@ def configure(keymap):
             job_item.paste_string = ""
             job_item.skip_paste = False
             proc = subprocess.Popen(
-                ["fzf.exe"],
+                ["fzf.exe", "--no-mouse"],
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
