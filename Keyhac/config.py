@@ -1516,7 +1516,7 @@ def configure(keymap):
             finger = VirtualFinger()
             while counter < trial:
                 if counter % 4 == 0:
-                    finger.input_key("Alt")
+                    finger.input_key("U-Alt")
                 try:
                     self._target.setForeground()
                     delay(interval)
