@@ -1684,12 +1684,12 @@ def configure(keymap):
                     return True
                 if wnd.getProcessName() in ignore_list:
                     return True
-                if len(wnd.getText()) < 1:
+                if not wnd.getText():
                     return True
                 if popup := wnd.getLastActivePopup():
-                    n = "{} [{}]".format(
-                        popup.getProcessName().replace(".exe", ""), popup.getText()
-                    )
+                    n = popup.getProcessName().replace(".exe", "")
+                    if t := popup.getText():
+                        n += "[{}]".format(t)
                     d[n] = popup
                     proc.stdin.write(n + "\n")
                 return True
