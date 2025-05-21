@@ -300,7 +300,7 @@ def configure(keymap):
         def _finish() -> None:
             keymap.endInput()
 
-        def _input_key(self, *keys) -> None:
+        def _input_key(self, *keys: str) -> None:
             for key in keys:
                 delay(self._inter_stroke_pause)
                 keymap.setInput_FromString(str(key))
@@ -310,7 +310,7 @@ def configure(keymap):
                 delay(self._inter_stroke_pause)
                 keymap.input_seq.append(pyauto.Char(c))
 
-        def input_key(self, *keys) -> None:
+        def input_key(self, *keys: str) -> None:
             self._prepare()
             self._input_key(*keys)
             self._finish()
@@ -943,7 +943,7 @@ def configure(keymap):
 
     # select-to-left with ime control
     keymap_global["U1-B"] = SKKSender().under_kanamode("S-Left")
-    keymap_global["LS-U1-B"] = SKKSender().under_kanamode("S-Right")
+    keymap_global["LS-U1-B"] = SKKSender().under_kanamode("S-Left", "S-Left")
     keymap_global["U1-Space"] = SKKSender().under_kanamode("C-S-Left")
     keymap_global["U1-N"] = SKKSender().under_kanamode(
         "C-S-Left", ImeControl.convpoint_key, "S-4", "Tab"
@@ -1778,31 +1778,19 @@ def configure(keymap):
     # vscode
     keymap_vscode = keymap.defineWindowKeymap(exe_name="Code.exe")
 
-    def remap_vscode(keys: list, km: WindowKeymap) -> Callable:
+    def remap_vscode(*keys: str) -> Callable:
         inputter = DirectInputter(defer_msec=20)
         for key in keys:
-            km[key] = inputter.invoke(key)
+            keymap_vscode[key] = inputter.invoke(key)
 
-    remap_vscode(
-        [
-            "C-E",
-            "C-S-F",
-            "C-S-E",
-            "C-S-G",
-            "RC-RS-X",
-            "C-0",
-            "C-S-P",
-            "C-A-B",
-        ],
-        keymap_vscode,
-    )
+    remap_vscode("C-E", "C-S-F", "C-S-E", "C-S-G", "RC-RS-X", "C-0", "C-S-P", "C-A-B")
 
     # mery
     keymap_mery = keymap.defineWindowKeymap(exe_name="Mery.exe")
 
-    def remap_mery(mapping_dict: dict, km: WindowKeymap) -> Callable:
+    def remap_mery(mapping_dict: dict) -> Callable:
         for key, value in mapping_dict.items():
-            km[key] = value
+            keymap_mery[key] = value
 
     remap_mery(
         {
@@ -1814,8 +1802,7 @@ def configure(keymap):
             "LA-LC-U0-K": "A-C-OpenBracket",
             "LA-LS-U0-J": "A-S-CloseBracket",
             "LA-LS-U0-K": "A-S-OpenBracket",
-        },
-        keymap_mery,
+        }
     )
 
     # sumatra PDF
@@ -1835,12 +1822,12 @@ def configure(keymap):
 
     keymap_sumatra_viewmode = keymap.defineWindowKeymap(check_func=sumatra_checker(True))
 
-    def sumatra_view_key(km: WindowKeymap) -> None:
+    def sumatra_view_key() -> None:
         inputter = DirectInputter(defer_msec=50)
         for key in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
-            km[key] = inputter.invoke(key)
+            keymap_sumatra_viewmode[key] = inputter.invoke(key)
 
-    sumatra_view_key(keymap_sumatra_viewmode)
+    sumatra_view_key()
 
     keymap_sumatra_viewmode["H"] = "C-S-Tab"
     keymap_sumatra_viewmode["L"] = "C-Tab"
