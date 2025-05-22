@@ -413,14 +413,12 @@ def configure(keymap):
                 job_item.copied = ""
                 interval = 10
                 trial = 20
-                counter = 0
-                while counter < trial:
+                for _ in range(trial):
                     delay(interval)
                     s = cls.get_string()
                     if 0 < len(s.strip()) and s != job_item.origin:
                         job_item.copied = s
-                        return
-                    counter += 1
+                        break
 
             subthread_run(_watch_clipboard, deferred)
 
@@ -1512,10 +1510,9 @@ def configure(keymap):
 
             interval = 40
             trial = 20
-            counter = 0
             finger = VirtualFinger(0)
-            while counter < trial:
-                if counter % 5 == 0:
+            for i in range(trial):
+                if (i + 1) % 5 == 0:
                     # https://www.autohotkey.com/docs/v2/lib/WinActivate.htm
                     finger.input_key("Alt", "Alt")
                 try:
@@ -1527,7 +1524,6 @@ def configure(keymap):
                 except Exception as e:
                     print("Failed to activate window due to exception:", e)
                     return False
-                counter += 1
             print("Failed to activate window due to timeout.")
             return False
 
