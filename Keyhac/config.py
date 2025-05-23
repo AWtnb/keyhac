@@ -1510,11 +1510,14 @@ def configure(keymap):
 
             interval = 40
             trial = 20
-            finger = VirtualFinger(20)
+            finger = VirtualFinger(0)
             for i in range(trial):
-                if (i + 1) % 4 == 0:
-                    # https://www.autohotkey.com/docs/v2/lib/WinActivate.htm
-                    finger.input_key("Alt", "Alt")
+                # https://www.autohotkey.com/docs/v2/lib/WinActivate.htm
+                if (n := i + 1) % 5 == 0:
+                    if n == trial:
+                        finger.input_key("U-Alt")
+                    else:
+                        finger.input_key("Alt", "Alt")
                 try:
                     self._target.setForeground()
                     delay(interval)
