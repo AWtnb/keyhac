@@ -1510,9 +1510,9 @@ def configure(keymap):
 
             interval = 40
             trial = 20
-            finger = VirtualFinger(0)
+            finger = VirtualFinger(20)
             for i in range(trial):
-                if (i + 1) % 5 == 0:
+                if (i + 1) % 4 == 0:
                     # https://www.autohotkey.com/docs/v2/lib/WinActivate.htm
                     finger.input_key("Alt", "Alt")
                 try:
