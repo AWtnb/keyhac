@@ -1548,7 +1548,7 @@ def configure(keymap):
                         return
                     result = WindowActivator(job_item.found).activate()
                     if not result:
-                        VirtualFinger().input_key("LWin-T")
+                        VirtualFinger().input_key("LCtrl-LAlt-Tab")
 
                 subthread_run(_activate, _finished)
 
@@ -1714,7 +1714,7 @@ def configure(keymap):
             if job_item.found:
                 result = WindowActivator(job_item.found).activate()
                 if not result:
-                    VirtualFinger().input_key("LWin-T")
+                    VirtualFinger().input_key("LCtrl-LAlt-Tab")
 
         subthread_run(_fzf_wnd, _finished)
 
@@ -1749,7 +1749,7 @@ def configure(keymap):
             if result:
                 finger.input_key("C-T")
             else:
-                finger.input_key("LWin-T")
+                finger.input_key("LCtrl-LAlt-Tab")
 
         subthread_run(_activate, _finished)
 
