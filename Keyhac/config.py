@@ -1507,8 +1507,8 @@ def configure(keymap):
                 self._target.restore()
                 delay()
 
-            interval = 40
-            trial = 20
+            interval = 20
+            trial = 40
             finger = VirtualFinger(0)
             for i in range(trial):
                 # https://www.autohotkey.com/docs/v2/lib/WinActivate.htm
