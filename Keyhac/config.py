@@ -1495,32 +1495,26 @@ def configure(keymap):
     class WindowActivator:
         def __init__(self, wnd: pyauto.Window) -> None:
             self._target = wnd
+            self._finger = VirtualFinger()
 
-        def check(self) -> bool:
+        def _check(self) -> bool:
             return pyauto.Window.getForeground() == self._target
 
-        def activate(self) -> bool:
-            if self.check():
-                return True
-
+        def _activate(self) -> bool:
             if self._target.isMinimized():
                 self._target.restore()
                 delay()
 
             interval = 20
             trial = 40
-            finger = VirtualFinger(0)
             for i in range(trial):
                 # https://www.autohotkey.com/docs/v2/lib/WinActivate.htm
-                if (n := i + 1) % 5 == 0:
-                    if n == trial:
-                        finger.input_key("U-Alt")
-                    else:
-                        finger.input_key("Alt", "Alt")
+                if (i + 1) % 5 == 0:
+                    self._finger.input_key("Alt", "Alt")
                 try:
                     self._target.setForeground()
                     delay(interval)
-                    if self.check():
+                    if self._check():
                         self._target.setForeground(True)
                         return True
                 except Exception as e:
@@ -1528,6 +1522,13 @@ def configure(keymap):
                     return False
             print("Failed to activate window due to timeout.")
             return False
+
+        def activate(self) -> bool:
+            if self._check():
+                return True
+            result = self._activate()
+            self._finger.input_key("U-Alt")
+            return result
 
     class PseudoCuteExec:
         @staticmethod
