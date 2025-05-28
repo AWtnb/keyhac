@@ -7,7 +7,7 @@ import shutil
 import subprocess
 import urllib.parse
 import unicodedata
-from typing import Union, Callable, Dict, List, NamedTuple
+from typing import Union, Callable, Dict, List, Tuple, NamedTuple
 from pathlib import Path
 from winreg import HKEY_CURRENT_USER, HKEY_CLASSES_ROOT, OpenKey, QueryValueEx
 from concurrent.futures import ThreadPoolExecutor
@@ -1500,7 +1500,7 @@ def configure(keymap):
         def _check(self) -> bool:
             return pyauto.Window.getForeground() == self._target
 
-        def _activate(self) -> bool:
+        def _activate(self) -> Tuple[bool, bool]:
             if self._target.isMinimized():
                 self._target.restore()
                 delay()
@@ -1509,25 +1509,28 @@ def configure(keymap):
             trial = 40
             for i in range(trial):
                 # https://www.autohotkey.com/docs/v2/lib/WinActivate.htm
+                knock = False
                 if (i + 1) % 5 == 0:
                     self._finger.input_key("Alt", "Alt")
+                    knock = True
                 try:
                     self._target.setForeground()
                     delay(interval)
                     if self._check():
                         self._target.setForeground(True)
-                        return True
+                        return True, knock
                 except Exception as e:
                     print("Failed to activate window due to exception:", e)
-                    return False
+                    return False, knock
             print("Failed to activate window due to timeout.")
-            return False
+            return False, True
 
         def activate(self) -> bool:
             if self._check():
                 return True
-            result = self._activate()
-            self._finger.input_key("U-Alt")
+            result, wnd_knocked = self._activate()
+            if wnd_knocked:
+                self._finger.input_key("U-Alt")
             return result
 
     class PseudoCuteExec:
