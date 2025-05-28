@@ -20,6 +20,20 @@ Running [`set-startup.ps1`](set-startup.ps1) with `keyhac.exe` path makes shortc
 .\set-startup.ps1 "$env:USERPROFILE\Sync\portable_app\keyhac\keyhac.exe"
 ```
 
+## Notes
+
+### `keyhac.ini`
+
+Set `visible = 0` on `[CONSOLE]` section of `keyhac.ini` to hide console window on startup.
+
+```ini
+[CONSOLE]
+visible = 0
+```
+
+
+### `.stignore`
+
 With [Syncthing](https://syncthing.net/), append below on `.stignore` to skip syncing local history.
 
 ```
