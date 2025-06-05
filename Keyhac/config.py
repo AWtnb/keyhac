@@ -437,7 +437,13 @@ def configure(keymap):
         return _wrapper
 
     # clipboard menu
-    keymap_global["LC-LS-X"] = lazify(keymap.command_ClipboardList, 40)
+    def lazy_clipboard_menu() -> None:
+        def _menu(_) -> None:
+            keymap.command_ClipboardList()
+
+        subthread_run(_menu)
+
+    keymap_global["LC-LS-X"] = lazy_clipboard_menu
 
     class DirectInputter:
         def __init__(
