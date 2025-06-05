@@ -1,12 +1,15 @@
+# https://github.com/smzht/fakeymacs/blob/master/keyhac.bat
+$bat = @'
+@echo off
+
+start "" /high "_"
+'@
+
 $d = $args[0]
 if ($d.length -lt 1) {
     Write-Host "Specify exe path."
-} else {
-    $wsShell = New-Object -ComObject WScript.Shell
-    $startup = $env:USERPROFILE | Join-Path -ChildPath "AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup"
-    $shortcutPath = $startup | Join-Path -ChildPath ((Get-Item $d).BaseName + ".lnk")
-    $shortcut = $wsShell.CreateShortcut($shortcutPath)
-    $shortcut.TargetPath = $d
-    $shortcut.Save()
-    "Created shortcut on startup: {0}" -f $shortcutPath | Write-Host
+}
+else {
+    $bat = $bat -replace "_", $d
+    $bat | Out-File -FilePath ($env:USERPROFILE | Join-Path -ChildPath "AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\keyhac.bat") -Encoding utf8
 }

@@ -14,9 +14,10 @@ Environment:
 $d = "Keyhac"; New-Item -Path ($env:APPDATA | Join-Path -ChildPath $d) -Value ($pwd.Path | Join-Path -ChildPath $d) -ItemType Junction
 ```
 
-Running [`set-startup.ps1`](set-startup.ps1) with `keyhac.exe` path makes shortcut (.lnk) to windows startup:
+Running [`set-startup.ps1`](set-startup.ps1) with `keyhac.exe` path makes `keyhac.bat` on startup, which runs keyhac with high priority:
 
 ```
+# EXAMPLE
 .\set-startup.ps1 "$env:USERPROFILE\Sync\portable_app\keyhac\keyhac.exe"
 ```
 
