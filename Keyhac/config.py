@@ -350,6 +350,11 @@ def configure(keymap):
             if self.get_status() != mode:
                 keymap.getWindow().setImeStatus(mode)
 
+        @staticmethod
+        def is_inputable() -> bool:
+            info = keymap.getWindow().getCaret()
+            return info[0] is not None
+
         def enable(self) -> None:
             self.set_status(1)
 
