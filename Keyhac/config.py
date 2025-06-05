@@ -342,15 +342,13 @@ def configure(keymap):
         def __init__(self, inter_stroke_pause: int = 10) -> None:
             self._finger = VirtualFinger(inter_stroke_pause)
 
-        def get_status(self) -> int:
+        @staticmethod
+        def get_status() -> int:
             return keymap.getWindow().getImeStatus()
 
         def set_status(self, mode: int) -> None:
             if self.get_status() != mode:
                 keymap.getWindow().setImeStatus(mode)
-
-        def is_enabled(self) -> bool:
-            return self.get_status() == 1
 
         def enable(self) -> None:
             self.set_status(1)
