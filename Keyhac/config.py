@@ -434,15 +434,6 @@ def configure(keymap):
 
         return _wrapper
 
-    # clipboard menu
-    def lazy_clipboard_menu() -> None:
-        def _menu(_) -> None:
-            keymap.command_ClipboardList()
-
-        subthread_run(_menu)
-
-    keymap_global["LC-LS-X"] = lazy_clipboard_menu
-
     class DirectInputter:
         def __init__(
             self,
@@ -628,6 +619,15 @@ def configure(keymap):
     keymap.editor = lambda _: ConfigMenu().open_keyhac_repo()
 
     keymap_global["U1-F12"] = lazify(ConfigMenu().reload_config, 50)
+
+    # clipboard menu
+    def lazy_clipboard_menu() -> None:
+        def _menu(_) -> None:
+            keymap.command_ClipboardList()
+
+        subthread_run(_menu)
+
+    keymap_global["LC-LS-X"] = lazify(lazy_clipboard_menu, 50)
 
     ################################
     # class for position on monitor
@@ -1677,6 +1677,7 @@ def configure(keymap):
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 encoding="utf-8",
+                creationflags=subprocess.HIGH_PRIORITY_CLASS
             )
 
             def _walk(wnd: pyauto.Window, _) -> bool:
@@ -1725,7 +1726,7 @@ def configure(keymap):
 
         subthread_run(_fzf_wnd, _finished)
 
-    keymap_global["U1-E"] = lazify(fuzzy_window_switcher, 120)
+    keymap_global["D-U1-E"] = fuzzy_window_switcher
 
     def invoke_draft() -> None:
         def _invoke(_) -> None:
@@ -2245,7 +2246,7 @@ def configure(keymap):
 
         subthread_run(_fzf, _finished)
 
-    keymap_global["U1-Z"] = lazify(fzfmenu, 120)
+    keymap_global["U1-Z"] = fzfmenu
 
 
 def configure_ListWindow(window: ListWindow) -> None:
