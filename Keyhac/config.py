@@ -1496,10 +1496,20 @@ def configure(keymap):
             self.found = popup
             return False
 
+    class WindowKnocker:
+        def __init__(self, interval: int = 20) -> None:
+            self._finger = VirtualFinger(interval)
+
+        def knock(self) -> None:
+            self._finger.input_key("Alt", "Alt")
+
+        def recover(self) -> None:
+            self._finger.input_key("U-Alt")
+
     class WindowActivator:
         def __init__(self, wnd: pyauto.Window) -> None:
             self._target = wnd
-            self._finger = VirtualFinger()
+            self._knocker = WindowKnocker()
 
         def _check(self) -> bool:
             return pyauto.Window.getForeground() == self._target
@@ -1515,7 +1525,7 @@ def configure(keymap):
                 # https://www.autohotkey.com/docs/v2/lib/WinActivate.htm
                 knock = False
                 if (i + 1) % 5 == 0:
-                    self._finger.input_key("Alt", "Alt")
+                    self._knocker.knock()
                     knock = True
                 try:
                     self._target.setForeground()
@@ -1534,7 +1544,7 @@ def configure(keymap):
                 return True
             result, wnd_knocked = self._activate()
             if wnd_knocked:
-                self._finger.input_key("U-Alt")
+                self._knocker.recover()
             return result
 
     class PseudoCuteExec:
@@ -1668,7 +1678,7 @@ def configure(keymap):
             "ApplicationFrameHost.exe",
         ]
 
-        VirtualFinger().input_key("Alt", "Alt")
+        WindowKnocker().knock()
 
         def _fzf_wnd(job_item: ckit.JobItem) -> None:
             job_item.result = []
@@ -2209,6 +2219,8 @@ def configure(keymap):
             return
 
         table = CLIPBOARD_MENU.table
+
+        WindowKnocker().knock()
 
         def _fzf(job_item: ckit.JobItem) -> None:
             job_item.result = False
