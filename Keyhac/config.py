@@ -1660,6 +1660,7 @@ def configure(keymap):
             return
 
         ignore_list = [
+            "fzf.exe",
             "explorer.exe",
             "MouseGestureL.exe",
             "TextInputHost.exe",
@@ -1670,14 +1671,16 @@ def configure(keymap):
         def _fzf_wnd(job_item: ckit.JobItem) -> None:
             job_item.result = []
             job_item.found = None
-            d = {}
+            popup_table = {}
+
+            delay(120)
             proc = subprocess.Popen(
                 ["fzf.exe", "--no-mouse"],
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 encoding="utf-8",
-                creationflags=subprocess.HIGH_PRIORITY_CLASS
+                creationflags=subprocess.HIGH_PRIORITY_CLASS,
             )
 
             def _walk(wnd: pyauto.Window, _) -> bool:
@@ -1697,7 +1700,7 @@ def configure(keymap):
                     n = popup.getProcessName().replace(".exe", "")
                     if t := popup.getText():
                         n += "[{}]".format(t)
-                    d[n] = popup
+                    popup_table[n] = popup
                     proc.stdin.write(n + "\n")
                 return True
 
@@ -1716,7 +1719,7 @@ def configure(keymap):
             result = result.strip()
             if len(result) < 1:
                 return
-            job_item.found = d.get(result, None)
+            job_item.found = popup_table.get(result, None)
 
         def _finished(job_item: ckit.JobItem) -> None:
             if job_item.found:
@@ -1726,7 +1729,7 @@ def configure(keymap):
 
         subthread_run(_fzf_wnd, _finished)
 
-    keymap_global["D-U1-E"] = fuzzy_window_switcher
+    keymap_global["U1-E"] = fuzzy_window_switcher
 
     def invoke_draft() -> None:
         def _invoke(_) -> None:
