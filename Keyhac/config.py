@@ -1668,10 +1668,14 @@ def configure(keymap):
             "ApplicationFrameHost.exe",
         ]
 
+        finger = VirtualFinger()
+        finger.input_key("Alt", "Alt")
+
         def _fzf_wnd(job_item: ckit.JobItem) -> None:
             job_item.result = []
             job_item.found = None
             popup_table = {}
+
 
             delay(120)
             proc = subprocess.Popen(
@@ -1725,7 +1729,7 @@ def configure(keymap):
             if job_item.found:
                 result = WindowActivator(job_item.found).activate()
                 if not result:
-                    VirtualFinger().input_key("LCtrl-LAlt-Tab")
+                    finger.input_key("LCtrl-LAlt-Tab")
 
         subthread_run(_fzf_wnd, _finished)
 
