@@ -1500,10 +1500,11 @@ def configure(keymap):
         def __init__(self, interval: int = 20) -> None:
             self._finger = VirtualFinger(interval)
 
-        def knock(self) -> None:
-            self._finger.input_key("Alt", "Alt")
+        def knock(self, times: int = 2) -> None:
+            alts = ["Alt"] * times
+            self._finger.input_key(*alts)
 
-        def recover(self) -> None:
+        def leave(self) -> None:
             self._finger.input_key("U-Alt")
 
     class WindowActivator:
@@ -1544,7 +1545,7 @@ def configure(keymap):
                 return True
             result, wnd_knocked = self._activate()
             if wnd_knocked:
-                self._knocker.recover()
+                self._knocker.leave()
             return result
 
     class PseudoCuteExec:
@@ -1678,14 +1679,14 @@ def configure(keymap):
             "ApplicationFrameHost.exe",
         ]
 
-        WindowKnocker().knock()
+        knocker = WindowKnocker()
+        knocker.knock(1)
 
         def _fzf_wnd(job_item: ckit.JobItem) -> None:
             job_item.result = []
             job_item.found = None
             popup_table = {}
 
-            delay(120)
             proc = subprocess.Popen(
                 ["fzf.exe", "--no-mouse"],
                 stdin=subprocess.PIPE,
@@ -1734,6 +1735,7 @@ def configure(keymap):
             job_item.found = popup_table.get(result, None)
 
         def _finished(job_item: ckit.JobItem) -> None:
+            knocker.leave()
             if job_item.found:
                 result = WindowActivator(job_item.found).activate()
                 if not result:
