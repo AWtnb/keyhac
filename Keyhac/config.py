@@ -1507,6 +1507,9 @@ def configure(keymap):
         def leave(self) -> None:
             self._finger.input_key("U-Alt")
 
+        def wakeup(self) -> None:
+            self._finger.input_key("LWin-S-M")
+
     class WindowActivator:
         def __init__(self, wnd: pyauto.Window) -> None:
             self._target = wnd
@@ -1679,7 +1682,7 @@ def configure(keymap):
             "ApplicationFrameHost.exe",
         ]
 
-        VirtualFinger().input_key("LWin-S-M")
+        WindowKnocker().wakeup()
 
         def _fzf_wnd(job_item: ckit.JobItem) -> None:
             job_item.result = []
