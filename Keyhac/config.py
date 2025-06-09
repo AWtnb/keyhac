@@ -1683,13 +1683,13 @@ def configure(keymap):
         ]
 
         WindowKnocker().wakeup()
+        delay(100)
 
         def _fzf_wnd(job_item: ckit.JobItem) -> None:
             job_item.result = []
             job_item.found = None
             popup_table = {}
 
-            delay(250)
             proc = subprocess.Popen(
                 ["fzf.exe", "--no-mouse"],
                 stdin=subprocess.PIPE,
