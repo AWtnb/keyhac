@@ -1679,6 +1679,8 @@ def configure(keymap):
             "ApplicationFrameHost.exe",
         ]
 
+        VirtualFinger().input_key("LWin-Home")
+
         def _fzf_wnd(job_item: ckit.JobItem) -> None:
             job_item.result = []
             job_item.found = None
