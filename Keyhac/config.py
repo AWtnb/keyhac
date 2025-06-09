@@ -1679,14 +1679,12 @@ def configure(keymap):
             "ApplicationFrameHost.exe",
         ]
 
-        knocker = WindowKnocker()
-        knocker.knock(1)
-
         def _fzf_wnd(job_item: ckit.JobItem) -> None:
             job_item.result = []
             job_item.found = None
             popup_table = {}
 
+            delay(250)
             proc = subprocess.Popen(
                 ["fzf.exe", "--no-mouse"],
                 stdin=subprocess.PIPE,
@@ -1735,7 +1733,6 @@ def configure(keymap):
             job_item.found = popup_table.get(result, None)
 
         def _finished(job_item: ckit.JobItem) -> None:
-            knocker.leave()
             if job_item.found:
                 result = WindowActivator(job_item.found).activate()
                 if not result:
