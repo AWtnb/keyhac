@@ -496,16 +496,14 @@ def configure(keymap):
 
         @classmethod
         def invoke(cls, remove_white: bool = False, to_sigleline: bool = False) -> Callable:
-            def _cleaner(s: str) -> str:
-                s = s.strip()
+
+            def _paster() -> None:
+                s = ClipHandler().get_string().strip()
                 if remove_white:
                     s = cls.clear_space(s)
                 if to_sigleline:
                     s = "".join(s.splitlines())
-                return s
-
-            def _paster() -> None:
-                ClipHandler().paste(None, _cleaner)
+                ClipHandler().paste(s)
 
             return _paster
 
