@@ -390,16 +390,16 @@ def configure(keymap):
             ckit.setClipboardText(str(s))
 
         @classmethod
-        def paste(cls, s: str, format_func: Union[Callable, None] = None) -> None:
+        def paste(
+            cls, s: Union[str, None] = None, format_func: Union[Callable, None] = None
+        ) -> None:
+            if s is None:
+                s = cls.get_string()
             if format_func is not None:
                 cls.set_string(format_func(s))
             else:
                 cls.set_string(s)
             VirtualFinger().input_key("C-V")
-
-        @classmethod
-        def paste_current(cls, format_func: Union[Callable, None] = None) -> None:
-            cls.paste(cls.get_string(), format_func)
 
         @classmethod
         def after_copy(cls, deferred: Callable) -> None:
@@ -481,9 +481,8 @@ def configure(keymap):
     keymap_global["LS-(236)"] = IME_CONTROL.start_skk_conv
 
     # paste as plaintext
-    keymap_global["U0-V"] = lazify(ClipHandler().paste_current)
+    keymap_global["U0-V"] = lazify(ClipHandler().paste)
 
-    # paste as plaintext (with trimming removable whitespaces)
     class StrCleaner:
         @staticmethod
         def clear_space(s: str) -> str:
@@ -506,7 +505,7 @@ def configure(keymap):
                 return s
 
             def _paster() -> None:
-                ClipHandler().paste_current(_cleaner)
+                ClipHandler().paste(None, _cleaner)
 
             return _paster
 
@@ -535,7 +534,7 @@ def configure(keymap):
             return "\n".join(["> " + line for line in lines])
 
         def _paster() -> None:
-            ClipHandler().paste_current(_formatter)
+            ClipHandler().paste(None, _formatter)
 
         return _paster
 
@@ -2108,29 +2107,9 @@ def configure(keymap):
                 table.append(_join(_split(line)))
             return "\n".join(table)
 
-    class ClipboardMenu(ClipHandler):
+    class ClipboardMenu:
         def __init__(self) -> None:
             self._table = {}
-
-        @classmethod
-        def invoke_formatter(cls, func: Callable) -> Callable:
-            def _formatter() -> str:
-                cb = cls.get_string()
-                if cb:
-                    return func(cb)
-
-            return _formatter
-
-        @classmethod
-        def invoke_replacer(cls, search: str, replace_to: str) -> Callable:
-            reg = re.compile(search)
-
-            def _replacer() -> str:
-                cb = cls.get_string()
-                if cb:
-                    return reg.sub(replace_to, cb)
-
-            return _replacer
 
         @property
         def table(self) -> dict:
@@ -2138,19 +2117,27 @@ def configure(keymap):
 
         def set_formatter(self, mapping: dict) -> None:
             for menu, func in mapping.items():
-                self._table[menu] = self.invoke_formatter(func)
+                self._table[menu] = func
+
+        @staticmethod
+        def invoke_replacer(search: str, replace_to: str) -> Callable:
+            reg = re.compile(search)
+
+            def _replacer(s: str) -> str:
+                return reg.sub(replace_to, s)
+
+            return _replacer
 
         def set_replacer(self, mapping: dict) -> None:
             for menu, args in mapping.items():
                 self._table[menu] = self.invoke_replacer(*args)
 
-        def set_func(self, mapping: dict) -> None:
-            for menu, func in mapping.items():
-                self._table[menu] = func
-
     CLIPBOARD_MENU = ClipboardMenu()
     CLIPBOARD_MENU.set_formatter(
         {
+            "my markdown frontmatter": lambda _: md_frontmatter(),
+            "to lowercase": lambda c: c.lower(),
+            "to uppercase": lambda c: c.upper(),
             "to slack feed subscribe": lambda c: "/feed subscribe {}".format(c),
             "to list": FormatTools.to_list,
             "to deepl-friendly": FormatTools.to_deepl_friendly,
@@ -2206,13 +2193,6 @@ def configure(keymap):
             ),
         }
     )
-    CLIPBOARD_MENU.set_func(
-        {
-            "to lowercase": lambda: ClipHandler.get_string().lower(),
-            "to uppercase": lambda: ClipHandler.get_string().upper(),
-            "my markdown frontmatter": md_frontmatter,
-        }
-    )
 
     def fzfmenu() -> None:
         if not check_fzf():
@@ -2228,9 +2208,8 @@ def configure(keymap):
         WindowKnocker().knock()
 
         def _fzf(job_item: ckit.JobItem) -> None:
-            job_item.result = False
-            job_item.paste_string = ""
-            job_item.skip_paste = False
+            job_item.func = None
+
             proc = subprocess.Popen(
                 ["fzf.exe", "--no-mouse"],
                 stdin=subprocess.PIPE,
@@ -2255,16 +2234,11 @@ def configure(keymap):
             if len(result) < 1:
                 return
 
-            func = table.get(result, None)
-            if func:
-                fmt = func()
-                if 0 < len(fmt):
-                    job_item.result = True
-                    job_item.paste_string = fmt
+            job_item.func = table.get(result, None)
 
         def _finished(job_item: ckit.JobItem) -> None:
-            if job_item.result and job_item.paste_string:
-                ClipHandler().paste(job_item.paste_string)
+            if job_item.func:
+                ClipHandler().paste(None, job_item.func)
 
         subthread_run(_fzf, _finished)
 
