@@ -2151,6 +2151,7 @@ def configure(keymap):
     CLIPBOARD_MENU = ClipboardMenu()
     CLIPBOARD_MENU.set_formatter(
         {
+            "to slack feed subscribe": lambda c: "/feed subscribe {}".format(c),
             "to list": FormatTools.to_list,
             "to deepl-friendly": FormatTools.to_deepl_friendly,
             "swap abbreviation around colon": FormatTools.swap_abbreviation,
