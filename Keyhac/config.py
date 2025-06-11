@@ -1543,6 +1543,7 @@ def configure(keymap):
         def activate(self) -> bool:
             if self._check():
                 return True
+            self._knocker.wakeup()
             result, wnd_knocked = self._activate()
             if wnd_knocked:
                 self._knocker.leave()
