@@ -1689,7 +1689,7 @@ def configure(keymap):
             popup_table = {}
 
             proc = subprocess.Popen(
-                ["fzf.exe", "--no-mouse"],
+                ["fzf.exe", "--no-mouse", "--margin=1"],
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -2210,7 +2210,7 @@ def configure(keymap):
             job_item.func = None
 
             proc = subprocess.Popen(
-                ["fzf.exe", "--no-mouse"],
+                ["fzf.exe", "--no-mouse", "--margin=1"],
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
