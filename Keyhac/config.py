@@ -293,8 +293,8 @@ def configure(keymap):
 
         @staticmethod
         def _prepare() -> None:
-            keymap.setInput_Modifier(0)
             keymap.beginInput()
+            keymap.setInput_Modifier(0)
 
         @staticmethod
         def _finish() -> None:
@@ -1547,6 +1547,7 @@ def configure(keymap):
             result, wnd_knocked = self._activate()
             if wnd_knocked:
                 self._knocker.leave()
+            keymap.setInput_Modifier(0)
             return result
 
     class PseudoCuteExec:
