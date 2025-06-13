@@ -1498,13 +1498,13 @@ def configure(keymap):
             self._target = wnd
 
         @staticmethod
-        def wakeup() -> None:
+        def ready() -> None:
             VirtualFinger().input_key("LWin-S-M")
 
         def _check(self) -> bool:
             return pyauto.Window.getForeground() == self._target
 
-        def _activate(self) -> bool:
+        def activate(self) -> bool:
             if self._check():
                 return True
 
@@ -1528,30 +1528,28 @@ def configure(keymap):
             print("Failed to activate window due to timeout.")
             return False
 
-        def activate(self) -> bool:
-            self.wakeup()
-            result = self._activate()
-            keymap.setInput_Modifier(0)
-            return result
-
     class PseudoCuteExec:
         @staticmethod
         def invoke(exe_name: str, class_name: str = "", exe_path: str = "") -> Callable:
             def _executer() -> None:
 
+                WindowActivator.ready()
+
                 def _activate(job_item: ckit.JobItem) -> None:
-                    job_item.fuond = None
+                    job_item.result = None
                     scanner = WndScanner(exe_name, class_name)
                     scanner.scan()
-                    job_item.found = scanner.found
+                    wnd = scanner.found
+                    if wnd is not None:
+                        job_item.result = WindowActivator(wnd).activate()
 
                 def _finished(job_item: ckit.JobItem) -> None:
-                    if not job_item.found:
+                    if job_item.result is None:
                         if exe_path:
                             PathHandler(exe_path).run()
                         return
-                    result = WindowActivator(job_item.found).activate()
-                    if not result:
+                    keymap.setInput_Modifier(0)
+                    if not job_item.result:
                         VirtualFinger().input_key("LCtrl-LAlt-Tab")
 
                 subthread_run(_activate, _finished)
@@ -1665,12 +1663,11 @@ def configure(keymap):
             "ApplicationFrameHost.exe",
         ]
 
-        WindowActivator.wakeup()
+        WindowActivator.ready()
         delay(100)
 
         def _fzf_wnd(job_item: ckit.JobItem) -> None:
-            job_item.result = []
-            job_item.found = None
+            job_item.result = None
             popup_table = {}
 
             proc = subprocess.Popen(
@@ -1718,12 +1715,14 @@ def configure(keymap):
             result = result.strip()
             if len(result) < 1:
                 return
-            job_item.found = popup_table.get(result, None)
+            wnd = popup_table.get(result, None)
+            if wnd is not None:
+                job_item.result = WindowActivator(wnd).activate()
 
         def _finished(job_item: ckit.JobItem) -> None:
-            if job_item.found:
-                result = WindowActivator(job_item.found).activate()
-                if not result:
+            if job_item.result is not None:
+                keymap.setInput_Modifier(0)
+                if not job_item.result:
                     VirtualFinger().input_key("LCtrl-LAlt-Tab")
 
         subthread_run(_fzf_wnd, _finished)
