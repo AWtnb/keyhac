@@ -1521,7 +1521,7 @@ def configure(keymap):
                 delay()
 
             interval = 20
-            trial = 40
+            trial = 10
             for i in range(trial):
                 # https://www.autohotkey.com/docs/v2/lib/WinActivate.htm
                 knock = False
