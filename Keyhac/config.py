@@ -1493,60 +1493,44 @@ def configure(keymap):
             self.found = popup
             return False
 
-    class WindowKnocker:
-        def __init__(self, interval: int = 20) -> None:
-            self._finger = VirtualFinger(interval)
-
-        def knock(self, times: int = 2) -> None:
-            alts = ["Alt"] * times
-            self._finger.input_key(*alts)
-
-        def leave(self) -> None:
-            self._finger.input_key("U-Alt")
-
-        def wakeup(self) -> None:
-            self._finger.input_key("LWin-S-M")
-
     class WindowActivator:
         def __init__(self, wnd: pyauto.Window) -> None:
             self._target = wnd
-            self._knocker = WindowKnocker()
+
+        @staticmethod
+        def wakeup() -> None:
+            VirtualFinger().input_key("LWin-S-M")
 
         def _check(self) -> bool:
             return pyauto.Window.getForeground() == self._target
 
-        def _activate(self) -> Tuple[bool, bool]:
+        def _activate(self) -> bool:
+            if self._check():
+                return True
+
             if self._target.isMinimized():
                 self._target.restore()
                 delay()
 
             interval = 20
-            trial = 10
-            for i in range(trial):
-                # https://www.autohotkey.com/docs/v2/lib/WinActivate.htm
-                knock = False
-                if (i + 1) % 5 == 0:
-                    self._knocker.knock()
-                    knock = True
+            trial = 40
+            for _ in range(trial):
                 try:
                     self._target.setForeground()
                     delay(interval)
                     if self._check():
                         self._target.setForeground(True)
-                        return True, knock
+                        return True
                 except Exception as e:
                     print("Failed to activate window due to exception:", e)
-                    return False, knock
+                    return False
+
             print("Failed to activate window due to timeout.")
-            return False, True
+            return False
 
         def activate(self) -> bool:
-            if self._check():
-                return True
-            self._knocker.wakeup()
-            result, wnd_knocked = self._activate()
-            if wnd_knocked:
-                self._knocker.leave()
+            self.wakeup()
+            result = self._activate()
             keymap.setInput_Modifier(0)
             return result
 
@@ -1681,7 +1665,7 @@ def configure(keymap):
             "ApplicationFrameHost.exe",
         ]
 
-        WindowKnocker().wakeup()
+        WindowActivator.wakeup()
         delay(100)
 
         def _fzf_wnd(job_item: ckit.JobItem) -> None:
