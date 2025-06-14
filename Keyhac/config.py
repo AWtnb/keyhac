@@ -1560,7 +1560,7 @@ def configure(keymap):
         def apply(cls, wnd_keymap: WindowKeymap, remap_table: dict = {}) -> None:
             for key, params in remap_table.items():
                 func = cls.invoke(*params)
-                wnd_keymap[key] = lazify(func, 80)
+                wnd_keymap[key] = func
 
     PseudoCuteExec().apply(
         keymap_global,
