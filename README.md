@@ -19,6 +19,8 @@ Running [`set-startup.ps1`](set-startup.ps1) with `keyhac.exe` path makes `keyha
 .\set-startup.ps1 "$env:USERPROFILE\Sync\portable_app\keyhac\keyhac.exe"
 ```
 
+Running [`set-startmenu.ps1`] makes start menu to edit this repository on VSCode.
+
 ## Notes
 
 ### `keyhac.ini`
