@@ -58,10 +58,6 @@ def configure(keymap):
         except:
             balloon("invalid path: '{}'".format(path))
 
-    def subthread_run(func: Callable, finished: Union[Callable, None] = None) -> None:
-        job = ckit.JobItem(func, finished)
-        ckit.JobQueue.defaultQueue().enqueue(job)
-
     ################################
     # general setting
     ################################
@@ -328,6 +324,16 @@ def configure(keymap):
                 else:
                     self._input_text(tap.send)
             self._finish()
+
+    def subthread_run(
+        func: Callable,
+        finished: Union[Callable, None] = None,
+        change_focus_in_subthread: bool = False,
+    ) -> None:
+        if change_focus_in_subthread:
+            VirtualFinger().input_key("LWin-S-M")
+        job = ckit.JobItem(func, finished)
+        ckit.JobQueue.defaultQueue().enqueue(job)
 
     class SKKKey:
         kata_key = "Q"
@@ -1497,10 +1503,6 @@ def configure(keymap):
         def __init__(self, wnd: pyauto.Window) -> None:
             self._target = wnd
 
-        @staticmethod
-        def ready() -> None:
-            VirtualFinger().input_key("LWin-S-M")
-
         def _check(self) -> bool:
             return pyauto.Window.getForeground() == self._target
 
@@ -1533,8 +1535,6 @@ def configure(keymap):
         def invoke(exe_name: str, class_name: str = "", exe_path: str = "") -> Callable:
             def _executer() -> None:
 
-                WindowActivator.ready()
-
                 def _activate(job_item: ckit.JobItem) -> None:
                     job_item.result = None
                     scanner = WndScanner(exe_name, class_name)
@@ -1552,7 +1552,7 @@ def configure(keymap):
                     if not job_item.result:
                         VirtualFinger().input_key("LCtrl-LAlt-Tab")
 
-                subthread_run(_activate, _finished)
+                subthread_run(_activate, _finished, True)
 
             return _executer
 
@@ -1663,7 +1663,6 @@ def configure(keymap):
             "ApplicationFrameHost.exe",
         ]
 
-        WindowActivator.ready()
         delay(100)
 
         def _fzf_wnd(job_item: ckit.JobItem) -> None:
@@ -1725,7 +1724,7 @@ def configure(keymap):
                 if not job_item.result:
                     VirtualFinger().input_key("LCtrl-LAlt-Tab")
 
-        subthread_run(_fzf_wnd, _finished)
+        subthread_run(_fzf_wnd, _finished, True)
 
     keymap_global["U1-E"] = fuzzy_window_switcher
 
@@ -1745,24 +1744,25 @@ def configure(keymap):
 
         def _activate(job_item: ckit.JobItem) -> None:
             delay()
-            job_item.found = None
+            job_item.result = None
             scanner = WndScanner(DEFAULT_BROWSER.get_exe_name(), DEFAULT_BROWSER.get_wnd_class())
             scanner.scan()
-            job_item.found = scanner.found
+            wnd = scanner.found
+            if wnd is not None:
+                job_item.result = WindowActivator(wnd).activate()
 
         def _finished(job_item: ckit.JobItem) -> None:
-            if not job_item.found:
+            if job_item.result is None:
                 PathHandler(DEFAULT_BROWSER.get_exe_path()).run()
                 return
-            result = WindowActivator(job_item.found).activate()
-            if result:
+            if job_item.result:
                 finger.input_key("C-T")
             else:
                 finger.input_key("LCtrl-LAlt-Tab")
 
-        subthread_run(_activate, _finished)
+        subthread_run(_activate, _finished, True)
 
-    keymap_global["U0-Q"] = lazify(search_on_browser, 10)
+    keymap_global["U0-Q"] = search_on_browser
 
     ################################
     # application based remap
@@ -2188,8 +2188,6 @@ def configure(keymap):
 
         table = CLIPBOARD_MENU.table
 
-        WindowKnocker().knock()
-
         def _fzf(job_item: ckit.JobItem) -> None:
             job_item.func = None
 
@@ -2223,7 +2221,7 @@ def configure(keymap):
             if job_item.func:
                 ClipHandler().paste(None, job_item.func)
 
-        subthread_run(_fzf, _finished)
+        subthread_run(_fzf, _finished, True)
 
     keymap_global["U1-Z"] = fzfmenu
 
