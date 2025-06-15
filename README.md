@@ -12,14 +12,14 @@ Environment:
 
 Run [`install.ps1`](./install.ps1) to create junction of `Keyhac` to AppData.
 
-Running [`set-startup.ps1`](set-startup.ps1) with `keyhac.exe` path makes `keyhac.bat` on startup, which runs keyhac with high priority:
+Running [`set-startup.ps1`](./set-startup.ps1) with `keyhac.exe` path makes `keyhac.bat` on startup, which runs keyhac with high priority:
 
 ```
 # EXAMPLE
 .\set-startup.ps1 "$env:USERPROFILE\Sync\portable_app\keyhac\keyhac.exe"
 ```
 
-Running [`set-startmenu.ps1`] makes start menu to edit this repository on VSCode.
+Running [`set-startmenu.ps1`](./set-startmenu.ps1) makes start menu to edit this repository on VSCode.
 
 ## Notes
 
