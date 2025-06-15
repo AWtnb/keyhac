@@ -331,7 +331,7 @@ def configure(keymap):
         change_focus_in_subthread: bool = False,
     ) -> None:
         if change_focus_in_subthread:
-            VirtualFinger().input_key("LWin-S-M")
+            VirtualFinger().input_key("Alt", "Alt", "LWin-S-M")
         job = ckit.JobItem(func, finished)
         ckit.JobQueue.defaultQueue().enqueue(job)
 
