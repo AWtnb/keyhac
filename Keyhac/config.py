@@ -196,6 +196,8 @@ def configure(keymap):
     bind_keys(
         keymap_global,
         {
+            # send n and space
+            "LC-U0-N": ("N", "N", "Space"),
             # close
             "LC-Q": ("A-F4"),
             # delete 2
@@ -228,7 +230,6 @@ def configure(keymap):
             "S-U0-C": ("S-Apps"),
             # rename
             "U0-N": ("F2"),
-            "LC-U0-N": ("F2"),
             # print
             "F1": ("C-P"),
             "U1-F1": ("F1"),
@@ -1866,12 +1867,6 @@ def configure(keymap):
             finger.input_key("C-A")
 
     keymap_excel["C-A"] = select_all
-
-    def select_cell_content() -> None:
-        if keymap.getWindow().getClassName() == "EXCEL7":
-            VirtualFinger().input_key("F2", "C-S-Home")
-
-    keymap_excel["LC-U0-N"] = select_cell_content
 
     ################################
     # popup clipboard menu
