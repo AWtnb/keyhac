@@ -2090,17 +2090,13 @@ def configure(keymap):
                 table.append(_join(_split(line)))
             return "\n".join(table)
 
-    class ClipboardMenu:
-        def __init__(self) -> None:
-            self._table = {}
+    keymap.cutsom_clipboard_formatter = {}
 
-        @property
-        def table(self) -> dict:
-            return self._table
-
-        def set_formatter(self, mapping: dict) -> None:
+    class ClipboardFormatMenu:
+        @staticmethod
+        def set_formatter(mapping: dict) -> None:
             for menu, func in mapping.items():
-                self._table[menu] = func
+                keymap.cutsom_clipboard_formatter[menu] = func
 
         @staticmethod
         def invoke_replacer(search: str, replace_to: str) -> Callable:
@@ -2111,17 +2107,18 @@ def configure(keymap):
 
             return _replacer
 
-        def set_replacer(self, mapping: dict) -> None:
+        @classmethod
+        def set_replacer(cls, mapping: dict) -> None:
             for menu, args in mapping.items():
-                self._table[menu] = self.invoke_replacer(*args)
+                keymap.cutsom_clipboard_formatter[menu] = cls.invoke_replacer(*args)
 
-    CLIPBOARD_MENU = ClipboardMenu()
-    CLIPBOARD_MENU.set_formatter(
+    ClipboardFormatMenu.set_formatter(
         {
             "my markdown frontmatter": lambda _: md_frontmatter(),
             "to lowercase": lambda c: c.lower(),
             "to uppercase": lambda c: c.upper(),
             "to slack feed subscribe": lambda c: "/feed subscribe {}".format(c),
+            "to slack feed remove": lambda c: "/feed remove {}".format(c),
             "to list": FormatTools.to_list,
             "to deepl-friendly": FormatTools.to_deepl_friendly,
             "swap abbreviation around colon": FormatTools.swap_abbreviation,
@@ -2150,7 +2147,7 @@ def configure(keymap):
             "zoom invitation": format_zoom_invitation,
         }
     )
-    CLIPBOARD_MENU.set_replacer(
+    ClipboardFormatMenu.set_replacer(
         {
             "escape backslash": (r"\\", r"\\\\"),
             "escape double-quotation": (r"\"", r'\\"'),
@@ -2186,7 +2183,7 @@ def configure(keymap):
             balloon("no text in clipboard.")
             return
 
-        table = CLIPBOARD_MENU.table
+        table = keymap.cutsom_clipboard_formatter
 
         def _fzf(job_item: ckit.JobItem) -> None:
             job_item.func = None
