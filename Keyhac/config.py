@@ -329,10 +329,10 @@ def configure(keymap):
     def subthread_run(
         func: Callable,
         finished: Union[Callable, None] = None,
-        change_focus_in_subthread: bool = False,
+        focus_changed_in_subthread: bool = False,
     ) -> None:
-        if change_focus_in_subthread:
-            VirtualFinger().input_key("Alt", "Alt", "LWin-S-M")
+        if focus_changed_in_subthread:
+            VirtualFinger(0).input_key("LWin-S-M", "Alt", "Alt")
         job = ckit.JobItem(func, finished)
         ckit.JobQueue.defaultQueue().enqueue(job)
 
@@ -629,7 +629,7 @@ def configure(keymap):
         def _menu(_) -> None:
             keymap.command_ClipboardList()
 
-        subthread_run(_menu)
+        subthread_run(_menu, focus_changed_in_subthread=True)
 
     keymap_global["LC-LS-X"] = lazify(lazy_clipboard_menu, 50)
 
@@ -1541,17 +1541,17 @@ def configure(keymap):
                     scanner = WndScanner(exe_name, class_name)
                     scanner.scan()
                     wnd = scanner.found
-                    if wnd is not None:
+                    if wnd is None:
+                        if exe_path:
+                            PathHandler(exe_path).run()
+                    else:
                         job_item.result = WindowActivator(wnd).activate()
 
                 def _finished(job_item: ckit.JobItem) -> None:
-                    if job_item.result is None:
-                        if exe_path:
-                            PathHandler(exe_path).run()
-                        return
-                    keymap.setInput_Modifier(0)
-                    if not job_item.result:
-                        VirtualFinger().input_key("LCtrl-LAlt-Tab")
+                    if job_item.result is not None:
+                        keymap.setInput_Modifier(0)
+                        if not job_item.result:
+                            VirtualFinger().input_key("LCtrl-LAlt-Tab")
 
                 subthread_run(_activate, _finished, True)
 
@@ -1749,17 +1749,17 @@ def configure(keymap):
             scanner = WndScanner(DEFAULT_BROWSER.get_exe_name(), DEFAULT_BROWSER.get_wnd_class())
             scanner.scan()
             wnd = scanner.found
-            if wnd is not None:
+            if wnd is None:
+                PathHandler(DEFAULT_BROWSER.get_exe_path()).run()
+            else:
                 job_item.result = WindowActivator(wnd).activate()
 
         def _finished(job_item: ckit.JobItem) -> None:
-            if job_item.result is None:
-                PathHandler(DEFAULT_BROWSER.get_exe_path()).run()
-                return
-            if job_item.result:
-                finger.input_key("C-T")
-            else:
-                finger.input_key("LCtrl-LAlt-Tab")
+            if job_item.result is not None:
+                if job_item.result:
+                    finger.input_key("C-T")
+                else:
+                    finger.input_key("LCtrl-LAlt-Tab")
 
         subthread_run(_activate, _finished, True)
 
