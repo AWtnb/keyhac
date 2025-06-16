@@ -85,6 +85,7 @@ def configure(keymap):
             return " ".join(params)
 
         def run(self, *args) -> None:
+            # this should be called inside subthread.
             if self.is_accessible():
                 shell_exec(self._path, *args)
             else:
@@ -620,8 +621,28 @@ def configure(keymap):
     keymap_global["LC-U0-X"] = keymap.defineMultiStrokeKeymap()
     ConfigMenu().apply(keymap_global["LC-U0-X"])
 
+    def open_keyhac_repo() -> None:
+        config_path = os.path.join(os.environ.get("APPDATA"), "Keyhac")
+        if not smart_check_path(config_path):
+            balloon("config not found: {}".format(config_path))
+            return
+
+        dir_path = config_path
+        if (real_path := os.path.realpath(config_path)) != dir_path:
+            dir_path = os.path.dirname(real_path)
+
+        def _open(_) -> None:
+            if KEYHAC_EDITOR == "notepad.exe":
+                balloon("keyhac editor 'notepad.exe' cannot open directory.")
+                PathHandler(dir_path).run()
+            else:
+                PathHandler(KEYHAC_EDITOR).run(dir_path)
+
+        subthread_run(_open)
+
     keymap.editor = lambda _: ConfigMenu().open_keyhac_repo()
 
+    keymap_global["U0-F12"] = lazify(open_keyhac_repo, 50)
     keymap_global["U1-F12"] = lazify(ConfigMenu().reload_config, 50)
 
     # clipboard menu
