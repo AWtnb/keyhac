@@ -1003,7 +1003,7 @@ def configure(keymap):
             "U1-8": ["\uff08", "\uff09"],  # FULLWIDTH PARENTHESIS （）
             "U1-Atmark": ["\uff08`", "`\uff09"],  # FULLWIDTH PARENTHESIS and BackTick （``）
             "U0-Y": ["\u3008", "\u3009"],  # ANGLE BRACKET
-            "S-U0-Y": ["\u300a", "\u300b"],  # DOUBLE ANGLE BRACKET
+            "U1-Y": ["\u300a", "\u300b"],  # DOUBLE ANGLE BRACKET
             "U1-OpenBracket": ["\uff3b", "\uff3d"],  # FULLWIDTH SQUARE BRACKET ［］
         },
     )
