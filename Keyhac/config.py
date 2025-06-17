@@ -198,7 +198,7 @@ def configure(keymap):
         keymap_global,
         {
             # send n and space
-            "LC-U0-N": ("N", "N", "Space"),
+            "LS-U0-N": ("N", "N", "Space"),
             # close
             "LC-Q": ("A-F4"),
             # delete 2
