@@ -333,7 +333,7 @@ def configure(keymap):
         focus_changed_in_subthread: bool = False,
     ) -> None:
         if focus_changed_in_subthread:
-            VirtualFinger(0).input_key("LWin-S-M", "Alt", "Alt")
+            VirtualFinger(0).input_key("Alt", "Alt", "U-Alt", "LWin-S-M")
         job = ckit.JobItem(func, finished)
         ckit.JobQueue.defaultQueue().enqueue(job)
 
@@ -561,65 +561,15 @@ def configure(keymap):
     keymap_global["C-U0-O"] = open_selected_url
 
     ################################
-    # config menu
+    # config keys
     ################################
 
-    class ConfigMenu:
-
-        @staticmethod
-        def reload_config() -> None:
-            ckit.JobQueue.cancelAll()
-            keymap.configure()
-            keymap.updateKeymap()
-            ts = datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S")
-            balloon("{} reloaded config.py".format(ts))
-
-        @staticmethod
-        def open_dir(path: str) -> None:
-            if not smart_check_path(path):
-                balloon("config not found: {}".format(path))
-                return
-            dir_path = path
-            if (real_path := os.path.realpath(path)) != dir_path:
-                dir_path = os.path.dirname(real_path)
-            handler = PathHandler(dir_path)
-            if handler.is_accessible():
-                if KEYHAC_EDITOR == "notepad.exe":
-                    balloon("keyhac editor 'notepad.exe' cannot open directory.")
-                    handler.run()
-                else:
-                    PathHandler(KEYHAC_EDITOR).run(handler.path)
-            else:
-                balloon("cannot find path: '{}'".format(handler.path))
-
-        @classmethod
-        def open_keyhac_repo(cls) -> None:
-            config_path = os.path.join(os.environ.get("APPDATA"), "Keyhac")
-            cls.open_dir(config_path)
-
-        @classmethod
-        def open_skk_repo(cls) -> None:
-            config_path = os.path.join(os.environ.get("APPDATA"), "CorvusSKK")
-            cls.open_dir(config_path)
-
-        @staticmethod
-        def open_skk_config() -> None:
-            skk_path = PathHandler(r"C:\Windows\System32\IME\IMCRVSKK\imcrvcnf.exe")
-            skk_path.run()
-
-        @classmethod
-        def apply(cls, km: WindowKeymap) -> None:
-            for key, func in {
-                "R": cls.reload_config,
-                "E": cls.open_keyhac_repo,
-                "C-E": cls.open_skk_repo,
-                "S": cls.open_skk_config,
-                "X": lambda: None,
-            }.items():
-                km[key] = lazify(func, 50)
-
-    keymap_global["LC-U0-X"] = keymap.defineMultiStrokeKeymap()
-    ConfigMenu().apply(keymap_global["LC-U0-X"])
+    def reload_config() -> None:
+        ckit.JobQueue.cancelAll()
+        keymap.configure()
+        keymap.updateKeymap()
+        ts = datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S")
+        balloon("{} reloaded config.py".format(ts))
 
     def open_keyhac_repo() -> None:
         config_path = os.path.join(os.environ.get("APPDATA"), "Keyhac")
@@ -640,10 +590,10 @@ def configure(keymap):
 
         subthread_run(_open)
 
-    keymap.editor = lambda _: ConfigMenu().open_keyhac_repo()
+    keymap.editor = lambda _: open_keyhac_repo()
 
     keymap_global["U0-F12"] = lazify(open_keyhac_repo, 50)
-    keymap_global["U1-F12"] = lazify(ConfigMenu().reload_config, 50)
+    keymap_global["U1-F12"] = lazify(reload_config, 50)
 
     # clipboard menu
     def lazy_clipboard_menu() -> None:
