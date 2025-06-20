@@ -533,20 +533,41 @@ def configure(keymap):
     StrCleaner().apply(keymap_global, "U1-V")
 
     # paste with quote mark
-    def paste_with_anchor(join_lines: bool = False) -> Callable:
-        def _formatter(s: str) -> str:
+    class Quoter:
+        @staticmethod
+        def simple_quote(s: str) -> str:
             lines = s.strip().splitlines()
-            if join_lines:
-                return "> " + "".join([line.strip() for line in lines])
-            return "\n".join(["> " + line for line in lines])
+            return "\n".join([keymap.quote_mark + line for line in lines])
 
-        def _paster() -> None:
-            ClipHandler().paste(None, _formatter)
+        @staticmethod
+        def as_single_line(s: str) -> str:
+            lines = s.strip().splitlines()
+            return keymap.quote_mark + "".join([line.strip() for line in lines])
 
-        return _paster
+        @staticmethod
+        def skip_blank_line(s: str) -> str:
+            lines = []
+            for line in s.strip().splitlines():
+                if 0 < len(line.strip()):
+                    lines.append(keymap.quote_mark + line)
+                else:
+                    lines.append("")
+            return "\n".join(lines)
 
-    keymap_global["U1-Q"] = paste_with_anchor(False)
-    keymap_global["C-U1-Q"] = paste_with_anchor(True)
+        @staticmethod
+        def invoke_paster(func: Callable) -> Callable:
+            def _paster() -> None:
+                ClipHandler().paste(None, func)
+
+            return _paster
+
+        @classmethod
+        def apply(cls, km: WindowKeymap, key: str) -> None:
+            km[key] = cls.invoke_paster(cls.simple_quote)
+            km["C-" + key] = cls.invoke_paster(cls.as_single_line)
+            km["S-" + key] = cls.invoke_paster(cls.skip_blank_line)
+
+    Quoter().apply(keymap_global, "U1-Q")
 
     # open url in browser
     def open_selected_url():
