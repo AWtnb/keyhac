@@ -290,13 +290,32 @@ def configure(keymap):
             self._inter_stroke_pause = inter_stroke_pause
 
         @staticmethod
+        def _release_modifier() -> None:
+            keymap.setInput_Modifier(0)
+
+        @classmethod
+        def release_modifier(cls) -> None:
+            cls._prepare()
+            cls._release_modifier()
+            cls._finish()
+
+        @staticmethod
         def _prepare() -> None:
             keymap.beginInput()
-            keymap.setInput_Modifier(0)
+
+        @classmethod
+        def begin(cls) -> None:
+            cls._prepare()
+            cls._release_modifier()
 
         @staticmethod
         def _finish() -> None:
             keymap.endInput()
+
+        @classmethod
+        def end(cls) -> None:
+            cls._release_modifier()
+            cls._finish()
 
         def _input_key(self, *keys: str) -> None:
             for key in keys:
@@ -309,23 +328,23 @@ def configure(keymap):
                 keymap.input_seq.append(pyauto.Char(c))
 
         def input_key(self, *keys: str) -> None:
-            self._prepare()
+            self.begin()
             self._input_key(*keys)
-            self._finish()
+            self.end()
 
         def input_text(self, s: str) -> None:
-            self._prepare()
+            self.begin()
             self._input_text(s)
-            self._finish()
+            self.end()
 
         def tap_sequence(self, taps: List[Tap]) -> None:
-            self._prepare()
+            self.begin()
             for tap in taps:
                 if tap.has_real_key:
                     self._input_key(tap.send)
                 else:
                     self._input_text(tap.send)
-            self._finish()
+            self.end()
 
     def subthread_run(
         func: Callable,
@@ -334,7 +353,6 @@ def configure(keymap):
     ) -> None:
         if focus_changed_in_subthread:
             VirtualFinger().input_key("Alt", "Alt", "LWin-S-M")
-            keymap.setInput_Modifier(0)
         job = ckit.JobItem(func, finished)
         ckit.JobQueue.defaultQueue().enqueue(job)
 
@@ -1543,9 +1561,10 @@ def configure(keymap):
 
                 def _finished(job_item: ckit.JobItem) -> None:
                     if job_item.result is not None:
-                        keymap.setInput_Modifier(0)
+                        finger = VirtualFinger()
+                        finger.release_modifier()
                         if not job_item.result:
-                            VirtualFinger().input_key("LCtrl-LAlt-Tab")
+                            finger.input_key("LCtrl-LAlt-Tab")
 
                 subthread_run(_activate, _finished, True)
 
@@ -1715,9 +1734,10 @@ def configure(keymap):
 
         def _finished(job_item: ckit.JobItem) -> None:
             if job_item.result is not None:
-                keymap.setInput_Modifier(0)
+                finger = VirtualFinger()
+                finger.release_modifier()
                 if not job_item.result:
-                    VirtualFinger().input_key("LCtrl-LAlt-Tab")
+                    finger.input_key("LCtrl-LAlt-Tab")
 
         subthread_run(_fzf_wnd, _finished, True)
 
