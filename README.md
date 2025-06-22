@@ -14,11 +14,11 @@ Run [`install.ps1`](./install.ps1) to create junction of `Keyhac` to AppData.
 
 ### Optional
 
-Running [`register-task.ps1`](./register-task.ps1) with `keyhac.exe` path makes startup task:
+Running [`set-startup.ps1`](./set-startup.ps1) with `keyhac.exe` path makes startup lnk:
 
 ```PowerShell
 # EXAMPLE
-.\register-task.ps1 "$env:USERPROFILE\Sync\portable_app\keyhac\keyhac.exe"
+.\set-startup.ps1 "$env:USERPROFILE\Sync\portable_app\keyhac\keyhac.exe"
 ```
 
 Running [`set-startmenu.ps1`](./set-startmenu.ps1) makes start menu to edit this repository on VSCode.
