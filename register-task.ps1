@@ -6,7 +6,7 @@ if ($src.length -lt 1) {
 
 $action = New-ScheduledTaskAction -Execute $src
 $trigger = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
-$settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -Priority 5 -ExecutionTimeLimit $(New-TimeSpan -Minutes 1)
+$settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -Priority 5
 
 $taskName = "Keyhac-on-startup"
 
