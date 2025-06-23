@@ -2082,7 +2082,7 @@ def configure(keymap):
 
         @staticmethod
         def trim_honorific(s: str) -> str:
-            reg = re.compile(r"先生$|様$|(先生|様)(?=[、。：；（）［］・！？])")
+            reg = re.compile(r"先生$|様$|(先生|様)(?=[、。：；（）［］・！？\s])")
             return reg.sub("", s)
 
         @staticmethod
