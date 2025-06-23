@@ -430,8 +430,12 @@ def configure(keymap):
 
         @classmethod
         def after_copy(cls, deferred: Callable) -> None:
-            cb = cls.get_string()
-            VirtualFinger().input_key("C-C")
+            try:
+                cb = cls.get_string()
+                VirtualFinger().input_key("C-C")
+            except Exception as e:
+                print(e)
+                return
 
             def _watch_clipboard(job_item: ckit.JobItem) -> None:
                 job_item.origin = cb
@@ -439,10 +443,14 @@ def configure(keymap):
                 interval = 10
                 trial = 20
                 for _ in range(trial):
-                    delay(interval)
-                    s = cls.get_string()
-                    if 0 < len(s.strip()) and s != job_item.origin:
-                        job_item.copied = s
+                    try:
+                        delay(interval)
+                        s = cls.get_string()
+                        if 0 < len(s.strip()) and s != job_item.origin:
+                            job_item.copied = s
+                            break
+                    except Exception as e:
+                        print(e)
                         break
 
             subthread_run(_watch_clipboard, deferred)
