@@ -2086,6 +2086,25 @@ def configure(keymap):
             return reg.sub("", s)
 
         @staticmethod
+        def format_nested_paren(s: str) -> str:
+            stack = []
+            result = list(s)
+            parens = [("\uff08", "\uff09"), ("\u3014", "\u3015")]
+
+            for i, char in enumerate(s):
+                if char == "\uff08":
+                    stack.append(i)
+                elif char == "\uff09":
+                    if stack:
+                        start = stack.pop()
+                        depth = len(stack)
+                        left, right = parens[depth % 2]
+                        result[start] = left
+                        result[i] = right
+
+            return "".join(result)
+
+        @staticmethod
         def mdtable_from_tsv(s: str) -> str:
             delim = "\t"
 
@@ -2161,6 +2180,7 @@ def configure(keymap):
             "to fullwidth symbols": CharWidth().to_full_symbol,
             "to fullwidth bracktets": CharWidth().to_full_brackets,
             "trim honorific": FormatTools.trim_honorific,
+            "fix nested paren": FormatTools.format_nested_paren,
             "zoom invitation": format_zoom_invitation,
         }
     )
