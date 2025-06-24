@@ -423,19 +423,14 @@ def configure(keymap):
             if s is None:
                 s = cls.get_string()
             if format_func is not None:
-                cls.set_string(format_func(s))
-            else:
-                cls.set_string(s)
+                s = format_func(s)
+            cls.set_string(s)
             VirtualFinger().input_key("C-V")
 
         @classmethod
         def after_copy(cls, deferred: Callable) -> None:
-            try:
-                cb = cls.get_string()
-                VirtualFinger().input_key("C-C")
-            except Exception as e:
-                print(e)
-                return
+            cb = cls.get_string()
+            VirtualFinger().input_key("C-C")
 
             def _watch_clipboard(job_item: ckit.JobItem) -> None:
                 job_item.origin = cb
@@ -516,7 +511,7 @@ def configure(keymap):
     keymap_global["LS-(236)"] = IME_CONTROL.start_skk_conv
 
     # paste as plaintext
-    keymap_global["U0-V"] = lazify(ClipHandler().paste)
+    keymap_global["U0-V"] = ClipHandler().paste
 
     class StrCleaner:
         @staticmethod
@@ -640,17 +635,17 @@ def configure(keymap):
 
     keymap.editor = lambda _: open_keyhac_repo()
 
-    keymap_global["U0-F12"] = lazify(open_keyhac_repo, 50)
-    keymap_global["U1-F12"] = lazify(reload_config, 50)
+    keymap_global["U0-F12"] = open_keyhac_repo
+    keymap_global["U1-F12"] = reload_config
 
     # clipboard menu
-    def lazy_clipboard_menu() -> None:
+    def clipboard_menu_in_subthread() -> None:
         def _menu(_) -> None:
             keymap.command_ClipboardList()
 
-        subthread_run(_menu, focus_changed_in_subthread=True)
+        subthread_run(_menu)
 
-    keymap_global["LC-LS-X"] = lazify(lazy_clipboard_menu, 50)
+    keymap_global["LC-LS-X"] = clipboard_menu_in_subthread
 
     ################################
     # class for position on monitor
@@ -710,6 +705,10 @@ def configure(keymap):
     class Rectizor:
         def __init__(self, rect: Rect) -> None:
             self._rect = rect.to_list()
+
+        @property
+        def rect(self):
+            return self._rect
 
         def check_rect(self, wnd: pyauto.Window) -> bool:
             return wnd.getRect() == self._rect
@@ -824,9 +823,10 @@ def configure(keymap):
                     for key, pos in cls.snap_key_dict.items():
                         if monitor_idx < len(monitors):
                             rectizor = monitors[monitor_idx].mapping[pos].get(size, None)
-                            func = rectizor.snap if rectizor else lambda: balloon("invalid rect.")
                             if rectizor:
-                                km[monitor_mod + area_mod + key] = lazify(func, 50)
+                                km[monitor_mod + area_mod + key] = rectizor.snap
+                            else:
+                                print(f"invalid rect: {monitor_idx=} {size=} {pos=} {rectizor.rect}")
 
         @staticmethod
         def maximize(km: WindowKeymap, mapping_dict: dict) -> None:
@@ -1414,15 +1414,11 @@ def configure(keymap):
 
                 ClipHandler().after_copy(_search)
 
-            return lazify(_searcher)
-
-        @staticmethod
-        def _mod_key(s: str) -> list:
-            return ["", s + "-"]
+            return _searcher
 
         def apply(self, km: WindowKeymap) -> None:
-            for shift_key in self._mod_key("S"):
-                for ctrl_key in self._mod_key("C"):
+            for shift_key in ("", "S-"):
+                for ctrl_key in ("", "C-"):
                     is_strict = 0 < len(shift_key)
                     strip_hiragana = 0 < len(ctrl_key)
                     trigger_key = shift_key + ctrl_key + "U0-S"
