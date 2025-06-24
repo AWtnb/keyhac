@@ -1966,6 +1966,27 @@ def configure(keymap):
             ]
         )
 
+    class NestedCircumfix:
+        def __init__(self, prime_pair: tuple, secondory_pair: tuple):
+            self.pairs = [prime_pair, secondory_pair]
+
+        def fix(self, s: str) -> str:
+            stack = []
+            result = list(s)
+            openChar, closeChar = self.pairs[0]
+            for i, char in enumerate(s):
+                if char == openChar:
+                    stack.append(i)
+                elif char == closeChar:
+                    if stack:
+                        start = stack.pop()
+                        depth = len(stack)
+                        left, right = self.pairs[depth % 2]
+                        result[start] = left
+                        result[i] = right
+
+            return "".join(result)
+
     class FormatTools:
         @staticmethod
         def to_deepl_friendly(s: str) -> str:
@@ -2087,22 +2108,11 @@ def configure(keymap):
 
         @staticmethod
         def format_nested_paren(s: str) -> str:
-            stack = []
-            result = list(s)
-            parens = [("\uff08", "\uff09"), ("\u3014", "\u3015")]
+            return NestedCircumfix(("（", "）"), ("〔", "〕")).fix(s)
 
-            for i, char in enumerate(s):
-                if char == "\uff08":
-                    stack.append(i)
-                elif char == "\uff09":
-                    if stack:
-                        start = stack.pop()
-                        depth = len(stack)
-                        left, right = parens[depth % 2]
-                        result[start] = left
-                        result[i] = right
-
-            return "".join(result)
+        @staticmethod
+        def format_nested_bracket(s: str) -> str:
+            return NestedCircumfix(("「", "」"), ("『", "』")).fix(s)
 
         @staticmethod
         def mdtable_from_tsv(s: str) -> str:
@@ -2181,6 +2191,7 @@ def configure(keymap):
             "to fullwidth bracktets": CharWidth().to_full_brackets,
             "trim honorific": FormatTools.trim_honorific,
             "fix nested paren": FormatTools.format_nested_paren,
+            "fix nested bracket": FormatTools.format_nested_bracket,
             "zoom invitation": format_zoom_invitation,
         }
     )
