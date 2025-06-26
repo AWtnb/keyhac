@@ -826,7 +826,9 @@ def configure(keymap):
                             if rectizor:
                                 km[monitor_mod + area_mod + key] = rectizor.snap
                             else:
-                                print(f"invalid rect: {monitor_idx=} {size=} {pos=} {rectizor.rect}")
+                                print(
+                                    f"invalid rect: {monitor_idx=} {size=} {pos=} {rectizor.rect}"
+                                )
 
         @staticmethod
         def maximize(km: WindowKeymap, mapping_dict: dict) -> None:
@@ -1504,11 +1506,9 @@ def configure(keymap):
                 return True
             if not wnd.isEnabled():
                 return True
-            if not fnmatch.fnmatch(wnd.getProcessName(), self.exe_name):
-                return True
             if self.class_name and not fnmatch.fnmatch(wnd.getClassName(), self.class_name):
                 return True
-            if len(wnd.getText()) < 1:
+            if not fnmatch.fnmatch(wnd.getProcessName(), self.exe_name):
                 return True
             popup = wnd.getLastActivePopup()
             if not popup:
@@ -1564,9 +1564,9 @@ def configure(keymap):
                         job_item.result = WindowActivator(wnd).activate()
 
                 def _finished(job_item: ckit.JobItem) -> None:
+                    finger = VirtualFinger()
+                    finger.release_modifier()
                     if job_item.result is not None:
-                        finger = VirtualFinger()
-                        finger.release_modifier()
                         if not job_item.result:
                             finger.input_key("LCtrl-LAlt-Tab")
 
@@ -1737,9 +1737,9 @@ def configure(keymap):
                 job_item.result = WindowActivator(wnd).activate()
 
         def _finished(job_item: ckit.JobItem) -> None:
+            finger = VirtualFinger()
+            finger.release_modifier()
             if job_item.result is not None:
-                finger = VirtualFinger()
-                finger.release_modifier()
                 if not job_item.result:
                     finger.input_key("LCtrl-LAlt-Tab")
 
