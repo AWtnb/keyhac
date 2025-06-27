@@ -359,12 +359,13 @@ def configure(keymap):
     class SKKKey:
         kata = "Q"
         kana = "C-J"
-        convchar = "C-O"
+        halfkata = "C-O"
         latin = "S-L"
         cancel = "Esc"
         reconv = "LWin-Slash"
         abbrev = "Slash"
         convpoint = "S-0"
+        jlatin = "S-Q"
 
     class ImeControl:
         def __init__(self, inter_stroke_pause: int = 10) -> None:
@@ -400,9 +401,13 @@ def configure(keymap):
             self.enable_skk()
             self._finger.input_key(SKKKey.kata)
 
-        def skk_convchar(self) -> None:
+        def to_skk_half_kata(self) -> None:
             self.enable_skk()
-            self._finger.input_key(SKKKey.convchar)
+            self._finger.input_key(SKKKey.halfkata)
+
+        def to_skk_full_latin(self) -> None:
+            self.enable_skk()
+            self._finger.input_key(SKKKey.jlatin)
 
         def start_skk_conv(self) -> None:
             self.enable_skk()
@@ -417,7 +422,8 @@ def configure(keymap):
         for key, func in {
             "U1-J": control.enable_skk,
             "LC-U0-I": control.to_skk_kata,
-            "LC-LS-U0-I": control.skk_convchar,
+            "U0-O": control.to_skk_half_kata,
+            "LC-LS-U0-I": control.to_skk_half_kata,
             "U0-F": control.disable,
             "LS-U0-F": control.enable_skk,
             "S-U1-J": control.to_skk_latin,
