@@ -366,6 +366,7 @@ def configure(keymap):
         abbrev = "Slash"
         convpoint = "S-0"
         jlatin = "S-Q"
+        prefix = "S-Period"
 
     class ImeControl:
         def __init__(self, inter_stroke_pause: int = 10) -> None:
@@ -413,6 +414,10 @@ def configure(keymap):
             self.enable_skk()
             self._finger.input_key(SKKKey.convpoint)
 
+        def start_skk_conv_prefix(self) -> None:
+            self.enable_skk()
+            self._finger.input_key(SKKKey.convpoint, SKKKey.prefix)
+
         def reconvert_with_skk(self) -> None:
             self.enable_skk()
             self._finger.input_key(SKKKey.reconv, self.cancel)
@@ -421,6 +426,7 @@ def configure(keymap):
         control = ImeControl()
         for key, func in {
             "U1-J": control.enable_skk,
+            "LC-U0-P": control.start_skk_conv_prefix,
             "LC-U0-I": control.to_skk_kata,
             "U0-O": control.to_skk_half_kata,
             "LC-LS-U0-I": control.to_skk_half_kata,
