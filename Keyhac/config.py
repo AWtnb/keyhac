@@ -357,15 +357,16 @@ def configure(keymap):
         ckit.JobQueue.defaultQueue().enqueue(job)
 
     class SKKKey:
-        kata_key = "Q"
-        kana_key = "C-J"
-        latin_key = "S-L"
-        cancel_key = "Esc"
-        reconv_key = "LWin-Slash"
-        abbrev_key = "Slash"
-        convpoint_key = "S-0"
+        kata = "Q"
+        kana = "C-J"
+        convchar = "C-O"
+        latin = "S-L"
+        cancel = "Esc"
+        reconv = "LWin-Slash"
+        abbrev = "Slash"
+        convpoint = "S-0"
 
-    class ImeControl(SKKKey):
+    class ImeControl:
         def __init__(self, inter_stroke_pause: int = 10) -> None:
             self._finger = VirtualFinger(inter_stroke_pause)
 
@@ -380,32 +381,90 @@ def configure(keymap):
         def enable(self) -> None:
             self.set_status(1)
 
+        def disable(self) -> None:
+            self.set_status(0)
+
         def enable_skk(self) -> None:
             self.enable()
-            self._finger.input_key(self.kana_key)
+            self._finger.input_key(SKKKey.kana)
 
         def to_skk_latin(self) -> None:
             self.enable_skk()
-            self._finger.input_key(self.latin_key)
+            self._finger.input_key(SKKKey.latin)
 
         def to_skk_abbrev(self) -> None:
             self.enable_skk()
-            self._finger.input_key(self.abbrev_key)
+            self._finger.input_key(SKKKey.abbrev)
 
         def to_skk_kata(self) -> None:
             self.enable_skk()
-            self._finger.input_key(self.kata_key)
+            self._finger.input_key(SKKKey.kata)
+
+        def skk_convchar(self) -> None:
+            self.enable_skk()
+            self._finger.input_key(SKKKey.convchar)
 
         def start_skk_conv(self) -> None:
             self.enable_skk()
-            self._finger.input_key(self.convpoint_key)
+            self._finger.input_key(SKKKey.convpoint)
 
         def reconvert_with_skk(self) -> None:
             self.enable_skk()
-            self._finger.input_key(self.reconv_key, self.cancel_key)
+            self._finger.input_key(SKKKey.reconv, self.cancel)
 
-        def disable(self) -> None:
-            self.set_status(0)
+    def apply_ime_control() -> None:
+        control = ImeControl()
+        for key, func in {
+            "U1-J": control.enable_skk,
+            "LC-U0-I": control.to_skk_kata,
+            "LC-LS-U0-I": control.skk_convchar,
+            "U0-F": control.disable,
+            "LS-U0-F": control.enable_skk,
+            "S-U1-J": control.to_skk_latin,
+            "U1-I": control.reconvert_with_skk,
+            "O-(236)": control.to_skk_abbrev,
+            "LS-(236)": control.start_skk_conv,
+        }.items():
+            keymap_global[key] = func
+
+    apply_ime_control()
+
+    def lazify(func: Callable, msec: int = 20) -> Callable:
+        def _wrapper() -> None:
+            keymap.delayedCall(func, msec)
+
+        return _wrapper
+
+    class DirectInput:
+        def __init__(
+            self,
+            recover_ime: bool = False,
+            inter_stroke_pause: int = 0,
+            defer_msec: int = 0,
+        ) -> None:
+            self._recover_ime = recover_ime
+            self._defer_msec = defer_msec
+            self._finger = VirtualFinger(inter_stroke_pause)
+
+        def invoke(self, *sequence) -> Callable:
+            control = ImeControl()
+            seq = Taps().from_sequence(sequence)
+
+            def _sender() -> None:
+                control.disable()
+                self._finger.tap_sequence(seq)
+                if self._recover_ime:
+                    control.enable()
+
+            def _inhook_executer() -> None:
+                keymap.hookCall(_sender)
+
+            if 0 < self._defer_msec:
+                return lazify(_inhook_executer, self._defer_msec)
+
+            return _inhook_executer
+
+    keymap_global["U0-4"] = DirectInput().invoke("$_")
 
     class ClipHandler:
         @staticmethod
@@ -458,60 +517,12 @@ def configure(keymap):
 
             cls.after_copy(_push)
 
-    def lazify(func: Callable, msec: int = 20) -> Callable:
-        def _wrapper() -> None:
-            keymap.delayedCall(func, msec)
-
-        return _wrapper
-
-    class DirectInputter:
-        def __init__(
-            self,
-            recover_ime: bool = False,
-            inter_stroke_pause: int = 0,
-            defer_msec: int = 0,
-        ) -> None:
-            self._recover_ime = recover_ime
-            self._defer_msec = defer_msec
-            self._finger = VirtualFinger(inter_stroke_pause)
-
-        def invoke(self, *sequence) -> Callable:
-            control = ImeControl()
-            seq = Taps().from_sequence(sequence)
-
-            def _input() -> None:
-                control.disable()
-                self._finger.tap_sequence(seq)
-                if self._recover_ime:
-                    control.enable()
-
-            def _inhook_executer() -> None:
-                keymap.hookCall(_input)
-
-            return lazify(_inhook_executer, self._defer_msec)
-
-    keymap_global["U0-4"] = DirectInputter(defer_msec=50).invoke("$_")
+    keymap_global["U0-V"] = ClipHandler().paste
+    keymap_global["LC-U0-C"] = ClipHandler().append
 
     ################################
     # custom hotkey
     ################################
-
-    keymap_global["LC-U0-C"] = ClipHandler().append
-
-    # ime: Japanese / Foreign
-    IME_CONTROL = ImeControl()
-    keymap_global["U1-J"] = IME_CONTROL.enable_skk
-    keymap_global["LC-U0-I"] = IME_CONTROL.to_skk_kata
-    keymap_global["U0-F"] = IME_CONTROL.disable
-    keymap_global["LS-U0-F"] = IME_CONTROL.enable_skk
-    keymap_global["S-U1-J"] = IME_CONTROL.to_skk_latin
-    keymap_global["U1-I"] = IME_CONTROL.reconvert_with_skk
-    keymap_global["LS-U1-I"] = IME_CONTROL.reconv_key
-    keymap_global["O-(236)"] = IME_CONTROL.to_skk_abbrev
-    keymap_global["LS-(236)"] = IME_CONTROL.start_skk_conv
-
-    # paste as plaintext
-    keymap_global["U0-V"] = ClipHandler().paste
 
     class StrCleaner:
         @staticmethod
@@ -639,13 +650,13 @@ def configure(keymap):
     keymap_global["U1-F12"] = reload_config
 
     # clipboard menu
-    def clipboard_menu_in_subthread() -> None:
+    def clipboard_history_menu() -> None:
         def _menu(_) -> None:
             keymap.command_ClipboardList()
 
         subthread_run(_menu)
 
-    keymap_global["LC-LS-X"] = clipboard_menu_in_subthread
+    keymap_global["LC-LS-X"] = clipboard_history_menu
 
     ################################
     # class for position on monitor
@@ -972,10 +983,8 @@ def configure(keymap):
     keymap_global["U1-B"] = SKKSender().under_kanamode("S-Left", "S-Left")
     keymap_global["LS-U1-B"] = SKKSender().under_kanamode("S-Right")
     keymap_global["U1-Space"] = SKKSender().under_kanamode("C-S-Left")
-    keymap_global["U1-N"] = SKKSender().under_kanamode(
-        "C-S-Left", ImeControl.convpoint_key, "S-4", "Tab"
-    )
-    keymap_global["U1-4"] = SKKSender().under_kanamode(SKKKey.convpoint_key, "S-4")
+    keymap_global["U1-N"] = SKKSender().under_kanamode("C-S-Left", SKKKey.convpoint, "S-4", "Tab")
+    keymap_global["U1-4"] = SKKSender().under_kanamode(SKKKey.convpoint, "S-4")
 
     class LatinSender(SKKSender):
         def __init__(self, recover_mode: bool = True) -> None:
@@ -985,7 +994,7 @@ def configure(keymap):
 
         def invoke(self, *sequence) -> Callable:
             if self._recover_mode:
-                sequence = list(sequence) + [ImeControl.kana_key]
+                sequence = list(sequence) + [SKKKey.kana]
             return self.under_latinmode(*sequence)
 
         def apply(self, km: WindowKeymap, mapping_dict: dict) -> None:
@@ -1790,8 +1799,8 @@ def configure(keymap):
     # browser
     keymap_browser = keymap.defineWindowKeymap(check_func=CheckWnd.is_browser)
     keymap_browser["LC-LS-W"] = "A-Left"
-    keymap_browser["LC-L"] = DirectInputter(defer_msec=50, recover_ime=False).invoke("C-L")
-    keymap_browser["LC-F"] = DirectInputter(defer_msec=50, recover_ime=False).invoke("C-F")
+    keymap_browser["LC-L"] = DirectInput().invoke("C-L")
+    keymap_browser["LC-F"] = DirectInput().invoke("C-F")
 
     # intra
     keymap_intra = keymap.defineWindowKeymap(exe_name="APARClientAWS.exe")
@@ -1799,16 +1808,16 @@ def configure(keymap):
 
     # slack
     keymap_slack = keymap.defineWindowKeymap(exe_name="slack.exe", class_name="Chrome_WidgetWin_1")
-    keymap_slack["F3"] = DirectInputter().invoke("C-K")
+    keymap_slack["F3"] = DirectInput().invoke("C-K")
     keymap_slack["C-K"] = keymap_slack["F3"]
     keymap_slack["C-E"] = keymap_slack["F3"]
-    keymap_slack["F1"] = DirectInputter().invoke("S-SemiColon", "Colon")
+    keymap_slack["F1"] = DirectInput().invoke("S-SemiColon", "Colon")
 
     # vscode
     keymap_vscode = keymap.defineWindowKeymap(exe_name="Code.exe")
 
     def remap_vscode(*keys: str) -> Callable:
-        inputter = DirectInputter(defer_msec=20)
+        inputter = DirectInput(defer_msec=20)
         for key in keys:
             keymap_vscode[key] = inputter.invoke(key)
 
@@ -1852,7 +1861,7 @@ def configure(keymap):
     keymap_sumatra_viewmode = keymap.defineWindowKeymap(check_func=sumatra_checker(True))
 
     def sumatra_view_key() -> None:
-        inputter = DirectInputter(defer_msec=50)
+        inputter = DirectInput(defer_msec=50)
         for key in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
             keymap_sumatra_viewmode[key] = inputter.invoke(key)
 
