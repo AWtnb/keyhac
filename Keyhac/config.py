@@ -469,11 +469,17 @@ def configure(keymap):
     class ClipHandler:
         @staticmethod
         def get_string() -> str:
-            return ckit.getClipboardText() or ""
+            try:
+                return ckit.getClipboardText() or ""
+            except:
+                return ""
 
         @staticmethod
         def set_string(s: str) -> None:
-            ckit.setClipboardText(str(s))
+            try:
+                ckit.setClipboardText(str(s))
+            except:
+                pass
 
         @classmethod
         def paste(
