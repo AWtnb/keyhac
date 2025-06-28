@@ -665,7 +665,7 @@ def configure(keymap):
     keymap.editor = lambda _: open_keyhac_repo()
 
     keymap_global["U0-F12"] = open_keyhac_repo
-    keymap_global["U1-F12"] = reload_config
+    keymap_global["U1-F12"] = lazify(reload_config, 50)
 
     # clipboard menu
     def clipboard_history_menu() -> None:
