@@ -295,27 +295,19 @@ def configure(keymap):
 
         @classmethod
         def release_modifier(cls) -> None:
-            cls._prepare()
-            cls._release_modifier()
-            cls._finish()
-
-        @staticmethod
-        def _prepare() -> None:
             keymap.beginInput()
+            cls._release_modifier()
+            keymap.endInput()
 
         @classmethod
         def begin(cls) -> None:
-            cls._prepare()
+            keymap.beginInput()
             cls._release_modifier()
-
-        @staticmethod
-        def _finish() -> None:
-            keymap.endInput()
 
         @classmethod
         def end(cls) -> None:
             cls._release_modifier()
-            cls._finish()
+            keymap.endInput()
 
         def _input_key(self, *keys: str) -> None:
             for key in keys:
@@ -441,11 +433,20 @@ def configure(keymap):
 
     apply_ime_control()
 
-    def lazify(func: Callable, msec: int = 20) -> Callable:
-        def _wrapper() -> None:
-            keymap.delayedCall(func, msec)
+    class FuncWrapper:
+        @staticmethod
+        def lazify(func: Callable, msec: int = 20) -> Callable:
+            def _wrapper() -> None:
+                keymap.delayedCall(func, msec)
 
-        return _wrapper
+            return _wrapper
+
+        @staticmethod
+        def hookfy(func: Callable) -> Callable:
+            def _wrapper() -> None:
+                keymap.hookCall(func)
+
+            return _wrapper
 
     class DirectInput:
         def __init__(
@@ -468,13 +469,12 @@ def configure(keymap):
                 if self._recover_ime:
                     control.enable()
 
-            def _inhook_executer() -> None:
-                keymap.hookCall(_sender)
+            executor = FuncWrapper.hookfy(_sender)
 
             if 0 < self._defer_msec:
-                return lazify(_inhook_executer, self._defer_msec)
+                return FuncWrapper.lazify(executor, self._defer_msec)
 
-            return _inhook_executer
+            return executor
 
     keymap_global["U0-4"] = DirectInput().invoke("$_")
 
@@ -665,7 +665,7 @@ def configure(keymap):
     keymap.editor = lambda _: open_keyhac_repo()
 
     keymap_global["U0-F12"] = open_keyhac_repo
-    keymap_global["U1-F12"] = lazify(reload_config, 50)
+    keymap_global["U1-F12"] = FuncWrapper.hookfy(reload_config)
 
     # clipboard menu
     def clipboard_history_menu() -> None:
@@ -674,7 +674,7 @@ def configure(keymap):
 
         subthread_run(_menu)
 
-    keymap_global["LC-LS-X"] = clipboard_history_menu
+    keymap_global["LC-LS-X"] = FuncWrapper.hookfy(clipboard_history_menu)
 
     ################################
     # class for position on monitor
@@ -1577,7 +1577,7 @@ def configure(keymap):
     class PseudoCuteExec:
         @staticmethod
         def invoke(exe_name: str, class_name: str = "", exe_path: str = "") -> Callable:
-            def _executer() -> None:
+            def _executor() -> None:
 
                 def _activate(job_item: ckit.JobItem) -> None:
                     job_item.result = None
@@ -1599,7 +1599,7 @@ def configure(keymap):
 
                 subthread_run(_activate, _finished, True)
 
-            return _executer
+            return FuncWrapper.hookfy(_executor)
 
         @classmethod
         def apply(cls, wnd_keymap: WindowKeymap, remap_table: dict = {}) -> None:
@@ -1772,7 +1772,7 @@ def configure(keymap):
 
         subthread_run(_fzf_wnd, _finished, True)
 
-    keymap_global["U1-E"] = fuzzy_window_switcher
+    keymap_global["U1-E"] = FuncWrapper.hookfy(fuzzy_window_switcher)
 
     def invoke_draft() -> None:
         def _invoke(_) -> None:
@@ -2291,7 +2291,7 @@ def configure(keymap):
 
         subthread_run(_fzf, _finished, True)
 
-    keymap_global["U1-Z"] = fzfmenu
+    keymap_global["U1-Z"] = FuncWrapper.hookfy(fzfmenu)
 
 
 def configure_ListWindow(window: ListWindow) -> None:
