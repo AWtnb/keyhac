@@ -433,7 +433,7 @@ def configure(keymap):
 
     apply_ime_control()
 
-    class FuncWrapper:
+    class KeyhacMagic:
         @staticmethod
         def lazify(func: Callable, msec: int = 20) -> Callable:
             def _wrapper() -> None:
@@ -442,7 +442,7 @@ def configure(keymap):
             return _wrapper
 
         @staticmethod
-        def hookfy(func: Callable) -> Callable:
+        def detour(func: Callable) -> Callable:
             def _wrapper() -> None:
                 keymap.hookCall(func)
 
@@ -469,10 +469,10 @@ def configure(keymap):
                 if self._recover_ime:
                     control.enable()
 
-            executor = FuncWrapper.hookfy(_sender)
+            executor = KeyhacMagic.detour(_sender)
 
             if 0 < self._defer_msec:
-                return FuncWrapper.lazify(executor, self._defer_msec)
+                return KeyhacMagic.lazify(executor, self._defer_msec)
 
             return executor
 
@@ -665,7 +665,7 @@ def configure(keymap):
     keymap.editor = lambda _: open_keyhac_repo()
 
     keymap_global["U0-F12"] = open_keyhac_repo
-    keymap_global["U1-F12"] = FuncWrapper.hookfy(reload_config)
+    keymap_global["U1-F12"] = KeyhacMagic.detour(reload_config)
 
     # clipboard menu
     def clipboard_history_menu() -> None:
@@ -674,7 +674,7 @@ def configure(keymap):
 
         subthread_run(_menu)
 
-    keymap_global["LC-LS-X"] = FuncWrapper.hookfy(clipboard_history_menu)
+    keymap_global["LC-LS-X"] = KeyhacMagic.detour(clipboard_history_menu)
 
     ################################
     # class for position on monitor
@@ -1599,7 +1599,7 @@ def configure(keymap):
 
                 subthread_run(_activate, _finished, True)
 
-            return FuncWrapper.hookfy(_executor)
+            return KeyhacMagic.detour(_executor)
 
         @classmethod
         def apply(cls, wnd_keymap: WindowKeymap, remap_table: dict = {}) -> None:
@@ -1772,7 +1772,7 @@ def configure(keymap):
 
         subthread_run(_fzf_wnd, _finished, True)
 
-    keymap_global["U1-E"] = FuncWrapper.hookfy(fuzzy_window_switcher)
+    keymap_global["U1-E"] = KeyhacMagic.detour(fuzzy_window_switcher)
 
     def invoke_draft() -> None:
         def _invoke(_) -> None:
@@ -2291,7 +2291,7 @@ def configure(keymap):
 
         subthread_run(_fzf, _finished, True)
 
-    keymap_global["U1-Z"] = FuncWrapper.hookfy(fzfmenu)
+    keymap_global["U1-Z"] = KeyhacMagic.detour(fzfmenu)
 
 
 def configure_ListWindow(window: ListWindow) -> None:
