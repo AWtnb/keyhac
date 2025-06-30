@@ -433,20 +433,17 @@ def configure(keymap):
 
     apply_ime_control()
 
-    class KeyhacMagic:
-        @staticmethod
-        def lazify(func: Callable, msec: int = 20) -> Callable:
-            def _wrapper() -> None:
-                keymap.delayedCall(func, msec)
+    def lazify(func: Callable, msec: int = 20) -> Callable:
+        def _wrapper() -> None:
+            keymap.delayedCall(func, msec)
 
-            return _wrapper
+        return _wrapper
 
-        @staticmethod
-        def detour(func: Callable) -> Callable:
-            def _wrapper() -> None:
-                keymap.hookCall(func)
+    def suppress_binded_key(func: Callable) -> Callable:
+        def _wrapper() -> None:
+            keymap.hookCall(func)
 
-            return _wrapper
+        return _wrapper
 
     class DirectInput:
         def __init__(
@@ -469,10 +466,10 @@ def configure(keymap):
                 if self._recover_ime:
                     control.enable()
 
-            executor = KeyhacMagic.detour(_sender)
+            executor = suppress_binded_key(_sender)
 
             if 0 < self._defer_msec:
-                return KeyhacMagic.lazify(executor, self._defer_msec)
+                return lazify(executor, self._defer_msec)
 
             return executor
 
@@ -665,7 +662,7 @@ def configure(keymap):
     keymap.editor = lambda _: open_keyhac_repo()
 
     keymap_global["U0-F12"] = open_keyhac_repo
-    keymap_global["U1-F12"] = KeyhacMagic.detour(reload_config)
+    keymap_global["U1-F12"] = suppress_binded_key(reload_config)
 
     # clipboard menu
     def clipboard_history_menu() -> None:
@@ -674,7 +671,7 @@ def configure(keymap):
 
         subthread_run(_menu)
 
-    keymap_global["LC-LS-X"] = KeyhacMagic.detour(clipboard_history_menu)
+    keymap_global["LC-LS-X"] = suppress_binded_key(clipboard_history_menu)
 
     ################################
     # class for position on monitor
@@ -1599,7 +1596,7 @@ def configure(keymap):
 
                 subthread_run(_activate, _finished, True)
 
-            return KeyhacMagic.detour(_executor)
+            return suppress_binded_key(_executor)
 
         @classmethod
         def apply(cls, wnd_keymap: WindowKeymap, remap_table: dict = {}) -> None:
@@ -1772,7 +1769,7 @@ def configure(keymap):
 
         subthread_run(_fzf_wnd, _finished, True)
 
-    keymap_global["U1-E"] = KeyhacMagic.detour(fuzzy_window_switcher)
+    keymap_global["U1-E"] = suppress_binded_key(fuzzy_window_switcher)
 
     def invoke_draft() -> None:
         def _invoke(_) -> None:
@@ -2291,7 +2288,7 @@ def configure(keymap):
 
         subthread_run(_fzf, _finished, True)
 
-    keymap_global["U1-Z"] = KeyhacMagic.detour(fzfmenu)
+    keymap_global["U1-Z"] = suppress_binded_key(fzfmenu)
 
 
 def configure_ListWindow(window: ListWindow) -> None:
