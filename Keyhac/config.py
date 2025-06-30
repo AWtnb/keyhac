@@ -340,7 +340,7 @@ def configure(keymap):
         focus_changed_in_subthread: bool = False,
     ) -> None:
         if focus_changed_in_subthread:
-            magical_key = ("LWin-S-M", "LWin-S-M")
+            magical_key = ("LWin-S-M", "U-Alt")
             VirtualFinger().input_key(*magical_key)
         job = ckit.JobItem(func, finished)
         ckit.JobQueue.defaultQueue().enqueue(job)
