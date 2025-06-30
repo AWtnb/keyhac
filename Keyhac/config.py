@@ -466,12 +466,10 @@ def configure(keymap):
                 if self._recover_ime:
                     control.enable()
 
-            executor = suppress_binded_key(_sender)
-
             if 0 < self._defer_msec:
-                return lazify(executor, self._defer_msec)
+                return suppress_binded_key(lazify(_sender, self._defer_msec))
 
-            return executor
+            return suppress_binded_key(_sender)
 
     keymap_global["U0-4"] = DirectInput().invoke("$_")
 
