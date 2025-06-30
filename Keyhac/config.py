@@ -340,7 +340,8 @@ def configure(keymap):
         focus_changed_in_subthread: bool = False,
     ) -> None:
         if focus_changed_in_subthread:
-            VirtualFinger().input_key("D-Alt", "LWin-S-M", "U-Alt")
+            magical_key = ("LWin-S-M", "LWin-S-M")
+            VirtualFinger().input_key(*magical_key)
         job = ckit.JobItem(func, finished)
         ckit.JobQueue.defaultQueue().enqueue(job)
 
@@ -1592,13 +1593,13 @@ def configure(keymap):
 
                 subthread_run(_activate, _finished, True)
 
-            return suppress_binded_key(_executor)
+            return _executor
 
         @classmethod
         def apply(cls, wnd_keymap: WindowKeymap, remap_table: dict = {}) -> None:
             for key, params in remap_table.items():
                 func = cls.invoke(*params)
-                wnd_keymap[key] = func
+                wnd_keymap[key] = suppress_binded_key(func)
 
     PseudoCuteExec().apply(
         keymap_global,
