@@ -214,13 +214,9 @@ def configure(keymap):
             "U1-A": ("End", "S-Home"),
             # punctuation
             "U0-Enter": ("Period"),
-            "LS-U0-Enter": ("Comma"),
-            "LC-U0-Enter": ("Slash"),
-            "U0-U": "S-BackSlash",
+            "U0-U": ("S-BackSlash"),
             "U0-Z": ("Minus"),
             "U1-S": ("Slash"),
-            "LS-U0-P": ("LS-Slash"),
-            "LC-U0-P": ("LS-1"),
             # emacs-like backchar
             "LC-H": ("Back"),
             # Insert line
@@ -418,7 +414,7 @@ def configure(keymap):
         control = ImeControl()
         for key, func in {
             "U1-J": control.enable_skk,
-            "LC-U0-P": control.start_skk_conv_prefix,
+            "LS-U0-P": control.start_skk_conv_prefix,
             "LC-U0-I": control.to_skk_kata,
             "U0-O": control.to_skk_half_kata,
             "LC-LS-U0-I": control.to_skk_half_kata,
