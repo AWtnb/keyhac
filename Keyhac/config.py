@@ -409,7 +409,7 @@ def configure(keymap):
 
         def reconvert_with_skk(self) -> None:
             self.enable_skk()
-            self._finger.input_key(SKKKey.reconv, self.cancel)
+            self._finger.input_key(SKKKey.reconv, SKKKey.cancel)
 
     def apply_ime_control() -> None:
         control = ImeControl()
