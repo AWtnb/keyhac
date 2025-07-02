@@ -44,7 +44,7 @@ def configure(keymap):
             pass
 
     def shell_exec(path: str, *args) -> None:
-        if type(path) is not str:
+        if not isinstance(path, str):
             path = str(path)
         params = []
         for arg in args:
@@ -55,41 +55,13 @@ def configure(keymap):
                     params.append(arg)
         try:
             pyauto.shellExecute(None, path, " ".join(params), "")
-        except:
+        except Exception as e:
+            print(e)
             balloon("invalid path: '{}'".format(path))
 
     ################################
     # general setting
     ################################
-
-    class PathHandler:
-        def __init__(self, path: str) -> None:
-            self._path = os.path.expandvars(path)
-
-        @property
-        def path(self) -> str:
-            return self._path
-
-        def is_accessible(self) -> bool:
-            return smart_check_path(self._path)
-
-        @staticmethod
-        def args_to_param(args: tuple) -> str:
-            params = []
-            for arg in args:
-                if 0 < len(arg.strip()):
-                    if " " in arg:
-                        params.append('"{}"'.format(arg))
-                    else:
-                        params.append(arg)
-            return " ".join(params)
-
-        def run(self, *args) -> None:
-            # this should be called inside subthread.
-            if self.is_accessible():
-                shell_exec(self._path, *args)
-            else:
-                balloon("invalid-path: '{}'".format(self._path))
 
     def get_editor() -> str:
         code_cmd_path = shutil.which("code")
@@ -642,9 +614,8 @@ def configure(keymap):
         def _open(_) -> None:
             if KEYHAC_EDITOR == "notepad.exe":
                 balloon("keyhac editor 'notepad.exe' cannot open directory.")
-                PathHandler(dir_path).run()
             else:
-                PathHandler(KEYHAC_EDITOR).run(dir_path)
+                shell_exec(KEYHAC_EDITOR, dir_path)
 
         subthread_run(_open)
 
@@ -1574,7 +1545,7 @@ def configure(keymap):
                     wnd = scanner.found
                     if wnd is None:
                         if exe_path:
-                            PathHandler(exe_path).run()
+                            shell_exec(exe_path)
                     else:
                         job_item.result = WindowActivator(wnd).activate()
 
@@ -1760,7 +1731,7 @@ def configure(keymap):
 
     def invoke_draft() -> None:
         def _invoke(_) -> None:
-            PathHandler(r"${USERPROFILE}\Personal\draft.txt").run()
+            shell_exec(r"${USERPROFILE}\Personal\draft.txt")
 
         subthread_run(_invoke)
 
@@ -1779,7 +1750,7 @@ def configure(keymap):
             scanner.scan()
             wnd = scanner.found
             if wnd is None:
-                PathHandler(DEFAULT_BROWSER.get_exe_path()).run()
+                shell_exec(DEFAULT_BROWSER.get_exe_path())
             else:
                 job_item.result = WindowActivator(wnd).activate()
 
