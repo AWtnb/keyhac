@@ -92,9 +92,9 @@ def configure(keymap):
                 balloon("invalid-path: '{}'".format(self._path))
 
     def get_editor() -> str:
-        vscode_path = PathHandler(r"${USERPROFILE}\scoop\apps\vscode\current\Code.exe")
-        if vscode_path.is_accessible():
-            return vscode_path.path
+        code_cmd_path = shutil.which("code")
+        if code_cmd_path is not None:
+            return os.path.join(Path(code_cmd_path).parents[1], "Code.exe")
         return "notepad.exe"
 
     KEYHAC_EDITOR = get_editor()
