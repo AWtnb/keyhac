@@ -290,12 +290,6 @@ def configure(keymap):
             keymap.setInput_Modifier(0)
 
         @classmethod
-        def release_modifier(cls) -> None:
-            keymap.beginInput()
-            cls._release_modifier()
-            keymap.endInput()
-
-        @classmethod
         def begin(cls) -> None:
             keymap.beginInput()
             cls._release_modifier()
@@ -430,17 +424,17 @@ def configure(keymap):
 
     apply_ime_control()
 
-    def lazify(func: Callable, msec: int = 20) -> Callable:
-        def _wrapper() -> None:
-            keymap.delayedCall(func, msec)
-
-        return _wrapper
-
-    def suppress_binded_key(func: Callable) -> Callable:
+    def suppress_binded_key(func: Callable, lazify_msec: int = 0) -> Callable:
         def _wrapper() -> None:
             keymap.hookCall(func)
 
-        return _wrapper
+        if lazify_msec < 0:
+            return _wrapper
+
+        def _lazified() -> None:
+            keymap.delayedCall(_wrapper, lazify_msec)
+
+        return _lazified
 
     class DirectInput:
         def __init__(
@@ -464,7 +458,7 @@ def configure(keymap):
                     control.enable()
 
             if 0 < self._defer_msec:
-                return suppress_binded_key(lazify(_sender, self._defer_msec))
+                return suppress_binded_key(_sender, self._defer_msec)
 
             return suppress_binded_key(_sender)
 
@@ -657,7 +651,7 @@ def configure(keymap):
     keymap.editor = lambda _: open_keyhac_repo()
 
     keymap_global["U0-F12"] = open_keyhac_repo
-    keymap_global["U1-F12"] = suppress_binded_key(reload_config)
+    keymap_global["U1-F12"] = suppress_binded_key(reload_config, 250)
 
     # clipboard menu
     def clipboard_history_menu() -> None:
@@ -1585,11 +1579,9 @@ def configure(keymap):
                         job_item.result = WindowActivator(wnd).activate()
 
                 def _finished(job_item: ckit.JobItem) -> None:
-                    finger = VirtualFinger()
-                    finger.release_modifier()
                     if job_item.result is not None:
                         if not job_item.result:
-                            finger.input_key("LCtrl-LAlt-Tab")
+                            VirtualFinger().input_key("LCtrl-LAlt-Tab")
 
                 subthread_run(_activate, _finished, True)
 
@@ -1758,11 +1750,9 @@ def configure(keymap):
                 job_item.result = WindowActivator(wnd).activate()
 
         def _finished(job_item: ckit.JobItem) -> None:
-            finger = VirtualFinger()
-            finger.release_modifier()
             if job_item.result is not None:
                 if not job_item.result:
-                    finger.input_key("LCtrl-LAlt-Tab")
+                    VirtualFinger().input_key("LCtrl-LAlt-Tab")
 
         subthread_run(_fzf_wnd, _finished, True)
 
