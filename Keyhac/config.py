@@ -199,6 +199,7 @@ def configure(keymap):
             # line selection
             "U1-A": ("End", "S-Home"),
             # punctuation
+            "U0-4": ("S-4", "S-BackSlash"),
             "U0-Enter": ("Period"),
             "U0-U": ("S-BackSlash"),
             "U0-Z": ("Minus"),
@@ -414,13 +415,13 @@ def configure(keymap):
         def _wrapper() -> None:
             keymap.hookCall(func)
 
-        if lazify_msec < 0:
-            return _wrapper
+        if 0 < lazify_msec:
+            def _lazified() -> None:
+                keymap.delayedCall(_wrapper, lazify_msec)
 
-        def _lazified() -> None:
-            keymap.delayedCall(_wrapper, lazify_msec)
+            return _lazified
 
-        return _lazified
+        return _wrapper
 
     class DirectInput:
         def __init__(
@@ -443,12 +444,7 @@ def configure(keymap):
                 if self._recover_ime:
                     control.enable()
 
-            if 0 < self._defer_msec:
-                return suppress_binded_key(_sender, self._defer_msec)
-
-            return suppress_binded_key(_sender)
-
-    keymap_global["U0-4"] = DirectInput().invoke("$_")
+            return suppress_binded_key(_sender, self._defer_msec)
 
     class ClipHandler:
         @staticmethod
@@ -1796,8 +1792,6 @@ def configure(keymap):
     # browser
     keymap_browser = keymap.defineWindowKeymap(check_func=CheckWnd.is_browser)
     keymap_browser["LC-LS-W"] = "A-Left"
-    keymap_browser["LC-L"] = DirectInput().invoke("C-L")
-    keymap_browser["LC-F"] = DirectInput().invoke("C-F")
 
     # intra
     keymap_intra = keymap.defineWindowKeymap(exe_name="APARClientAWS.exe")
