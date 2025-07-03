@@ -43,6 +43,7 @@ def configure(keymap):
         except:
             pass
 
+    # This should be called inside subthread.
     def shell_exec(path: str, *args) -> None:
         if not isinstance(path, str):
             path = str(path)
@@ -174,8 +175,8 @@ def configure(keymap):
             # close
             "LC-Q": ("A-F4"),
             # delete 2
-            "LA-U0-B": ("Back",) * 2,
-            "LA-U0-D": ("Delete",) * 2,
+            "U0-Back": ("Back",) * 2,
+            "U0-Delete": ("Delete",) * 2,
             # delete to bol / eol
             "S-U0-B": ("S-Home", "Delete"),
             "S-U0-D": ("S-End", "Delete"),
