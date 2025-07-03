@@ -661,6 +661,13 @@ def configure(keymap):
         def opposite_of(i: int) -> int:
             return (i + 2) % 4
 
+        @classmethod
+        def from_int(cls, i: int) -> str:
+            edges = ["left", "top", "right", "bottom"]
+            if len(edges) <= i or i < 0:
+                raise ValueError("Invalid RectEdge index: {}".format(i))
+            return edges[i]
+
     class Rect:
         min_width = 300
         min_height = 200
@@ -734,8 +741,7 @@ def configure(keymap):
             subthread_run(_snap, _finished)
 
     class KeyhacMonitor:
-        _variants = {"small": 1 / 3, "middle": 1 / 2, "large": 2 / 3}
-        _edges = ["left", "top", "right", "bottom"]
+        variants = {"small": 1 / 3, "middle": 1 / 2, "large": 2 / 3}
 
         def __init__(self) -> None:
             self.mapping: Dict[str, Dict[str, Rectizor]] = {}
@@ -743,11 +749,12 @@ def configure(keymap):
         def allocate(self, rect: Rect) -> None:
             for edge in [RectEdge.left, RectEdge.top, RectEdge.right, RectEdge.bottom]:
                 d: Dict[str, Rectizor] = {}
-                for size, scale in self._variants.items():
+                for size, scale in self.variants.items():
                     resized = rect.resize(scale, edge)
                     if resized.is_valid():
                         d[size] = Rectizor(resized)
-                self.mapping[self._edges[edge]] = d
+                e = RectEdge().from_int(edge)
+                self.mapping[e] = d
 
     class KeyhacMonitors:
         def __init__(self) -> None:
