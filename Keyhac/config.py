@@ -662,6 +662,9 @@ def configure(keymap):
             return (i + 2) % 4
 
     class Rect:
+        min_width = 300
+        min_height = 200
+
         def __init__(self, left: int, top: int, right: int, bottom: int) -> None:
             self.left = left
             self.top = top
@@ -683,9 +686,9 @@ def configure(keymap):
                 return False
             if self.height <= 0:
                 return False
-            if self.width < 300:
+            if self.width < self.min_width:
                 return False
-            if self.height < 200:
+            if self.height < self.min_height:
                 return False
             return True
 
