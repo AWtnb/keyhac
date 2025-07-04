@@ -445,17 +445,6 @@ def configure(keymap):
 
             return suppress_binded_key(_sender, self._defer_msec)
 
-    def honorific_last_nchar(km: WindowKeymap, honorific: str) -> Callable:
-        for n in "123":
-            seq = ["Back"] * int(n) + [honorific]
-            km[n] = DirectInput(recover_ime=True).invoke(*seq)
-
-    keymap_global["U0-G"] = keymap.defineMultiStrokeKeymap()
-    honorific_last_nchar(keymap_global["U0-G"], "先生")
-
-    keymap_global["LS-U0-G"] = keymap.defineMultiStrokeKeymap()
-    honorific_last_nchar(keymap_global["LS-U0-G"], "様")
-
     class ClipHandler:
         @staticmethod
         def get_string() -> str:
@@ -1013,6 +1002,17 @@ def configure(keymap):
                 _, suffix = circumfix
                 sequence = circumfix + ["Left"] * len(suffix)
                 km[key] = self.invoke(*sequence)
+
+    def honorific_last_nchar(km: WindowKeymap, honorific: str) -> Callable:
+        for n in "123":
+            seq = ["Back"] * int(n) + [honorific]
+            km[n] = LatinSender().invoke(*seq)
+
+    keymap_global["U0-G"] = keymap.defineMultiStrokeKeymap()
+    honorific_last_nchar(keymap_global["U0-G"], "先生")
+
+    keymap_global["LS-U0-G"] = keymap.defineMultiStrokeKeymap()
+    honorific_last_nchar(keymap_global["LS-U0-G"], "様")
 
     # markdown list
     keymap_global["S-U0-8"] = LatinSender().invoke("- ")
