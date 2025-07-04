@@ -186,9 +186,8 @@ def configure(keymap):
             "LS-U0-N": ("N", "N", "Space"),
             # close
             "LC-Q": ("A-F4"),
-            # delete 2
-            "U0-Back": ("Back",) * 2,
-            "U0-Delete": ("Delete",) * 2,
+            # delete around cursor
+            "U0-Back": ("Back", "Delete"),
             # delete to bol / eol
             "S-U0-B": ("S-Home", "Delete"),
             "S-U0-D": ("S-End", "Delete"),
