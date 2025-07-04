@@ -56,7 +56,6 @@ def configure(keymap):
             path = str(path)
         if open_url(path):
             return
-        print("invalid url: '{}'".format(path))
         path = os.path.expandvars(path)
         if not smart_check_path(path):
             balloon("invalid path: '{}'".format(path))
@@ -446,6 +445,17 @@ def configure(keymap):
                     control.enable()
 
             return suppress_binded_key(_sender, self._defer_msec)
+
+    def honorific_last_nchar(km: WindowKeymap, honorific: str) -> Callable:
+        for n in "123":
+            seq = ["Back"] * int(n) + [honorific]
+            km[n] = DirectInput(recover_ime=True).invoke(*seq)
+
+    keymap_global["U0-G"] = keymap.defineMultiStrokeKeymap()
+    honorific_last_nchar(keymap_global["U0-G"], "先生")
+
+    keymap_global["LS-U0-G"] = keymap.defineMultiStrokeKeymap()
+    honorific_last_nchar(keymap_global["LS-U0-G"], "様")
 
     class ClipHandler:
         @staticmethod
