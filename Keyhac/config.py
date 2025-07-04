@@ -416,6 +416,7 @@ def configure(keymap):
             keymap.hookCall(func)
 
         if 0 < lazify_msec:
+
             def _lazified() -> None:
                 keymap.delayedCall(_wrapper, lazify_msec)
 
@@ -2103,6 +2104,10 @@ def configure(keymap):
             return reg.sub("", s)
 
         @staticmethod
+        def trim_space_on_line_head(s: str) -> str:
+            return "\n".join([line.lstrip() for line in s.splitlines()])
+
+        @staticmethod
         def format_nested_paren(s: str) -> str:
             return NestedCircumfix(("（", "）"), ("〔", "〕")).fix(s)
 
@@ -2156,6 +2161,8 @@ def configure(keymap):
 
     ClipboardFormatMenu.set_formatter(
         {
+            "as code": lambda c: f"`{c}`",
+            "trim space on line head": FormatTools.trim_space_on_line_head,
             "my markdown frontmatter": lambda _: md_frontmatter(),
             "to lowercase": lambda c: c.lower(),
             "to uppercase": lambda c: c.upper(),
