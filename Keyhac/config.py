@@ -1008,11 +1008,11 @@ def configure(keymap):
             seq = ["Back"] * int(n) + [honorific]
             km[n] = LatinSender().invoke(*seq)
 
-    keymap_global["U0-G"] = keymap.defineMultiStrokeKeymap()
-    honorific_last_nchar(keymap_global["U0-G"], "先生")
+    keymap_global["U0-M"] = keymap.defineMultiStrokeKeymap()
+    honorific_last_nchar(keymap_global["U0-M"], "先生")
 
-    keymap_global["LS-U0-G"] = keymap.defineMultiStrokeKeymap()
-    honorific_last_nchar(keymap_global["LS-U0-G"], "様")
+    keymap_global["LS-U0-M"] = keymap.defineMultiStrokeKeymap()
+    honorific_last_nchar(keymap_global["LS-U0-M"], "様")
 
     # markdown list
     keymap_global["S-U0-8"] = LatinSender().invoke("- ")
