@@ -193,6 +193,7 @@ def configure(keymap):
             "S-U0-D": ("S-End", "Delete"),
             # escape
             "O-(235)": ("Esc"),
+            "S-(235)": ("S-Esc"),
             "U0-X": ("Esc"),
             # line selection
             "U1-A": ("End", "S-Home"),
