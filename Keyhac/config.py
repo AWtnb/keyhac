@@ -2126,6 +2126,12 @@ def configure(keymap):
             return NestedCircumfix(("「", "」"), ("『", "』")).fix(s)
 
         @staticmethod
+        def swap_tabs(s: str) -> str:
+            ss = s.rstrip().split("\t")
+            ss.insert(0, ss.pop())
+            return "\t".join(ss)
+
+        @staticmethod
         def mdtable_from_tsv(s: str) -> str:
             delim = "\t"
 
@@ -2171,6 +2177,7 @@ def configure(keymap):
 
     ClipboardFormatMenu.set_formatter(
         {
+            "swap tabs": FormatTools.swap_tabs,
             "as code": lambda c: f"`{c}`",
             "trim space on line head": FormatTools.trim_space_on_line_head,
             "my markdown frontmatter": lambda _: md_frontmatter(),
