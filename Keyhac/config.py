@@ -2127,9 +2127,15 @@ def configure(keymap):
 
         @staticmethod
         def swap_tabs(s: str) -> str:
-            ss = s.rstrip().split("\t")
-            ss.insert(0, ss.pop())
-            return "\t".join(ss)
+            lines = s.splitlines()
+            if len(lines) < 1:
+                return s
+            swapped = []
+            for line in lines:
+                ss = line.split("\t")
+                ss.insert(0, ss.pop())
+                swapped.append("\t".join(ss))
+            return "\n".join(swapped)
 
         @staticmethod
         def mdtable_from_tsv(s: str) -> str:
