@@ -790,15 +790,8 @@ def configure(keymap):
     keymap_global["U1-H"] = "LWin-Left"
 
     keymap_global["U1-M"] = keymap.defineMultiStrokeKeymap()
-
-    def maximize_window():
-        def _maximize(_) -> None:
-            delay()
-            keymap.getTopLevelWindow().maximize()
-
-        subthread_run(_maximize)
-
-    keymap_global["U1-M"]["X"] = maximize_window
+    keymap_global["U1-M"]["X"] = lambda : keymap.getTopLevelWindow().maximize()
+    keymap_global["U1-M"]["N"] = lambda : keymap.getTopLevelWindow().minimize()
 
     class RectizorAllocator:
         monitor_dict = {
