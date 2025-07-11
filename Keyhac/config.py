@@ -532,7 +532,7 @@ def configure(keymap):
                     s = "".join(s.splitlines())
                 ClipHandler().paste(s)
 
-            return _paster
+            return suppress_binded_key(_paster)
 
         @classmethod
         def apply(cls, km: WindowKeymap, custom_key: str) -> None:
