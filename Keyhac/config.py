@@ -1967,8 +1967,8 @@ def configure(keymap):
         )
 
     class NestedCircumfix:
-        def __init__(self, prime_pair: tuple, secondory_pair: tuple):
-            self.pairs = [prime_pair, secondory_pair]
+        def __init__(self, prime_pair: tuple, secondary_pair: tuple):
+            self.pairs = [prime_pair, secondary_pair]
 
         def fix(self, s: str) -> str:
             stack = []
