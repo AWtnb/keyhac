@@ -182,6 +182,8 @@ def configure(keymap):
     bind_keys(
         keymap_global,
         {
+            # focus taskbar
+            "U1-T": ("LWin-T"),
             # send n and space
             "LS-U0-N": ("N", "N", "Space"),
             # close
@@ -790,8 +792,8 @@ def configure(keymap):
     keymap_global["U1-H"] = "LWin-Left"
 
     keymap_global["U1-M"] = keymap.defineMultiStrokeKeymap()
-    keymap_global["U1-M"]["X"] = lambda : keymap.getTopLevelWindow().maximize()
-    keymap_global["U1-M"]["N"] = lambda : keymap.getTopLevelWindow().minimize()
+    keymap_global["U1-M"]["X"] = lambda: keymap.getTopLevelWindow().maximize()
+    keymap_global["U1-M"]["N"] = lambda: keymap.getTopLevelWindow().minimize()
 
     class RectizorAllocator:
         monitor_dict = {
@@ -1035,7 +1037,7 @@ def configure(keymap):
             "U1-Atmark": ["\uff08`", "`\uff09"],  # FULLWIDTH PARENTHESIS and BackTick （``）
             "U0-Y": ["\u3008", "\u3009"],  # ANGLE BRACKET
             "U1-Y": ["\u300a", "\u300b"],  # DOUBLE ANGLE BRACKET
-            "U1-T": ["\u3014", "\u3015"],  # TORTOISE BRACKET
+            "U1-K": ["\u3014", "\u3015"],  # TORTOISE BRACKET
             "U1-OpenBracket": ["\uff3b", "\uff3d"],  # FULLWIDTH SQUARE BRACKET ［］
         },
     )
@@ -1060,8 +1062,8 @@ def configure(keymap):
             "U1-9": ["(", ")"],
             "U1-CloseBracket": ["{", "}"],
             "U0-Caret": ["~~", "~~"],
-            "U0-T": ["<", ">"],
-            "LS-U0-T": ["</", ">"],
+            "U1-Comma": ["<", ">"],
+            "U1-Period": ["</", ">"],
         },
     )
 
