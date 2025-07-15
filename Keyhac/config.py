@@ -1063,7 +1063,7 @@ def configure(keymap):
             "U1-CloseBracket": ["{", "}"],
             "U0-Caret": ["~~", "~~"],
             "U1-Comma": ["<", ">"],
-            "U1-Period": ["</", ">"],
+            "LS-U1-Comma": ["</", ">"],
         },
     )
 
