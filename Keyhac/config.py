@@ -14,6 +14,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 import ckit
 import pyauto
+import keyhac_ini
 from keyhac import *
 from keyhac_keymap import Keymap, KeyCondition, WindowKeymap
 from keyhac_listwindow import ListWindow
@@ -109,6 +110,11 @@ def configure(keymap):
         keymap.console_window.reloadTheme()
 
     set_custom_theme()
+
+    # set console appearance
+    keyhac_ini.setint("CONSOLE", "visible", 0)
+    keyhac_ini.setint("CONSOLE", "x", 0)
+    keyhac_ini.write()
 
     # user modifier
     keymap.replaceKey("(29)", 235)  # "muhenkan" => 235
