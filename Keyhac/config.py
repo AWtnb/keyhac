@@ -518,9 +518,9 @@ def configure(keymap):
     # custom hotkey
     ################################
 
-    class StrCleaner:
+    class StrPaster:
         @staticmethod
-        def clear_space(s: str) -> str:
+        def remove_whitespace(s: str) -> str:
             return s.strip().translate(
                 str.maketrans(
                     "",
@@ -530,33 +530,17 @@ def configure(keymap):
             )
 
         @classmethod
-        def invoke(cls, remove_white: bool = False, to_sigleline: bool = False) -> Callable:
-
-            def _paster() -> None:
-                s = ClipHandler().get_string().strip()
-                if remove_white:
-                    s = cls.clear_space(s)
-                if to_sigleline:
-                    s = "".join(s.splitlines())
-                ClipHandler().paste(s)
-
-            return suppress_binded_key(_paster)
+        def get_string(cls) -> str:
+            c = ClipHandler().get_string()
+            if (s := c.strip()) != c:
+                return s
+            return cls.remove_whitespace(c)
 
         @classmethod
-        def apply(cls, km: WindowKeymap, custom_key: str) -> None:
-            for mod_ctrl, remove_white in {
-                "": False,
-                "LC-": True,
-            }.items():
-                for mod_shift, include_linebreak in {
-                    "": False,
-                    "LS-": True,
-                }.items():
-                    km[mod_ctrl + mod_shift + custom_key] = cls.invoke(
-                        remove_white, include_linebreak
-                    )
+        def paste(cls) -> None:
+            ClipHandler().paste(cls.get_string())
 
-    StrCleaner().apply(keymap_global, "U1-V")
+    keymap_global["U1-V"] = StrPaster().paste
 
     # paste with quote mark
     class Quoter:
@@ -2220,6 +2204,7 @@ def configure(keymap):
             "fix nested paren": FormatTools.format_nested_paren,
             "fix nested bracket": FormatTools.format_nested_bracket,
             "zoom invitation": format_zoom_invitation,
+            "remove whitespaces": StrPaster.remove_whitespace,
         }
     )
     ClipboardFormatMenu.set_replacer(
@@ -2230,10 +2215,6 @@ def configure(keymap):
             "remove single-quotation": (r"'", ""),
             "remove linebreak": (r"\r?\n", ""),
             "to sigle line": (r"\r?\n", ""),
-            "remove whitespaces": (
-                r"[\u0009\u0020\u00a0\u2000-\u200f\u202f\u205f\u3000\ufeff]",
-                "",
-            ),
             "remove whitespaces (including linebreak)": (r"\s", ""),
             "remove non-digit-char": (r"[^\d]", ""),
             "remove quotations": (r"[\u0022\u0027]", ""),
