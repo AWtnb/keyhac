@@ -518,7 +518,7 @@ def configure(keymap):
     # custom hotkey
     ################################
 
-    class StrPaster:
+    class StrCleaner:
         @staticmethod
         def remove_whitespace(s: str) -> str:
             return s.strip().translate(
@@ -530,17 +530,34 @@ def configure(keymap):
             )
 
         @classmethod
-        def get_string(cls) -> str:
-            c = ClipHandler().get_string()
-            if (s := c.strip()) != c:
+        def invoke_paster(cls, no_space: bool = False, no_break: bool = False) -> Callable:
+            def _clean(s) -> str:
+                s = s.strip()
+                if no_space:
+                    s = cls.remove_whitespace(s)
+                if no_break:
+                    s = "".join(s.splitlines())
                 return s
-            return cls.remove_whitespace(c)
+
+            def _paste() -> None:
+                ClipHandler().paste(format_func=_clean)
+
+            return _paste
 
         @classmethod
-        def paste(cls) -> None:
-            ClipHandler().paste(cls.get_string())
+        def apply(cls, km: WindowKeymap, key: str) -> None:
+            for mod1, no_space in {
+                "": False,
+                "C-": True,
+            }.items():
+                for mod2, no_break in {
+                    "": False,
+                    "S-": True,
+                }.items():
+                    km[mod1 + mod2 + key] = cls.invoke_paster(no_space, no_break)
 
-    keymap_global["U1-V"] = StrPaster().paste
+    keymap_global["U1-V"] = keymap.defineMultiStrokeKeymap()
+    StrCleaner().apply(keymap_global["U1-V"], "V")
 
     # paste with quote mark
     class Quoter:
@@ -2204,7 +2221,7 @@ def configure(keymap):
             "fix nested paren": FormatTools.format_nested_paren,
             "fix nested bracket": FormatTools.format_nested_bracket,
             "zoom invitation": format_zoom_invitation,
-            "remove whitespaces": StrPaster.remove_whitespace,
+            "remove whitespaces": StrCleaner.remove_whitespace,
         }
     )
     ClipboardFormatMenu.set_replacer(
