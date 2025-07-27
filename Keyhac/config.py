@@ -34,6 +34,18 @@ def check_fzf() -> bool:
     return shutil.which("fzf.exe") is not None
 
 
+def open_vscode(*args: str) -> bool:
+    try:
+        if code_path := shutil.which("code"):
+            cmd = [code_path] + list(args)
+            subprocess.run(cmd, creationflags=subprocess.CREATE_NO_WINDOW)
+            return True
+        return False
+    except Exception as e:
+        print(e)
+        return False
+
+
 def configure(keymap):
 
     def balloon(message: str) -> None:
@@ -76,14 +88,6 @@ def configure(keymap):
     ################################
     # general setting
     ################################
-
-    def get_editor() -> str:
-        code_cmd_path = shutil.which("code")
-        if code_cmd_path is not None:
-            return os.path.join(Path(code_cmd_path).parents[1], "Code.exe")
-        return "notepad.exe"
-
-    KEYHAC_EDITOR = get_editor()
 
     # console theme
     keymap.setFont("HackGen", 16)
@@ -631,10 +635,9 @@ def configure(keymap):
             dir_path = os.path.dirname(real_path)
 
         def _open(_) -> None:
-            if KEYHAC_EDITOR == "notepad.exe":
-                balloon("keyhac editor 'notepad.exe' cannot open directory.")
-            else:
-                shell_exec(KEYHAC_EDITOR, dir_path)
+            result = open_vscode(dir_path)
+            if not result:
+                shell_exec("notepad.exe", os.path.join(dir_path, "Keyhac", "config.py"))
 
         subthread_run(_open)
 
@@ -1578,7 +1581,10 @@ def configure(keymap):
                     wnd = scanner.found
                     if wnd is None:
                         if exe_path:
-                            shell_exec(exe_path)
+                            if isinstance(exe_path, Callable):
+                                exe_path()
+                            else:
+                                shell_exec(exe_path)
                     else:
                         job_item.result = WindowActivator(wnd).activate()
 
@@ -1673,7 +1679,7 @@ def configure(keymap):
             "C-P": ("powerpnt.exe", "PPTFrameClass"),
             "E": ("EXCEL.EXE", "XLMAIN"),
             "W": ("WINWORD.EXE", "OpusApp"),
-            "V": ("Code.exe", "Chrome_WidgetWin_1", KEYHAC_EDITOR),
+            "V": ("Code.exe", "Chrome_WidgetWin_1", open_vscode),
             "C-V": ("vivaldi.exe", "Chrome_WidgetWin_1"),
             "M": (
                 "Mery.exe",
