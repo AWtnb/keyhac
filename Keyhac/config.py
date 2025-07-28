@@ -637,7 +637,7 @@ def configure(keymap):
         def _open(_) -> None:
             result = open_vscode(dir_path)
             if not result:
-                shell_exec("notepad.exe", os.path.join(dir_path, "Keyhac", "config.py"))
+                shell_exec(dir_path)
 
         subthread_run(_open)
 
