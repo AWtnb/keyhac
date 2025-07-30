@@ -870,7 +870,7 @@ def configure(keymap):
         },
     )
 
-    keymap_global["U1-M"]["0"] = "LWin-Z"
+    keymap_global["U1-M"]["M"] = "LWin-Z"
 
     class WndShrinker:
 
@@ -988,6 +988,14 @@ def configure(keymap):
     keymap_global["U1-N"] = SKKSender().under_kanamode("C-S-Left", SKKKey.convpoint, "S-4", "Tab")
     keymap_global["U1-4"] = SKKSender().under_kanamode(SKKKey.convpoint, "S-4")
 
+    def select_last_nchar(km: WindowKeymap) -> Callable:
+        for n in "123456":
+            seq = ["LS-Left"] * int(n)
+            km[n] = SKKSender().under_kanamode(*seq)
+
+    keymap_global["U0-M"] = keymap.defineMultiStrokeKeymap()
+    select_last_nchar(keymap_global["U0-M"])
+
     class LatinSender(SKKSender):
         def __init__(self, recover_mode: bool = True) -> None:
             inter_stroke_pause = 0
@@ -1008,17 +1016,6 @@ def configure(keymap):
                 _, suffix = circumfix
                 sequence = circumfix + ["Left"] * len(suffix)
                 km[key] = self.invoke(*sequence)
-
-    def honorific_last_nchar(km: WindowKeymap, honorific: str) -> Callable:
-        for n in "123":
-            seq = ["Back"] * int(n) + [honorific]
-            km[n] = LatinSender().invoke(*seq)
-
-    keymap_global["U0-M"] = keymap.defineMultiStrokeKeymap()
-    honorific_last_nchar(keymap_global["U0-M"], "先生")
-
-    keymap_global["LS-U0-M"] = keymap.defineMultiStrokeKeymap()
-    honorific_last_nchar(keymap_global["LS-U0-M"], "様")
 
     # markdown list
     keymap_global["S-U0-8"] = LatinSender().invoke("- ")
