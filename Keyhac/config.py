@@ -870,7 +870,7 @@ def configure(keymap):
         },
     )
 
-    keymap_global["U1-M"]["M"] = "LWin-Z"
+    keymap_global["U1-M"]["0"] = "LWin-Z"
 
     class WndShrinker:
 
