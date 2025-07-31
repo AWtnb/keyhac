@@ -7,6 +7,7 @@ import shutil
 import subprocess
 import urllib.parse
 import unicodedata
+from enum import Enum
 from typing import Union, Callable, Dict, List, Tuple, NamedTuple
 from pathlib import Path
 from winreg import HKEY_CURRENT_USER, HKEY_CLASSES_ROOT, OpenKey, QueryValueEx
@@ -659,22 +660,11 @@ def configure(keymap):
     # class for position on monitor
     ################################
 
-    class RectEdge:
+    class RectEdge(Enum):
         left = 0
         top = 1
         right = 2
         bottom = 3
-
-        @staticmethod
-        def opposite_of(i: int) -> int:
-            return (i + 2) % 4
-
-        @classmethod
-        def from_int(cls, i: int) -> str:
-            edges = ["left", "top", "right", "bottom"]
-            if len(edges) <= i or i < 0:
-                raise ValueError("Invalid RectEdge index: {}".format(i))
-            return edges[i]
 
     class Rect:
         min_width = 300
@@ -688,7 +678,7 @@ def configure(keymap):
             self.width = right - left
             self.height = bottom - top
 
-        def to_list(self) -> List[int]:
+        def as_list(self) -> List[int]:
             return [
                 self.left,
                 self.top,
@@ -707,9 +697,13 @@ def configure(keymap):
                 return False
             return True
 
+        def move_edge(self, toward: RectEdge, delta: int) -> List[int]:
+            r = self.as_list()
+            opposite = (toward.value + 2) % 4
+            r[opposite] = r[toward.value] + delta
+            return r
+
         def resize(self, scale: float, toward: RectEdge) -> "Rect":
-            r = self.to_list()
-            i = RectEdge.opposite_of(toward)
             if toward in [RectEdge.left, RectEdge.right]:
                 dim = self.width
             else:
@@ -717,12 +711,12 @@ def configure(keymap):
             delta = int(dim * scale)
             if toward in [RectEdge.right, RectEdge.bottom]:
                 delta = delta * -1
-            r[i] = r[toward] + delta
+            r = self.move_edge(toward, delta)
             return Rect(*r)
 
     class Rectizor:
         def __init__(self, rect: Rect) -> None:
-            self._rect = rect.to_list()
+            self._rect = rect.as_list()
 
         @property
         def rect(self):
@@ -755,14 +749,13 @@ def configure(keymap):
             self.mapping: Dict[str, Dict[str, Rectizor]] = {}
 
         def allocate(self, rect: Rect) -> None:
-            for edge in [RectEdge.left, RectEdge.top, RectEdge.right, RectEdge.bottom]:
+            for edge in RectEdge:
                 d: Dict[str, Rectizor] = {}
                 for size, scale in self.variants.items():
                     resized = rect.resize(scale, edge)
                     if resized.is_valid():
                         d[size] = Rectizor(resized)
-                e = RectEdge().from_int(edge)
-                self.mapping[e] = d
+                self.mapping[edge.name] = d
 
     class KeyhacMonitors:
         def __init__(self) -> None:
@@ -886,7 +879,7 @@ def configure(keymap):
                         if wnd.isMaximized():
                             wnd.restore()
                             delay()
-                        wnd.setRect(resized.to_list())
+                        wnd.setRect(resized.as_list())
 
                 subthread_run(__snap)
 
