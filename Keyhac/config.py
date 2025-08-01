@@ -211,6 +211,7 @@ def configure(keymap):
             # line selection
             "U1-A": ("End", "S-Home"),
             # punctuation
+            "U0-OpenBracket": ("OpenBracket", "CloseBracket", "Left"),
             "U0-4": ("S-4", "S-BackSlash"),
             "U0-Enter": ("Period"),
             "U0-U": ("S-BackSlash"),
@@ -1030,7 +1031,7 @@ def configure(keymap):
         {
             "U0-8": ["\u300e", "\u300f"],  # WHITE CORNER BRACKET 『』
             "U0-9": ["\u3010", "\u3011"],  # BLACK LENTICULAR BRACKET 【】
-            "U0-OpenBracket": ["\u300c", "\u300d"],  # CORNER BRACKET 「」
+            "LC-U0-OpenBracket": ["\u300c", "\u300d"],  # CORNER BRACKET 「」
             "U1-2": ["\u201c", "\u201d"],  # DOUBLE QUOTATION MARK “”
             "U1-7": ["\u2018", "\u2019"],  # SINGLE QUOTATION MARK ‘’
             "U1-8": ["\uff08", "\uff09"],  # FULLWIDTH PARENTHESIS （）
