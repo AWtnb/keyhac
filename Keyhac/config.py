@@ -909,16 +909,16 @@ def configure(keymap):
             def _avoider() -> None:
                 def _snap(_) -> None:
                     wnd = keymap.getTopLevelWindow()
-                    if CheckWnd.is_keyhac_console(wnd):
+                    if CheckWnd.is_keyhac_console(wnd) or wnd.isMaximized():
                         return
                     border = cls.get_border_x(wnd)
                     if border < 0:
                         return
                     rect = list(wnd.getRect())
                     if show_left:
-                        rect[2] = border
-                    else:
                         rect[0] = border
+                    else:
+                        rect[2] = border
                     if Rect(*rect).is_valid():
                         wnd.setRect(rect)
 
@@ -926,8 +926,8 @@ def configure(keymap):
 
             return _avoider
 
-    keymap_global["U1-M"]["A-H"] = MonitorCenterAvoider().invoke_avoider(True)
-    keymap_global["U1-M"]["A-L"] = MonitorCenterAvoider().invoke_avoider(False)
+    keymap_global["U1-M"]["A-H"] = MonitorCenterAvoider().invoke_avoider(False)
+    keymap_global["U1-M"]["A-L"] = MonitorCenterAvoider().invoke_avoider(True)
 
     ################################
     # set cursor position
