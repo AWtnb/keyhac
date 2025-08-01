@@ -715,31 +715,21 @@ def configure(keymap):
             r = self.move_edge(toward, delta)
             return Rect(*r)
 
-    class Rectizor:
-        def __init__(self, rect: Rect) -> None:
-            self._rect = rect.as_list()
-
-        @property
-        def rect(self):
-            return self._rect
-
-        def check_rect(self, wnd: pyauto.Window) -> bool:
-            return wnd.getRect() == self._rect
-
-        def snap(self) -> None:
+        def apply_to_wnd(self) -> None:
             wnd = keymap.getTopLevelWindow()
-            if not wnd or CheckWnd.is_keyhac_console(wnd) or self.check_rect(wnd):
+            goal = self.as_list()
+            if not wnd or CheckWnd.is_keyhac_console(wnd) or wnd.getRect() == goal:
                 return
 
             def _snap(_) -> None:
                 if wnd.isMaximized():
                     wnd.restore()
                     delay()
-                wnd.setRect(self._rect)
+                wnd.setRect(goal)
 
             def _finished(_) -> None:
-                if not self.check_rect(wnd):
-                    wnd.setRect(self._rect)
+                if wnd.getRect() != goal:
+                    wnd.setRect(goal)
 
             subthread_run(_snap, _finished)
 
@@ -747,15 +737,15 @@ def configure(keymap):
         variants = {"small": 1 / 3, "middle": 1 / 2, "large": 2 / 3}
 
         def __init__(self) -> None:
-            self.mapping: Dict[str, Dict[str, Rectizor]] = {}
+            self.mapping: Dict[str, Dict[str, Rect]] = {}
 
         def allocate(self, rect: Rect) -> None:
             for edge in RectEdge:
-                d: Dict[str, Rectizor] = {}
+                d: Dict[str, Rect] = {}
                 for size, scale in self.variants.items():
                     resized = rect.resize(scale, edge)
                     if resized.is_valid():
-                        d[size] = Rectizor(resized)
+                        d[size] = resized
                 self.mapping[edge.name] = d
 
     class KeyhacMonitors:
@@ -799,7 +789,7 @@ def configure(keymap):
     keymap_global["U1-M"]["X"] = lambda: keymap.getTopLevelWindow().maximize()
     keymap_global["U1-M"]["N"] = lambda: keymap.getTopLevelWindow().minimize()
 
-    class RectizorAllocator:
+    class RectAllocator:
         monitor_dict = {
             "": 0,
             "A-": 1,
@@ -827,12 +817,12 @@ def configure(keymap):
                 for area_mod, size in cls.size_dict.items():
                     for key, pos in cls.snap_key_dict.items():
                         if monitor_idx < len(monitors):
-                            rectizor = monitors[monitor_idx].mapping[pos].get(size, None)
-                            if rectizor:
-                                km[monitor_mod + area_mod + key] = rectizor.snap
+                            new_rect = monitors[monitor_idx].mapping[pos].get(size, None)
+                            if new_rect:
+                                km[monitor_mod + area_mod + key] = new_rect.apply_to_wnd
                             else:
                                 print(
-                                    f"invalid rect: {monitor_idx=} {size=} {pos=} {rectizor.rect}"
+                                    f"invalid rect: {monitor_idx=} {size=} {pos=} {new_rect.as_list()}"
                                 )
 
         @staticmethod
@@ -851,10 +841,10 @@ def configure(keymap):
 
                 km[key] = _snap
 
-    RectizorAllocator().flexible(keymap_global["U1-M"])
+    RectAllocator().flexible(keymap_global["U1-M"])
 
-    RectizorAllocator.maximize(keymap_global, {"LC-U1-L": "Right", "LC-U1-H": "Left"})
-    RectizorAllocator.maximize(
+    RectAllocator.maximize(keymap_global, {"LC-U1-L": "Right", "LC-U1-H": "Left"})
+    RectAllocator.maximize(
         keymap_global["U1-M"],
         {
             "U0-L": "Right",
