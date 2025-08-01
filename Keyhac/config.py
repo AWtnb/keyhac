@@ -888,6 +888,45 @@ def configure(keymap):
 
     WndShrinker().apply(keymap_global["U1-M"])
 
+    class MonitorCenterAvoider:
+
+        @staticmethod
+        def get_border_x(wnd: pyauto.Window) -> int:
+            x = -1
+            rect = Rect(*wnd.getRect())
+            center_x = int((rect.left + rect.right) / 2)
+            monitors = pyauto.Window.getMonitorInfo()
+            for monitor in monitors:
+                monitor_rect = Rect(*monitor[1])
+                if monitor_rect.left <= center_x and center_x <= monitor_rect.right:
+                    x = int((monitor_rect.left + monitor_rect.right) / 2)
+                    break
+            return x
+
+        @classmethod
+        def invoke_avoider(cls, show_left: bool) -> Callable:
+
+            def _avoider() -> None:
+                def _snap(_) -> None:
+                    wnd = keymap.getTopLevelWindow()
+                    border = cls.get_border_x(wnd)
+                    if border < 0:
+                        return
+                    rect = list(wnd.getRect())
+                    if show_left:
+                        rect[2] = border
+                    else:
+                        rect[0] = border
+                    if Rect(*rect).is_valid():
+                        wnd.setRect(rect)
+
+                subthread_run(_snap)
+
+            return _avoider
+
+    keymap_global["U1-M"]["A-H"] = MonitorCenterAvoider().invoke_avoider(True)
+    keymap_global["U1-M"]["A-L"] = MonitorCenterAvoider().invoke_avoider(False)
+
     ################################
     # set cursor position
     ################################
