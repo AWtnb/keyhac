@@ -1035,7 +1035,7 @@ def configure(keymap):
                 km[key] = self.invoke(*sequence)
 
     def select_last_nchar(km: WindowKeymap) -> Callable:
-        for n in "123456":
+        for n in "123456789":
             seq = ["LS-Left"] * int(n)
             km[n] = SKKSender().under_kanamode(*seq)
 
