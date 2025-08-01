@@ -909,6 +909,8 @@ def configure(keymap):
             def _avoider() -> None:
                 def _snap(_) -> None:
                     wnd = keymap.getTopLevelWindow()
+                    if CheckWnd.is_keyhac_console(wnd):
+                        return
                     border = cls.get_border_x(wnd)
                     if border < 0:
                         return
