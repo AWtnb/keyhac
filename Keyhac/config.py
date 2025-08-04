@@ -1036,15 +1036,15 @@ def configure(keymap):
             seq = ["LS-Left"] * int(n)
             km[n] = SKKSender().under_kanamode(*seq)
 
-    keymap_global["U1-B"] = keymap.defineMultiStrokeKeymap()
-    select_last_nchar(keymap_global["U1-B"])
+    keymap_global["U0-M"] = keymap.defineMultiStrokeKeymap()
+    select_last_nchar(keymap_global["U0-M"])
 
     def honorific_last_nchar(km: WindowKeymap, honorific: str) -> Callable:
         for n in "123":
             seq = ["Back"] * int(n) + [honorific]
             km["LC-" + n] = LatinSender().invoke(*seq)
 
-    honorific_last_nchar(keymap_global["U1-B"], "先生")
+    honorific_last_nchar(keymap_global["U0-M"], "先生")
 
     # markdown list
     keymap_global["S-U0-8"] = LatinSender().invoke("- ")
