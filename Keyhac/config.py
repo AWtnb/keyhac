@@ -1044,12 +1044,11 @@ def configure(keymap):
         }
         for key, to in combo.items():
             km[key] = keymap.defineMultiStrokeKeymap()
-            km[mod + key] = keymap.defineMultiStrokeKeymap()
             for n in "123456789":
                 seq1 = [to] * int(n)
                 km[key][n] = seq1
                 seq2 = [mod + s for s in seq1]
-                km[mod + key][n] = sender.under_kanamode(*seq2)
+                km[key][mod + n] = sender.under_kanamode(*seq2)
 
     cursor_combo(keymap_global["U0-M"])
 
