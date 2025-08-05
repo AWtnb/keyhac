@@ -1033,40 +1033,25 @@ def configure(keymap):
 
     keymap_global["U0-M"] = keymap.defineMultiStrokeKeymap()
 
-    class NChar:
-        numbers = "123456789"
+    def cursor_combo(km: WindowKeymap) -> None:
+        sender = SKKSender()
+        mod = "LS-"
+        combo = {
+            "H": "Left",
+            "J": "Down",
+            "K": "Up",
+            "L": "Right",
+        }
+        for key, to in combo.items():
+            km[key] = keymap.defineMultiStrokeKeymap()
+            km[mod + key] = keymap.defineMultiStrokeKeymap()
+            for n in "123456789":
+                seq1 = [to] * int(n)
+                km[key][n] = seq1
+                seq2 = [mod + s for s in seq1]
+                km[mod + key][n] = sender.under_kanamode(*seq2)
 
-        def __init__(self):
-            self.sender = SKKSender()
-
-        @staticmethod
-        def to_seq(key: str, count: int) -> List[str]:
-            return [key] * int(count)
-
-        def back_nchar(self, km: WindowKeymap) -> None:
-            for n in self.numbers:
-                seq = self.to_seq("Left", n)
-                km[n] = seq
-
-        def select_last_nchar(self, km: WindowKeymap) -> None:
-            for n in self.numbers:
-                seq = self.to_seq("LS-Left", n)
-                km["LS-" + n] = self.sender.under_kanamode(*seq)
-
-        def next_nchar(self, km: WindowKeymap) -> None:
-            for n in self.numbers:
-                seq = self.to_seq("Right", n)
-                km["LA-" + n] = seq
-
-        def select_next_nchar(self, km: WindowKeymap) -> None:
-            for n in self.numbers:
-                seq = self.to_seq("LS-Right", n)
-                km["LA-LS-" + n] = self.sender.under_kanamode(*seq)
-
-    NChar().back_nchar(keymap_global["U0-M"])
-    NChar().select_last_nchar(keymap_global["U0-M"])
-    NChar().next_nchar(keymap_global["U0-M"])
-    NChar().select_next_nchar(keymap_global["U0-M"])
+    cursor_combo(keymap_global["U0-M"])
 
     def honorific_last_nchar(km: WindowKeymap, honorific: str) -> Callable:
         for n in "123":
