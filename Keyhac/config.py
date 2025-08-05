@@ -1031,13 +1031,28 @@ def configure(keymap):
                 sequence = circumfix + ["Left"] * len(suffix)
                 km[key] = self.invoke(*sequence)
 
+    keymap_global["U0-M"] = keymap.defineMultiStrokeKeymap()
+
+    def back_nchar(km: WindowKeymap) -> Callable:
+        for n in "123456789":
+            seq = ["Left"] * int(n)
+            km["LA-" + n] = seq
+
+    back_nchar(keymap_global["U0-M"])
+
     def select_last_nchar(km: WindowKeymap) -> Callable:
         for n in "123456789":
             seq = ["LS-Left"] * int(n)
             km[n] = SKKSender().under_kanamode(*seq)
 
-    keymap_global["U0-M"] = keymap.defineMultiStrokeKeymap()
     select_last_nchar(keymap_global["U0-M"])
+
+    def select_next_nchar(km: WindowKeymap) -> Callable:
+        for n in "123456789":
+            seq = ["LS-Right"] * int(n)
+            km["LS-" + n] = SKKSender().under_kanamode(*seq)
+
+    select_next_nchar(keymap_global["U0-M"])
 
     def honorific_last_nchar(km: WindowKeymap, honorific: str) -> Callable:
         for n in "123":
