@@ -1033,26 +1033,40 @@ def configure(keymap):
 
     keymap_global["U0-M"] = keymap.defineMultiStrokeKeymap()
 
-    def back_nchar(km: WindowKeymap) -> Callable:
-        for n in "123456789":
-            seq = ["Left"] * int(n)
-            km["LA-" + n] = SKKSender().under_kanamode(*seq)
+    class NChar:
+        numbers = "123456789"
 
-    back_nchar(keymap_global["U0-M"])
+        def __init__(self):
+            self.sender = SKKSender()
 
-    def select_last_nchar(km: WindowKeymap) -> Callable:
-        for n in "123456789":
-            seq = ["LS-Left"] * int(n)
-            km[n] = SKKSender().under_kanamode(*seq)
+        @staticmethod
+        def to_seq(key: str, count: int) -> List[str]:
+            return [key] * int(count)
 
-    select_last_nchar(keymap_global["U0-M"])
+        def back_nchar(self, km: WindowKeymap) -> None:
+            for n in self.numbers:
+                seq = self.to_seq("Left", n)
+                km[n] = seq
 
-    def select_next_nchar(km: WindowKeymap) -> Callable:
-        for n in "123456789":
-            seq = ["LS-Right"] * int(n)
-            km["LS-" + n] = SKKSender().under_kanamode(*seq)
+        def select_last_nchar(self, km: WindowKeymap) -> None:
+            for n in self.numbers:
+                seq = self.to_seq("LS-Left", n)
+                km["LS-" + n] = self.sender.under_kanamode(*seq)
 
-    select_next_nchar(keymap_global["U0-M"])
+        def next_nchar(self, km: WindowKeymap) -> None:
+            for n in self.numbers:
+                seq = self.to_seq("Right", n)
+                km["LA-" + n] = seq
+
+        def select_next_nchar(self, km: WindowKeymap) -> None:
+            for n in self.numbers:
+                seq = self.to_seq("LS-Right", n)
+                km["LA-LS-" + n] = self.sender.under_kanamode(*seq)
+
+    NChar().back_nchar(keymap_global["U0-M"])
+    NChar().select_last_nchar(keymap_global["U0-M"])
+    NChar().next_nchar(keymap_global["U0-M"])
+    NChar().select_next_nchar(keymap_global["U0-M"])
 
     def honorific_last_nchar(km: WindowKeymap, honorific: str) -> Callable:
         for n in "123":
