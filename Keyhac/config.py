@@ -1036,19 +1036,25 @@ def configure(keymap):
     def cursor_combo(km: WindowKeymap) -> None:
         sender = SKKSender()
         mod = "LS-"
-        combo = {
+        number = "123456789"
+        base_combo = {
             "H": "Left",
             "J": "Down",
             "K": "Up",
             "L": "Right",
         }
-        for key, to in combo.items():
+        delete_combo = {
+            "B": "Back",
+            "D": "Del",
+        }
+        for key, to in (base_combo | delete_combo).items():
             km[key] = keymap.defineMultiStrokeKeymap()
-            for n in "123456789":
+            for n in number:
                 seq1 = [to] * int(n)
                 km[key][n] = seq1
-                seq2 = [mod + s for s in seq1]
-                km[key][mod + n] = sender.under_kanamode(*seq2)
+                if key not in delete_combo:
+                    seq2 = [mod + s for s in seq1]
+                    km[key][mod + n] = sender.under_kanamode(*seq2)
 
     cursor_combo(keymap_global["U0-M"])
 
