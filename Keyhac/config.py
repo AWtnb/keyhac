@@ -1036,7 +1036,7 @@ def configure(keymap):
     def back_nchar(km: WindowKeymap) -> Callable:
         for n in "123456789":
             seq = ["Left"] * int(n)
-            km["LA-" + n] = seq
+            km["LA-" + n] = SKKSender().under_kanamode(*seq)
 
     back_nchar(keymap_global["U0-M"])
 
