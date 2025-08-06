@@ -1045,16 +1045,16 @@ def configure(keymap):
         }
         delete_combo = {
             "B": "Back",
-            "D": "Del",
+            "D": "Delete",
         }
         for key, to in (base_combo | delete_combo).items():
             km[key] = keymap.defineMultiStrokeKeymap()
             for n in number:
-                seq1 = [to] * int(n)
-                km[key][n] = seq1
-                if key not in delete_combo:
-                    seq2 = [mod + s for s in seq1]
-                    km[key][mod + n] = sender.under_kanamode(*seq2)
+                seq = [to] * int(n)
+                km[key][n] = seq
+                if key in base_combo:
+                    sel_seq = [mod + s for s in seq]
+                    km[key][mod + n] = sender.under_kanamode(*sel_seq)
 
     cursor_combo(keymap_global["U0-M"])
 
