@@ -853,8 +853,6 @@ def configure(keymap):
         },
     )
 
-    keymap_global["LA-U1-M"] = "LWin-Z"
-
     class WndShrinker:
 
         @staticmethod
@@ -914,12 +912,17 @@ def configure(keymap):
                     if border < 0:
                         return
                     rect = list(wnd.getRect())
-                    if show_left:
+                    width = Rect(*rect).width
+                    if rect[0] == border:
+                        rect[0] = border - width
+                        rect[2] = rect[0] + width
+                    elif rect[2] == border:
                         rect[0] = border
+                        rect[2] = rect[0] + width
                     else:
-                        rect[2] = border
-                    if Rect(*rect).is_valid():
-                        wnd.setRect(rect)
+                        i = 0 if show_left else 2
+                        rect[i] = border
+                    wnd.setRect(rect)
 
                 subthread_run(_snap)
 
