@@ -97,21 +97,22 @@ def configure(keymap):
         name = "black"
 
         custom_theme = {
-            "bg": (63, 59, 57),
-            "fg": (160, 180, 167),
-            "cursor0": (255, 255, 255),
-            "cursor1": (255, 64, 64),
-            "bar_fg": (0, 0, 0),
-            "bar_error_fg": (255, 64, 64),
-            "select_bg": (223, 244, 119),
-            "select_fg": (63, 59, 57),
-            "caret0": (255, 255, 255),
-            "caret1": (255, 0, 0),
+            "bg": "#3f3b39",
+            "fg": "#a0b4a7",
+            "cursor0": "#ffffff",
+            "cursor1": "#ff4040",
+            "bar_fg": "#000000",
+            "bar_error_fg": "#ff4040",
+            "select_bg": "#dff477",
+            "select_fg": "#3f3b39",
+            "caret0": "#ffffff",
+            "caret1": "#ff0000",
         }
         ckit.ckit_theme.theme_name = name
 
         for k, v in custom_theme.items():
-            ckit.ckit_theme.ini.set("COLOR", k, str(v))
+            rgb = tuple(int(v[i : i + 2], 16) for i in (1, 3, 5))
+            ckit.ckit_theme.ini.set("COLOR", k, str(rgb))
         keymap.console_window.reloadTheme()
 
     set_custom_theme()
