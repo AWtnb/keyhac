@@ -999,6 +999,8 @@ def configure(keymap):
             return _send
 
     # select-to-left with ime control
+    keymap_global["U1-B"] = SKKSender().under_kanamode("S-Left")
+    keymap_global["LS-U1-B"] = SKKSender().under_kanamode("S-Right")
     keymap_global["U1-Space"] = SKKSender().under_kanamode("C-S-Left")
     keymap_global["U1-N"] = SKKSender().under_kanamode("C-S-Left", SKKKey.convpoint, "S-4", "Tab")
     keymap_global["U1-4"] = SKKSender().under_kanamode(SKKKey.convpoint, "S-4")
