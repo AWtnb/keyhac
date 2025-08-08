@@ -7,6 +7,7 @@ import shutil
 import subprocess
 import urllib.parse
 import unicodedata
+import webbrowser
 from enum import Enum
 from typing import Union, Callable, Dict, List, Tuple, NamedTuple
 from pathlib import Path
@@ -58,31 +59,19 @@ def configure(keymap):
             pass
 
     # This should be called inside subthread.
-    def open_url(url: str) -> bool:
-        if url.startswith("http://") or url.startswith("https://"):
-            pyauto.shellExecute(None, url, "", "")
-            return True
-        return False
-
-    # This should be called inside subthread.
     def shell_exec(path: str, *args) -> None:
         if not isinstance(path, str):
             path = str(path)
-        if open_url(path):
+        if path.startswith("http://") or path.startswith("https://"):
+            webbrowser.open(path)
             return
         path = os.path.expandvars(path)
         if not smart_check_path(path):
             balloon("invalid path: '{}'".format(path))
             return
-        params = []
-        for arg in args:
-            if len(arg.strip()):
-                if " " in arg:
-                    params.append('"{}"'.format(arg))
-                else:
-                    params.append(arg)
         try:
-            pyauto.shellExecute(None, path, " ".join(params), "")
+            params = ["start", path] + list(args)
+            subprocess.run(params, shell=True)
         except Exception as e:
             print(e)
 
