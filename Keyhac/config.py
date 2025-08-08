@@ -1827,7 +1827,7 @@ def configure(keymap):
             scanner.scan()
             wnd = scanner.found
             if wnd is None:
-                shell_exec(DEFAULT_BROWSER.get_exe_path())
+                webbrowser.open("http://")
             else:
                 job_item.result = WindowActivator(wnd).activate()
 
