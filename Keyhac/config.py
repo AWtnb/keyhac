@@ -1027,7 +1027,6 @@ def configure(keymap):
                 km[key] = self.invoke(*sequence)
 
     keymap_global["U0-M"] = keymap.defineMultiStrokeKeymap()
-    keymap_global["U1-O"] = keymap.defineMultiStrokeKeymap()
 
     def cursor_combo(km: WindowKeymap) -> None:
         sender = SKKSender()
@@ -1043,17 +1042,16 @@ def configure(keymap):
             "B": "Back",
             "D": "Delete",
         }
-        for key, to in (base_combo | delete_combo).items():
-            km[key] = keymap.defineMultiStrokeKeymap()
-            for n in number:
+        for n in number:
+            km[n] = keymap.defineMultiStrokeKeymap()
+            for key, to in (base_combo | delete_combo).items():
                 seq = [to] * int(n)
-                km[key][n] = seq
+                km[n][key] = seq
                 if key in base_combo:
                     sel_seq = [mod + s for s in seq]
-                    km[key][mod + n] = sender.under_kanamode(*sel_seq)
+                    km[n][mod + key] = sel_seq
 
     cursor_combo(keymap_global["U0-M"])
-    cursor_combo(keymap_global["U1-O"])
 
     def honorific_last_nchar(km: WindowKeymap, honorific: str) -> Callable:
         for n in "123":
