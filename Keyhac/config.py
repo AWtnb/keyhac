@@ -1027,7 +1027,7 @@ def configure(keymap):
                 km[key] = self.invoke(*sequence)
 
     keymap_global["U0-M"] = keymap.defineMultiStrokeKeymap()
-    keymap_global["LC-U1-B"] = keymap.defineMultiStrokeKeymap()
+    keymap_global["U1-O"] = keymap.defineMultiStrokeKeymap()
 
     def cursor_combo(km: WindowKeymap) -> None:
         sender = SKKSender()
@@ -1053,7 +1053,7 @@ def configure(keymap):
                     km[key][mod + n] = sender.under_kanamode(*sel_seq)
 
     cursor_combo(keymap_global["U0-M"])
-    cursor_combo(keymap_global["LC-U1-B"])
+    cursor_combo(keymap_global["U1-O"])
 
     def honorific_last_nchar(km: WindowKeymap, honorific: str) -> Callable:
         for n in "123":
