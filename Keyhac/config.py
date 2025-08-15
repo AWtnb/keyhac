@@ -722,37 +722,34 @@ def configure(keymap):
 
             subthread_run(_snap, _finished)
 
-    class KeyhacMonitor:
-        variants = {"small": 1 / 3, "middle": 1 / 2, "large": 2 / 3}
+    class MonitorInfo:
+        def __init__(self, info: list):
+            self.rect = Rect(*info[0])
+            self.work_rect = Rect(*info[1])
+            self.is_primary = info[2] == 1
 
-        def __init__(self) -> None:
-            self.mapping: Dict[str, Dict[str, Rect]] = {}
-
-        def allocate(self, rect: Rect) -> None:
+        def variants(self) -> Dict[str, Dict[str, Rect]]:
+            edge_mapping: Dict[str, Dict[str, Rect]] = {}
             for edge in RectEdge:
-                d: Dict[str, Rect] = {}
-                for size, scale in self.variants.items():
-                    resized = rect.resize(scale, edge)
+                size_mapping: Dict[str, Rect] = {}
+                for size, scale in {"small": 1 / 3, "middle": 1 / 2, "large": 2 / 3}.items():
+                    resized = self.work_rect.resize(scale, edge)
                     if resized.is_valid():
-                        d[size] = resized
-                self.mapping[edge.name] = d
+                        size_mapping[size] = resized
+                edge_mapping[edge.name] = size_mapping
+            return edge_mapping
 
-    class KeyhacMonitors:
-        def __init__(self) -> None:
-            monitor_infos = self.get_sorted()
-            self._monitors = []
-            for mi in monitor_infos:
-                m = KeyhacMonitor()
-                m.allocate(Rect(*mi[1]))
-                self._monitors.append(m)
+    class MonitorInfos:
+        def __init__(self):
+            infos = [MonitorInfo(info) for info in pyauto.Window.getMonitorInfo()]
+            infos.sort(key=lambda info: not info.is_primary)
+            self.infos = infos
 
-        @property
-        def monitors(self) -> List[KeyhacMonitor]:
-            return self._monitors
+        def mappings(self) -> List[dict]:
+            return [info.variants() for info in self.infos]
 
-        @staticmethod
-        def get_sorted() -> List[list]:
-            return sorted(pyauto.Window.getMonitorInfo(), key=lambda x: x[2] != 1)
+        def rects(self) -> List[Rect]:
+            return [info.work_rect for info in self.infos]
 
     ################################
     # set window position
@@ -801,12 +798,12 @@ def configure(keymap):
 
         @classmethod
         def flexible(cls, km: WindowKeymap) -> None:
-            monitors = KeyhacMonitors().monitors
+            mappings = MonitorInfos().mappings()
             for monitor_mod, monitor_idx in cls.monitor_dict.items():
                 for area_mod, size in cls.size_dict.items():
                     for key, pos in cls.snap_key_dict.items():
-                        if monitor_idx < len(monitors):
-                            new_rect = monitors[monitor_idx].mapping[pos].get(size, None)
+                        if monitor_idx < len(mappings):
+                            new_rect = mappings[monitor_idx][pos].get(size, None)
                             if new_rect:
                                 km[monitor_mod + area_mod + key] = new_rect.apply_to_wnd
                             else:
@@ -929,9 +926,7 @@ def configure(keymap):
         @staticmethod
         def get_pos() -> list:
             pos = []
-            monitor_infos = KeyhacMonitors.get_sorted()
-            for m in monitor_infos:
-                rect = Rect(*m[1])
+            for rect in MonitorInfos().rects():
                 for i in (1, 3):
                     y = rect.top + int(rect.height / 2)
                     x = rect.left + int(rect.width / 4) * i
