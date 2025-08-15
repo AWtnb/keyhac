@@ -727,8 +727,8 @@ def configure(keymap):
         middle = 1 / 2
         large = 2 / 3
 
-    RectSizeMapping: TypeAlias = Dict[RectVariants.name, Rect]
-    RectEdgeMapping: TypeAlias = Dict[RectEdge.name, RectSizeMapping]
+    RectSizeMapping: TypeAlias = Dict[RectVariants, Rect]
+    RectEdgeMapping: TypeAlias = Dict[RectEdge, RectSizeMapping]
 
     class MonitorInfo:
         def __init__(self, info: list):
