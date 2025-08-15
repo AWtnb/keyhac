@@ -753,7 +753,7 @@ def configure(keymap):
             infos.sort(key=lambda info: not info.is_primary)
             self.infos = infos
 
-        def mappings(self) -> List[dict]:
+        def mappings(self) -> List[RectEdgeMapping]:
             return [info.variants() for info in self.infos]
 
         def rects(self) -> List[Rect]:
