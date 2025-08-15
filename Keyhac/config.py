@@ -9,7 +9,7 @@ import urllib.parse
 import unicodedata
 import webbrowser
 from enum import Enum
-from typing import Union, Callable, Dict, List, Tuple, NamedTuple
+from typing import Union, Callable, Dict, List, Tuple, NamedTuple, TypeAlias
 from pathlib import Path
 from winreg import HKEY_CURRENT_USER, HKEY_CLASSES_ROOT, OpenKey, QueryValueEx
 from concurrent.futures import ThreadPoolExecutor
@@ -722,20 +722,28 @@ def configure(keymap):
 
             subthread_run(_snap, _finished)
 
+    class RectVariants(Enum):
+        small = 1 / 3
+        middle = 1 / 2
+        large = 2 / 3
+
+    RectSizeMapping: TypeAlias = Dict[RectVariants.name, Rect]
+    RectEdgeMapping: TypeAlias = Dict[RectEdge.name, RectSizeMapping]
+
     class MonitorInfo:
         def __init__(self, info: list):
             self.rect = Rect(*info[0])
             self.work_rect = Rect(*info[1])
             self.is_primary = info[2] == 1
 
-        def variants(self) -> Dict[str, Dict[str, Rect]]:
-            edge_mapping: Dict[str, Dict[str, Rect]] = {}
+        def variants(self) -> RectEdgeMapping:
+            edge_mapping: RectEdgeMapping = {}
             for edge in RectEdge:
-                size_mapping: Dict[str, Rect] = {}
-                for size, scale in {"small": 1 / 3, "middle": 1 / 2, "large": 2 / 3}.items():
-                    resized = self.work_rect.resize(scale, edge)
+                size_mapping: RectSizeMapping = {}
+                for rv in RectVariants:
+                    resized = self.work_rect.resize(rv.value, edge)
                     if resized.is_valid():
-                        size_mapping[size] = resized
+                        size_mapping[rv.name] = resized
                 edge_mapping[edge.name] = size_mapping
             return edge_mapping
 
