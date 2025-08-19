@@ -1031,7 +1031,7 @@ def configure(keymap):
                 sequence = circumfix + ["Left"] * len(suffix)
                 km[key] = self.invoke(*sequence)
 
-    keymap_global["U0-M"] = keymap.defineMultiStrokeKeymap()
+    keymap_global["U0-M"] = keymap.defineMultiStrokeKeymap("combo start:")
 
     def cursor_combo(km: WindowKeymap) -> None:
         sender = SKKSender()
@@ -1048,7 +1048,7 @@ def configure(keymap):
             "D": "Delete",
         }
         for n in number:
-            km[n] = keymap.defineMultiStrokeKeymap()
+            km[n] = keymap.defineMultiStrokeKeymap("repeat: {}".format(n))
             for key, to in (base_combo | delete_combo).items():
                 seq = [to] * int(n)
                 km[n][key] = seq
