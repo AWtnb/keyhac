@@ -216,6 +216,8 @@ def configure(keymap):
             "S-U0-C": ("S-Apps"),
             # rename
             "U0-N": ("F2"),
+            # indent
+            "U0-Tab": ("Home", "Tab"),
             # print
             "F1": ("C-P"),
             "U1-F1": ("F1"),
