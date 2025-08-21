@@ -465,16 +465,23 @@ def configure(keymap):
             except:
                 pass
 
+        @staticmethod
+        def send_ctrlv():
+            VirtualFinger().input_key("C-V")
+
         @classmethod
         def paste(
             cls, s: Union[str, None] = None, format_func: Union[Callable, None] = None
         ) -> None:
             if s is None:
                 s = cls.get_string()
+                if len(s) < 1:
+                    cls.send_ctrlv()
+                    return
             if format_func is not None:
                 s = format_func(s)
             cls.set_string(s)
-            VirtualFinger().input_key("C-V")
+            cls.send_ctrlv()
 
         @classmethod
         def after_copy(cls, deferred: Callable) -> None:
