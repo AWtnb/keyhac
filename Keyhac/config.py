@@ -931,8 +931,8 @@ def configure(keymap):
 
             return _avoider
 
-    keymap_global["U1-M"]["8"] = MonitorCenterAvoider().invoke_avoider(False)
-    keymap_global["U1-M"]["9"] = MonitorCenterAvoider().invoke_avoider(True)
+    keymap_global["U1-M"]["OpenBracket"] = MonitorCenterAvoider().invoke_avoider(False)
+    keymap_global["U1-M"]["CloseBracket"] = MonitorCenterAvoider().invoke_avoider(True)
 
     ################################
     # set cursor position
