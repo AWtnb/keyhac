@@ -1360,67 +1360,57 @@ def configure(keymap):
                 self._repl = ord(repl)
             else:
                 self._repl = None
-            self._mapping = {}
+            self.mapping = {}
 
-        def register(self, char_code: int) -> None:
-            self._mapping[char_code] = self._repl
+        def register(self, charcode: int) -> None:
+            self.mapping[charcode] = self._repl
 
-        def register_range(self, pair: list) -> None:
-            start, end = pair
-            for i in range(int(start, 16), int(end, 16) + 1):
+        def register_range(self, start: int, end: int) -> None:
+            for i in range(start, end + 1):
                 self.register(i)
 
-        def register_ranges(self, pairs: list) -> None:
-            for pair in pairs:
-                self.register_range(pair)
-
-        @property
-        def mapping(self) -> dict:
-            return self._mapping
-
-    class SearchNoiseMapping:
-        def __init__(self, repl: str) -> None:
-            _mapper = UnicodeMapper(repl)
-            _mapper.register(int("30FB", 16))  # KATAKANA MIDDLE DOT
-            _mapper.register_range(["2018", "201F"])  # quotation
-            _mapper.register_range(["2E80", "2EF3"])  # kangxi
-            _mapper.register_ranges(
-                [  # ascii
-                    ["0021", "002F"],
-                    ["003A", "0040"],
-                    ["005B", "0060"],
-                    ["007B", "007E"],
+    class SearchNoise(UnicodeMapper):
+        def __init__(self):
+            super().__init__(" ")
+            self.register(0x30FB)  # KATAKANA MIDDLE DOT
+            self.register_range(0x2018, 0x201F)  # quotation
+            self.register_range(0x2E80, 0x2EF3)  # kangxi
+            noises = (
+                [
+                    # ascii
+                    (0x0021, 0x002F),
+                    (0x003A, 0x0040),
+                    (0x005B, 0x0060),
+                    (0x007B, 0x007E),
+                ]
+                + [
+                    # bars
+                    (0x2010, 0x2017),
+                    (0x2500, 0x2501),
+                    (0x2E3A, 0x2E3B),
+                ]
+                + [
+                    # fullwidth
+                    (0x25A0, 0x25EF),
+                    (0x3000, 0x3004),
+                    (0x3008, 0x3040),
+                    (0x3097, 0x30A0),
+                    (0x3097, 0x30A0),
+                    (0x30FD, 0x30FF),
+                    (0xFF01, 0xFF0F),
+                    (0xFF1A, 0xFF20),
+                    (0xFF3B, 0xFF40),
+                    (0xFF5B, 0xFF65),
                 ]
             )
-            _mapper.register_ranges(
-                [  # bars
-                    ["2010", "2017"],
-                    ["2500", "2501"],
-                    ["2E3A", "2E3B"],
-                ]
-            )
-            _mapper.register_ranges(
-                [  # fullwidth
-                    ["25A0", "25EF"],
-                    ["3000", "3004"],
-                    ["3008", "3040"],
-                    ["3097", "30A0"],
-                    ["3097", "30A0"],
-                    ["30FD", "30FF"],
-                    ["FF01", "FF0F"],
-                    ["FF1A", "FF20"],
-                    ["FF3B", "FF40"],
-                    ["FF5B", "FF65"],
-                ]
-            )
-
-            self._mapping = _mapper.mapping
+            for noise in noises:
+                self.register_range(*noise)
 
         def cleanup(self, s: str) -> str:
-            return s.translate(str.maketrans(self._mapping))
+            return s.translate(str.maketrans(self.mapping))
 
     class SearchQuery:
-        noise_mapping = SearchNoiseMapping(" ")
+        noise_mapping = SearchNoise()
 
         def __init__(self, query: str) -> None:
             self._query = ""
@@ -1452,7 +1442,7 @@ def configure(keymap):
                 self._query = self._query.replace(honor, " ")
 
         def remove_editorial_style(self) -> None:
-            for honor in ["監修", "共著", "編著", "共編著", "共編", "分担執筆", "et al."]:
+            for honor in ["監修", "共著", "共編著", "編著", "共編", "分担執筆", "et al."]:
                 self._query = self._query.replace(honor, " ")
 
         def remove_hiragana(self) -> None:
