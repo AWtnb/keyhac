@@ -466,8 +466,8 @@ def configure(keymap):
                 pass
 
         @staticmethod
-        def send_ctrlv():
-            VirtualFinger().input_key("C-V")
+        def send_paste_key():
+            VirtualFinger().input_key("S-Insert")
 
         @classmethod
         def paste(
@@ -476,17 +476,18 @@ def configure(keymap):
             if s is None:
                 s = cls.get_string()
                 if len(s) < 1:
-                    cls.send_ctrlv()
+                    # empty clipboard text may means image inside clipboard.
+                    cls.send_paste_key()
                     return
             if format_func is not None:
                 s = format_func(s)
             cls.set_string(s)
-            cls.send_ctrlv()
+            cls.send_paste_key()
 
         @classmethod
         def after_copy(cls, deferred: Callable) -> None:
             cb = cls.get_string()
-            VirtualFinger().input_key("C-C")
+            VirtualFinger().input_key("C-Insert")
 
             def _watch_clipboard(job_item: ckit.JobItem) -> None:
                 job_item.origin = cb
