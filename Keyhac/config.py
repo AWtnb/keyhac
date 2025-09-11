@@ -1902,6 +1902,9 @@ def configure(keymap):
 
     # word
     keymap_word = keymap.defineWindowKeymap(exe_name="WINWORD.EXE")
+    keymap_word["S-C-R"] = "C-H"
+    keymap_word["RC-R"] = keymap_word["S-C-R"]
+    keymap_word["RC-H"] = keymap_word["S-C-R"]
     office_to_pdf(keymap_word)
 
     # powerpoint
