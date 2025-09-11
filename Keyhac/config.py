@@ -492,11 +492,15 @@ def configure(keymap):
             def _watch_clipboard(job_item: ckit.JobItem) -> None:
                 job_item.origin = cb
                 job_item.copied = ""
-                trial = 60
+                interval = 5
+                trial = 40
                 for _ in range(trial):
                     try:
+                        delay(interval)
                         s = cls.get_string()
-                        if 0 < len(s.strip()) and s != job_item.origin:
+                        if not s.strip():
+                            continue
+                        if s != job_item.origin:
                             job_item.copied = s
                             break
                     except Exception as e:
