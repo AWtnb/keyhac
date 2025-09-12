@@ -484,14 +484,32 @@ def configure(keymap):
             cls.set_string(s)
             cls.send_paste_key()
 
+        @staticmethod
+        def set_fifo_counter(n: int):
+            keymap.fifo_counter = n
+
+        @staticmethod
+        def get_fifo_counter() -> int:
+            return keymap.fifo_counter
+
         @classmethod
-        def set_fifo(cls) -> None:
+        def reset_fifo_counter(cls):
+            cls.set_fifo_counter(0)
+
+        @classmethod
+        def increment_fifo_counter(cls, n: int):
+            cls.set_fifo_counter(cls.get_fifo_counter() + n)
+
+        @classmethod
+        def push_as_LIFO(cls) -> None:
             cb = cls.get_string()
             if not cb:
                 return
             lines = cb.splitlines()
             if len(lines) < 2:
                 return
+
+            cls.reset_fifo_counter()
 
             def _register(job_item: ckit.JobItem) -> None:
                 job_item.count = 0
@@ -503,17 +521,23 @@ def configure(keymap):
 
             def _finished(job_item: ckit.JobItem) -> None:
                 if 1 < job_item.count:
-                    balloon("split last clipboard to {} items".format(job_item.count))
+                    cls.set_fifo_counter(job_item.count)
+                    balloon("Registered {} items as LIFO pastable".format(job_item.count))
 
             subthread_run(_register, _finished)
 
         @classmethod
         def paste_lifo(cls) -> None:
+
+            if cls.get_fifo_counter() < 1:
+                return
+
             cb = cls.get_string()
             if not cb:
                 return
 
             cls.send_paste_key()
+            balloon("LIFO: 1/{}".format(keymap.fifo_counter))
 
             # Wait until string is reliably registered.
             # (there is a lag before keyhac clipboard history reflects OS clipboard)
@@ -530,6 +554,7 @@ def configure(keymap):
             def _pop(job_item: ckit.JobItem) -> None:
                 if job_item.success:
                     keymap.clipboard_history.rotate()
+                    cls.increment_fifo_counter(-1)
 
             subthread_run(_watch, _pop)
 
@@ -567,7 +592,7 @@ def configure(keymap):
 
     keymap_global["U0-V"] = ClipHandler().paste
     keymap_global["LC-U0-V"] = ClipHandler().paste_lifo
-    keymap_global["LC-LS-U0-X"] = ClipHandler().set_fifo
+    keymap_global["LC-LS-U0-X"] = ClipHandler().push_as_LIFO
     keymap_global["LC-U0-C"] = ClipHandler().append
 
     ################################
