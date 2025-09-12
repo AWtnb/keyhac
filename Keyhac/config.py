@@ -485,6 +485,29 @@ def configure(keymap):
             cls.send_paste_key()
 
         @classmethod
+        def set_fifo(cls) -> None:
+            cb = cls.get_string()
+            if not cb:
+                return
+            lines = cb.splitlines()
+            if len(lines) < 2:
+                return
+
+            def _register(job_item: ckit.JobItem) -> None:
+                job_item.count = 0
+                for line in reversed(lines):
+                    if 0 < len(line.strip()):
+                        keymap.clipboard_history.push(line)
+                        delay(20)
+                        job_item.count += 1
+
+            def _finished(job_item: ckit.JobItem) -> None:
+                if 1 < job_item.count:
+                    balloon("split last clipboard to {} items".format(job_item.count))
+
+            subthread_run(_register, _finished)
+
+        @classmethod
         def paste_lifo(cls) -> None:
             cb = cls.get_string()
             if not cb:
@@ -544,6 +567,7 @@ def configure(keymap):
 
     keymap_global["U0-V"] = ClipHandler().paste
     keymap_global["LC-U0-V"] = ClipHandler().paste_lifo
+    keymap_global["LC-LS-U0-X"] = ClipHandler().set_fifo
     keymap_global["LC-U0-C"] = ClipHandler().append
 
     ################################
