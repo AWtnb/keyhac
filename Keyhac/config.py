@@ -485,7 +485,7 @@ def configure(keymap):
             cls.send_paste_key()
 
         @classmethod
-        def paste_and_pop(cls) -> None:
+        def paste_lifo(cls) -> None:
             cb = cls.get_string()
             if not cb:
                 return
@@ -506,7 +506,7 @@ def configure(keymap):
 
             def _pop(job_item: ckit.JobItem) -> None:
                 if job_item.success:
-                    keymap.clipboard_history.pop()
+                    keymap.clipboard_history.rotate()
 
             subthread_run(_watch, _pop)
 
@@ -543,7 +543,7 @@ def configure(keymap):
             cls.after_copy(_push)
 
     keymap_global["U0-V"] = ClipHandler().paste
-    keymap_global["LC-U0-V"] = ClipHandler().paste_and_pop
+    keymap_global["LC-U0-V"] = ClipHandler().paste_lifo
     keymap_global["LC-U0-C"] = ClipHandler().append
 
     ################################
