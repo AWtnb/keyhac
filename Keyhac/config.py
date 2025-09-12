@@ -2331,3 +2331,21 @@ def configure_ListWindow(window: ListWindow) -> None:
     for mod in ["", "S-", "C-", "C-S-"]:
         for key in ["L", "Space"]:
             window.keymap[mod + key] = window.command_Enter
+
+    def to_top_of_list():
+        if window.isearch:
+            return
+        window.select = 0
+        window.scroll_info.makeVisible(window.select, window.itemsHeight())
+        window.paint()
+
+    window.keymap["A"] = to_top_of_list
+
+    def to_end_of_list():
+        if window.isearch:
+            return
+        window.select = len(window.items) - 1
+        window.scroll_info.makeVisible(window.select, window.itemsHeight())
+        window.paint()
+
+    window.keymap["E"] = to_end_of_list
