@@ -485,6 +485,32 @@ def configure(keymap):
             cls.send_paste_key()
 
         @classmethod
+        def paste_and_pop(cls) -> None:
+            cb = cls.get_string()
+            if not cb:
+                return
+
+            cls.send_paste_key()
+
+            # Wait until string is reliably registered.
+            # (there is a lag before keyhac clipboard history reflects OS clipboard)
+            def _watch(job_item: ckit.JobItem) -> None:
+                job_item.success = False
+                trial = 20
+                interval = 10
+                for _ in range(trial):
+                    delay(interval)
+                    if keymap.clipboard_history.items[0] == cb:
+                        job_item.success = True
+                        return
+
+            def _pop(job_item: ckit.JobItem) -> None:
+                if job_item.success:
+                    keymap.clipboard_history.pop()
+
+            subthread_run(_watch, _pop)
+
+        @classmethod
         def after_copy(cls, deferred: Callable) -> None:
             cb = cls.get_string()
             VirtualFinger().input_key("C-Insert")
@@ -517,6 +543,7 @@ def configure(keymap):
             cls.after_copy(_push)
 
     keymap_global["U0-V"] = ClipHandler().paste
+    keymap_global["LC-U0-V"] = ClipHandler().paste_and_pop
     keymap_global["LC-U0-C"] = ClipHandler().append
 
     ################################
