@@ -62,15 +62,9 @@ def configure(keymap):
     def shell_exec(path: str, *args) -> None:
         if not isinstance(path, str):
             path = str(path)
-        if path.startswith("http://") or path.startswith("https://"):
-            webbrowser.open(path)
-            return
         path = os.path.expandvars(path)
-        if not smart_check_path(path):
-            balloon("invalid path: '{}'".format(path))
-            return
         try:
-            params = ["start", path] + list(args)
+            params = ["start", "", path] + list(args)
             subprocess.run(params, shell=True)
         except Exception as e:
             print(e)
