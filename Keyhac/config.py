@@ -47,6 +47,18 @@ def open_vscode(*args: str) -> bool:
         print(e)
         return False
 
+def shell_exec(path: str, *args) -> None:
+    if not isinstance(path, str):
+        path = str(path)
+    if path.startswith("http"):
+        webbrowser.open(path)
+        return
+    path = os.path.expandvars(path)
+    try:
+        cmd = ["start", "", path] + list(args)
+        subprocess.run(cmd, shell=True)
+    except Exception as e:
+        print(e)
 
 def configure(keymap):
 
@@ -57,17 +69,6 @@ def configure(keymap):
             keymap.popBalloon(title, message, 1500)
         except:
             pass
-
-    # This should be called inside subthread.
-    def shell_exec(path: str, *args) -> None:
-        if not isinstance(path, str):
-            path = str(path)
-        path = os.path.expandvars(path)
-        try:
-            params = ["start", "", path] + list(args)
-            subprocess.run(params, shell=True)
-        except Exception as e:
-            print(e)
 
     ################################
     # general setting
