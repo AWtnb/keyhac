@@ -773,27 +773,13 @@ def configure(keymap):
             self.width = right - left
             self.height = bottom - top
 
-        def as_list(self) -> List[int]:
-            return [
+        def move_edge(self, toward: RectEdge, delta: int) -> List[int]:
+            r = [
                 self.left,
                 self.top,
                 self.right,
                 self.bottom,
             ]
-
-        def is_valid(self) -> bool:
-            if self.width <= 0:
-                return False
-            if self.height <= 0:
-                return False
-            if self.width < self.min_width:
-                return False
-            if self.height < self.min_height:
-                return False
-            return True
-
-        def move_edge(self, toward: RectEdge, delta: int) -> List[int]:
-            r = self.as_list()
             opposite = (toward.value + 2) % 4
             r[opposite] = r[toward.value] + delta
             return r
@@ -900,11 +886,10 @@ def configure(keymap):
                     wnd = keymap.getTopLevelWindow()
                     rect = wnd.getRect()
                     resized = Rect(*rect).resize(0.5, toward)
-                    if Rect(*resized).is_valid():
-                        if wnd.isMaximized():
-                            wnd.restore()
-                            delay()
-                        wnd.setRect(resized)
+                    if wnd.isMaximized():
+                        wnd.restore()
+                        delay()
+                    wnd.setRect(resized)
 
                 subthread_run(__snap)
 
