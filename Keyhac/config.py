@@ -47,6 +47,7 @@ def open_vscode(*args: str) -> bool:
         print(e)
         return False
 
+
 def shell_exec(path: str, *args) -> None:
     if not isinstance(path, str):
         path = str(path)
@@ -59,6 +60,7 @@ def shell_exec(path: str, *args) -> None:
         subprocess.run(cmd, shell=True)
     except Exception as e:
         print(e)
+
 
 def configure(keymap):
 
@@ -730,8 +732,28 @@ def configure(keymap):
     keymap_global["LC-LS-X"] = suppress_binded_key(clipboard_history_menu)
 
     ################################
-    # class for position on monitor
+    # set window position
     ################################
+
+    def apply_window_mover(km: WindowKeymap) -> None:
+        for key, delta in {
+            "Left": (-10, 0),
+            "Right": (+10, 0),
+            "Up": (0, -10),
+            "Down": (0, +10),
+        }.items():
+            x, y = delta
+            for mod, scale in {"": 15, "S-": 5, "C-": 5, "S-C-": 1}.items():
+                km[mod + "U0-" + key] = keymap.MoveWindowCommand(x * scale, y * scale)
+
+    apply_window_mover(keymap_global)
+
+    keymap_global["U1-L"] = "LWin-Right"
+    keymap_global["U1-H"] = "LWin-Left"
+
+    keymap_global["U1-M"] = keymap.defineMultiStrokeKeymap()
+    keymap_global["U1-M"]["X"] = lambda: keymap.getTopLevelWindow().maximize()
+    keymap_global["U1-M"]["N"] = lambda: keymap.getTopLevelWindow().minimize()
 
     class RectEdge(Enum):
         left = 0
@@ -776,7 +798,7 @@ def configure(keymap):
             r[opposite] = r[toward.value] + delta
             return r
 
-        def resize(self, scale: float, toward: RectEdge) -> "Rect":
+        def resize(self, scale: float, toward: RectEdge) -> List[int]:
             if toward in [RectEdge.left, RectEdge.right]:
                 dim = self.width
             else:
@@ -784,144 +806,81 @@ def configure(keymap):
             delta = int(dim * scale)
             if toward in [RectEdge.right, RectEdge.bottom]:
                 delta = delta * -1
-            r = self.move_edge(toward, delta)
-            return Rect(*r)
+            return self.move_edge(toward, delta)
 
-        def apply_to_wnd(self) -> None:
-            wnd = keymap.getTopLevelWindow()
-            goal = self.as_list()
-            if not wnd or CheckWnd.is_keyhac_console(wnd) or wnd.getRect() == goal:
-                return
-
-            def _snap(_) -> None:
-                if wnd.isMaximized():
-                    wnd.restore()
-                    delay()
-                wnd.setRect(goal)
-
-            def _finished(_) -> None:
-                if wnd.getRect() != goal:
-                    wnd.setRect(goal)
-
-            subthread_run(_snap, _finished)
-
-    class RectVariants(Enum):
-        small = 1 / 3
-        middle = 1 / 2
-        large = 2 / 3
-
-    RectSizeMapping: TypeAlias = Dict[RectVariants, Rect]
-    RectEdgeMapping: TypeAlias = Dict[RectEdge, RectSizeMapping]
-
-    class MonitorInfo:
-        def __init__(self, info: list):
-            self.rect = Rect(*info[0])
-            self.work_rect = Rect(*info[1])
-            self.is_primary = info[2] == 1
-
-        def variants(self) -> RectEdgeMapping:
-            edge_mapping: RectEdgeMapping = {}
-            for edge in RectEdge:
-                size_mapping: RectSizeMapping = {}
-                for rv in RectVariants:
-                    resized = self.work_rect.resize(rv.value, edge)
-                    if resized.is_valid():
-                        size_mapping[rv.name] = resized
-                edge_mapping[edge.name] = size_mapping
-            return edge_mapping
-
-    class MonitorInfos:
-        def __init__(self):
-            infos = [MonitorInfo(info) for info in pyauto.Window.getMonitorInfo()]
-            infos.sort(key=lambda info: not info.is_primary)
-            self.infos = infos
-
-        def mappings(self) -> List[RectEdgeMapping]:
-            return [info.variants() for info in self.infos]
-
-        def rects(self) -> List[Rect]:
-            return [info.work_rect for info in self.infos]
-
-    ################################
-    # set window position
-    ################################
-
-    def apply_window_mover(km: WindowKeymap) -> None:
-        for key, delta in {
-            "Left": (-10, 0),
-            "Right": (+10, 0),
-            "Up": (0, -10),
-            "Down": (0, +10),
-        }.items():
-            x, y = delta
-            for mod, scale in {"": 15, "S-": 5, "C-": 5, "S-C-": 1}.items():
-                km[mod + "U0-" + key] = keymap.MoveWindowCommand(x * scale, y * scale)
-
-    apply_window_mover(keymap_global)
-
-    keymap_global["U1-L"] = "LWin-Right"
-    keymap_global["U1-H"] = "LWin-Left"
-
-    keymap_global["U1-M"] = keymap.defineMultiStrokeKeymap()
-    keymap_global["U1-M"]["X"] = lambda: keymap.getTopLevelWindow().maximize()
-    keymap_global["U1-M"]["N"] = lambda: keymap.getTopLevelWindow().minimize()
-
-    class RectAllocator:
-        monitor_dict = {
-            "": 0,
-            "A-": 1,
+    def apply_window_snapper(km: WindowKeymap) -> None:
+        altkey_status = [False, True]
+        scale_mapping = {
+            "": 1 / 2,
+            "S-": 2 / 3,
+            "C-": 1 / 3,
         }
-        size_dict = {
-            "": "middle",
-            "S-": "large",
-            "C-": "small",
-        }
-        snap_key_dict = {
-            "H": "left",
-            "L": "right",
-            "J": "bottom",
-            "K": "top",
-            "Left": "left",
-            "Right": "right",
-            "Down": "bottom",
-            "Up": "top",
+        edge_mapping = {
+            "H": RectEdge.left,
+            "L": RectEdge.right,
+            "J": RectEdge.bottom,
+            "K": RectEdge.top,
         }
 
-        @classmethod
-        def flexible(cls, km: WindowKeymap) -> None:
-            mappings = MonitorInfos().mappings()
-            for monitor_mod, monitor_idx in cls.monitor_dict.items():
-                for area_mod, size in cls.size_dict.items():
-                    for key, pos in cls.snap_key_dict.items():
-                        if monitor_idx < len(mappings):
-                            new_rect = mappings[monitor_idx][pos].get(size, None)
-                            if new_rect:
-                                km[monitor_mod + area_mod + key] = new_rect.apply_to_wnd
-                            else:
-                                print(
-                                    f"invalid rect: {monitor_idx=} {size=} {pos=} {new_rect.as_list()}"
-                                )
+        for alt_pressed in altkey_status:
+            for area_mod, scale in scale_mapping.items():
+                for key, edge in edge_mapping.items():
 
-        @staticmethod
-        def maximize(km: WindowKeymap, mapping_dict: dict) -> None:
-            finger = VirtualFinger()
-            for key, towards in mapping_dict.items():
+                    def _invoke(
+                        a: bool = alt_pressed, s: float = scale, e: RectEdge = edge
+                    ) -> Callable:
 
-                def _snap() -> None:
-                    def _maximize(_) -> None:
-                        keymap.getTopLevelWindow().maximize()
+                        def __get_new_rect() -> List[int]:
+                            infos = pyauto.Window.getMonitorInfo()
+                            infos.sort(key=lambda info: info[2] != 1)
+                            target = infos[1] if 1 < len(infos) and a else infos[0]
+                            monitor_work_rect = Rect(*target[1])
+                            return monitor_work_rect.resize(s, e)
 
-                    def _snapper(_) -> None:
-                        finger.input_key("LShift-LWin-" + towards)
+                        def __snap() -> None:
+                            wnd = keymap.getTopLevelWindow()
+                            if not wnd or CheckWnd.is_keyhac_console(wnd):
+                                return
+                            rect = __get_new_rect()
+                            if wnd.getRect() == rect:
+                                return
 
-                    subthread_run(_maximize, _snapper)
+                            def _job_snap(_) -> None:
+                                if wnd.isMaximized():
+                                    wnd.restore()
+                                    delay()
+                                wnd.setRect(rect)
 
-                km[key] = _snap
+                            def _job_finished(_) -> None:
+                                if wnd.getRect() != rect:
+                                    wnd.setRect(rect)
 
-    RectAllocator().flexible(keymap_global["U1-M"])
+                            subthread_run(_job_snap, _job_finished)
 
-    RectAllocator.maximize(keymap_global, {"LC-U1-L": "Right", "LC-U1-H": "Left"})
-    RectAllocator.maximize(
+                        return __snap
+
+                    mod_alt = "A-" if alt_pressed else ""
+                    km[mod_alt + area_mod + key] = _invoke()
+
+    apply_window_snapper(keymap_global["U1-M"])
+
+    def apply_maximized_window_snapper(km: WindowKeymap, keybinding: dict) -> None:
+        finger = VirtualFinger()
+        for key, towards in keybinding.items():
+
+            def _snap() -> None:
+                def __maximize(_) -> None:
+                    keymap.getTopLevelWindow().maximize()
+
+                def __snapper(_) -> None:
+                    finger.input_key("LShift-LWin-" + towards)
+
+                subthread_run(__maximize, __snapper)
+
+            km[key] = _snap
+
+    apply_maximized_window_snapper(keymap_global, {"LC-U1-L": "Right", "LC-U1-H": "Left"})
+    apply_maximized_window_snapper(
         keymap_global["U1-M"],
         {
             "U0-L": "Right",
@@ -941,11 +900,11 @@ def configure(keymap):
                     wnd = keymap.getTopLevelWindow()
                     rect = wnd.getRect()
                     resized = Rect(*rect).resize(0.5, toward)
-                    if resized.is_valid():
+                    if Rect(*resized).is_valid():
                         if wnd.isMaximized():
                             wnd.restore()
                             delay()
-                        wnd.setRect(resized.as_list())
+                        wnd.setRect(resized)
 
                 subthread_run(__snap)
 
@@ -1016,8 +975,11 @@ def configure(keymap):
     class CursorPos:
         @staticmethod
         def get_pos() -> list:
+            infos = pyauto.Window.getMonitorInfo()
+            infos.sort(key=lambda info: info[2] != 1)
+            rects = [Rect(*info[1]) for info in infos]
             pos = []
-            for rect in MonitorInfos().rects():
+            for rect in rects:
                 for i in (1, 3):
                     y = rect.top + int(rect.height / 2)
                     x = rect.left + int(rect.width / 4) * i
