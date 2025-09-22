@@ -173,8 +173,8 @@ def configure(keymap):
 
     bind_cursor_keys(keymap_global)
 
-    def bind_keys(wk: WindowKeymap, mapping_dict: dict) -> None:
-        for key, value in mapping_dict.items():
+    def bind_keys(wk: WindowKeymap, bindig: dict) -> None:
+        for key, value in bindig.items():
             wk[key] = value
 
     bind_keys(
@@ -220,8 +220,8 @@ def configure(keymap):
         },
     )
 
-    def bind_paired_keys(wk: WindowKeymap, mapping_dict: dict) -> None:
-        for key, value in mapping_dict.items():
+    def bind_paired_keys(wk: WindowKeymap, binding: dict) -> None:
+        for key, value in binding.items():
             wk[key] = value, value, "Left"
 
     bind_paired_keys(
@@ -426,29 +426,6 @@ def configure(keymap):
 
         return _wrapper
 
-    class DirectInput:
-        def __init__(
-            self,
-            recover_ime: bool = False,
-            inter_stroke_pause: int = 0,
-            defer_msec: int = 0,
-        ) -> None:
-            self._recover_ime = recover_ime
-            self._defer_msec = defer_msec
-            self._finger = VirtualFinger(inter_stroke_pause)
-
-        def invoke(self, *sequence) -> Callable:
-            control = ImeControl()
-            seq = Taps().from_sequence(sequence)
-
-            def _sender() -> None:
-                control.disable()
-                self._finger.tap_sequence(seq)
-                if self._recover_ime:
-                    control.enable()
-
-            return suppress_binded_key(_sender, self._defer_msec)
-
     class ClipHandler:
         @staticmethod
         def get_string() -> str:
@@ -515,7 +492,7 @@ def configure(keymap):
     class FIFOStack:
         def __init__(self):
             self.items = []
-            self._disable()
+            self.enabled = False
 
         def _enable(self):
             balloon("FIFO mode ON!")
@@ -996,25 +973,28 @@ def configure(keymap):
             self,
             inter_stroke_pause: int = 0,
         ) -> None:
-            self._finger = VirtualFinger(inter_stroke_pause)
-            self._control = ImeControl(inter_stroke_pause)
+            self.finger = VirtualFinger(inter_stroke_pause)
+            self.control = ImeControl(inter_stroke_pause)
 
-        def under_kanamode(self, *sequence) -> Callable:
+        def invoke(self, mode_setter: Callable, *sequence) -> Callable:
             taps = Taps().from_sequence(sequence)
 
             def _send() -> None:
-                self._control.enable_skk()
-                self._finger.tap_sequence(taps)
+                mode_setter()
+                self.finger.tap_sequence(taps)
 
             return _send
 
+        def under_kanamode(self, *sequence) -> Callable:
+            _send = self.invoke(self.control.enable, *sequence)
+            return _send
+
         def under_latinmode(self, *sequence) -> Callable:
-            taps = Taps().from_sequence(sequence)
+            _send = self.invoke(self.control.to_skk_latin, *sequence)
+            return _send
 
-            def _send() -> None:
-                self._control.to_skk_latin()
-                self._finger.tap_sequence(taps)
-
+        def without_mode(self, *sequence) -> Callable:
+            _send = self.invoke(self.control.disable, *sequence)
             return _send
 
     # select-to-left with ime control
@@ -1024,23 +1004,27 @@ def configure(keymap):
     keymap_global["U1-N"] = SKKSender().under_kanamode("C-S-Left", SKKKey.convpoint, "S-4", "Tab")
     keymap_global["U1-4"] = SKKSender().under_kanamode(SKKKey.convpoint, "S-4")
 
-    class LatinSender(SKKSender):
-        def __init__(self, recover_mode: bool = True) -> None:
-            inter_stroke_pause = 0
-            super().__init__(inter_stroke_pause)
-            self._recover_mode = recover_mode
+    class DirectSender:
+        def __init__(self, recover_ime: bool = True) -> None:
+            self.skk = SKKSender(inter_stroke_pause=0)
+            self.recover = recover_ime
 
         def invoke(self, *sequence) -> Callable:
-            if self._recover_mode:
-                sequence = list(sequence) + [SKKKey.kana]
-            return self.under_latinmode(*sequence)
+            func = self.skk.without_mode(*sequence)
 
-        def apply(self, km: WindowKeymap, mapping_dict: dict) -> None:
-            for key, sent in mapping_dict.items():
+            def _sender():
+                func()
+                if self.recover:
+                    self.skk.control.enable()
+
+            return _sender
+
+        def bind(self, km: WindowKeymap, binding: dict) -> None:
+            for key, sent in binding.items():
                 km[key] = self.invoke(sent)
 
-        def apply_circumfix(self, km: WindowKeymap, mapping_dict: dict) -> None:
-            for key, circumfix in mapping_dict.items():
+        def bind_circumfix(self, km: WindowKeymap, binding: dict) -> None:
+            for key, circumfix in binding.items():
                 _, suffix = circumfix
                 sequence = circumfix + ["Left"] * len(suffix)
                 km[key] = self.invoke(*sequence)
@@ -1050,15 +1034,15 @@ def configure(keymap):
     def replace_last_nchar(km: WindowKeymap, newstr: str) -> Callable:
         for n in "123":
             seq = ["Back"] * int(n) + [newstr]
-            km[n] = LatinSender().invoke(*seq)
+            km[n] = DirectSender().invoke(*seq)
 
     replace_last_nchar(keymap_global["U0-M"], "先生")
 
     # markdown list
-    keymap_global["S-U0-8"] = LatinSender().invoke("- ")
-    keymap_global["U1-1"] = LatinSender().invoke("1. ")
+    keymap_global["S-U0-8"] = DirectSender().invoke("- ")
+    keymap_global["U1-1"] = DirectSender().invoke("1. ")
 
-    LatinSender().apply(
+    DirectSender().bind(
         keymap_global,
         {
             "S-U0-Colon": "\uff1a",  # FULLWIDTH COLON
@@ -1069,7 +1053,7 @@ def configure(keymap):
         },
     )
 
-    LatinSender().apply_circumfix(
+    DirectSender().bind_circumfix(
         keymap_global,
         {
             "U0-8": ["\u300e", "\u300f"],  # WHITE CORNER BRACKET 『』
@@ -1086,7 +1070,7 @@ def configure(keymap):
         },
     )
 
-    LatinSender(False).apply(
+    DirectSender(False).bind(
         keymap_global,
         {
             "U0-1": "S-1",
@@ -1099,7 +1083,7 @@ def configure(keymap):
             "U0-Period": "Period",
         },
     )
-    LatinSender(False).apply_circumfix(
+    DirectSender(False).bind_circumfix(
         keymap_global,
         {
             "U0-CloseBracket": ["[", "]"],
@@ -1841,26 +1825,26 @@ def configure(keymap):
 
     # slack
     keymap_slack = keymap.defineWindowKeymap(exe_name="slack.exe", class_name="Chrome_WidgetWin_1")
-    keymap_slack["F3"] = DirectInput().invoke("C-K")
+    keymap_slack["F3"] = DirectSender(False).invoke("C-K")
     keymap_slack["C-K"] = keymap_slack["F3"]
     keymap_slack["C-E"] = keymap_slack["F3"]
-    keymap_slack["F1"] = DirectInput().invoke("S-SemiColon", "Colon")
+    keymap_slack["F1"] = DirectSender(False).invoke("S-SemiColon", "Colon")
 
     # vscode
     keymap_vscode = keymap.defineWindowKeymap(exe_name="Code.exe")
 
     def remap_vscode(*keys: str) -> Callable:
-        inputter = DirectInput(defer_msec=20)
+        sender = DirectSender(False)
         for key in keys:
-            keymap_vscode[key] = inputter.invoke(key)
+            keymap_vscode[key] = sender.invoke(key)
 
-    remap_vscode("C-E", "C-S-F", "C-S-E", "C-S-G", "RC-RS-X", "C-0", "C-S-P", "C-A-B")
+    remap_vscode("C-E", "C-F", "C-S-F", "C-S-E", "C-S-G", "RC-RS-X", "C-0", "C-S-P", "C-A-B")
 
     # mery
     keymap_mery = keymap.defineWindowKeymap(exe_name="Mery.exe")
 
-    def remap_mery(mapping_dict: dict) -> Callable:
-        for key, value in mapping_dict.items():
+    def remap_mery(binding: dict) -> Callable:
+        for key, value in binding.items():
             keymap_mery[key] = value
 
     remap_mery(
@@ -1894,9 +1878,9 @@ def configure(keymap):
     keymap_sumatra_viewmode = keymap.defineWindowKeymap(check_func=sumatra_checker(True))
 
     def sumatra_view_key() -> None:
-        inputter = DirectInput(defer_msec=50)
+        sender = DirectSender(False)
         for key in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
-            keymap_sumatra_viewmode[key] = inputter.invoke(key)
+            keymap_sumatra_viewmode[key] = sender.invoke(key)
 
     sumatra_view_key()
 
@@ -2197,8 +2181,8 @@ def configure(keymap):
 
     class ClipboardFormatMenu:
         @staticmethod
-        def set_formatter(mapping: dict) -> None:
-            for menu, func in mapping.items():
+        def set_formatter(binding: dict) -> None:
+            for menu, func in binding.items():
                 keymap.cutsom_clipboard_formatter[menu] = func
 
         @staticmethod
@@ -2211,8 +2195,8 @@ def configure(keymap):
             return _replacer
 
         @classmethod
-        def set_replacer(cls, mapping: dict) -> None:
-            for menu, args in mapping.items():
+        def set_replacer(cls, binding: dict) -> None:
+            for menu, args in binding.items():
                 keymap.cutsom_clipboard_formatter[menu] = cls.invoke_replacer(*args)
 
     ClipboardFormatMenu.set_formatter(
