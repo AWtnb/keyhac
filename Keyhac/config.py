@@ -449,25 +449,6 @@ def configure(keymap):
 
             return suppress_binded_key(_sender, self._defer_msec)
 
-    keymap.FIFO_counter = 0
-
-    class FIFO:
-        @staticmethod
-        def set_counter(n: int):
-            keymap.FIFO_counter = n
-
-        @staticmethod
-        def get_counter() -> int:
-            return keymap.FIFO_counter
-
-        @classmethod
-        def reset_FIFO_counter(cls):
-            cls.set_counter(0)
-
-        @classmethod
-        def increment(cls, n: int):
-            cls.set_counter(cls.get_counter() + n)
-
     class ClipHandler:
         @staticmethod
         def get_string() -> str:
@@ -482,6 +463,10 @@ def configure(keymap):
                 ckit.setClipboardText(str(s))
             except:
                 pass
+
+        @staticmethod
+        def send_copy_key():
+            VirtualFinger().input_key("C-Insert")
 
         @staticmethod
         def send_paste_key():
@@ -502,66 +487,9 @@ def configure(keymap):
             cls.set_string(s)
             cls.send_paste_key()
 
-        @classmethod
-        def push_as_FIFO(cls) -> None:
-            cb = cls.get_string()
-            if not cb:
-                return
-            lines = cb.splitlines()
-            if len(lines) < 2:
-                return
-
-            def _register(job_item: ckit.JobItem) -> None:
-                job_item.count = 0
-                for line in reversed(lines):
-                    if 0 < len(line.strip()):
-                        keymap.clipboard_history.push(line)
-                        delay(20)
-                        job_item.count += 1
-
-            def _finished(job_item: ckit.JobItem) -> None:
-                if 1 < job_item.count:
-                    FIFO().set_counter(job_item.count)
-                    balloon("Registered {} items as LIFO pastable".format(job_item.count))
-
-            subthread_run(_register, _finished)
-
-        @classmethod
-        def paste_lifo(cls) -> None:
-
-            if FIFO().get_counter() < 1:
-                return
-
-            cb = cls.get_string()
-            if not cb:
-                return
-
-            cls.send_paste_key()
-            balloon("LIFO: 1/{}".format(FIFO().get_counter()))
-
-            # Wait until string is reliably registered.
-            # (there is a lag before keyhac clipboard history reflects OS clipboard)
-            def _watch(job_item: ckit.JobItem) -> None:
-                job_item.success = False
-                trial = 20
-                interval = 10
-                for _ in range(trial):
-                    delay(interval)
-                    if keymap.clipboard_history.items[0] == cb:
-                        job_item.success = True
-                        return
-
-            def _pop(job_item: ckit.JobItem) -> None:
-                if job_item.success:
-                    keymap.clipboard_history.rotate()
-                    FIFO().increment(-1)
-
-            subthread_run(_watch, _pop)
-
-        @classmethod
         def after_copy(cls, deferred: Callable) -> None:
             cb = cls.get_string()
-            VirtualFinger().input_key("C-Insert")
+            cls.send_copy_key()
 
             def _watch_clipboard(job_item: ckit.JobItem) -> None:
                 job_item.origin = cb
@@ -582,24 +510,73 @@ def configure(keymap):
 
             subthread_run(_watch_clipboard, deferred)
 
-        @classmethod
-        def append(cls) -> None:
-
-            def _push(job_item: ckit.JobItem) -> None:
-                cls.set_string(job_item.origin + "\n" + job_item.copied)
-
-            cls.after_copy(_push)
-
     keymap_global["U0-V"] = ClipHandler().paste
-    keymap_global["LC-U0-V"] = ClipHandler().paste_lifo
-    keymap_global["LC-LS-U0-X"] = ClipHandler().push_as_FIFO
-    keymap_global["LC-U0-C"] = ClipHandler().append
+
+    class FIFOStack:
+        def __init__(self):
+            self.items = []
+            self._disable()
+
+        def _enable(self):
+            balloon("FIFO mode ON!")
+            self.enabled = True
+
+        def _disable(self):
+            balloon("FIFO mode OFF!")
+            self.enabled = False
+
+        def toggle(self):
+            if self.enabled:
+                self._disable()
+            else:
+                self._enable()
+
+        def register(self, s: str):
+            self.items.append(s)
+            msg = "FIFO stack total: {}item".format(self.count())
+            if 1 < self.count():
+                msg += "s"
+            balloon(msg)
+
+        def count(self) -> int:
+            return len(self.items)
+
+        def reset(self):
+            self.items = []
+
+        def pop(self) -> Union[str, None]:
+            if 0 < self.count():
+                cb = self.items.pop(0)
+                balloon("FIFO stack rest: {}".format(self.count()))
+                if self.count() < 1:
+                    self._disable()
+                return cb
+            return None
+
+    FIFO_STACK = FIFOStack()
+
+    keymap_global["LC-LS-U0-X"] = FIFO_STACK.toggle
+
+    def smart_copy():
+        if FIFO_STACK.enabled:
+
+            def _register(job_item):
+                cb = job_item.copied
+                if cb:
+                    FIFO_STACK.register(cb)
+
+            ClipHandler().after_copy(_register)
+        else:
+            ClipHandler().send_copy_key()
+
+    keymap_global["LC-C"] = smart_copy
 
     def smart_paste() -> None:
-        if FIFO().get_counter() < 1:
-            ClipHandler().send_paste_key()
+        if 0 < FIFO_STACK.count() and FIFO_STACK.enabled:
+            cb = FIFO_STACK.pop()
+            ClipHandler().paste(cb)
         else:
-            ClipHandler().paste_lifo()
+            ClipHandler().send_paste_key()
 
     keymap_global["LC-V"] = smart_paste
 
