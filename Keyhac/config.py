@@ -449,6 +449,25 @@ def configure(keymap):
 
             return suppress_binded_key(_sender, self._defer_msec)
 
+    keymap.FIFO_counter = 0
+
+    class FIFO:
+        @staticmethod
+        def set_counter(n: int):
+            keymap.FIFO_counter = n
+
+        @staticmethod
+        def get_counter() -> int:
+            return keymap.FIFO_counter
+
+        @classmethod
+        def reset_FIFO_counter(cls):
+            cls.set_counter(0)
+
+        @classmethod
+        def increment(cls, n: int):
+            cls.set_counter(cls.get_counter() + n)
+
     class ClipHandler:
         @staticmethod
         def get_string() -> str:
@@ -483,32 +502,14 @@ def configure(keymap):
             cls.set_string(s)
             cls.send_paste_key()
 
-        @staticmethod
-        def set_fifo_counter(n: int):
-            keymap.fifo_counter = n
-
-        @staticmethod
-        def get_fifo_counter() -> int:
-            return keymap.fifo_counter
-
         @classmethod
-        def reset_fifo_counter(cls):
-            cls.set_fifo_counter(0)
-
-        @classmethod
-        def increment_fifo_counter(cls, n: int):
-            cls.set_fifo_counter(cls.get_fifo_counter() + n)
-
-        @classmethod
-        def push_as_LIFO(cls) -> None:
+        def push_as_FIFO(cls) -> None:
             cb = cls.get_string()
             if not cb:
                 return
             lines = cb.splitlines()
             if len(lines) < 2:
                 return
-
-            cls.reset_fifo_counter()
 
             def _register(job_item: ckit.JobItem) -> None:
                 job_item.count = 0
@@ -520,7 +521,7 @@ def configure(keymap):
 
             def _finished(job_item: ckit.JobItem) -> None:
                 if 1 < job_item.count:
-                    cls.set_fifo_counter(job_item.count)
+                    FIFO().set_counter(job_item.count)
                     balloon("Registered {} items as LIFO pastable".format(job_item.count))
 
             subthread_run(_register, _finished)
@@ -528,7 +529,7 @@ def configure(keymap):
         @classmethod
         def paste_lifo(cls) -> None:
 
-            if cls.get_fifo_counter() < 1:
+            if FIFO().get_counter() < 1:
                 return
 
             cb = cls.get_string()
@@ -536,7 +537,7 @@ def configure(keymap):
                 return
 
             cls.send_paste_key()
-            balloon("LIFO: 1/{}".format(keymap.fifo_counter))
+            balloon("LIFO: 1/{}".format(FIFO().get_counter()))
 
             # Wait until string is reliably registered.
             # (there is a lag before keyhac clipboard history reflects OS clipboard)
@@ -553,7 +554,7 @@ def configure(keymap):
             def _pop(job_item: ckit.JobItem) -> None:
                 if job_item.success:
                     keymap.clipboard_history.rotate()
-                    cls.increment_fifo_counter(-1)
+                    FIFO().increment(-1)
 
             subthread_run(_watch, _pop)
 
@@ -591,8 +592,16 @@ def configure(keymap):
 
     keymap_global["U0-V"] = ClipHandler().paste
     keymap_global["LC-U0-V"] = ClipHandler().paste_lifo
-    keymap_global["LC-LS-U0-X"] = ClipHandler().push_as_LIFO
+    keymap_global["LC-LS-U0-X"] = ClipHandler().push_as_FIFO
     keymap_global["LC-U0-C"] = ClipHandler().append
+
+    def smart_paste() -> None:
+        if FIFO().get_counter() < 1:
+            ClipHandler().send_paste_key()
+        else:
+            ClipHandler().paste_lifo()
+
+    keymap_global["LC-V"] = smart_paste
 
     ################################
     # custom hotkey
