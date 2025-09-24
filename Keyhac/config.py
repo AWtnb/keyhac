@@ -445,11 +445,11 @@ def configure(keymap):
 
         @staticmethod
         def send_copy_key():
-            VirtualFinger().input_key("C-Insert")
+            VirtualFinger().input_key("C-C")
 
         @staticmethod
         def send_paste_key():
-            VirtualFinger().input_key("S-Insert")
+            VirtualFinger().input_key("C-V")
 
         @classmethod
         def paste(
