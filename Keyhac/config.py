@@ -252,8 +252,8 @@ def configure(keymap):
             | set(KeyCondition.str_vk_table_jpn)
         )
 
-        def __init__(self) -> None:
-            pass
+        def __init__(self, sequence: tuple) -> None:
+            self.taps = [Tap(elem, self.check(elem)) for elem in sequence]
 
         @classmethod
         def check(cls, s: str) -> bool:
@@ -261,14 +261,6 @@ def configure(keymap):
                 return str.isdecimal(s[1:-1])
             k = s.split("-")[-1].upper()
             return k in cls.acceptable
-
-        @classmethod
-        def from_sequence(cls, sequence: tuple) -> List[Tap]:
-            seq = []
-            for elem in sequence:
-                key = Tap(elem, cls.check(elem))
-                seq.append(key)
-            return seq
 
     class VirtualFinger:
         def __init__(self, inter_stroke_pause: int = 10) -> None:
@@ -986,7 +978,7 @@ def configure(keymap):
             self.control = ImeControl(inter_stroke_pause)
 
         def invoke(self, mode_setter: Callable, *sequence) -> Callable:
-            taps = Taps().from_sequence(sequence)
+            taps = Taps(sequence).taps
 
             def _send() -> None:
                 mode_setter()
@@ -995,16 +987,16 @@ def configure(keymap):
             return _send
 
         def under_kanamode(self, *sequence) -> Callable:
-            _send = self.invoke(self.control.to_skk_kana, *sequence)
-            return _send
+            sender = self.invoke(self.control.to_skk_kana, *sequence)
+            return sender
 
         def under_latinmode(self, *sequence) -> Callable:
-            _send = self.invoke(self.control.to_skk_latin, *sequence)
-            return _send
+            sender = self.invoke(self.control.to_skk_latin, *sequence)
+            return sender
 
         def without_mode(self, *sequence) -> Callable:
-            _send = self.invoke(self.control.disable, *sequence)
-            return _send
+            sender = self.invoke(self.control.disable, *sequence)
+            return sender
 
     # select-to-left with ime control
     keymap_global["U1-B"] = SKKSender().under_kanamode("S-Left")
@@ -1021,8 +1013,8 @@ def configure(keymap):
         def invoke(self, *sequence) -> Callable:
             seq = list(sequence)
             if self.recover:
-                seq.append(SKKKey.VK_activate)
-            return self.skk.without_mode(*seq)
+                seq.append(SKKKey.kana)
+            return self.skk.under_latinmode(*seq)
 
         def bind(self, km: WindowKeymap, binding: dict) -> None:
             for key, sent in binding.items():
