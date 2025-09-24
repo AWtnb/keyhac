@@ -257,6 +257,8 @@ def configure(keymap):
 
         @classmethod
         def check(cls, s: str) -> bool:
+            if s.startswith("(") and s.endswith(")"):
+                return str.isdecimal(s[1:-1])
             k = s.split("-")[-1].upper()
             return k in cls.acceptable
 
@@ -327,6 +329,7 @@ def configure(keymap):
         ckit.JobQueue.defaultQueue().enqueue(job)
 
     class SKKKey:
+        VK_activate = "(243)"
         kata = "Q"
         kana = "C-J"
         halfkata = "C-O"
@@ -361,14 +364,6 @@ def configure(keymap):
         @classmethod
         def disable(cls) -> None:
             cls.set_status(0)
-
-        # SKK maintains the state just before disabling the IME.
-        # When disabling the IME using the `disable` method in Latin mode, the next attempt to `enable` the IME will start from Latin mode, which may cause confusion.
-        # Therefore, using this alternative method instead is recommended.
-        def turnoff(self) -> None:
-            if self.is_enabled():
-                self._finger.input_key(SKKKey.kana)
-                self.disable()
 
         def to_skk_kana(self) -> None:
             self.enable()
@@ -416,7 +411,7 @@ def configure(keymap):
             "U0-O": control.to_skk_half_kata,
             "LC-LS-U0-I": control.to_skk_half_kata,
             "U0-F8": control.to_skk_half_kata,
-            "U0-F": control.turnoff,
+            "U0-F": control.disable,
             "LS-U0-F": control.to_skk_kana,
             "S-U1-J": control.to_skk_latin,
             "U1-I": control.reconvert_with_skk,
@@ -1008,7 +1003,7 @@ def configure(keymap):
             return _send
 
         def without_mode(self, *sequence) -> Callable:
-            _send = self.invoke(self.control.turnoff, *sequence)
+            _send = self.invoke(self.control.disable, *sequence)
             return _send
 
     # select-to-left with ime control
@@ -1024,14 +1019,10 @@ def configure(keymap):
             self.recover = recover_ime
 
         def invoke(self, *sequence) -> Callable:
-            func = self.skk.without_mode(*sequence)
-
-            def _sender() -> None:
-                func()
-                if self.recover:
-                    self.skk.control.to_skk_kana()
-
-            return _sender
+            seq = list(sequence)
+            if self.recover:
+                seq.append(SKKKey.VK_activate)
+            return self.skk.without_mode(*seq)
 
         def bind(self, km: WindowKeymap, binding: dict) -> None:
             for key, sent in binding.items():
