@@ -1035,8 +1035,8 @@ def configure(keymap):
 
     def replace_last_nchar(km: WindowKeymap, newstr: str) -> Callable:
         for n in "123":
-            seq = ["Back"] * int(n) + [newstr]
-            km[n] = DirectSender().invoke(*seq)
+            seq = ["Back"] * int(n) + [newstr, SKKKey.kana]
+            km[n] = SKKSender().under_latinmode(*seq)
 
     replace_last_nchar(keymap_global["U0-M"], "先生")
 
