@@ -1968,6 +1968,8 @@ def configure(keymap):
             phrases = [
                 "あなたをスケジュール済みの",
                 "ミーティングに参加する",
+                "参加手順",
+                "invitations?signature=",
             ]
             for p in phrases:
                 if p in line:
