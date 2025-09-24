@@ -346,56 +346,58 @@ def configure(keymap):
         def get_status() -> int:
             return keymap.getWindow().getImeStatus()
 
-        def set_status(self, mode: int) -> None:
-            if self.get_status() != mode:
-                keymap.getWindow().setImeStatus(mode)
+        @staticmethod
+        def set_status(mode: int) -> None:
+            keymap.getWindow().setImeStatus(mode)
 
-        def enable(self) -> None:
-            self.set_status(1)
+        @classmethod
+        def enable(cls) -> None:
+            cls.set_status(1)
 
-        def disable(self) -> None:
-            self.set_status(0)
+        @classmethod
+        def disable(cls) -> None:
+            cls.set_status(0)
 
-        def enable_skk(self) -> None:
+        def to_skk_kana(self) -> None:
             self.enable()
             self._finger.input_key(SKKKey.kana)
 
         def to_skk_latin(self) -> None:
-            self.enable_skk()
+            self.to_skk_kana()
             self._finger.input_key(SKKKey.latin)
 
         def to_skk_abbrev(self) -> None:
-            self.enable_skk()
+            self.to_skk_kana()
             self._finger.input_key(SKKKey.abbrev)
 
         def to_skk_kata(self) -> None:
-            self.enable_skk()
+            self.to_skk_kana()
             self._finger.input_key(SKKKey.kata)
 
         def to_skk_half_kata(self) -> None:
-            self.enable_skk()
+            self.to_skk_kana()
             self._finger.input_key(SKKKey.halfkata)
 
         def to_skk_full_latin(self) -> None:
-            self.enable_skk()
+            self.to_skk_kana()
             self._finger.input_key(SKKKey.jlatin)
 
         def start_skk_conv(self) -> None:
-            self.enable_skk()
+            self.to_skk_kana()
             self._finger.input_key(SKKKey.convpoint)
 
         def start_skk_conv_prefix(self) -> None:
-            self.enable_skk()
+            self.to_skk_kana()
             self._finger.input_key(SKKKey.convpoint, SKKKey.prefix)
 
         def reconvert_with_skk(self) -> None:
-            self.enable_skk()
+            self.to_skk_kana()
             self._finger.input_key(SKKKey.reconv, SKKKey.cancel)
 
     def apply_ime_control() -> None:
         control = ImeControl()
         for key, func in {
-            "U1-J": control.enable_skk,
+            "U1-J": control.to_skk_kana,
             "LS-U0-P": control.start_skk_conv_prefix,
             "LC-U0-I": control.to_skk_kata,
             "U0-F7": control.to_skk_kata,
@@ -403,7 +405,7 @@ def configure(keymap):
             "LC-LS-U0-I": control.to_skk_half_kata,
             "U0-F8": control.to_skk_half_kata,
             "U0-F": control.disable,
-            "LS-U0-F": control.enable_skk,
+            "LS-U0-F": control.to_skk_kana,
             "S-U1-J": control.to_skk_latin,
             "U1-I": control.reconvert_with_skk,
             "O-(236)": control.to_skk_abbrev,
@@ -986,7 +988,7 @@ def configure(keymap):
             return _send
 
         def under_kanamode(self, *sequence) -> Callable:
-            _send = self.invoke(self.control.enable, *sequence)
+            _send = self.invoke(self.control.to_skk_kana, *sequence)
             return _send
 
         def under_latinmode(self, *sequence) -> Callable:
@@ -1015,7 +1017,7 @@ def configure(keymap):
             def _sender():
                 func()
                 if self.recover:
-                    self.skk.control.enable()
+                    ImeControl().enable()
 
             return _sender
 
