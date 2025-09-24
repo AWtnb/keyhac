@@ -351,12 +351,24 @@ def configure(keymap):
             keymap.getWindow().setImeStatus(mode)
 
         @classmethod
+        def is_enabled(cls) -> bool:
+            return cls.get_status() == 1
+
+        @classmethod
         def enable(cls) -> None:
             cls.set_status(1)
 
         @classmethod
         def disable(cls) -> None:
             cls.set_status(0)
+
+        # SKK maintains the state just before disabling the IME.
+        # When disabling the IME using the `disable` method in Latin mode, the next attempt to `enable` the IME will start from Latin mode, which may cause confusion.
+        # Therefore, using this alternative method instead is recommended.
+        def turnoff(self) -> None:
+            if self.is_enabled():
+                self._finger.input_key(SKKKey.kana)
+                self.disable()
 
         def to_skk_kana(self) -> None:
             self.enable()
@@ -404,7 +416,7 @@ def configure(keymap):
             "U0-O": control.to_skk_half_kata,
             "LC-LS-U0-I": control.to_skk_half_kata,
             "U0-F8": control.to_skk_half_kata,
-            "U0-F": control.disable,
+            "U0-F": control.turnoff,
             "LS-U0-F": control.to_skk_kana,
             "S-U1-J": control.to_skk_latin,
             "U1-I": control.reconvert_with_skk,
@@ -996,7 +1008,7 @@ def configure(keymap):
             return _send
 
         def without_mode(self, *sequence) -> Callable:
-            _send = self.invoke(self.control.disable, *sequence)
+            _send = self.invoke(self.control.turnoff, *sequence)
             return _send
 
     # select-to-left with ime control
@@ -1014,10 +1026,10 @@ def configure(keymap):
         def invoke(self, *sequence) -> Callable:
             func = self.skk.without_mode(*sequence)
 
-            def _sender():
+            def _sender() -> None:
                 func()
                 if self.recover:
-                    ImeControl().enable()
+                    self.skk.control.to_skk_kana()
 
             return _sender
 
