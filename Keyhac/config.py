@@ -247,9 +247,9 @@ def configure(keymap):
 
     class Taps:
         acceptable = (
-            list(KeyCondition.str_vk_table_common)
-            + list(KeyCondition.str_vk_table_std)
-            + list(KeyCondition.str_vk_table_jpn)
+            set(KeyCondition.str_vk_table_common)
+            | set(KeyCondition.str_vk_table_std)
+            | set(KeyCondition.str_vk_table_jpn)
         )
 
         def __init__(self) -> None:
