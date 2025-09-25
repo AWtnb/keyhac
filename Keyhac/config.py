@@ -339,6 +339,7 @@ def configure(keymap):
         @staticmethod
         def set_status(mode: int) -> None:
             keymap.getWindow().setImeStatus(mode)
+            delay(20)
 
         @classmethod
         def is_enabled(cls) -> bool:
@@ -346,11 +347,13 @@ def configure(keymap):
 
         @classmethod
         def enable(cls) -> None:
-            cls.set_status(1)
+            if not cls.is_enabled():
+                cls.set_status(1)
 
         @classmethod
         def disable(cls) -> None:
-            cls.set_status(0)
+            if cls.is_enabled():
+                cls.set_status(0)
 
         def _set_skk_mode(self, *keys: str) -> None:
             self.enable()
@@ -1000,7 +1003,7 @@ def configure(keymap):
                 seq.append(SKKKey.kana)
             else:
                 seq.append(SKKKey.toggle_vk)
-            return self.skk.under_kanamode(SKKKey.latin, *seq)
+            return self.skk.under_latinmode(*seq)
 
         def bind(self, km: WindowKeymap, binding: dict) -> None:
             for key, sent in binding.items():
