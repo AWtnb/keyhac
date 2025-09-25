@@ -359,6 +359,9 @@ def configure(keymap):
             self.enable()
             self._finger.input_key(SKKKey.kana, *keys)
 
+        def turnoff_skk(self) -> None:
+            self._set_skk_mode(SKKKey.toggle_vk)
+
         def to_skk_kana(self) -> None:
             self._set_skk_mode()
 
@@ -982,11 +985,7 @@ def configure(keymap):
             return sender
 
         def without_mode(self, *sequence) -> Callable:
-            def _turnoff():
-                self.control.to_skk_kana()
-                self.control.disable()
-
-            sender = self.invoke(_turnoff, *sequence)
+            sender = self.invoke(self.control.turnoff_skk, *sequence)
             return sender
 
     # select-to-left with ime control
