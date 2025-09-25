@@ -1014,6 +1014,8 @@ def configure(keymap):
             seq = list(sequence)
             if self.recover:
                 seq.append(SKKKey.kana)
+            else:
+                seq.append(SKKKey.VK_activate)
             return self.skk.under_latinmode(*seq)
 
         def bind(self, km: WindowKeymap, binding: dict) -> None:
@@ -1076,6 +1078,8 @@ def configure(keymap):
             "U1-Minus": "Minus",
             "U0-SemiColon": "SemiColon",
             "U1-SemiColon": "+:",
+            "U1-X": "!",
+            "LS-U1-X": "!=",
             "U0-Comma": "Comma",
             "U0-Period": "Period",
         },
