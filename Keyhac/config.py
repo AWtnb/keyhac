@@ -982,7 +982,11 @@ def configure(keymap):
             return sender
 
         def without_mode(self, *sequence) -> Callable:
-            sender = self.invoke(self.control.disable, *sequence)
+            def _turnoff():
+                self.control.to_skk_kana()
+                self.control.disable()
+
+            sender = self.invoke(_turnoff, *sequence)
             return sender
 
     # select-to-left with ime control
@@ -1000,10 +1004,8 @@ def configure(keymap):
         def invoke(self, *sequence) -> Callable:
             seq = list(sequence)
             if self.recover:
-                seq.append(SKKKey.kana)
-            else:
                 seq.append(SKKKey.toggle_vk)
-            return self.skk.under_latinmode(*seq)
+            return self.skk.without_mode(*seq)
 
         def bind(self, km: WindowKeymap, binding: dict) -> None:
             for key, sent in binding.items():
