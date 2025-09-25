@@ -506,9 +506,7 @@ def configure(keymap):
 
         def register(self, s: str):
             self.items.append(s)
-            msg = "FIFO stack total: {}item".format(self.count())
-            if 1 < self.count():
-                msg += "s"
+            msg = "FIFO stack total: {}".format(self.count())
             balloon(msg)
 
         def count(self) -> int:
