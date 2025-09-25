@@ -267,17 +267,12 @@ def configure(keymap):
             self._inter_stroke_pause = inter_stroke_pause
 
         @staticmethod
-        def _release_modifier() -> None:
+        def begin() -> None:
+            keymap.beginInput()
             keymap.setInput_Modifier(0)
 
-        @classmethod
-        def begin(cls) -> None:
-            keymap.beginInput()
-            cls._release_modifier()
-
-        @classmethod
-        def end(cls) -> None:
-            cls._release_modifier()
+        @staticmethod
+        def end() -> None:
             keymap.endInput()
 
         def _input_key(self, *keys: str) -> None:
