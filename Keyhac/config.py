@@ -1000,7 +1000,7 @@ def configure(keymap):
                 seq.append(SKKKey.kana)
             else:
                 seq.append(SKKKey.toggle_vk)
-            return self.skk.under_latinmode(*seq)
+            return self.skk.under_kanamode(SKKKey.latin, *seq)
 
         def bind(self, km: WindowKeymap, binding: dict) -> None:
             for key, sent in binding.items():
