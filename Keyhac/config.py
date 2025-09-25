@@ -321,7 +321,7 @@ def configure(keymap):
         ckit.JobQueue.defaultQueue().enqueue(job)
 
     class SKKKey:
-        VK_activate = "(243)"
+        toggle_vk = "(243)"
         kata = "Q"
         kana = "C-J"
         halfkata = "C-O"
@@ -1015,7 +1015,7 @@ def configure(keymap):
             if self.recover:
                 seq.append(SKKKey.kana)
             else:
-                seq.append(SKKKey.VK_activate)
+                seq.append(SKKKey.toggle_vk)
             return self.skk.under_latinmode(*seq)
 
         def bind(self, km: WindowKeymap, binding: dict) -> None:
