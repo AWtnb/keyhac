@@ -352,47 +352,38 @@ def configure(keymap):
         def disable(cls) -> None:
             cls.set_status(0)
 
-        def to_skk_kana(self) -> None:
+        def _set_skk_mode(self, *keys: str) -> None:
             self.enable()
-            self._finger.input_key(SKKKey.kana)
+            self._finger.input_key(SKKKey.kana, *keys)
+
+        def to_skk_kana(self) -> None:
+            self._set_skk_mode()
 
         def to_skk_latin(self) -> None:
-            self.to_skk_kana()
-            self._finger.input_key(SKKKey.latin)
+            self._set_skk_mode(SKKKey.latin)
 
         def to_skk_abbrev(self) -> None:
-            self.to_skk_kana()
-            self._finger.input_key(SKKKey.abbrev)
+            self._set_skk_mode(SKKKey.abbrev)
 
         def to_skk_kata(self) -> None:
-            self.to_skk_kana()
-            self._finger.input_key(SKKKey.kata)
+            self._set_skk_mode(SKKKey.kata)
 
         def to_skk_half_kata(self) -> None:
-            self.to_skk_kana()
-            self._finger.input_key(SKKKey.halfkata)
+            self._set_skk_mode(SKKKey.halfkata)
 
         def to_skk_full_latin(self) -> None:
-            self.to_skk_kana()
-            self._finger.input_key(SKKKey.jlatin)
+            self._set_skk_mode(SKKKey.jlatin)
 
         def start_skk_conv(self) -> None:
-            self.to_skk_kana()
-            self._finger.input_key(SKKKey.convpoint)
-
-        def start_skk_conv_prefix(self) -> None:
-            self.to_skk_kana()
-            self._finger.input_key(SKKKey.convpoint, SKKKey.prefix)
+            self._set_skk_mode(SKKKey.convpoint)
 
         def reconvert_with_skk(self) -> None:
-            self.to_skk_kana()
-            self._finger.input_key(SKKKey.reconv, SKKKey.cancel)
+            self._set_skk_mode(SKKKey.reconv, SKKKey.cancel)
 
     def apply_ime_control() -> None:
         control = ImeControl()
         for key, func in {
             "U1-J": control.to_skk_kana,
-            "LS-U0-P": control.start_skk_conv_prefix,
             "LC-U0-I": control.to_skk_kata,
             "U0-F7": control.to_skk_kata,
             "U0-O": control.to_skk_half_kata,
