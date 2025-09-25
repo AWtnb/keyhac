@@ -531,17 +531,17 @@ def configure(keymap):
                 return cb
             return None
 
-    FIFO_STACK = FIFOStack()
+    keymap.fifo_stack = FIFOStack()
 
-    keymap_global["LC-LS-U0-X"] = FIFO_STACK.toggle
+    keymap_global["LC-LS-U0-X"] = keymap.fifo_stack.toggle
 
     def smart_copy():
-        if FIFO_STACK.enabled:
+        if keymap.fifo_stack.enabled:
 
             def _register(job_item):
                 cb = job_item.copied
                 if cb:
-                    FIFO_STACK.register(cb)
+                    keymap.fifo_stack.register(cb)
 
             ClipHandler().after_copy(_register)
         else:
@@ -550,8 +550,8 @@ def configure(keymap):
     keymap_global["LC-C"] = smart_copy
 
     def smart_paste() -> None:
-        if 0 < FIFO_STACK.count() and FIFO_STACK.enabled:
-            cb = FIFO_STACK.pop()
+        if 0 < keymap.fifo_stack.count() and keymap.fifo_stack.enabled:
+            cb = keymap.fifo_stack.pop()
             ClipHandler().paste(cb)
         else:
             ClipHandler().send_paste_key()
