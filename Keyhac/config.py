@@ -540,9 +540,7 @@ def configure(keymap):
 
     keymap_global["LC-LS-U0-X"] = keymap.fifo_stack.toggle
 
-    keymap_global["LC-LS-U0-F"] = lambda: keymap.fifo_stack.bulk_register(
-        ClipHandler.get_string()
-    )
+    keymap_global["LC-LS-U0-F"] = lambda: keymap.fifo_stack.bulk_register(ClipHandler.get_string())
 
     def smart_copy():
         if keymap.fifo_stack.enabled:
@@ -1004,7 +1002,7 @@ def configure(keymap):
             return sender
 
         def without_mode(self, *sequence) -> Callable:
-            sender = self.invoke(self.control.turnoff_skk, *sequence)
+            sender = self.invoke(self.control.disable, *sequence)
             return sender
 
     # select-to-left with ime control
@@ -1020,10 +1018,15 @@ def configure(keymap):
             self.recover = recover_ime
 
         def invoke(self, *sequence) -> Callable:
+            # use this function instead of `self.control.disable()` in order to confirm buffers by Ctrl-J while conversion.
+            def _turnoff() -> None:
+                if self.skk.control.is_enabled():
+                    self.skk.control.turnoff_skk()
+
             seq = list(sequence)
             if self.recover:
                 seq.append(SKKKey.toggle_vk)
-            return self.skk.without_mode(*seq)
+            return self.skk.invoke(_turnoff, *seq)
 
         def bind(self, km: WindowKeymap, binding: dict) -> None:
             for key, sent in binding.items():
