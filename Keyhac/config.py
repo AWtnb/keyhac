@@ -483,36 +483,51 @@ def configure(keymap):
     keymap_global["U0-V"] = ClipHandler().paste
 
     class FIFOStack:
-        def __init__(self):
+        def __init__(self) -> None:
             self.items = []
             self.enabled = False
 
-        def _enable(self):
+        def _enable(self) -> None:
             balloon("FIFO mode ON!")
             self.enabled = True
 
-        def _disable(self):
+        def _disable(self) -> None:
             balloon("FIFO mode OFF!")
             self.enabled = False
 
-        def toggle(self):
+        def toggle(self) -> None:
             if self.enabled:
                 self._disable()
             else:
                 self._enable()
 
-        def register(self, s: str):
-            self.items.append(s)
-            msg = "FIFO stack total: {}".format(self.count())
-            balloon(msg)
+        def register(self, s: str) -> None:
+            if self.enabled:
+                self.items.append(s)
+                msg = "FIFO stack total: {}".format(self.count())
+                balloon(msg)
+            else:
+                balloon("FIFO mode is not enabled.")
+
+        def reset(self) -> None:
+            self.items = []
+
+        def bulk_register(self, lines: str) -> None:
+            if self.enabled:
+                self.reset()
+                self.items = [line for line in lines.splitlines() if line.strip()]
+                msg = "FIFO stack total: {}".format(self.count())
+                balloon(msg)
+            else:
+                balloon("FIFO mode is not enabled.")
 
         def count(self) -> int:
             return len(self.items)
 
-        def reset(self):
-            self.items = []
-
         def pop(self) -> Union[str, None]:
+            if not self.enabled:
+                balloon("FIFO mode is not enabled.")
+                return None
             if 0 < self.count():
                 cb = self.items.pop(0)
                 balloon("FIFO stack rest: {}".format(self.count()))
@@ -524,6 +539,10 @@ def configure(keymap):
     keymap.fifo_stack = FIFOStack()
 
     keymap_global["LC-LS-U0-X"] = keymap.fifo_stack.toggle
+
+    keymap_global["LC-LS-U0-F"] = lambda: keymap.fifo_stack.bulk_register(
+        ClipHandler.get_string()
+    )
 
     def smart_copy():
         if keymap.fifo_stack.enabled:
