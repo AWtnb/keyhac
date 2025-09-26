@@ -1488,7 +1488,9 @@ def configure(keymap):
 
         @classmethod
         def get_exe_path(cls) -> str:
-            return re.sub(r"(^.+\.exe)(.*)", r"\1", cls.get_commandline()).replace('"', "")
+            ext = ".exe"
+            c = cls.get_commandline()
+            return c[: c.find(ext) + len(ext)].strip('"')
 
         @classmethod
         def get_exe_name(cls) -> str:
@@ -1502,7 +1504,7 @@ def configure(keymap):
                 "firefox.exe": "MozillaWindowClass",
             }.get(cls.get_exe_name(), "Chrome_WidgetWin_1")
 
-    DEFAULT_BROWSER = SystemBrowser()
+    keymap.default_browser = SystemBrowser()
 
     class WndScanner:
         def __init__(self, exe_name: str, class_name: str = "") -> None:
@@ -1631,9 +1633,9 @@ def configure(keymap):
         keymap_global["U1-C"],
         {
             "Space": (
-                DEFAULT_BROWSER.get_exe_name(),
-                DEFAULT_BROWSER.get_wnd_class(),
-                DEFAULT_BROWSER.get_exe_path(),
+                keymap.default_browser.get_exe_name(),
+                keymap.default_browser.get_wnd_class(),
+                keymap.default_browser.get_exe_path(),
             ),
             "C": (
                 "chrome.exe",
@@ -1774,14 +1776,16 @@ def configure(keymap):
 
     def search_on_browser() -> None:
         finger = VirtualFinger(20)
-        if keymap.getWindow().getProcessName() == DEFAULT_BROWSER.get_exe_name():
+        if keymap.getWindow().getProcessName() == keymap.default_browser.get_exe_name():
             finger.input_key("C-T")
             return
 
         def _activate(job_item: ckit.JobItem) -> None:
             delay()
             job_item.result = None
-            scanner = WndScanner(DEFAULT_BROWSER.get_exe_name(), DEFAULT_BROWSER.get_wnd_class())
+            scanner = WndScanner(
+                keymap.default_browser.get_exe_name(), keymap.default_browser.get_wnd_class()
+            )
             scanner.scan()
             wnd = scanner.found
             if wnd is None:
