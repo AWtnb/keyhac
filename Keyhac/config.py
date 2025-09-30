@@ -406,16 +406,9 @@ def configure(keymap):
 
     apply_ime_control()
 
-    def suppress_binded_key(func: Callable, lazify_msec: int = 0) -> Callable:
+    def suppress_binded_key(func: Callable, lazify_msec: int = 20) -> Callable:
         def _wrapper() -> None:
-            keymap.hookCall(func)
-
-        if 0 < lazify_msec:
-
-            def _lazified() -> None:
-                keymap.delayedCall(_wrapper, lazify_msec)
-
-            return _lazified
+            subthread_run(lambda _: delay(lazify_msec), lambda _: func())
 
         return _wrapper
 
@@ -691,7 +684,7 @@ def configure(keymap):
     keymap.editor = lambda _: open_keyhac_repo()
 
     keymap_global["U0-F12"] = open_keyhac_repo
-    keymap_global["U1-F12"] = suppress_binded_key(reload_config, 250)
+    keymap_global["U1-F12"] = suppress_binded_key(reload_config, 60)
 
     # clipboard menu
     def clipboard_history_menu() -> None:
@@ -700,7 +693,7 @@ def configure(keymap):
 
         subthread_run(_menu)
 
-    keymap_global["LC-LS-X"] = suppress_binded_key(clipboard_history_menu)
+    keymap_global["LC-LS-X"] = suppress_binded_key(clipboard_history_menu, 60)
 
     ################################
     # set window position
@@ -1621,7 +1614,7 @@ def configure(keymap):
         def apply(cls, wnd_keymap: WindowKeymap, remap_table: dict = {}) -> None:
             for key, params in remap_table.items():
                 func = cls.invoke(*params)
-                wnd_keymap[key] = suppress_binded_key(func)
+                wnd_keymap[key] = suppress_binded_key(func, 60)
 
     PseudoCuteExec().apply(
         keymap_global,
@@ -1786,7 +1779,7 @@ def configure(keymap):
 
         subthread_run(_fzf_wnd, _finished, True)
 
-    keymap_global["U1-E"] = suppress_binded_key(fuzzy_window_switcher)
+    keymap_global["U1-E"] = suppress_binded_key(fuzzy_window_switcher, 60)
 
     def invoke_draft() -> None:
         def _invoke(_) -> None:
@@ -2326,7 +2319,7 @@ def configure(keymap):
 
         subthread_run(_fzf, _finished, True)
 
-    keymap_global["U1-Z"] = suppress_binded_key(fzfmenu)
+    keymap_global["U1-Z"] = suppress_binded_key(fzfmenu, 60)
 
 
 def configure_ListWindow(window: ListWindow) -> None:
