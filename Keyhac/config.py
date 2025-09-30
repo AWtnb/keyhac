@@ -407,8 +407,12 @@ def configure(keymap):
     apply_ime_control()
 
     def suppress_binded_key(func: Callable, lazify_msec: int = 20) -> Callable:
+        def _calmdown(_) -> None:
+            delay(lazify_msec)
+            keymap.setInput_Modifier(0)
+
         def _wrapper() -> None:
-            subthread_run(lambda _: delay(lazify_msec), lambda _: func())
+            subthread_run(_calmdown, lambda _: func())
 
         return _wrapper
 
@@ -1614,7 +1618,7 @@ def configure(keymap):
         def apply(cls, wnd_keymap: WindowKeymap, remap_table: dict = {}) -> None:
             for key, params in remap_table.items():
                 func = cls.invoke(*params)
-                wnd_keymap[key] = suppress_binded_key(func, 60)
+                wnd_keymap[key] = suppress_binded_key(func, 120)
 
     PseudoCuteExec().apply(
         keymap_global,
