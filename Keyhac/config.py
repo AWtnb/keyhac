@@ -340,6 +340,7 @@ def configure(keymap):
             VirtualFinger().input_key(*magical_key)
         job = ckit.JobItem(func, finished)
         ckit.JobQueue.defaultQueue().enqueue(job)
+        keymap.setInput_Modifier(0)
 
     class SKKKey:
         toggle_vk = "(243)"
@@ -694,6 +695,8 @@ def configure(keymap):
         ts = datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S")
         balloon("{} reloaded config.py".format(ts))
 
+    keymap_global["U1-F12"] = suppress_binded_key(reload_config, 60)
+
     def open_keyhac_repo() -> None:
         config_path = os.path.join(os.environ.get("APPDATA"), "Keyhac")
         if not smart_check_path(config_path):
@@ -714,7 +717,6 @@ def configure(keymap):
     keymap.editor = lambda _: open_keyhac_repo()
 
     keymap_global["U0-F12"] = open_keyhac_repo
-    keymap_global["U1-F12"] = suppress_binded_key(reload_config, 60)
 
     # clipboard menu
     def clipboard_history_menu() -> None:
