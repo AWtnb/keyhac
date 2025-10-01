@@ -275,10 +275,36 @@ def configure(keymap):
         def end() -> None:
             keymap.endInput()
 
+        @staticmethod
+        def __input_key(s: str) -> None:
+            mod = 0
+            up = None
+            tokens = [k.strip() for k in s.split("-")]
+            vk = KeyCondition.strToVk(tokens[-1])
+            for token in tokens[:-1]:
+                try:
+                    mod |= KeyCondition.strToMod(token, force_LR=True)
+                except ValueError:
+                    if up is not None:
+                        continue
+                    if token == "D":
+                        up = False
+                    else:
+                        if token == "U":
+                            up = True
+            keymap.setInput_Modifier(mod)
+            if up is None:
+                keymap.input_seq.append(pyauto.Key(vk))
+            else:
+                if up:
+                    keymap.input_seq.append(pyauto.KeyUp(vk))
+                else:
+                    keymap.input_seq.append(pyauto.KeyDown(vk))
+
         def _input_key(self, *keys: str) -> None:
             for key in keys:
                 delay(self._inter_stroke_pause)
-                keymap.setInput_FromString(str(key))
+                self.__input_key(str(key))
 
         def _input_text(self, s: str) -> None:
             for c in str(s):
@@ -406,12 +432,12 @@ def configure(keymap):
 
     apply_ime_control()
 
-    def suppress_binded_key(func: Callable, lazify_msec: int = 20) -> Callable:
+    def suppress_binded_key(func: Callable, wait_msec: int = 20) -> Callable:
         def _calmdown(_) -> None:
-            delay(lazify_msec)
-            keymap.setInput_Modifier(0)
+            delay(wait_msec)
 
         def _wrapper() -> None:
+            keymap.setInput_Modifier(0)
             subthread_run(_calmdown, lambda _: func())
 
         return _wrapper
@@ -1783,7 +1809,7 @@ def configure(keymap):
 
         subthread_run(_fzf_wnd, _finished, True)
 
-    keymap_global["U1-E"] = suppress_binded_key(fuzzy_window_switcher, 60)
+    keymap_global["U1-E"] = suppress_binded_key(fuzzy_window_switcher)
 
     def invoke_draft() -> None:
         def _invoke(_) -> None:
