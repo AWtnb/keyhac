@@ -1749,8 +1749,6 @@ def configure(keymap):
             "ApplicationFrameHost.exe",
         ]
 
-        delay(100)
-
         def _fzf_wnd(job_item: ckit.JobItem) -> None:
             job_item.result = None
             popup_table = {}
@@ -2351,7 +2349,7 @@ def configure(keymap):
 
         subthread_run(_fzf, _finished, True)
 
-    keymap_global["U1-Z"] = suppress_binded_key(fzfmenu, 60)
+    keymap_global["U1-Z"] = suppress_binded_key(fzfmenu)
 
 
 def configure_ListWindow(window: ListWindow) -> None:
