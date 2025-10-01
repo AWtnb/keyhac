@@ -279,7 +279,7 @@ def configure(keymap):
         def __input_key(s: str) -> None:
             mod = 0
             up = None
-            tokens = [k.strip() for k in s.split("-")]
+            tokens = [k.strip() for k in s.upper().split("-")]
             vk = KeyCondition.strToVk(tokens[-1])
             for token in tokens[:-1]:
                 try:
