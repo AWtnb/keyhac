@@ -241,6 +241,48 @@ def configure(keymap):
         if 0 < msec:
             time.sleep(msec / 1000)
 
+    PyautoInput: TypeAlias = Union[pyauto.Key, pyauto.KeyUp, pyauto.KeyDown, pyauto.Char]
+
+    class Tap:
+        mod: int = 0
+        sequence: List[PyautoInput] = []
+
+        def __init__(self, name: str):
+            up = None
+            tokens = [s for s in name.split("-")]
+
+            for token in tokens[:-1]:
+                t = token.strip().upper()
+                try:
+                    self.mod |= KeyCondition.strToMod(t, force_LR=True)
+                except ValueError:
+                    if up is not None:
+                        continue
+                    if t == "U":
+                        up = True
+                    else:
+                        if t == "D":
+                            up = False
+
+            tail = tokens[-1]
+            try:
+                vk = KeyCondition.strToVk(tail.strip().upper())
+                if up is None:
+                    self.sequence = [pyauto.Key(vk)]
+                else:
+                    if up:
+                        self.sequence = [pyauto.KeyUp(vk)]
+                    else:
+                        self.sequence = [pyauto.KeyDown(vk)]
+            except ValueError:
+
+                self.sequence = [pyauto.Char(c) for c in str(tail)]
+
+    Taps: TypeAlias = List[Tap]
+
+    def compile_taps(*sequence: str) -> Taps:
+        return [Tap(elem) for elem in sequence]
+
     class VirtualFinger:
         def __init__(self, inter_stroke_pause: int = 10) -> None:
             self._inter_stroke_pause = inter_stroke_pause
@@ -254,71 +296,23 @@ def configure(keymap):
         def end() -> None:
             keymap.endInput()
 
-        @staticmethod
-        def __input_key(s: str) -> None:
-            mod = 0
-            up = None
-            tokens = [k.strip() for k in s.upper().split("-")]
-            vk = KeyCondition.strToVk(tokens[-1])
-            for token in tokens[:-1]:
-                try:
-                    mod |= KeyCondition.strToMod(token, force_LR=True)
-                except ValueError:
-                    if up is not None:
-                        continue
-                    if token == "D":
-                        up = False
-                    else:
-                        if token == "U":
-                            up = True
-            keymap.setInput_Modifier(mod)
-            if up is None:
-                keymap.input_seq.append(pyauto.Key(vk))
-            else:
-                if up:
-                    keymap.input_seq.append(pyauto.KeyUp(vk))
-                else:
-                    keymap.input_seq.append(pyauto.KeyDown(vk))
-
-        def _input_key(self, *keys: str) -> None:
-            for key in keys:
+        def send_taps(self, taps: Taps) -> None:
+            for t in taps:
                 delay(self._inter_stroke_pause)
-                self.__input_key(str(key))
-
-        def _input_text(self, s: str) -> None:
-            delay(self._inter_stroke_pause)
-            for c in str(s):
-                keymap.input_seq.append(pyauto.Char(c))
-
-        def input_key(self, *keys: str) -> None:
-            self.begin()
-            self._input_key(*keys)
-            self.end()
-
-        def input_text(self, s: str) -> None:
-            self.begin()
-            self._input_text(s)
-            self.end()
-
-        def input_mixture(self, *sequence: str) -> None:
-            self.begin()
-            for seq in sequence:
-                token = seq[seq.rfind("-") + 1 :]
-                try:
-                    _ = KeyCondition.strToVk(token.upper())
-                    self._input_key(seq)
-                except ValueError:
-                    self._input_text(seq)
-            self.end()
+                self.begin()
+                keymap.setInput_Modifier(t.mod)
+                for x in t.sequence:
+                    keymap.input_seq.append(x)
+                self.end()
 
     def subthread_run(
         func: Callable,
         finished: Union[Callable, None] = None,
         focus_changed_in_subthread: bool = False,
     ) -> None:
+        magical_key = compile_taps("LWin-S-M", "U-Alt")
         if focus_changed_in_subthread:
-            magical_key = ("LWin-S-M", "U-Alt")
-            VirtualFinger().input_key(*magical_key)
+            VirtualFinger().send_taps(magical_key)
         job = ckit.JobItem(func, finished)
         ckit.JobQueue.defaultQueue().enqueue(job)
         keymap.setInput_Modifier(0)
@@ -365,7 +359,7 @@ def configure(keymap):
 
         def _set_skk_mode(self, *keys: str) -> None:
             self.enable()
-            self._finger.input_key(SKKKey.kana, *keys)
+            self._finger.send_taps(compile_taps(SKKKey.kana, *keys))
 
         def turnoff_skk(self) -> None:
             self._set_skk_mode(SKKKey.toggle_vk)
@@ -441,11 +435,11 @@ def configure(keymap):
 
         @staticmethod
         def send_copy_key():
-            VirtualFinger().input_key("C-C")
+            VirtualFinger().send_taps(compile_taps("C-C"))
 
         @staticmethod
         def send_paste_key():
-            VirtualFinger().input_key("C-V")
+            VirtualFinger().send_taps(compile_taps("C-V"))
 
         @classmethod
         def paste(
@@ -830,13 +824,14 @@ def configure(keymap):
     def apply_maximized_window_snapper(km: WindowKeymap, keybinding: dict) -> None:
         finger = VirtualFinger()
         for key, towards in keybinding.items():
+            taps = compile_taps("LShift-LWin-" + towards)
 
             def _snap() -> None:
                 def __maximize(_) -> None:
                     keymap.getTopLevelWindow().maximize()
 
                 def __snapper(_) -> None:
-                    finger.input_key("LShift-LWin-" + towards)
+                    finger.send_taps(taps)
 
                 subthread_run(__maximize, __snapper)
 
@@ -991,10 +986,11 @@ def configure(keymap):
             self.control = ImeControl(inter_stroke_pause)
 
         def invoke(self, mode_setter: Callable, *sequence) -> Callable:
+            taps = compile_taps(*sequence)
 
             def _send() -> None:
                 mode_setter()
-                self.finger.input_mixture(*sequence)
+                self.finger.send_taps(taps)
 
             return _send
 
@@ -1053,8 +1049,8 @@ def configure(keymap):
     replace_last_nchar(keymap_global["U0-M"], "先生")
 
     # markdown list
-    keymap_global["S-U0-8"] = DirectSender().invoke("- ")
-    keymap_global["U1-1"] = DirectSender().invoke("1. ")
+    keymap_global["S-U0-8"] = DirectSender().invoke("U-Shift", "Minus", " ")
+    keymap_global["U1-1"] = DirectSender().invoke("1.", " ")
 
     DirectSender().bind(
         keymap_global,
@@ -1616,7 +1612,7 @@ def configure(keymap):
                 def _finished(job_item: ckit.JobItem) -> None:
                     if job_item.result is not None:
                         if not job_item.result:
-                            VirtualFinger().input_key("LCtrl-LAlt-Tab")
+                            VirtualFinger().send_taps(compile_taps("LCtrl-LAlt-Tab"))
 
                 subthread_run(_activate, _finished, True)
 
@@ -1785,7 +1781,7 @@ def configure(keymap):
         def _finished(job_item: ckit.JobItem) -> None:
             if job_item.result is not None:
                 if not job_item.result:
-                    VirtualFinger().input_key("LCtrl-LAlt-Tab")
+                    VirtualFinger().send_taps(compile_taps("LCtrl-LAlt-Tab"))
 
         subthread_run(_fzf_wnd, _finished, True)
 
@@ -1802,7 +1798,7 @@ def configure(keymap):
     def search_on_browser() -> None:
         finger = VirtualFinger(20)
         if keymap.getWindow().getProcessName() == keymap.default_browser.get_exe_name():
-            finger.input_key("C-T")
+            finger.send_taps(compile_taps("C-T"))
             return
 
         def _activate(job_item: ckit.JobItem) -> None:
@@ -1821,9 +1817,9 @@ def configure(keymap):
         def _finished(job_item: ckit.JobItem) -> None:
             if job_item.result is not None:
                 if job_item.result:
-                    finger.input_key("C-T")
+                    finger.send_taps(compile_taps("C-T"))
                 else:
-                    finger.input_key("LCtrl-LAlt-Tab")
+                    finger.send_taps(compile_taps("LCtrl-LAlt-Tab"))
 
         subthread_run(_activate, _finished, True)
 
@@ -1927,9 +1923,9 @@ def configure(keymap):
     def select_all() -> None:
         finger = VirtualFinger()
         if keymap.getWindow().getClassName() == "EXCEL6":
-            finger.input_key("C-End", "C-S-Home")
+            finger.send_taps(compile_taps("C-End", "C-S-Home"))
         else:
-            finger.input_key("C-A")
+            finger.send_taps(compile_taps("C-A"))
 
     keymap_excel["C-A"] = select_all
 
