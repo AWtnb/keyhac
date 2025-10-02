@@ -300,7 +300,7 @@ def configure(keymap):
             self._input_text(s)
             self.end()
 
-        def input_smart(self, *sequence: str) -> None:
+        def input_mixture(self, *sequence: str) -> None:
             self.begin()
             for seq in sequence:
                 token = seq[seq.rfind("-") + 1 :]
@@ -994,7 +994,7 @@ def configure(keymap):
 
             def _send() -> None:
                 mode_setter()
-                self.finger.input_smart(*sequence)
+                self.finger.input_mixture(*sequence)
 
             return _send
 
