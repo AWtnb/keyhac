@@ -278,11 +278,6 @@ def configure(keymap):
 
                 self.sequence = [pyauto.Char(c) for c in str(tail)]
 
-    Taps: TypeAlias = List[Tap]
-
-    def compile_taps(*sequence: str) -> Taps:
-        return [Tap(elem) for elem in sequence]
-
     class VirtualFinger:
         def __init__(self, inter_stroke_pause: int = 10) -> None:
             self._inter_stroke_pause = inter_stroke_pause
@@ -296,7 +291,15 @@ def configure(keymap):
         def end() -> None:
             keymap.endInput()
 
-        def send_taps(self, taps: Taps) -> None:
+        @staticmethod
+        def compile(*sequence: str) -> List[Tap]:
+            return [Tap(elem) for elem in sequence]
+
+        def send(self, *sequence: str) -> None:
+            taps = self.compile(*sequence)
+            self.send_compiled(taps)
+
+        def send_compiled(self, taps: List[Tap]) -> None:
             for t in taps:
                 delay(self._inter_stroke_pause)
                 self.begin()
@@ -310,9 +313,8 @@ def configure(keymap):
         finished: Union[Callable, None] = None,
         focus_changed_in_subthread: bool = False,
     ) -> None:
-        magical_key = compile_taps("LWin-S-M", "U-Alt")
         if focus_changed_in_subthread:
-            VirtualFinger().send_taps(magical_key)
+            VirtualFinger().send("LWin-S-M", "U-Alt")
         job = ckit.JobItem(func, finished)
         ckit.JobQueue.defaultQueue().enqueue(job)
         keymap.setInput_Modifier(0)
@@ -359,7 +361,7 @@ def configure(keymap):
 
         def _set_skk_mode(self, *keys: str) -> None:
             self.enable()
-            self._finger.send_taps(compile_taps(SKKKey.kana, *keys))
+            self._finger.send(SKKKey.kana, *keys)
 
         def turnoff_skk(self) -> None:
             self._set_skk_mode(SKKKey.toggle_vk)
@@ -435,11 +437,11 @@ def configure(keymap):
 
         @staticmethod
         def send_copy_key():
-            VirtualFinger().send_taps(compile_taps("C-C"))
+            VirtualFinger().send("C-C")
 
         @staticmethod
         def send_paste_key():
-            VirtualFinger().send_taps(compile_taps("C-V"))
+            VirtualFinger().send("C-V")
 
         @classmethod
         def paste(
@@ -824,14 +826,13 @@ def configure(keymap):
     def apply_maximized_window_snapper(km: WindowKeymap, keybinding: dict) -> None:
         finger = VirtualFinger()
         for key, towards in keybinding.items():
-            taps = compile_taps("LShift-LWin-" + towards)
 
             def _snap() -> None:
                 def __maximize(_) -> None:
                     keymap.getTopLevelWindow().maximize()
 
                 def __snapper(_) -> None:
-                    finger.send_taps(taps)
+                    finger.send("LShift-LWin-" + towards)
 
                 subthread_run(__maximize, __snapper)
 
@@ -986,11 +987,11 @@ def configure(keymap):
             self.control = ImeControl(inter_stroke_pause)
 
         def invoke(self, mode_setter: Callable, *sequence) -> Callable:
-            taps = compile_taps(*sequence)
+            taps = self.finger.compile(*sequence)
 
             def _send() -> None:
                 mode_setter()
-                self.finger.send_taps(taps)
+                self.finger.send_compiled(taps)
 
             return _send
 
@@ -1612,7 +1613,7 @@ def configure(keymap):
                 def _finished(job_item: ckit.JobItem) -> None:
                     if job_item.result is not None:
                         if not job_item.result:
-                            VirtualFinger().send_taps(compile_taps("LCtrl-LAlt-Tab"))
+                            VirtualFinger().send("LCtrl-LAlt-Tab")
 
                 subthread_run(_activate, _finished, True)
 
@@ -1781,7 +1782,7 @@ def configure(keymap):
         def _finished(job_item: ckit.JobItem) -> None:
             if job_item.result is not None:
                 if not job_item.result:
-                    VirtualFinger().send_taps(compile_taps("LCtrl-LAlt-Tab"))
+                    VirtualFinger().send("LCtrl-LAlt-Tab")
 
         subthread_run(_fzf_wnd, _finished, True)
 
@@ -1798,7 +1799,7 @@ def configure(keymap):
     def search_on_browser() -> None:
         finger = VirtualFinger(20)
         if keymap.getWindow().getProcessName() == keymap.default_browser.get_exe_name():
-            finger.send_taps(compile_taps("C-T"))
+            finger.send("C-T")
             return
 
         def _activate(job_item: ckit.JobItem) -> None:
@@ -1817,9 +1818,9 @@ def configure(keymap):
         def _finished(job_item: ckit.JobItem) -> None:
             if job_item.result is not None:
                 if job_item.result:
-                    finger.send_taps(compile_taps("C-T"))
+                    finger.send("C-T")
                 else:
-                    finger.send_taps(compile_taps("LCtrl-LAlt-Tab"))
+                    finger.send("LCtrl-LAlt-Tab")
 
         subthread_run(_activate, _finished, True)
 
@@ -1923,9 +1924,9 @@ def configure(keymap):
     def select_all() -> None:
         finger = VirtualFinger()
         if keymap.getWindow().getClassName() == "EXCEL6":
-            finger.send_taps(compile_taps("C-End", "C-S-Home"))
+            finger.send("C-End", "C-S-Home")
         else:
-            finger.send_taps(compile_taps("C-A"))
+            finger.send("C-A")
 
     keymap_excel["C-A"] = select_all
 
