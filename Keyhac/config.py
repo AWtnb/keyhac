@@ -241,27 +241,6 @@ def configure(keymap):
         if 0 < msec:
             time.sleep(msec / 1000)
 
-    class Tap(NamedTuple):
-        send: str
-        has_real_key: bool
-
-    class Taps:
-        acceptable = (
-            set(KeyCondition.str_vk_table_common)
-            | set(KeyCondition.str_vk_table_std)
-            | set(KeyCondition.str_vk_table_jpn)
-        )
-
-        def __init__(self, sequence: tuple) -> None:
-            self.taps = [Tap(elem, self.check(elem)) for elem in sequence]
-
-        @classmethod
-        def check(cls, s: str) -> bool:
-            if s.startswith("(") and s.endswith(")"):
-                return str.isdecimal(s[1:-1])
-            k = s.split("-")[-1].upper()
-            return k in cls.acceptable
-
     class VirtualFinger:
         def __init__(self, inter_stroke_pause: int = 10) -> None:
             self._inter_stroke_pause = inter_stroke_pause
@@ -307,8 +286,8 @@ def configure(keymap):
                 self.__input_key(str(key))
 
         def _input_text(self, s: str) -> None:
+            delay(self._inter_stroke_pause)
             for c in str(s):
-                delay(self._inter_stroke_pause)
                 keymap.input_seq.append(pyauto.Char(c))
 
         def input_key(self, *keys: str) -> None:
@@ -321,13 +300,15 @@ def configure(keymap):
             self._input_text(s)
             self.end()
 
-        def tap_sequence(self, taps: List[Tap]) -> None:
+        def input_smart(self, *sequence: str) -> None:
             self.begin()
-            for tap in taps:
-                if tap.has_real_key:
-                    self._input_key(tap.send)
-                else:
-                    self._input_text(tap.send)
+            for seq in sequence:
+                token = seq[seq.rfind("-") + 1 :]
+                try:
+                    _ = KeyCondition.strToVk(token.upper())
+                    self._input_key(seq)
+                except ValueError:
+                    self._input_text(seq)
             self.end()
 
     def subthread_run(
@@ -1010,11 +991,10 @@ def configure(keymap):
             self.control = ImeControl(inter_stroke_pause)
 
         def invoke(self, mode_setter: Callable, *sequence) -> Callable:
-            taps = Taps(sequence).taps
 
             def _send() -> None:
                 mode_setter()
-                self.finger.tap_sequence(taps)
+                self.finger.input_smart(*sequence)
 
             return _send
 
