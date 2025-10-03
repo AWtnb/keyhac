@@ -308,17 +308,20 @@ def configure(keymap):
                     keymap.input_seq.append(x)
                 self.end()
 
-    keymap.magical_key = VirtualFinger.compile("LWin-S-M", "U-Alt", "U-Ctrl")
+    keymap.magical_key = VirtualFinger.compile("LWin-S-M", "U-Alt")
+    keymap.mod_release_sequence = VirtualFinger.compile("U-Shift", "U-Alt", "U-Ctrl")
 
     def subthread_run(
         func: Callable,
         finished: Union[Callable, None] = None,
         focus_changed_in_subthread: bool = False,
     ) -> None:
+        finger = VirtualFinger()
         if focus_changed_in_subthread:
-            VirtualFinger().send_compiled(keymap.magical_key)
+            finger.send_compiled(keymap.magical_key)
         job = ckit.JobItem(func, finished)
         ckit.JobQueue.defaultQueue().enqueue(job)
+        finger.send_compiled(keymap.mod_release_sequence)
         keymap.setInput_Modifier(0)
 
     class SKKKey:
