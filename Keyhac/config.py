@@ -308,7 +308,7 @@ def configure(keymap):
                     keymap.input_seq.append(x)
                 self.end()
 
-    keymap.magical_key = VirtualFinger.compile("LWin-S-M", "U-Alt")
+    keymap.magical_key = VirtualFinger.compile("LWin-S-M", "U-Alt", "U-Ctrl")
 
     def subthread_run(
         func: Callable,
