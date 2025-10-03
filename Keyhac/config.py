@@ -308,13 +308,15 @@ def configure(keymap):
                     keymap.input_seq.append(x)
                 self.end()
 
+    keymap.magical_key = VirtualFinger.compile("LWin-S-M", "U-Alt")
+
     def subthread_run(
         func: Callable,
         finished: Union[Callable, None] = None,
         focus_changed_in_subthread: bool = False,
     ) -> None:
         if focus_changed_in_subthread:
-            VirtualFinger().send("LWin-S-M", "U-Alt")
+            VirtualFinger().send_compiled(keymap.magical_key)
         job = ckit.JobItem(func, finished)
         ckit.JobQueue.defaultQueue().enqueue(job)
         keymap.setInput_Modifier(0)
@@ -332,9 +334,22 @@ def configure(keymap):
         jlatin = "S-Q"
         prefix = "S-Period"
 
+        @classmethod
+        def taps(cls, *keys: str) -> List[Tap]:
+            return VirtualFinger.compile(cls.kana, *keys)
+
     class ImeControl:
         def __init__(self, inter_stroke_pause: int = 10) -> None:
             self._finger = VirtualFinger(inter_stroke_pause)
+            self.key_to_kana = SKKKey.taps()
+            self.key_to_turnoff = SKKKey.taps(SKKKey.toggle_vk)
+            self.key_to_kata = SKKKey.taps(SKKKey.kata)
+            self.key_to_latin = SKKKey.taps(SKKKey.latin)
+            self.key_to_abbrev = SKKKey.taps(SKKKey.abbrev)
+            self.key_to_half_kata = SKKKey.taps(SKKKey.halfkata)
+            self.key_to_full_latin = SKKKey.taps(SKKKey.jlatin)
+            self.key_to_conv = SKKKey.taps(SKKKey.convpoint)
+            self.key_to_reconv = SKKKey.taps(SKKKey.reconv, SKKKey.cancel)
 
         @staticmethod
         def get_status() -> int:
@@ -359,36 +374,41 @@ def configure(keymap):
             if cls.is_enabled():
                 cls.set_status(0)
 
-        def _set_skk_mode(self, *keys: str) -> None:
-            self.enable()
-            self._finger.send(SKKKey.kana, *keys)
-
         def turnoff_skk(self) -> None:
-            self._set_skk_mode(SKKKey.toggle_vk)
+            self.enable()
+            self._finger.send_compiled(self.key_to_turnoff)
 
         def to_skk_kana(self) -> None:
-            self._set_skk_mode()
+            self.enable()
+            self._finger.send_compiled(self.key_to_kana)
 
         def to_skk_latin(self) -> None:
-            self._set_skk_mode(SKKKey.latin)
+            self.enable()
+            self._finger.send_compiled(self.key_to_latin)
 
         def to_skk_abbrev(self) -> None:
-            self._set_skk_mode(SKKKey.abbrev)
+            self.enable()
+            self._finger.send_compiled(self.key_to_abbrev)
 
         def to_skk_kata(self) -> None:
-            self._set_skk_mode(SKKKey.kata)
+            self.enable()
+            self._finger.send_compiled(self.key_to_kata)
 
         def to_skk_half_kata(self) -> None:
-            self._set_skk_mode(SKKKey.halfkata)
+            self.enable()
+            self._finger.send_compiled(self.key_to_half_kata)
 
         def to_skk_full_latin(self) -> None:
-            self._set_skk_mode(SKKKey.jlatin)
+            self.enable()
+            self._finger.send_compiled(self.key_to_full_latin)
 
         def start_skk_conv(self) -> None:
-            self._set_skk_mode(SKKKey.convpoint)
+            self.enable()
+            self._finger.send_compiled(self.key_to_conv)
 
         def reconvert_with_skk(self) -> None:
-            self._set_skk_mode(SKKKey.reconv, SKKKey.cancel)
+            self.enable()
+            self._finger.send_compiled(self.key_to_reconv)
 
     def apply_ime_control() -> None:
         control = ImeControl()
