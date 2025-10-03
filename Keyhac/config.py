@@ -1866,6 +1866,10 @@ def configure(keymap):
     keymap_intra = keymap.defineWindowKeymap(exe_name="APARClientAWS.exe")
     keymap_intra["O-(235)"] = lambda: None
 
+    # rsturio
+    keymap_rstudio = keymap.defineWindowKeymap(exe_name="rstudio.exe")
+    keymap_rstudio["U0-Minus"] = DirectSender(False).invoke("S-Comma", "Minus")
+
     # slack
     keymap_slack = keymap.defineWindowKeymap(exe_name="slack.exe", class_name="Chrome_WidgetWin_1")
     keymap_slack["F3"] = DirectSender(False).invoke("C-K")
