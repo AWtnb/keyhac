@@ -1063,7 +1063,7 @@ def configure(keymap):
     keymap_global["U0-M"] = keymap.defineMultiStrokeKeymap()
 
     def replace_last_nchar(km: WindowKeymap, newstr: str) -> Callable:
-        for n in "123":
+        for n in "0123":
             seq = ["Back"] * int(n) + [newstr, SKKKey.kana]
             km[n] = SKKSender().under_latinmode(*seq)
 
