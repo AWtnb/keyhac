@@ -319,10 +319,15 @@ def configure(keymap):
         finger = VirtualFinger()
         if focus_changed_in_subthread:
             finger.send_compiled(keymap.magical_key)
-        job = ckit.JobItem(func, finished)
+
+        def _finished(job_item: ckit.JobItem) -> None:
+            if finished is not None:
+                finished(job_item)
+            finger.send_compiled(keymap.mod_release_sequence)
+            keymap.setInput_Modifier(0)
+
+        job = ckit.JobItem(func, _finished)
         ckit.JobQueue.defaultQueue().enqueue(job)
-        finger.send_compiled(keymap.mod_release_sequence)
-        keymap.setInput_Modifier(0)
 
     class SKKKey:
         toggle_vk = "(243)"
