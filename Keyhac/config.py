@@ -377,14 +377,15 @@ def configure(keymap):
             if not cls.is_enabled():
                 cls.set_status(1)
 
+        # Unlike the `turnoff_skk` method, this method forcibly turns off the IME itself. Due to SKK specifications, please be aware that upon the next execution of the `enable` method, the IME will start up in the mode it was in just before being turned off, rather than in Kana input mode.
         @classmethod
         def disable(cls) -> None:
             if cls.is_enabled():
                 cls.set_status(0)
 
         def turnoff_skk(self) -> None:
-            self.enable()
-            self._finger.send_compiled(self.key_to_turnoff)
+            if self.is_enabled():
+                self._finger.send_compiled(self.key_to_turnoff)
 
         def to_skk_kana(self) -> None:
             self.enable()
@@ -1048,15 +1049,10 @@ def configure(keymap):
             self.recover = recover_ime
 
         def invoke(self, *sequence) -> Callable:
-            # use this function instead of `self.control.disable()` in order to confirm buffers by Ctrl-J while conversion.
-            def _turnoff() -> None:
-                if self.skk.control.is_enabled():
-                    self.skk.control.turnoff_skk()
-
             seq = list(sequence)
             if self.recover:
                 seq.append(SKKKey.toggle_vk)
-            return self.skk.invoke(_turnoff, *seq)
+            return self.skk.invoke(self.skk.control.turnoff_skk, *seq)
 
         def bind(self, km: WindowKeymap, binding: dict) -> None:
             for key, sent in binding.items():
@@ -1073,7 +1069,8 @@ def configure(keymap):
     def replace_last_nchar(km: WindowKeymap, newstr: str) -> Callable:
         for n in "0123":
             seq = ["Back"] * int(n) + [newstr, SKKKey.kana]
-            km[n] = SKKSender().under_latinmode(*seq)
+            km[n] = DirectSender().invoke(*seq)
+            # km[n] = SKKSender().under_latinmode(*seq)
 
     replace_last_nchar(keymap_global["U0-M"], "先生")
 
