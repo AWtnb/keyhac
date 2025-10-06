@@ -317,6 +317,7 @@ def configure(keymap):
         focus_changed_in_subthread: bool = False,
     ) -> None:
         finger = VirtualFinger()
+        finger.send_compiled(keymap.mod_release_sequence)
         if focus_changed_in_subthread:
             finger.send_compiled(keymap.magical_key)
 
@@ -439,13 +440,12 @@ def configure(keymap):
 
     apply_ime_control()
 
-    def suppress_binded_key(func: Callable, wait_msec: int = 20) -> Callable:
-        def _calmdown(_) -> None:
+    def cooldown(func: Callable, wait_msec: int = 20) -> Callable:
+        def _wait(_) -> None:
             delay(wait_msec)
 
         def _wrapper() -> None:
-            keymap.setInput_Modifier(0)
-            subthread_run(_calmdown, lambda _: func())
+            subthread_run(_wait, lambda _: func())
 
         return _wrapper
 
@@ -701,7 +701,7 @@ def configure(keymap):
         ts = datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S")
         balloon("{} reloaded config.py".format(ts))
 
-    keymap_global["U1-F12"] = suppress_binded_key(reload_config, 60)
+    keymap_global["U1-F12"] = cooldown(reload_config, 60)
 
     def open_keyhac_repo() -> None:
         config_path = os.path.join(os.environ.get("APPDATA"), "Keyhac")
@@ -725,13 +725,7 @@ def configure(keymap):
     keymap_global["U0-F12"] = open_keyhac_repo
 
     # clipboard menu
-    def clipboard_history_menu() -> None:
-        def _menu(_) -> None:
-            keymap.command_ClipboardList()
-
-        subthread_run(_menu)
-
-    keymap_global["LC-LS-X"] = suppress_binded_key(clipboard_history_menu, 60)
+    keymap_global["LC-LS-X"] = keymap.command_ClipboardList
 
     ################################
     # set window position
@@ -1073,6 +1067,25 @@ def configure(keymap):
 
     replace_last_nchar(keymap_global["U0-M"], "先生")
 
+    keymap.curly_comma_mode = False
+    keymap.comma = [Tap("Comma")]
+    keymap.curly_comma = [Tap("\uff0c")]
+
+    def toggle_comma_mode() -> None:
+        keymap.curly_comma_mode = not keymap.curly_comma_mode
+        balloon("Comma mode: {}".format(keymap.curly_comma_mode))
+
+    keymap_global["S-U0-Comma"] = toggle_comma_mode
+
+    def send_comma() -> None:
+        finger = VirtualFinger()
+        if ImeControl().is_enabled() and keymap.curly_comma_mode:
+            finger.send_compiled(keymap.curly_comma)
+        else:
+            finger.send_compiled(keymap.comma)
+
+    keymap_global["Comma"] = send_comma
+
     # markdown list
     keymap_global["S-U0-8"] = DirectSender().invoke("U-Shift", "Minus", " ")
     keymap_global["U1-1"] = DirectSender().invoke("1.", " ")
@@ -1081,7 +1094,6 @@ def configure(keymap):
         keymap_global,
         {
             "S-U0-Colon": "\uff1a",  # FULLWIDTH COLON
-            "S-U0-Comma": "\uff0c",  # FULLWIDTH COMMA
             "S-U0-Minus": "\u3000\u2015\u2015",
             "S-U0-Period": "\uff0e",  # FULLWIDTH FULL STOP
             "U0-Minus": "\u2015\u2015",  # HORIZONTAL BAR * 2
@@ -1647,7 +1659,7 @@ def configure(keymap):
         def apply(cls, wnd_keymap: WindowKeymap, remap_table: dict = {}) -> None:
             for key, params in remap_table.items():
                 func = cls.invoke(*params)
-                wnd_keymap[key] = suppress_binded_key(func, 120)
+                wnd_keymap[key] = cooldown(func, 40)
 
     PseudoCuteExec().apply(
         keymap_global,
@@ -1810,7 +1822,7 @@ def configure(keymap):
 
         subthread_run(_fzf_wnd, _finished, True)
 
-    keymap_global["U1-E"] = suppress_binded_key(fuzzy_window_switcher)
+    keymap_global["U1-E"] = cooldown(fuzzy_window_switcher)
 
     def invoke_draft() -> None:
         def _invoke(_) -> None:
@@ -2354,7 +2366,7 @@ def configure(keymap):
 
         subthread_run(_fzf, _finished, True)
 
-    keymap_global["U1-Z"] = suppress_binded_key(fzfmenu)
+    keymap_global["U1-Z"] = cooldown(fzfmenu)
 
 
 def configure_ListWindow(window: ListWindow) -> None:
