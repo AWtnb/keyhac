@@ -458,6 +458,10 @@ def configure(keymap):
                 return ""
 
         @staticmethod
+        def get_clipboard_history_item(idx: int) -> str:
+            return keymap.clipboard_history.items[idx]
+
+        @staticmethod
         def set_string(s: str) -> None:
             try:
                 ckit.setClipboardText(str(s))
@@ -488,17 +492,17 @@ def configure(keymap):
             cls.send_paste_key()
 
         def after_copy(cls, deferred: Callable) -> None:
-            cb = cls.get_string()
+            cb = cls.get_clipboard_history_item(0)
             cls.send_copy_key()
+            delay(40)
 
             def _watch_clipboard(job_item: ckit.JobItem) -> None:
                 job_item.origin = cb
                 job_item.copied = ""
                 trial = 600
-                delay(120)
                 for _ in range(trial):
                     try:
-                        s = cls.get_string()
+                        s = cls.get_clipboard_history_item(0)
                         if not s.strip():
                             continue
                         if s != job_item.origin:
