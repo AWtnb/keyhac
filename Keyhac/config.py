@@ -275,7 +275,6 @@ def configure(keymap):
                     else:
                         self.sequence = [pyauto.KeyDown(vk)]
             except ValueError:
-
                 self.sequence = [pyauto.Char(c) for c in str(tail)]
 
     class VirtualFinger:
@@ -324,7 +323,7 @@ def configure(keymap):
         finished: Union[Callable, None] = None,
         focus_changed_in_subthread: bool = False,
     ) -> None:
-        finger = VirtualFinger()
+        finger = VirtualFinger(0)
         finger.send_compiled(keymap.mod_release_sequence)
         if focus_changed_in_subthread:
             finger.send_compiled(keymap.magical_key)
