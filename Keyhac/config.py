@@ -309,7 +309,15 @@ def configure(keymap):
                 self.end()
 
     keymap.magical_key = VirtualFinger.compile("LWin-S-M", "U-Alt")
-    keymap.mod_release_sequence = VirtualFinger.compile("U-Shift", "U-Alt", "U-Ctrl")
+
+    def mod_release_sequence() -> List[Tap]:
+        seq = []
+        for mod in ["Shift", "Alt", "Ctrl"]:
+            for pos in ["", "L", "R"]:
+                seq.append("U-{}{}".format(pos, mod))
+        return VirtualFinger.compile(*seq)
+
+    keymap.mod_release_sequence = mod_release_sequence()
 
     def subthread_run(
         func: Callable,
