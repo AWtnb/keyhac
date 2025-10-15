@@ -562,6 +562,15 @@ def configure(keymap):
             else:
                 balloon("FIFO mode is not enabled.")
 
+        def join_items(self, sep: str) -> str:
+            if not self.enabled:
+                balloon("FIFO mode is not enabled.")
+                return ""
+            s = sep.join(self.items)
+            self.reset()
+            self._disable()
+            return s
+
         def count(self) -> int:
             return len(self.items)
 
@@ -2273,6 +2282,8 @@ def configure(keymap):
             "as code": lambda c: f"`{c}`",
             "trim space on line head": FormatTools.trim_space_on_line_head,
             "my markdown frontmatter": lambda _: md_frontmatter(),
+            "FIFO: join items with Tab": lambda _: keymap.fifo_stack.join_items("\t"),
+            "FIFO: join items with LineBreak": lambda _: keymap.fifo_stack.join_items("\n"),
             "to lowercase": lambda c: c.lower(),
             "to uppercase": lambda c: c.upper(),
             "to slack feed subscribe": lambda c: "/feed subscribe {}".format(c),
