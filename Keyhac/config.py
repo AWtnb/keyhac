@@ -64,11 +64,11 @@ def shell_exec(path: str, *args) -> None:
 
 def configure(keymap):
 
-    def balloon(message: str) -> None:
+    def balloon(message: str, timeout_msec: int = 1500) -> None:
         title = datetime.datetime.today().strftime("%Y%m%d-%H%M%S-%f")
         print(message)
         try:
-            keymap.popBalloon(title, message, 1500)
+            keymap.popBalloon(title, message, timeout_msec)
         except:
             pass
 
@@ -457,6 +457,9 @@ def configure(keymap):
         return _wrapper
 
     class ClipHandler:
+        copy_tap = [Tap("C-C")]
+        paste_tap = [Tap("C-V")]
+
         @staticmethod
         def get_string() -> str:
             try:
@@ -466,7 +469,10 @@ def configure(keymap):
 
         @staticmethod
         def get_clipboard_history_item(idx: int) -> str:
-            return keymap.clipboard_history.items[idx]
+            try:
+                return keymap.clipboard_history.items[idx]
+            except IndexError:
+                return ""
 
         @staticmethod
         def set_string(s: str) -> None:
@@ -475,13 +481,13 @@ def configure(keymap):
             except:
                 pass
 
-        @staticmethod
-        def send_copy_key():
-            VirtualFinger().send("C-C")
+        @classmethod
+        def send_copy_key(cls):
+            VirtualFinger().send_compiled(cls.copy_tap)
 
-        @staticmethod
-        def send_paste_key():
-            VirtualFinger().send("C-V")
+        @classmethod
+        def send_paste_key(cls):
+            VirtualFinger().send_compiled(cls.paste_tap)
 
         @classmethod
         def paste(
@@ -508,15 +514,11 @@ def configure(keymap):
                 job_item.copied = ""
                 trial = 600
                 for _ in range(trial):
-                    try:
-                        s = cls.get_clipboard_history_item(0)
-                        if not s.strip():
-                            continue
-                        if s != job_item.origin:
-                            job_item.copied = s
-                            break
-                    except Exception as e:
-                        print(e)
+                    s = cls.get_clipboard_history_item(0)
+                    if not s.strip():
+                        continue
+                    if s != job_item.origin:
+                        job_item.copied = s
                         break
 
             subthread_run(_watch_clipboard, deferred)
@@ -532,8 +534,9 @@ def configure(keymap):
             balloon("FIFO mode ON!")
             self.enabled = True
 
-        def _disable(self) -> None:
-            balloon("FIFO mode OFF!")
+        def _disable(self, alert: bool = True) -> None:
+            if alert:
+                balloon("FIFO mode OFF!")
             self.enabled = False
 
         def toggle(self) -> None:
@@ -545,7 +548,7 @@ def configure(keymap):
         def register(self, s: str) -> None:
             if self.enabled:
                 self.items.append(s)
-                msg = "FIFO stack total: {}".format(self.count())
+                msg = "FIFO stack total: {}".format(self.count)
                 balloon(msg)
             else:
                 balloon("FIFO mode is not enabled.")
@@ -557,7 +560,7 @@ def configure(keymap):
             if self.enabled:
                 self.reset()
                 self.items = [line for line in lines.splitlines() if line.strip()]
-                msg = "FIFO stack total: {}".format(self.count())
+                msg = "FIFO stack total: {}".format(self.count)
                 balloon(msg)
             else:
                 balloon("FIFO mode is not enabled.")
@@ -571,6 +574,7 @@ def configure(keymap):
             self._disable()
             return s
 
+        @property
         def count(self) -> int:
             return len(self.items)
 
@@ -578,11 +582,14 @@ def configure(keymap):
             if not self.enabled:
                 balloon("FIFO mode is not enabled.")
                 return None
-            if 0 < self.count():
-                cb = self.items.pop(0)
-                balloon("FIFO stack rest: {}".format(self.count()))
-                if self.count() < 1:
-                    self._disable()
+            if 0 < self.count:
+                cb = self.items[0]
+                if self.count == 1:
+                    balloon("FIFO pasted last item: FIFO mode OFF!", 3000)
+                    self._disable(False)
+                else:
+                    balloon("FIFO next item: `{}`".format(self.items[1]), 3000)
+                    self.items.pop(0)
                 return cb
             return None
 
@@ -607,7 +614,7 @@ def configure(keymap):
     keymap_global["LC-C"] = smart_copy
 
     def smart_paste() -> None:
-        if 0 < keymap.fifo_stack.count() and keymap.fifo_stack.enabled:
+        if 0 < keymap.fifo_stack.count and keymap.fifo_stack.enabled:
             cb = keymap.fifo_stack.pop()
             ClipHandler().paste(cb)
         else:
