@@ -583,13 +583,12 @@ def configure(keymap):
                 balloon("FIFO mode is not enabled.")
                 return None
             if 0 < self.count:
-                cb = self.items[0]
-                if self.count == 1:
+                cb = self.items.pop(0)
+                if self.count == 0:
                     balloon("FIFO pasted last item: FIFO mode OFF!", 3000)
                     self._disable(False)
                 else:
-                    balloon("FIFO next item: `{}`".format(self.items[1]), 3000)
-                    self.items.pop(0)
+                    balloon("FIFO next item: `{}`".format(self.items[0]), 3000)
                 return cb
             return None
 
