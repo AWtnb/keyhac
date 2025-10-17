@@ -523,8 +523,6 @@ def configure(keymap):
 
             subthread_run(_watch_clipboard, deferred)
 
-    keymap_global["U0-V"] = ClipHandler().paste
-
     class FIFOStack:
         def __init__(self) -> None:
             self.items = []
@@ -611,6 +609,14 @@ def configure(keymap):
             ClipHandler().send_copy_key()
 
     keymap_global["LC-C"] = smart_copy
+
+    def paste_plaintext() -> None:
+        s = None
+        if 0 < keymap.fifo_stack.count and keymap.fifo_stack.enabled:
+            s = keymap.fifo_stack.pop()
+        ClipHandler().paste(s)
+
+    keymap_global["U0-V"] = paste_plaintext
 
     def smart_paste() -> None:
         if 0 < keymap.fifo_stack.count and keymap.fifo_stack.enabled:
