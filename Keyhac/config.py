@@ -2288,6 +2288,19 @@ def configure(keymap):
             for menu, args in binding.items():
                 keymap.cutsom_clipboard_formatter[menu] = cls.invoke_replacer(*args)
 
+        @staticmethod
+        def invoke_line_jointer(sep: str) -> Callable:
+
+            def _jointer(s: str) -> str:
+                return sep.join(s.splitlines())
+
+            return _jointer
+
+        @classmethod
+        def set_line_jointer(cls, binding: dict) -> None:
+            for menu, sep in binding.items():
+                keymap.cutsom_clipboard_formatter[menu] = cls.invoke_line_jointer(sep)
+
     ClipboardFormatMenu.set_formatter(
         {
             "swap tabs": FormatTools.swap_tabs,
@@ -2351,6 +2364,14 @@ def configure(keymap):
                 r"^.+amazon\.co\.jp/.+dp/(.{10}).*",
                 r"https://www.amazon.jp/dp/\1",
             ),
+        }
+    )
+
+    ClipboardFormatMenu.set_line_jointer(
+        {
+            "Joint lines with Dot": "・",
+            "Joint lines with Tab": "\t",
+            "Joint lines with Slash": "／",
         }
     )
 
