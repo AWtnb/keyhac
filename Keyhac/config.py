@@ -1565,36 +1565,38 @@ def configure(keymap):
     ################################
 
     class SystemBrowser:
-        register_path = (
-            r"Software\Microsoft\Windows\Shell\Associations\UrlAssociations\https\UserChoice"
-        )
-        prog_id = ""
-        with OpenKey(HKEY_CURRENT_USER, register_path) as key:
-            prog_id = str(QueryValueEx(key, "ProgId")[0])
+        prog_id: str = ""
+        commandline: str = ""
 
-        @classmethod
-        def get_commandline(cls) -> str:
-            register_path = r"{}\shell\open\command".format(cls.prog_id)
-            with OpenKey(HKEY_CLASSES_ROOT, register_path) as key:
-                return str(QueryValueEx(key, "")[0])
+        def __init__(self):
+            self.set_prog_id()
+            self.set_commandline()
 
-        @classmethod
-        def get_exe_path(cls) -> str:
+        def set_prog_id(self) -> str:
+            rp = r"Software\Microsoft\Windows\Shell\Associations\UrlAssociations\https\UserChoice"
+            with OpenKey(HKEY_CURRENT_USER, rp) as key:
+                self.prog_id = str(QueryValueEx(key, "ProgId")[0])
+
+        def set_commandline(self) -> str:
+            rp = os.path.join(self.prog_id, "shell", "open", "command")
+            with OpenKey(HKEY_CLASSES_ROOT, rp) as key:
+                self.commandline = str(QueryValueEx(key, "")[0])
+
+        def get_exe_path(self) -> str:
             ext = ".exe"
-            c = cls.get_commandline()
+            c = self.commandline
             return c[: c.find(ext) + len(ext)].strip('"')
 
-        @classmethod
-        def get_exe_name(cls) -> str:
-            return Path(cls.get_exe_path()).name
+        def get_exe_name(self) -> str:
+            _, name = os.path.split(self.get_exe_path())
+            return name
 
-        @classmethod
-        def get_wnd_class(cls) -> str:
+        def get_wnd_class(self) -> str:
             return {
                 "chrome.exe": "Chrome_WidgetWin_1",
                 "vivaldi.exe": "Chrome_WidgetWin_1",
                 "firefox.exe": "MozillaWindowClass",
-            }.get(cls.get_exe_name(), "Chrome_WidgetWin_1")
+            }.get(self.get_exe_name(), "Chrome_WidgetWin_1")
 
     keymap.default_browser = SystemBrowser()
 
