@@ -202,8 +202,6 @@ def configure(keymap):
             "U0-U": ("S-BackSlash"),
             "U0-Z": ("Minus"),
             "U1-S": ("Slash"),
-            # emacs-like backchar
-            "LC-H": ("Back"),
             # Insert line
             "U0-I": ("End", "Enter"),
             "S-U0-I": ("Home", "Enter", "Up"),
