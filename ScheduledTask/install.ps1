@@ -1,5 +1,6 @@
-$exe = $args[0]
-if ($exe.length -lt 1) {
+param([parameter(Mandatory)]$exe)
+
+if (-not $exe) {
     Write-Host "Specify Keyhac.exe path."
 }
 else {
