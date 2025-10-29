@@ -1,6 +1,6 @@
 $exe = $args[0]
 if ($exe.length -lt 1) {
-    Write-Host "Specify exe path."
+    Write-Host "Specify Keyhac.exe path."
 }
 else {
     if (Test-Path -Path $exe) {

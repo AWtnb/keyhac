@@ -11,7 +11,7 @@ if ($proc) {
 }
 
 if (($args.Count -lt 1) -or ($args[0].Trim().Length -lt 1)) {
-    "PowerShell script to start Keyhac is not specified." | logWrite
+    "Keyhac path not specified." | logWrite
     [System.Environment]::exit(1)
 }
 
@@ -28,6 +28,6 @@ if (Test-Path $src) {
     }
 }
 else {
-    "PowerShell script to start Keyhac not found." | logWrite
+    "Keyhac path not found." | logWrite
     [System.Environment]::exit(1)
 }
