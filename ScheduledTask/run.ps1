@@ -6,6 +6,7 @@ function logWrite {
 
 $proc = Get-Process -ProcessName "Keyhac" -ErrorAction SilentlyContinue
 if ($proc) {
+    Write-Host "Keyhac already running."
     [System.Environment]::exit(0)
 }
 

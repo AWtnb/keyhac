@@ -6,13 +6,7 @@ else {
     if (Test-Path -Path $exe) {
 
         $config = Get-Content -Path $($PSScriptRoot | Join-Path -ChildPath "config.json") | ConvertFrom-Json
-        $taskPath = $config.taskPath
-        if (-not $taskPath.StartsWith("\")) {
-            $taskPath = "\" + $taskPath
-        }
-        if (-not $taskPath.EndsWith("\")) {
-            $taskPath = $taskPath + "\"
-        }
+        $taskPath = ("\{0}\" -f $config.taskPath) -replace "^\\+", "\" -replace "\\+$", "\"
 
         $dest = $env:APPDATA | Join-Path -ChildPath $config.appDirName
         if (-not (Test-Path $dest -PathType Container)) {
