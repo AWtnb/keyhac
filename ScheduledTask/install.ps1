@@ -21,7 +21,6 @@ else {
 
         $src = $PSScriptRoot | Join-Path -ChildPath "run.ps1" | Copy-Item -Destination $dest -PassThru
 
-
         $action = New-ScheduledTaskAction -Execute powershell.exe -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$src`" `"$exe`""
         $trigger = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
         $settings = New-ScheduledTaskSettingsSet -Hidden -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
