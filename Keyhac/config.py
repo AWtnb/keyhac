@@ -62,6 +62,9 @@ def shell_exec(path: str, *args) -> None:
         print(e)
 
 
+CallbackFunc = Callable[[], None]
+
+
 def configure(keymap) -> None:
 
     def balloon(message: Union[str, Exception], timeout_msec: int = 1500) -> None:
@@ -443,7 +446,7 @@ def configure(keymap) -> None:
 
     apply_ime_control()
 
-    def cooldown(func: Callable, wait_msec: int = 20) -> Callable[..., None]:
+    def cooldown(func: CallbackFunc, wait_msec: int = 20) -> CallbackFunc:
         def _wait(_) -> None:
             delay(wait_msec)
 
@@ -500,7 +503,7 @@ def configure(keymap) -> None:
             cls.set_string(s)
             cls.send_paste_key()
 
-        def after_copy(self, deferred: Callable) -> None:
+        def after_copy(self, deferred: Callable[[ckit.JobItem], None]) -> None:
             cb = self.get_clipboard_history_item(0)
             self.send_copy_key()
             delay(40)
@@ -639,9 +642,7 @@ def configure(keymap) -> None:
             )
 
         @classmethod
-        def invoke_paster(
-            cls, no_space: bool = False, no_break: bool = False
-        ) -> Callable[..., None]:
+        def invoke_paster(cls, no_space: bool = False, no_break: bool = False) -> CallbackFunc:
             def _clean(s) -> str:
                 s = s.strip()
                 if no_space:
@@ -693,7 +694,7 @@ def configure(keymap) -> None:
             return "\n".join(lines)
 
         @staticmethod
-        def invoke_paster(func: Callable) -> Callable[..., None]:
+        def invoke_paster(func: Callable[[str], str]) -> CallbackFunc:
             def _paster() -> None:
                 ClipHandler().paste(None, func)
 
@@ -840,7 +841,7 @@ def configure(keymap) -> None:
 
                     def _invoke(
                         a: bool = alt_pressed, s: float = scale, e: RectEdge = edge
-                    ) -> Callable[..., None]:
+                    ) -> CallbackFunc:
 
                         def __get_new_rect() -> list[int]:
                             infos = pyauto.Window.getMonitorInfo()
@@ -905,7 +906,7 @@ def configure(keymap) -> None:
     class WndShrinker:
 
         @staticmethod
-        def invoke_snapper(toward: RectEdge) -> Callable[..., None]:
+        def invoke_snapper(toward: RectEdge) -> CallbackFunc:
 
             def _snapper() -> None:
                 def __snap(_) -> None:
@@ -949,7 +950,7 @@ def configure(keymap) -> None:
             return x
 
         @classmethod
-        def invoke_avoider(cls, show_left: bool) -> Callable[..., None]:
+        def invoke_avoider(cls, show_left: bool) -> CallbackFunc:
 
             def _avoider() -> None:
                 def _snap(_) -> None:
@@ -1039,7 +1040,7 @@ def configure(keymap) -> None:
             self.finger = VirtualFinger(inter_stroke_pause)
             self.control = ImeControl(inter_stroke_pause)
 
-        def invoke(self, mode_setter: Callable, *sequence) -> Callable[..., None]:
+        def invoke(self, mode_setter: CallbackFunc, *sequence) -> CallbackFunc:
             taps = self.finger.compile(*sequence)
 
             def _send() -> None:
@@ -1048,15 +1049,15 @@ def configure(keymap) -> None:
 
             return _send
 
-        def under_kanamode(self, *sequence) -> Callable[..., None]:
+        def under_kanamode(self, *sequence) -> CallbackFunc:
             sender = self.invoke(self.control.to_skk_kana, *sequence)
             return sender
 
-        def under_latinmode(self, *sequence) -> Callable[..., None]:
+        def under_latinmode(self, *sequence) -> CallbackFunc:
             sender = self.invoke(self.control.to_skk_latin, *sequence)
             return sender
 
-        def without_mode(self, *sequence) -> Callable[..., None]:
+        def without_mode(self, *sequence) -> CallbackFunc:
             sender = self.invoke(self.control.disable, *sequence)
             return sender
 
@@ -1072,7 +1073,7 @@ def configure(keymap) -> None:
             self.skk = SKKSender(inter_stroke_pause=0)
             self.recover = recover_ime
 
-        def invoke(self, *sequence) -> Callable[..., None]:
+        def invoke(self, *sequence) -> CallbackFunc:
             seq = list(sequence)
             if self.recover:
                 seq.append(SKKKey.toggle_vk)
@@ -1509,9 +1510,7 @@ def configure(keymap) -> None:
             self._uri_mapping = uri_mapping
 
         @staticmethod
-        def invoke(
-            uri: str, strict: bool = False, strip_hiragana: bool = False
-        ) -> Callable[..., None]:
+        def invoke(uri: str, strict: bool = False, strip_hiragana: bool = False) -> CallbackFunc:
             def _searcher() -> None:
                 def _search(job_item: ckit.JobItem) -> None:
                     s = job_item.copied
@@ -1663,7 +1662,7 @@ def configure(keymap) -> None:
 
     class PseudoCuteExec:
         @staticmethod
-        def invoke(exe_name: str, class_name: str = "", exe_path: str = "") -> Callable[..., None]:
+        def invoke(exe_name: str, class_name: str = "", exe_path: str = "") -> CallbackFunc:
             def _executor() -> None:
 
                 def _activate(job_item: ckit.JobItem) -> None:
