@@ -9,17 +9,17 @@ import urllib.parse
 import unicodedata
 import webbrowser
 from enum import Enum
-from typing import Union, Callable, Dict, List, Tuple, NamedTuple, TypeAlias
+from typing import Union, Callable
 from pathlib import Path
 from winreg import HKEY_CURRENT_USER, HKEY_CLASSES_ROOT, OpenKey, QueryValueEx
 from concurrent.futures import ThreadPoolExecutor
 
-import ckit
-import pyauto
-import keyhac_ini
-from keyhac import *
-from keyhac_keymap import Keymap, KeyCondition, WindowKeymap
-from keyhac_listwindow import ListWindow
+import ckit  # type: ignore
+import pyauto  # type: ignore
+import keyhac_ini  # type: ignore
+from keyhac import *  # type: ignore
+from keyhac_keymap import KeyCondition, WindowKeymap  # type: ignore
+from keyhac_listwindow import ListWindow  # type: ignore
 
 
 def smart_check_path(path: Union[str, Path], timeout_sec: Union[int, float, None] = None) -> bool:
@@ -62,9 +62,9 @@ def shell_exec(path: str, *args) -> None:
         print(e)
 
 
-def configure(keymap):
+def configure(keymap) -> None:
 
-    def balloon(message: str, timeout_msec: int = 1500) -> None:
+    def balloon(message: Union[str, Exception], timeout_msec: int = 1500) -> None:
         title = datetime.datetime.today().strftime("%Y%m%d-%H%M%S-%f")
         print(message)
         try:
@@ -79,7 +79,7 @@ def configure(keymap):
     # console theme
     keymap.setFont("HackGen", 16)
 
-    def set_custom_theme():
+    def set_custom_theme() -> None:
         name = "black"
 
         custom_theme = {
@@ -239,11 +239,9 @@ def configure(keymap):
         if 0 < msec:
             time.sleep(msec / 1000)
 
-    PyautoInput: TypeAlias = Union[pyauto.Key, pyauto.KeyUp, pyauto.KeyDown, pyauto.Char]
-
     class Tap:
         mod: int = 0
-        sequence: List[PyautoInput] = []
+        sequence: list[Union[pyauto.Key, pyauto.KeyUp, pyauto.KeyDown, pyauto.Char]] = []
 
         def __init__(self, name: str):
             up = None
@@ -289,14 +287,14 @@ def configure(keymap):
             keymap.endInput()
 
         @staticmethod
-        def compile(*sequence: str) -> List[Tap]:
+        def compile(*sequence: str) -> list[Tap]:
             return [Tap(elem) for elem in sequence]
 
         def send(self, *sequence: str) -> None:
             taps = self.compile(*sequence)
             self.send_compiled(taps)
 
-        def send_compiled(self, taps: List[Tap]) -> None:
+        def send_compiled(self, taps: list[Tap]) -> None:
             for t in taps:
                 delay(self._inter_stroke_pause)
                 self.begin()
@@ -307,7 +305,7 @@ def configure(keymap):
 
     keymap.magical_key = VirtualFinger.compile("LWin-S-M", "U-Alt")
 
-    def mod_release_sequence() -> List[Tap]:
+    def mod_release_sequence() -> list[Tap]:
         seq = []
         for mod in ["Shift", "Alt", "Ctrl"]:
             for pos in ["", "L", "R"]:
@@ -349,7 +347,7 @@ def configure(keymap):
         prefix = "S-Period"
 
         @classmethod
-        def taps(cls, *keys: str) -> List[Tap]:
+        def taps(cls, *keys: str) -> list[Tap]:
             return VirtualFinger.compile(cls.kana, *keys)
 
     class ImeControl:
@@ -445,7 +443,7 @@ def configure(keymap):
 
     apply_ime_control()
 
-    def cooldown(func: Callable, wait_msec: int = 20) -> Callable:
+    def cooldown(func: Callable, wait_msec: int = 20) -> Callable[..., None]:
         def _wait(_) -> None:
             delay(wait_msec)
 
@@ -480,16 +478,16 @@ def configure(keymap):
                 pass
 
         @classmethod
-        def send_copy_key(cls):
+        def send_copy_key(cls) -> None:
             VirtualFinger().send_compiled(cls.copy_tap)
 
         @classmethod
-        def send_paste_key(cls):
+        def send_paste_key(cls) -> None:
             VirtualFinger().send_compiled(cls.paste_tap)
 
         @classmethod
         def paste(
-            cls, s: Union[str, None] = None, format_func: Union[Callable, None] = None
+            cls, s: Union[str, None] = None, format_func: Union[Callable[[str], str], None] = None
         ) -> None:
             if s is None:
                 s = cls.get_string()
@@ -502,9 +500,9 @@ def configure(keymap):
             cls.set_string(s)
             cls.send_paste_key()
 
-        def after_copy(cls, deferred: Callable) -> None:
-            cb = cls.get_clipboard_history_item(0)
-            cls.send_copy_key()
+        def after_copy(self, deferred: Callable) -> None:
+            cb = self.get_clipboard_history_item(0)
+            self.send_copy_key()
             delay(40)
 
             def _watch_clipboard(job_item: ckit.JobItem) -> None:
@@ -512,7 +510,7 @@ def configure(keymap):
                 job_item.copied = ""
                 trial = 600
                 for _ in range(trial):
-                    s = cls.get_clipboard_history_item(0)
+                    s = self.get_clipboard_history_item(0)
                     if not s.strip():
                         continue
                     if s != job_item.origin:
@@ -594,10 +592,10 @@ def configure(keymap):
 
     keymap_global["LC-LS-U0-F"] = lambda: keymap.fifo_stack.bulk_register(ClipHandler.get_string())
 
-    def smart_copy():
+    def smart_copy() -> None:
         if keymap.fifo_stack.enabled:
 
-            def _register(job_item):
+            def _register(job_item) -> None:
                 cb = job_item.copied
                 if cb:
                     keymap.fifo_stack.register(cb)
@@ -641,7 +639,9 @@ def configure(keymap):
             )
 
         @classmethod
-        def invoke_paster(cls, no_space: bool = False, no_break: bool = False) -> Callable:
+        def invoke_paster(
+            cls, no_space: bool = False, no_break: bool = False
+        ) -> Callable[..., None]:
             def _clean(s) -> str:
                 s = s.strip()
                 if no_space:
@@ -693,7 +693,7 @@ def configure(keymap):
             return "\n".join(lines)
 
         @staticmethod
-        def invoke_paster(func: Callable) -> Callable:
+        def invoke_paster(func: Callable) -> Callable[..., None]:
             def _paster() -> None:
                 ClipHandler().paste(None, func)
 
@@ -708,7 +708,7 @@ def configure(keymap):
     Quoter().apply(keymap_global, "U1-Q")
 
     # open url in browser
-    def open_selected_url():
+    def open_selected_url() -> None:
         def _open(job_item: ckit.JobItem) -> None:
             if job_item.copied:
                 u = job_item.copied
@@ -734,7 +734,7 @@ def configure(keymap):
     keymap_global["U1-F12"] = cooldown(reload_config, 60)
 
     def open_keyhac_repo() -> None:
-        config_path = os.path.join(os.environ.get("APPDATA"), "Keyhac")
+        config_path = os.path.join(os.environ.get("APPDATA", ""), "Keyhac")
         if not smart_check_path(config_path):
             balloon("config not found: {}".format(config_path))
             return
@@ -799,7 +799,7 @@ def configure(keymap):
             self.width = right - left
             self.height = bottom - top
 
-        def move_edge(self, toward: RectEdge, delta: int) -> List[int]:
+        def move_edge(self, toward: RectEdge, delta: int) -> list[int]:
             r = [
                 self.left,
                 self.top,
@@ -810,7 +810,7 @@ def configure(keymap):
             r[opposite] = r[toward.value] + delta
             return r
 
-        def resize(self, scale: float, toward: RectEdge) -> List[int]:
+        def resize(self, scale: float, toward: RectEdge) -> list[int]:
             if toward in [RectEdge.left, RectEdge.right]:
                 dim = self.width
             else:
@@ -840,9 +840,9 @@ def configure(keymap):
 
                     def _invoke(
                         a: bool = alt_pressed, s: float = scale, e: RectEdge = edge
-                    ) -> Callable:
+                    ) -> Callable[..., None]:
 
-                        def __get_new_rect() -> List[int]:
+                        def __get_new_rect() -> list[int]:
                             infos = pyauto.Window.getMonitorInfo()
                             infos.sort(key=lambda info: info[2] != 1)
                             target = infos[1] if 1 < len(infos) and a else infos[0]
@@ -905,7 +905,7 @@ def configure(keymap):
     class WndShrinker:
 
         @staticmethod
-        def invoke_snapper(toward: RectEdge) -> Callable:
+        def invoke_snapper(toward: RectEdge) -> Callable[..., None]:
 
             def _snapper() -> None:
                 def __snap(_) -> None:
@@ -949,7 +949,7 @@ def configure(keymap):
             return x
 
         @classmethod
-        def invoke_avoider(cls, show_left: bool) -> Callable:
+        def invoke_avoider(cls, show_left: bool) -> Callable[..., None]:
 
             def _avoider() -> None:
                 def _snap(_) -> None:
@@ -1039,7 +1039,7 @@ def configure(keymap):
             self.finger = VirtualFinger(inter_stroke_pause)
             self.control = ImeControl(inter_stroke_pause)
 
-        def invoke(self, mode_setter: Callable, *sequence) -> Callable:
+        def invoke(self, mode_setter: Callable, *sequence) -> Callable[..., None]:
             taps = self.finger.compile(*sequence)
 
             def _send() -> None:
@@ -1048,15 +1048,15 @@ def configure(keymap):
 
             return _send
 
-        def under_kanamode(self, *sequence) -> Callable:
+        def under_kanamode(self, *sequence) -> Callable[..., None]:
             sender = self.invoke(self.control.to_skk_kana, *sequence)
             return sender
 
-        def under_latinmode(self, *sequence) -> Callable:
+        def under_latinmode(self, *sequence) -> Callable[..., None]:
             sender = self.invoke(self.control.to_skk_latin, *sequence)
             return sender
 
-        def without_mode(self, *sequence) -> Callable:
+        def without_mode(self, *sequence) -> Callable[..., None]:
             sender = self.invoke(self.control.disable, *sequence)
             return sender
 
@@ -1072,7 +1072,7 @@ def configure(keymap):
             self.skk = SKKSender(inter_stroke_pause=0)
             self.recover = recover_ime
 
-        def invoke(self, *sequence) -> Callable:
+        def invoke(self, *sequence) -> Callable[..., None]:
             seq = list(sequence)
             if self.recover:
                 seq.append(SKKKey.toggle_vk)
@@ -1090,7 +1090,7 @@ def configure(keymap):
 
     keymap_global["U0-M"] = keymap.defineMultiStrokeKeymap()
 
-    def replace_last_nchar(km: WindowKeymap, newstr: str) -> Callable:
+    def replace_last_nchar(km: WindowKeymap, newstr: str) -> None:
         for n in "0123":
             seq = ["Back"] * int(n) + [newstr, SKKKey.kana]
             km[n] = DirectSender().invoke(*seq)
@@ -1416,7 +1416,7 @@ def configure(keymap):
                 self.register(i)
 
     class SearchNoise(UnicodeMapper):
-        def __init__(self):
+        def __init__(self) -> None:
             super().__init__(" ")
             self.register(0x30FB)  # KATAKANA MIDDLE DOT
             self.register_range(0x2018, 0x201F)  # quotation
@@ -1509,7 +1509,9 @@ def configure(keymap):
             self._uri_mapping = uri_mapping
 
         @staticmethod
-        def invoke(uri: str, strict: bool = False, strip_hiragana: bool = False) -> Callable:
+        def invoke(
+            uri: str, strict: bool = False, strip_hiragana: bool = False
+        ) -> Callable[..., None]:
             def _searcher() -> None:
                 def _search(job_item: ckit.JobItem) -> None:
                     s = job_item.copied
@@ -1566,16 +1568,16 @@ def configure(keymap):
         prog_id: str = ""
         commandline: str = ""
 
-        def __init__(self):
+        def __init__(self) -> None:
             self.set_prog_id()
             self.set_commandline()
 
-        def set_prog_id(self) -> str:
+        def set_prog_id(self) -> None:
             rp = r"Software\Microsoft\Windows\Shell\Associations\UrlAssociations\https\UserChoice"
             with OpenKey(HKEY_CURRENT_USER, rp) as key:
                 self.prog_id = str(QueryValueEx(key, "ProgId")[0])
 
-        def set_commandline(self) -> str:
+        def set_commandline(self) -> None:
             rp = os.path.join(self.prog_id, "shell", "open", "command")
             with OpenKey(HKEY_CLASSES_ROOT, rp) as key:
                 self.commandline = str(QueryValueEx(key, "")[0])
@@ -1661,7 +1663,7 @@ def configure(keymap):
 
     class PseudoCuteExec:
         @staticmethod
-        def invoke(exe_name: str, class_name: str = "", exe_path: str = "") -> Callable:
+        def invoke(exe_name: str, class_name: str = "", exe_path: str = "") -> Callable[..., None]:
             def _executor() -> None:
 
                 def _activate(job_item: ckit.JobItem) -> None:
@@ -1825,12 +1827,14 @@ def configure(keymap):
                     if t := popup.getText():
                         n += "[{}]".format(t)
                     popup_table[n] = popup
-                    proc.stdin.write(n + "\n")
+                    if proc.stdin:
+                        proc.stdin.write(n + "\n")
                 return True
 
             try:
                 pyauto.Window.enum(_walk, None)
-                proc.stdin.close()
+                if proc.stdin:
+                    proc.stdin.close()
             except Exception as e:
                 print(e)
                 return
@@ -1920,7 +1924,7 @@ def configure(keymap):
     # vscode
     keymap_vscode = keymap.defineWindowKeymap(exe_name="Code.exe")
 
-    def remap_vscode(*keys: str) -> Callable:
+    def remap_vscode(*keys: str) -> None:
         sender = DirectSender(False)
         for key in keys:
             keymap_vscode[key] = sender.invoke(key)
@@ -1930,7 +1934,7 @@ def configure(keymap):
     # mery
     keymap_mery = keymap.defineWindowKeymap(exe_name="Mery.exe")
 
-    def remap_mery(binding: dict) -> Callable:
+    def remap_mery(binding: dict) -> None:
         for key, value in binding.items():
             keymap_mery[key] = value
 
@@ -1948,7 +1952,7 @@ def configure(keymap):
     )
 
     # sumatra PDF
-    def sumatra_checker(viewmode: bool = False) -> Callable:
+    def sumatra_checker(viewmode: bool = False) -> Callable[[pyauto.Window], bool]:
         def _checker(wnd: pyauto.Window) -> bool:
             if wnd.getProcessName() == "SumatraPDF.exe":
                 if viewmode:
@@ -2044,7 +2048,7 @@ def configure(keymap):
         def to_full_brackets(cls, s: str) -> str:
             return s.translate(str.maketrans(cls.half_brackets, cls.full_brackets))
 
-    def format_zoom_invitation(s: str) -> None:
+    def format_zoom_invitation(s: str) -> str:
 
         def _is_ignorable(line: str) -> bool:
             phrases = [
@@ -2248,7 +2252,7 @@ def configure(keymap):
         def mdtable_from_tsv(s: str) -> str:
             delim = "\t"
 
-            def _split(s: str) -> str:
+            def _split(s: str) -> list[str]:
                 return s.split(delim)
 
             def _join(ss: list) -> str:
@@ -2275,7 +2279,7 @@ def configure(keymap):
                 keymap.cutsom_clipboard_formatter[menu] = func
 
         @staticmethod
-        def invoke_replacer(search: str, replace_to: str) -> Callable:
+        def invoke_replacer(search: str, replace_to: str) -> Callable[[str], str]:
             reg = re.compile(search)
 
             def _replacer(s: str) -> str:
@@ -2289,7 +2293,7 @@ def configure(keymap):
                 keymap.cutsom_clipboard_formatter[menu] = cls.invoke_replacer(*args)
 
         @staticmethod
-        def invoke_line_jointer(sep: str) -> Callable:
+        def invoke_line_jointer(sep: str) -> Callable[[str], str]:
 
             def _jointer(s: str) -> str:
                 return sep.join(s.splitlines())
@@ -2397,9 +2401,10 @@ def configure(keymap):
                 encoding="utf-8",
             )
             try:
-                for k in table.keys():
-                    proc.stdin.write(k + "\n")
-                proc.stdin.close()
+                if proc.stdin:
+                    for k in table.keys():
+                        proc.stdin.write(k + "\n")
+                    proc.stdin.close()
             except Exception as e:
                 balloon(e)
                 return
@@ -2434,7 +2439,7 @@ def configure_ListWindow(window: ListWindow) -> None:
         for key in ["L", "Space"]:
             window.keymap[mod + key] = window.command_Enter
 
-    def to_top_of_list():
+    def to_top_of_list() -> None:
         if window.isearch:
             return
         window.select = 0
@@ -2443,7 +2448,7 @@ def configure_ListWindow(window: ListWindow) -> None:
 
     window.keymap["A"] = to_top_of_list
 
-    def to_end_of_list():
+    def to_end_of_list() -> None:
         if window.isearch:
             return
         window.select = len(window.items) - 1
