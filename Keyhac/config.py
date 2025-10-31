@@ -354,17 +354,18 @@ def configure(keymap) -> None:
             return VirtualFinger.compile(cls.kana, *keys)
 
     class ImeControl:
+        key_to_kana = SKKKey.taps()
+        key_to_turnoff = SKKKey.taps(SKKKey.toggle_vk)
+        key_to_kata = SKKKey.taps(SKKKey.kata)
+        key_to_latin = SKKKey.taps(SKKKey.latin)
+        key_to_abbrev = SKKKey.taps(SKKKey.abbrev)
+        key_to_half_kata = SKKKey.taps(SKKKey.halfkata)
+        key_to_full_latin = SKKKey.taps(SKKKey.jlatin)
+        key_to_conv = SKKKey.taps(SKKKey.convpoint)
+        key_to_reconv = SKKKey.taps(SKKKey.reconv, SKKKey.cancel)
+
         def __init__(self, inter_stroke_pause: int = 10) -> None:
             self._finger = VirtualFinger(inter_stroke_pause)
-            self.key_to_kana = SKKKey.taps()
-            self.key_to_turnoff = SKKKey.taps(SKKKey.toggle_vk)
-            self.key_to_kata = SKKKey.taps(SKKKey.kata)
-            self.key_to_latin = SKKKey.taps(SKKKey.latin)
-            self.key_to_abbrev = SKKKey.taps(SKKKey.abbrev)
-            self.key_to_half_kata = SKKKey.taps(SKKKey.halfkata)
-            self.key_to_full_latin = SKKKey.taps(SKKKey.jlatin)
-            self.key_to_conv = SKKKey.taps(SKKKey.convpoint)
-            self.key_to_reconv = SKKKey.taps(SKKKey.reconv, SKKKey.cancel)
 
         @staticmethod
         def get_status() -> int:
@@ -1040,31 +1041,43 @@ def configure(keymap) -> None:
             self.finger = VirtualFinger(inter_stroke_pause)
             self.control = ImeControl(inter_stroke_pause)
 
-        def invoke(self, mode_setter: CallbackFunc, *sequence) -> CallbackFunc:
+        def invoke(self, mode_setter: CallbackFunc, *sequence: str) -> CallbackFunc:
             taps = self.finger.compile(*sequence)
 
-            def _send() -> None:
+            def _sender() -> None:
                 mode_setter()
                 self.finger.send_compiled(taps)
 
-            return _send
+            return _sender
 
-        def under_kanamode(self, *sequence) -> CallbackFunc:
+        def under_kanamode(self, *sequence: str) -> CallbackFunc:
             sender = self.invoke(self.control.to_skk_kana, *sequence)
             return sender
 
-        def under_latinmode(self, *sequence) -> CallbackFunc:
+        def under_latinmode(self, *sequence: str) -> CallbackFunc:
             sender = self.invoke(self.control.to_skk_latin, *sequence)
             return sender
 
-        def without_mode(self, *sequence) -> CallbackFunc:
+        def without_mode(self, *sequence: str) -> CallbackFunc:
             sender = self.invoke(self.control.disable, *sequence)
             return sender
 
+        def emit_then_toggle(self, enable_ime_later: bool, *sequence: str) -> CallbackFunc:
+            taps = self.finger.compile(*sequence)
+            toggle_tap = self.finger.compile(SKKKey.toggle_vk)
+
+            def _sender() -> None:
+                if ImeControl.get_status() != int(enable_ime_later):
+                    self.finger.send_compiled(taps + toggle_tap)
+                else:
+                    self.finger.send_compiled(taps)
+
+            return _sender
+
     # select-to-left with ime control
-    keymap_global["U1-B"] = SKKSender().under_kanamode("S-Left")
-    keymap_global["LS-U1-B"] = SKKSender().under_kanamode("S-Right")
-    keymap_global["U1-Space"] = SKKSender().under_kanamode("C-S-Left")
+    keymap_global["U1-B"] = SKKSender().emit_then_toggle(True, "S-Left")
+    keymap_global["LS-U1-B"] = SKKSender().emit_then_toggle(True, "S-Right")
+    keymap_global["U1-Space"] = SKKSender().emit_then_toggle(True, "C-S-Left")
     keymap_global["U1-N"] = SKKSender().under_kanamode("C-S-Left", SKKKey.convpoint, "S-4", "Tab")
     keymap_global["U1-4"] = SKKSender().under_kanamode(SKKKey.convpoint, "S-4")
 
@@ -1073,7 +1086,7 @@ def configure(keymap) -> None:
             self.skk = SKKSender(inter_stroke_pause=0)
             self.recover = recover_ime
 
-        def invoke(self, *sequence) -> CallbackFunc:
+        def invoke(self, *sequence: str) -> CallbackFunc:
             seq = list(sequence)
             if self.recover:
                 seq.append(SKKKey.toggle_vk)
@@ -1904,6 +1917,8 @@ def configure(keymap) -> None:
     # browser
     keymap_browser = keymap.defineWindowKeymap(check_func=CheckWnd.is_browser)
     keymap_browser["LC-LS-W"] = "A-Left"
+    keymap_browser["LC-F"] = SKKSender().emit_then_toggle(False, "C-F")
+    keymap_browser["LC-L"] = SKKSender().emit_then_toggle(False, "C-L")
 
     # intra
     keymap_intra = keymap.defineWindowKeymap(exe_name="APARClientAWS.exe")
@@ -1915,18 +1930,18 @@ def configure(keymap) -> None:
 
     # slack
     keymap_slack = keymap.defineWindowKeymap(exe_name="slack.exe", class_name="Chrome_WidgetWin_1")
-    keymap_slack["F3"] = DirectSender(False).invoke("C-K")
-    keymap_slack["C-K"] = keymap_slack["F3"]
-    keymap_slack["C-E"] = keymap_slack["F3"]
+    keymap_slack["C-K"] = SKKSender().emit_then_toggle(False, "C-K")
+    keymap_slack["F3"] = keymap_slack["C-K"]
+    keymap_slack["C-E"] = keymap_slack["C-K"]
     keymap_slack["F1"] = DirectSender(False).invoke("S-SemiColon", "Colon")
 
     # vscode
     keymap_vscode = keymap.defineWindowKeymap(exe_name="Code.exe")
 
     def remap_vscode(*keys: str) -> None:
-        sender = DirectSender(False)
+        sender = SKKSender()
         for key in keys:
-            keymap_vscode[key] = sender.invoke(key)
+            keymap_vscode[key] = sender.emit_then_toggle(False, key)
 
     remap_vscode("C-E", "C-F", "C-S-F", "C-S-E", "C-S-G", "RC-RS-X", "C-0", "C-S-P", "C-A-B")
 
@@ -1977,24 +1992,15 @@ def configure(keymap) -> None:
     keymap_sumatra_viewmode["H"] = "C-S-Tab"
     keymap_sumatra_viewmode["L"] = "C-Tab"
 
-    def office_to_pdf(km: WindowKeymap, key: str = "F11") -> None:
-        km[key] = "A-F", "E", "P", "A"
-
     # word
     keymap_word = keymap.defineWindowKeymap(exe_name="WINWORD.EXE")
-    keymap_word["S-C-R"] = "C-H"
-    keymap_word["RC-R"] = keymap_word["S-C-R"]
-    keymap_word["RC-H"] = keymap_word["S-C-R"]
-    office_to_pdf(keymap_word)
 
     # powerpoint
     keymap_ppt = keymap.defineWindowKeymap(exe_name="powerpnt.exe")
-    office_to_pdf(keymap_ppt)
     keymap_ppt["O-(236)"] = ImeControl(40).to_skk_abbrev
 
     # excel
     keymap_excel = keymap.defineWindowKeymap(exe_name="excel.exe")
-    office_to_pdf(keymap_excel)
 
     def select_all() -> None:
         finger = VirtualFinger()
