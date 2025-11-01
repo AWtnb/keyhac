@@ -353,6 +353,10 @@ def configure(keymap) -> None:
         def taps(cls, *keys: str) -> list[Tap]:
             return VirtualFinger.compile(cls.kana, *keys)
 
+    class ImeStatus(Enum):
+        on = 1
+        off = 0
+
     class ImeControl:
         key_to_kana = SKKKey.taps()
         key_to_turnoff = SKKKey.taps(SKKKey.toggle_vk)
@@ -368,12 +372,12 @@ def configure(keymap) -> None:
             self._finger = VirtualFinger(inter_stroke_pause)
 
         @staticmethod
-        def get_status() -> int:
+        def get_status() -> ImeStatus:
             return keymap.getWindow().getImeStatus()
 
         @staticmethod
-        def set_status(mode: int) -> None:
-            keymap.getWindow().setImeStatus(mode)
+        def set_status(status: ImeStatus) -> None:
+            keymap.getWindow().setImeStatus(status)
             delay(20)
 
         @classmethod
@@ -383,13 +387,13 @@ def configure(keymap) -> None:
         @classmethod
         def enable(cls) -> None:
             if not cls.is_enabled():
-                cls.set_status(1)
+                cls.set_status(ImeStatus.on)
 
         # Unlike the `turnoff_skk` method, this method forcibly turns off the IME itself. Due to SKK specifications, please be aware that upon the next execution of the `enable` method, the IME will start up in the mode it was in just before being turned off, rather than in Kana input mode.
         @classmethod
         def disable(cls) -> None:
             if cls.is_enabled():
-                cls.set_status(0)
+                cls.set_status(ImeStatus.off)
 
         def turnoff_skk(self) -> None:
             if self.is_enabled():
@@ -1062,12 +1066,14 @@ def configure(keymap) -> None:
             sender = self.invoke(self.control.disable, *sequence)
             return sender
 
-        def emit_then_toggle(self, enable_ime_later: bool, *sequence: str) -> CallbackFunc:
+        def invoke_emitThenSwitch(
+            self, later_ime_status: ImeStatus, *sequence: str
+        ) -> CallbackFunc:
             taps = self.finger.compile(*sequence)
             toggle_tap = self.finger.compile(SKKKey.toggle_vk)
 
             def _sender() -> None:
-                if ImeControl.get_status() != int(enable_ime_later):
+                if ImeControl.get_status() != later_ime_status:
                     self.finger.send_compiled(taps + toggle_tap)
                 else:
                     self.finger.send_compiled(taps)
@@ -1075,9 +1081,9 @@ def configure(keymap) -> None:
             return _sender
 
     # select-to-left with ime control
-    keymap_global["U1-B"] = SKKSender().emit_then_toggle(True, "S-Left")
-    keymap_global["LS-U1-B"] = SKKSender().emit_then_toggle(True, "S-Right")
-    keymap_global["U1-Space"] = SKKSender().emit_then_toggle(True, "C-S-Left")
+    keymap_global["U1-B"] = SKKSender().invoke_emitThenSwitch(ImeStatus.on, "S-Left")
+    keymap_global["LS-U1-B"] = SKKSender().invoke_emitThenSwitch(ImeStatus.on, "S-Right")
+    keymap_global["U1-Space"] = SKKSender().invoke_emitThenSwitch(ImeStatus.on, "C-S-Left")
     keymap_global["U1-N"] = SKKSender().under_kanamode("C-S-Left", SKKKey.convpoint, "S-4", "Tab")
     keymap_global["U1-4"] = SKKSender().under_kanamode(SKKKey.convpoint, "S-4")
 
@@ -1917,8 +1923,8 @@ def configure(keymap) -> None:
     # browser
     keymap_browser = keymap.defineWindowKeymap(check_func=CheckWnd.is_browser)
     keymap_browser["LC-LS-W"] = "A-Left"
-    keymap_browser["LC-F"] = SKKSender().emit_then_toggle(False, "C-F")
-    keymap_browser["LC-L"] = SKKSender().emit_then_toggle(False, "C-L")
+    keymap_browser["LC-F"] = SKKSender().invoke_emitThenSwitch(ImeStatus.off, "C-F")
+    keymap_browser["LC-L"] = SKKSender().invoke_emitThenSwitch(ImeStatus.off, "C-L")
 
     # intra
     keymap_intra = keymap.defineWindowKeymap(exe_name="APARClientAWS.exe")
@@ -1930,7 +1936,7 @@ def configure(keymap) -> None:
 
     # slack
     keymap_slack = keymap.defineWindowKeymap(exe_name="slack.exe", class_name="Chrome_WidgetWin_1")
-    keymap_slack["C-K"] = SKKSender().emit_then_toggle(False, "C-K")
+    keymap_slack["C-K"] = SKKSender().invoke_emitThenSwitch(ImeStatus.off, "C-K")
     keymap_slack["F3"] = keymap_slack["C-K"]
     keymap_slack["C-E"] = keymap_slack["C-K"]
     keymap_slack["F1"] = DirectSender(False).invoke("S-SemiColon", "Colon")
@@ -1941,7 +1947,7 @@ def configure(keymap) -> None:
     def remap_vscode(*keys: str) -> None:
         sender = SKKSender()
         for key in keys:
-            keymap_vscode[key] = sender.emit_then_toggle(False, key)
+            keymap_vscode[key] = sender.invoke_emitThenSwitch(ImeStatus.off, key)
 
     remap_vscode("C-E", "C-F", "C-S-F", "C-S-E", "C-S-G", "RC-RS-X", "C-0", "C-S-P", "C-A-B")
 
