@@ -373,7 +373,7 @@ def configure(keymap) -> None:
 
         @staticmethod
         def get_status() -> ImeStatus:
-            return keymap.getWindow().getImeStatus()
+            return ImeStatus(keymap.getWindow().getImeStatus())
 
         @staticmethod
         def set_status(status: ImeStatus) -> None:
