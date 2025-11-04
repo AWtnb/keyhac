@@ -382,7 +382,7 @@ def configure(keymap) -> None:
 
         @classmethod
         def is_enabled(cls) -> bool:
-            return cls.get_status() == 1
+            return cls.get_status() == ImeStatus.on
 
         @classmethod
         def enable(cls) -> None:
