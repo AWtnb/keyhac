@@ -1813,6 +1813,7 @@ def configure(keymap) -> None:
 
         def _fzf_wnd(job_item: ckit.JobItem) -> None:
             job_item.result = None
+            delay()
             popup_table = {}
 
             proc = subprocess.Popen(
@@ -2400,6 +2401,7 @@ def configure(keymap) -> None:
 
         def _fzf(job_item: ckit.JobItem) -> None:
             job_item.func = None
+            delay()
 
             proc = subprocess.Popen(
                 ["fzf.exe", "--no-mouse", "--margin=1"],
