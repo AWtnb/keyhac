@@ -451,15 +451,6 @@ def configure(keymap) -> None:
 
     apply_ime_control()
 
-    def cooldown(func: CallbackFunc, wait_msec: int = 20) -> CallbackFunc:
-        def _wait(_) -> None:
-            delay(wait_msec)
-
-        def _wrapper() -> None:
-            subthread_run(_wait, lambda _: func())
-
-        return _wrapper
-
     class ClipHandler:
         copy_tap = [Tap("C-C")]
         paste_tap = [Tap("C-V")]
@@ -731,13 +722,19 @@ def configure(keymap) -> None:
     ################################
 
     def reload_config() -> None:
-        ckit.JobQueue.cancelAll()
-        keymap.configure()
-        keymap.updateKeymap()
-        ts = datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S")
-        balloon("{} reloaded config.py".format(ts))
+        def _wait(_) -> None:
+            delay(60)
 
-    keymap_global["U1-F12"] = cooldown(reload_config, 60)
+        def _reload(_) -> None:
+            ckit.JobQueue.cancelAll()
+            keymap.configure()
+            keymap.updateKeymap()
+            ts = datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S")
+            balloon("{} reloaded config.py".format(ts))
+
+        subthread_run(_wait, _reload)
+
+    keymap_global["U1-F12"] = reload_config
 
     def open_keyhac_repo() -> None:
         config_path = os.path.join(os.environ.get("APPDATA", ""), "Keyhac")
@@ -1711,7 +1708,7 @@ def configure(keymap) -> None:
         def apply(cls, wnd_keymap: WindowKeymap, remap_table: dict = {}) -> None:
             for key, params in remap_table.items():
                 func = cls.invoke(*params)
-                wnd_keymap[key] = cooldown(func, 40)
+                wnd_keymap[key] = func
 
     PseudoCuteExec().apply(
         keymap_global,
@@ -1876,7 +1873,7 @@ def configure(keymap) -> None:
 
         subthread_run(_fzf_wnd, _finished, True)
 
-    keymap_global["U1-E"] = cooldown(fuzzy_window_switcher)
+    keymap_global["U1-E"] = fuzzy_window_switcher
 
     def invoke_draft() -> None:
         def _invoke(_) -> None:
@@ -2437,7 +2434,7 @@ def configure(keymap) -> None:
 
         subthread_run(_fzf, _finished, True)
 
-    keymap_global["U1-Z"] = cooldown(fzfmenu)
+    keymap_global["U1-Z"] = fzfmenu
 
 
 def configure_ListWindow(window: ListWindow) -> None:
