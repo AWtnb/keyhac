@@ -1947,7 +1947,7 @@ def configure(keymap) -> None:
         for key in keys:
             keymap_vscode[key] = sender.invoke_emitThenSwitch(ImeStatus.off, key)
 
-    remap_vscode("C-E", "C-F", "C-S-F", "C-S-E", "C-S-G", "RC-RS-X", "C-0", "C-S-P", "C-A-B")
+    remap_vscode("C-E", "C-F", "C-S-F", "C-S-E", "C-S-G", "RC-RS-X", "C-0", "C-S-P", "C-A-B", "C-A-AtMark", "C-1", "C-2")
 
     # mery
     keymap_mery = keymap.defineWindowKeymap(exe_name="Mery.exe")
