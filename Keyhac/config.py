@@ -1694,6 +1694,7 @@ def configure(keymap) -> None:
                                 shell_exec(exe_path)
                     else:
                         job_item.result = WindowActivator(wnd).activate()
+                        delay(40)
 
                 def _finished(job_item: ckit.JobItem) -> None:
                     if job_item.result is not None:
