@@ -358,15 +358,16 @@ def configure(keymap) -> None:
         off = 0
 
     class ImeControl:
-        key_to_kana = SKKKey.taps()
-        key_to_turnoff = SKKKey.taps(SKKKey.toggle_vk)
-        key_to_kata = SKKKey.taps(SKKKey.kata)
-        key_to_latin = SKKKey.taps(SKKKey.latin)
-        key_to_abbrev = SKKKey.taps(SKKKey.abbrev)
-        key_to_half_kata = SKKKey.taps(SKKKey.halfkata)
-        key_to_full_latin = SKKKey.taps(SKKKey.jlatin)
-        key_to_conv = SKKKey.taps(SKKKey.convpoint)
-        key_to_reconv = SKKKey.taps(SKKKey.reconv, SKKKey.cancel)
+        taps_to_toggle = [Tap(SKKKey.toggle_vk)]
+        taps_to_kana = SKKKey.taps()
+        taps_to_turnoff = SKKKey.taps(SKKKey.toggle_vk)
+        taps_to_kata = SKKKey.taps(SKKKey.kata)
+        taps_to_latin = SKKKey.taps(SKKKey.latin)
+        taps_to_abbrev = SKKKey.taps(SKKKey.abbrev)
+        taps_to_half_kata = SKKKey.taps(SKKKey.halfkata)
+        taps_to_full_latin = SKKKey.taps(SKKKey.jlatin)
+        taps_to_conv = SKKKey.taps(SKKKey.convpoint)
+        taps_to_reconv = SKKKey.taps(SKKKey.reconv, SKKKey.cancel)
 
         def __init__(self, inter_stroke_pause: int = 10) -> None:
             self._finger = VirtualFinger(inter_stroke_pause)
@@ -389,7 +390,8 @@ def configure(keymap) -> None:
             if not cls.is_enabled():
                 cls.set_status(ImeStatus.on)
 
-        # Unlike the `turnoff_skk` method, this method forcibly turns off the IME itself. Due to SKK specifications, please be aware that upon the next execution of the `enable` method, the IME will start up in the mode it was in just before being turned off, rather than in Kana input mode.
+        # Unlike the `turnoff_skk` method, this method forcibly turns off the IME itself.
+        # Once SKK is disabled with this method, the next execution of the `enable` method starts SKK with the mode it was in just before being turned off.
         @classmethod
         def disable(cls) -> None:
             if cls.is_enabled():
@@ -397,39 +399,39 @@ def configure(keymap) -> None:
 
         def turnoff_skk(self) -> None:
             if self.is_enabled():
-                self._finger.send_compiled(self.key_to_turnoff)
+                self._finger.send_compiled(self.taps_to_toggle)
 
         def to_skk_kana(self) -> None:
             self.enable()
-            self._finger.send_compiled(self.key_to_kana)
+            self._finger.send_compiled(self.taps_to_kana)
 
         def to_skk_latin(self) -> None:
             self.enable()
-            self._finger.send_compiled(self.key_to_latin)
+            self._finger.send_compiled(self.taps_to_latin)
 
         def to_skk_abbrev(self) -> None:
             self.enable()
-            self._finger.send_compiled(self.key_to_abbrev)
+            self._finger.send_compiled(self.taps_to_abbrev)
 
         def to_skk_kata(self) -> None:
             self.enable()
-            self._finger.send_compiled(self.key_to_kata)
+            self._finger.send_compiled(self.taps_to_kata)
 
         def to_skk_half_kata(self) -> None:
             self.enable()
-            self._finger.send_compiled(self.key_to_half_kata)
+            self._finger.send_compiled(self.taps_to_half_kata)
 
         def to_skk_full_latin(self) -> None:
             self.enable()
-            self._finger.send_compiled(self.key_to_full_latin)
+            self._finger.send_compiled(self.taps_to_full_latin)
 
         def start_skk_conv(self) -> None:
             self.enable()
-            self._finger.send_compiled(self.key_to_conv)
+            self._finger.send_compiled(self.taps_to_conv)
 
         def reconvert_with_skk(self) -> None:
             self.enable()
-            self._finger.send_compiled(self.key_to_reconv)
+            self._finger.send_compiled(self.taps_to_reconv)
 
     def apply_ime_control() -> None:
         control = ImeControl()
@@ -1063,15 +1065,12 @@ def configure(keymap) -> None:
             sender = self.invoke(self.control.disable, *sequence)
             return sender
 
-        def invoke_emitThen(
-            self, later_ime_status: ImeStatus, *sequence: str
-        ) -> CallbackFunc:
+        def invoke_emitThen(self, later_ime_status: ImeStatus, *sequence: str) -> CallbackFunc:
             taps = self.finger.compile(*sequence)
-            toggle_tap = self.finger.compile(SKKKey.toggle_vk)
 
             def _sender() -> None:
                 if ImeControl.get_status() != later_ime_status:
-                    self.finger.send_compiled(taps + toggle_tap)
+                    self.finger.send_compiled(taps + ImeControl.taps_to_toggle)
                 else:
                     self.finger.send_compiled(taps)
 
@@ -1948,7 +1947,20 @@ def configure(keymap) -> None:
         for key in keys:
             keymap_vscode[key] = sender.invoke_emitThen(ImeStatus.off, key)
 
-    remap_vscode("C-E", "C-F", "C-S-F", "C-S-E", "C-S-G", "RC-RS-X", "C-0", "C-S-P", "C-A-B", "C-A-AtMark", "C-1", "C-2")
+    remap_vscode(
+        "C-E",
+        "C-F",
+        "C-S-F",
+        "C-S-E",
+        "C-S-G",
+        "RC-RS-X",
+        "C-0",
+        "C-S-P",
+        "C-A-B",
+        "C-A-AtMark",
+        "C-1",
+        "C-2",
+    )
 
     # mery
     keymap_mery = keymap.defineWindowKeymap(exe_name="Mery.exe")
@@ -1971,31 +1983,31 @@ def configure(keymap) -> None:
     )
 
     # sumatra PDF
-    def sumatra_checker(viewmode: bool = False) -> Callable[[pyauto.Window], bool]:
+    def sumatra_checker(inputbox_focused: bool = True) -> Callable[[pyauto.Window], bool]:
         def _checker(wnd: pyauto.Window) -> bool:
             if wnd.getProcessName() == "SumatraPDF.exe":
-                if viewmode:
+                if inputbox_focused:
                     return wnd.getClassName() != "Edit"
                 return True
             return False
 
         return _checker
 
+    keymap_sumatra_inputbox = keymap.defineWindowKeymap(check_func=sumatra_checker(True))
+
+    keymap_sumatra_inputbox["O-LCtrl"] = "Esc", "Esc", "C-Home", "C-F"
+
     keymap_sumatra = keymap.defineWindowKeymap(check_func=sumatra_checker(False))
-
-    keymap_sumatra["O-LCtrl"] = "Esc", "Esc", "C-Home", "C-F"
-
-    keymap_sumatra_viewmode = keymap.defineWindowKeymap(check_func=sumatra_checker(True))
 
     def sumatra_view_key() -> None:
         sender = DirectSender(False)
         for key in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
-            keymap_sumatra_viewmode[key] = sender.invoke(key)
+            keymap_sumatra[key] = sender.invoke(key)
 
     sumatra_view_key()
 
-    keymap_sumatra_viewmode["H"] = "C-S-Tab"
-    keymap_sumatra_viewmode["L"] = "C-Tab"
+    keymap_sumatra["H"] = "C-S-Tab"
+    keymap_sumatra["L"] = "C-Tab"
 
     # word
     keymap_word = keymap.defineWindowKeymap(exe_name="WINWORD.EXE")
