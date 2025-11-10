@@ -48,20 +48,6 @@ def open_vscode(*args: str) -> bool:
         return False
 
 
-def shell_exec(path: str, *args) -> None:
-    if not isinstance(path, str):
-        path = str(path)
-    if path.startswith("http"):
-        webbrowser.open(path)
-        return
-    path = os.path.expandvars(path)
-    try:
-        cmd = ["start", "", path] + list(args)
-        subprocess.run(cmd, shell=True)
-    except Exception as e:
-        print(e)
-
-
 CallbackFunc = Callable[[], None]
 
 
@@ -74,6 +60,22 @@ def configure(keymap) -> None:
             keymap.popBalloon(title, message, timeout_msec)
         except:
             pass
+
+    def shell_exec(path: str, *args) -> None:
+        if not isinstance(path, str):
+            path = str(path)
+        if path.startswith("http"):
+            webbrowser.open(path)
+            return
+        path = os.path.expandvars(path)
+        if not smart_check_path(path):
+            balloon(f"invalid path: {path}")
+            return
+        try:
+            cmd = ["start", "", path] + list(args)
+            subprocess.run(cmd, shell=True)
+        except Exception as e:
+            print(e)
 
     ################################
     # general setting
