@@ -358,7 +358,6 @@ def configure(keymap) -> None:
         off = 0
 
     class ImeControl:
-        taps_to_toggle = [Tap(SKKKey.toggle_vk)]
         taps_to_kana = SKKKey.taps()
         taps_to_turnoff = SKKKey.taps(SKKKey.toggle_vk)
         taps_to_kata = SKKKey.taps(SKKKey.kata)
@@ -399,7 +398,7 @@ def configure(keymap) -> None:
 
         def turnoff_skk(self) -> None:
             if self.is_enabled():
-                self._finger.send_compiled(self.taps_to_toggle)
+                self._finger.send_compiled(self.taps_to_turnoff)
 
         def to_skk_kana(self) -> None:
             self.enable()
@@ -1067,10 +1066,11 @@ def configure(keymap) -> None:
 
         def invoke_emitThen(self, later_ime_status: ImeStatus, *sequence: str) -> CallbackFunc:
             taps = self.finger.compile(*sequence)
+            toggle_tap = Tap(SKKKey.toggle_vk)
 
             def _sender() -> None:
                 if ImeControl.get_status() != later_ime_status:
-                    self.finger.send_compiled(taps + ImeControl.taps_to_toggle)
+                    self.finger.send_compiled(taps + [toggle_tap])
                 else:
                     self.finger.send_compiled(taps)
 
