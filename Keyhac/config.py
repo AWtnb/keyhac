@@ -323,15 +323,13 @@ def configure(keymap) -> None:
         focus_changed_in_subthread: bool = False,
     ) -> None:
         finger = VirtualFinger(0)
-        finger.send_compiled(keymap.mod_release_sequence)
         if focus_changed_in_subthread:
             finger.send_compiled(keymap.magical_key)
 
         def _finished(job_item: ckit.JobItem) -> None:
+            keymap.setInput_Modifier(0)
             if finished is not None:
                 finished(job_item)
-            finger.send_compiled(keymap.mod_release_sequence)
-            keymap.setInput_Modifier(0)
 
         job = ckit.JobItem(func, _finished)
         ckit.JobQueue.defaultQueue().enqueue(job)
@@ -1686,6 +1684,7 @@ def configure(keymap) -> None:
 
                 def _activate(job_item: ckit.JobItem) -> None:
                     job_item.result = None
+                    delay(40)
                     scanner = WndScanner(exe_name, class_name)
                     scanner.scan()
                     wnd = scanner.found
@@ -1697,7 +1696,6 @@ def configure(keymap) -> None:
                                 shell_exec(exe_path)
                     else:
                         job_item.result = WindowActivator(wnd).activate()
-                        delay(40)
 
                 def _finished(job_item: ckit.JobItem) -> None:
                     if job_item.result is not None:
