@@ -1987,31 +1987,28 @@ def configure(keymap) -> None:
     )
 
     # sumatra PDF
-    def sumatra_checker(inputbox_focused: bool = True) -> Callable[[pyauto.Window], bool]:
-        def _checker(wnd: pyauto.Window) -> bool:
-            if wnd.getProcessName() == "SumatraPDF.exe":
-                if inputbox_focused:
-                    return wnd.getClassName() != "Edit"
-                return True
-            return False
+    keymap_sumatra = keymap.defineWindowKeymap(
+        check_func=lambda wnd: wnd.getProcessName() == "SumatraPDF.exe"
+    )
+    keymap_sumatra["O-LCtrl"] = "Esc", "Esc", "C-Home", "C-F"
 
-        return _checker
 
-    keymap_sumatra_inputbox = keymap.defineWindowKeymap(check_func=sumatra_checker(True))
-
-    keymap_sumatra_inputbox["O-LCtrl"] = "Esc", "Esc", "C-Home", "C-F"
-
-    keymap_sumatra = keymap.defineWindowKeymap(check_func=sumatra_checker(False))
+    # sumatra PDF (not focused on inputbox)
+    keymap_sumatra_view = keymap.defineWindowKeymap(
+        check_func=(
+            lambda wnd: wnd.getProcessName() == "SumatraPDF.exe" and wnd.getClassName() != "Edit"
+        )
+    )
 
     def sumatra_view_key() -> None:
         sender = DirectSender(False)
         for key in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
-            keymap_sumatra[key] = sender.invoke(key)
+            keymap_sumatra_view[key] = sender.invoke(key)
 
     sumatra_view_key()
 
-    keymap_sumatra["H"] = "C-S-Tab"
-    keymap_sumatra["L"] = "C-Tab"
+    keymap_sumatra_view["H"] = "C-S-Tab"
+    keymap_sumatra_view["L"] = "C-Tab"
 
     # word
     keymap_word = keymap.defineWindowKeymap(exe_name="WINWORD.EXE")
