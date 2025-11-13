@@ -720,32 +720,27 @@ def configure(keymap) -> None:
 
     keymap_global["U1-5"] = diffinity
 
-    def register_tempfile_cleaner_cron() -> None:
+    def remove_tempfiles() -> None:
         temp_dir = tempfile.gettempdir()
+        count = 0
+        for file in os.listdir(temp_dir):
+            if file.startswith(TEMP_FILE_PREFIX) and file.endswith(".txt"):
+                try:
+                    p = Path(temp_dir, file)
+                    if not is_file_locked(p):
+                        p.unlink()
+                        count += 1
+                except Exception as e:
+                    print("Failed to remove temp file :{}\n{}".format(file, e))
 
-        def _crean(_) -> None:
-            count = 0
-            for file in os.listdir(temp_dir):
-                if file.startswith(TEMP_FILE_PREFIX) and file.endswith(".txt"):
-                    try:
-                        p = Path(temp_dir, file)
-                        if not is_file_locked(p):
-                            p.unlink()
-                            count += 1
-                    except Exception as e:
-                        print("Failed to remove temp file :{}\n{}".format(file, e))
+        if 0 < count:
+            msg = "Removed {} tempfile".format(count)
+            if 1 < count:
+                msg += "s"
+            msg += "."
+            print(msg)
 
-            if 0 < count:
-                msg = "Removed {} tempfile".format(count)
-                if 1 < count:
-                    msg += "s"
-                msg += " for preview."
-                print(msg)
-
-        ci = ckit.CronItem(_crean, 30.0)
-        ckit.CronTable.defaultCronTable().add(ci)
-
-    register_tempfile_cleaner_cron()
+    remove_tempfiles()
 
     # paste with quote mark
     class Quoter:
