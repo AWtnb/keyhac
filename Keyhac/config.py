@@ -5,6 +5,7 @@ import re
 import time
 import shutil
 import subprocess
+import tempfile
 import urllib.parse
 import unicodedata
 import webbrowser
@@ -46,6 +47,14 @@ def open_vscode(*args: str) -> bool:
     except Exception as e:
         print(e)
         return False
+
+
+def is_file_locked(path: Union[Path, str]) -> bool:
+    try:
+        with open(path, "a"):
+            return False
+    except OSError:
+        return True
 
 
 def shell_exec(path: str, *args) -> None:
@@ -665,6 +674,78 @@ def configure(keymap) -> None:
 
     keymap_global["U1-V"] = keymap.defineMultiStrokeKeymap()
     StrCleaner().apply(keymap_global["U1-V"], "V")
+
+    TEMP_FILE_PREFIX = "keyhac_temp_"
+
+    def diffinity() -> None:
+        exe_path = shutil.which("Diffinity")
+        if exe_path is None:
+            print("Diffinity not found.")
+            return
+
+        def _write_to_tempfile(content: str) -> str:
+            try:
+                tf = tempfile.NamedTemporaryFile(
+                    mode="w",
+                    encoding="utf-8",
+                    delete=False,
+                    suffix=".txt",
+                    prefix=TEMP_FILE_PREFIX,
+                )
+                tf.write(content)
+                tf.close()
+                return tf.name
+            except Exception as e:
+                print(e)
+                return ""
+
+        def _ivoke_diffinity(job_item: ckit.JobItem) -> None:
+            origin = job_item.origin
+            copied = job_item.copied
+
+            def __write(job_item: ckit.JobItem) -> None:
+                job_item.org_temp_path = _write_to_tempfile(origin)
+                job_item.cop_temp_path = _write_to_tempfile(copied)
+
+            def __finished(job_item: ckit.JobItem) -> None:
+                p1 = job_item.org_temp_path
+                p2 = job_item.cop_temp_path
+                if p1 == "" or p2 == "":
+                    return
+                shell_exec(exe_path, p1, p2)
+
+            subthread_run(__write, __finished)
+
+        ClipHandler().after_copy(_ivoke_diffinity)
+
+    keymap_global["U1-5"] = diffinity
+
+    def register_tempfile_cleaner_cron() -> None:
+        temp_dir = tempfile.gettempdir()
+
+        def _crean(_) -> None:
+            count = 0
+            for file in os.listdir(temp_dir):
+                if file.startswith(TEMP_FILE_PREFIX) and file.endswith(".txt"):
+                    try:
+                        p = Path(temp_dir, file)
+                        if not is_file_locked(p):
+                            p.unlink()
+                            count += 1
+                    except Exception as e:
+                        print("Failed to remove temp file :{}\n{}".format(file, e))
+
+            if 0 < count:
+                msg = "Removed {} tempfile".format(count)
+                if 1 < count:
+                    msg += "s"
+                msg += " for preview."
+                print(msg)
+
+        ci = ckit.CronItem(_crean, 30.0)
+        ckit.CronTable.defaultCronTable().add(ci)
+
+    register_tempfile_cleaner_cron()
 
     # paste with quote mark
     class Quoter:
@@ -1989,7 +2070,6 @@ def configure(keymap) -> None:
         check_func=lambda wnd: wnd.getProcessName() == "SumatraPDF.exe"
     )
     keymap_sumatra["O-LCtrl"] = "Esc", "Esc", "C-Home", "C-F"
-
 
     # sumatra PDF (not focused on inputbox)
     keymap_sumatra_view = keymap.defineWindowKeymap(
