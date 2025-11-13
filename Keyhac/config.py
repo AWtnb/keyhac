@@ -333,7 +333,7 @@ def configure(keymap) -> None:
     ) -> None:
         finger = VirtualFinger(0)
         if focus_changed_in_subthread:
-            finger.send_compiled(keymap.magical_key)
+            finger.send_compiled(*keymap.magical_key)
 
         def _finished(job_item: ckit.JobItem) -> None:
             keymap.setInput_Modifier(0)
