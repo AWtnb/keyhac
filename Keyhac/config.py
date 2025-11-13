@@ -304,9 +304,9 @@ def configure(keymap) -> None:
 
         def send(self, *sequence: str) -> None:
             taps = self.compile(*sequence)
-            self.send_compiled(taps)
+            self.send_compiled(*taps)
 
-        def send_compiled(self, taps: list[Tap]) -> None:
+        def send_compiled(self, *taps: Tap) -> None:
             for t in taps:
                 delay(self._inter_stroke_pause)
                 self.begin()
@@ -405,39 +405,39 @@ def configure(keymap) -> None:
 
         def turnoff_skk(self) -> None:
             if self.is_enabled():
-                self._finger.send_compiled(self.taps_to_turnoff)
+                self._finger.send_compiled(*self.taps_to_turnoff)
 
         def to_skk_kana(self) -> None:
             self.enable()
-            self._finger.send_compiled(self.taps_to_kana)
+            self._finger.send_compiled(*self.taps_to_kana)
 
         def to_skk_latin(self) -> None:
             self.enable()
-            self._finger.send_compiled(self.taps_to_latin)
+            self._finger.send_compiled(*self.taps_to_latin)
 
         def to_skk_abbrev(self) -> None:
             self.enable()
-            self._finger.send_compiled(self.taps_to_abbrev)
+            self._finger.send_compiled(*self.taps_to_abbrev)
 
         def to_skk_kata(self) -> None:
             self.enable()
-            self._finger.send_compiled(self.taps_to_kata)
+            self._finger.send_compiled(*self.taps_to_kata)
 
         def to_skk_half_kata(self) -> None:
             self.enable()
-            self._finger.send_compiled(self.taps_to_half_kata)
+            self._finger.send_compiled(*self.taps_to_half_kata)
 
         def to_skk_full_latin(self) -> None:
             self.enable()
-            self._finger.send_compiled(self.taps_to_full_latin)
+            self._finger.send_compiled(*self.taps_to_full_latin)
 
         def start_skk_conv(self) -> None:
             self.enable()
-            self._finger.send_compiled(self.taps_to_conv)
+            self._finger.send_compiled(*self.taps_to_conv)
 
         def reconvert_with_skk(self) -> None:
             self.enable()
-            self._finger.send_compiled(self.taps_to_reconv)
+            self._finger.send_compiled(*self.taps_to_reconv)
 
     def apply_ime_control() -> None:
         control = ImeControl()
@@ -460,8 +460,8 @@ def configure(keymap) -> None:
     apply_ime_control()
 
     class ClipHandler:
-        copy_tap = [Tap("C-C")]
-        paste_tap = [Tap("C-V")]
+        copy_tap = Tap("C-C")
+        paste_tap = Tap("C-V")
 
         @staticmethod
         def get_string() -> str:
@@ -1126,7 +1126,7 @@ def configure(keymap) -> None:
 
             def _sender() -> None:
                 mode_setter()
-                self.finger.send_compiled(taps)
+                self.finger.send_compiled(*taps)
 
             return _sender
 
@@ -1148,9 +1148,9 @@ def configure(keymap) -> None:
 
             def _sender() -> None:
                 if ImeControl.get_status() != later_ime_status:
-                    self.finger.send_compiled(taps + [toggle_tap])
+                    self.finger.send_compiled(*taps, toggle_tap)
                 else:
-                    self.finger.send_compiled(taps)
+                    self.finger.send_compiled(*taps)
 
             return _sender
 
@@ -1191,24 +1191,43 @@ def configure(keymap) -> None:
 
     replace_last_nchar(keymap_global["U0-M"], "先生")
 
-    keymap.curly_comma_mode = False
-    keymap.comma = [Tap("Comma")]
-    keymap.curly_comma = [Tap("\uff0c")]
+    keymap.comma_mode = False
 
     def toggle_comma_mode() -> None:
-        keymap.curly_comma_mode = not keymap.curly_comma_mode
-        balloon("Comma mode: {}".format(keymap.curly_comma_mode))
+        keymap.comma_mode = not keymap.comma_mode
+        balloon("Comma mode: {}".format(keymap.comma_mode))
 
     keymap_global["S-U0-Comma"] = toggle_comma_mode
 
     def send_comma() -> None:
+        comma_tap = Tap("Comma")
+        full_comma_tap = Tap("\uff0c")
         finger = VirtualFinger()
-        if ImeControl().is_enabled() and keymap.curly_comma_mode:
-            finger.send_compiled(keymap.curly_comma)
+        if ImeControl().is_enabled() and keymap.comma_mode:
+            finger.send_compiled(full_comma_tap)
         else:
-            finger.send_compiled(keymap.comma)
+            finger.send_compiled(comma_tap)
 
     keymap_global["Comma"] = send_comma
+
+    keymap.period_mode = False
+
+    def toggle_period_mode() -> None:
+        keymap.period_mode = not keymap.period_mode
+        balloon("Period mode: {}".format(keymap.period_mode))
+
+    keymap_global["S-U0-Period"] = toggle_period_mode
+
+    def send_period() -> None:
+        period_tap = Tap("Period")
+        full_period_tap = Tap("\uff0e")
+        finger = VirtualFinger()
+        if ImeControl().is_enabled() and keymap.period_mode:
+            finger.send_compiled(full_period_tap)
+        else:
+            finger.send_compiled(period_tap)
+
+    keymap_global["Period"] = send_period
 
     # markdown list
     keymap_global["S-U0-8"] = DirectSender().invoke("U-Shift", "Minus", " ")
@@ -1219,7 +1238,6 @@ def configure(keymap) -> None:
         {
             "S-U0-Colon": "\uff1a",  # FULLWIDTH COLON
             "S-U0-Minus": "\u3000\u2015\u2015",
-            "S-U0-Period": "\uff0e",  # FULLWIDTH FULL STOP
             "U0-Minus": "\u2015\u2015",  # HORIZONTAL BAR * 2
         },
     )
