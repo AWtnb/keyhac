@@ -476,9 +476,9 @@ def configure(keymap) -> None:
                 return ""
 
         @staticmethod
-        def get_clipboard_history_item(idx: int) -> str:
+        def get_latest_clipboard_history() -> str:
             try:
-                return keymap.clipboard_history.items[idx]
+                return keymap.clipboard_history.items[0]
             except IndexError:
                 return ""
 
@@ -515,7 +515,7 @@ def configure(keymap) -> None:
             cls.send_paste_key()
 
         def after_copy(self, deferred: Callable[[ckit.JobItem], None]) -> None:
-            cb = self.get_clipboard_history_item(0)
+            cb = self.get_latest_clipboard_history()
             self.send_copy_key()
             delay(40)
 
@@ -524,7 +524,7 @@ def configure(keymap) -> None:
                 job_item.copied = ""
                 trial = 600
                 for _ in range(trial):
-                    s = self.get_clipboard_history_item(0)
+                    s = self.get_latest_clipboard_history()
                     if not s.strip():
                         continue
                     if s != job_item.origin:
