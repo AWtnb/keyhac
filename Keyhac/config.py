@@ -462,6 +462,11 @@ def configure(keymap) -> None:
     class ClipHandler:
         copy_tap = Tap("C-C")
         paste_tap = Tap("C-V")
+        terminal_process = [
+            "pwsh.exe",
+            "powershell.exe",
+            "wezterm-gui.exe",
+        ]
 
         @staticmethod
         def get_string() -> str:
@@ -504,6 +509,8 @@ def configure(keymap) -> None:
                     return
             if format_func is not None:
                 s = format_func(s)
+            if keymap.getWindow().getProcessName() in cls.terminal_process:
+                s = s.strip()
             cls.set_string(s)
             cls.send_paste_key()
 
@@ -613,22 +620,20 @@ def configure(keymap) -> None:
 
     keymap_global["LC-C"] = smart_copy
 
-    def paste_plaintext() -> None:
-        s = None
-        if 0 < keymap.fifo_stack.count and keymap.fifo_stack.enabled:
-            s = keymap.fifo_stack.pop()
-        ClipHandler().paste(s)
+    def smart_paste(simply: bool) -> CallbackFunc:
+        def _paster() -> None:
+            if simply:
+                ClipHandler().send_paste_key()
+            else:
+                s = None
+                if 0 < keymap.fifo_stack.count and keymap.fifo_stack.enabled:
+                    s = keymap.fifo_stack.pop()
+                ClipHandler().paste(s)
 
-    keymap_global["U0-V"] = paste_plaintext
+        return _paster
 
-    def smart_paste() -> None:
-        if 0 < keymap.fifo_stack.count and keymap.fifo_stack.enabled:
-            cb = keymap.fifo_stack.pop()
-            ClipHandler().paste(cb)
-        else:
-            ClipHandler().send_paste_key()
-
-    keymap_global["LC-V"] = smart_paste
+    keymap_global["LC-V"] = smart_paste(True)
+    keymap_global["U0-V"] = smart_paste(False)
 
     ################################
     # custom hotkey
