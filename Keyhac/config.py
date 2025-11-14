@@ -620,20 +620,21 @@ def configure(keymap) -> None:
 
     keymap_global["LC-C"] = smart_copy
 
-    def smart_paste(simply: bool) -> CallbackFunc:
+    def smart_paste(plaintext: bool) -> CallbackFunc:
         def _paster() -> None:
-            if simply:
-                ClipHandler().send_paste_key()
+            if not keymap.fifo_stack.enabled or keymap.fifo_stack.count < 1:
+                if plaintext:
+                    ClipHandler().paste()
+                else:
+                    ClipHandler().send_paste_key()
             else:
-                s = None
-                if 0 < keymap.fifo_stack.count and keymap.fifo_stack.enabled:
-                    s = keymap.fifo_stack.pop()
+                s = keymap.fifo_stack.pop()
                 ClipHandler().paste(s)
 
         return _paster
 
-    keymap_global["LC-V"] = smart_paste(True)
-    keymap_global["U0-V"] = smart_paste(False)
+    keymap_global["LC-V"] = smart_paste(False)
+    keymap_global["U0-V"] = smart_paste(True)
 
     ################################
     # custom hotkey
