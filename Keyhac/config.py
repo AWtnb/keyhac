@@ -356,27 +356,27 @@ def configure(keymap) -> None:
         jlatin = "S-Q"
         prefix = "S-Period"
 
-        @classmethod
-        def taps(cls, *keys: str) -> list[Tap]:
-            return VirtualFinger.compile(cls.kana, *keys)
-
     class ImeStatus(Enum):
         on = 1
         off = 0
 
     class ImeControl:
-        taps_to_kana = SKKKey.taps()
-        taps_to_turnoff = SKKKey.taps(SKKKey.toggle_vk)
-        taps_to_kata = SKKKey.taps(SKKKey.kata)
-        taps_to_latin = SKKKey.taps(SKKKey.latin)
-        taps_to_abbrev = SKKKey.taps(SKKKey.abbrev)
-        taps_to_half_kata = SKKKey.taps(SKKKey.halfkata)
-        taps_to_full_latin = SKKKey.taps(SKKKey.jlatin)
-        taps_to_conv = SKKKey.taps(SKKKey.convpoint)
-        taps_to_reconv = SKKKey.taps(SKKKey.reconv, SKKKey.cancel)
 
         def __init__(self, inter_stroke_pause: int = 10) -> None:
             self._finger = VirtualFinger(inter_stroke_pause)
+
+            self.taps_to_kana = self._tapify()
+            self.taps_to_turnoff = self._tapify(SKKKey.toggle_vk)
+            self.taps_to_kata = self._tapify(SKKKey.kata)
+            self.taps_to_latin = self._tapify(SKKKey.latin)
+            self.taps_to_abbrev = self._tapify(SKKKey.abbrev)
+            self.taps_to_half_kata = self._tapify(SKKKey.halfkata)
+            self.taps_to_full_latin = self._tapify(SKKKey.jlatin)
+            self.taps_to_conv = self._tapify(SKKKey.convpoint)
+            self.taps_to_reconv = self._tapify(SKKKey.reconv, SKKKey.cancel)
+
+        def _tapify(self, *keys: str) -> list[Tap]:
+            return self._finger.compile(SKKKey.kana, *keys)
 
         @staticmethod
         def get_status() -> ImeStatus:
@@ -440,7 +440,7 @@ def configure(keymap) -> None:
             self._finger.send_compiled(*self.taps_to_reconv)
 
     def apply_ime_control() -> None:
-        control = ImeControl()
+        control = ImeControl(0)
         for key, func in {
             "U1-J": control.to_skk_kana,
             "LC-U0-I": control.to_skk_kata,
