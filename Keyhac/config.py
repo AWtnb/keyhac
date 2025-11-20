@@ -1243,6 +1243,7 @@ def configure(keymap) -> None:
         keymap_global,
         {
             "S-U0-Colon": "\uff1a",  # FULLWIDTH COLON
+            "U0-SemiColon": "\uff1b",  # FULLWIDTH SEMICOLON
             "S-U0-Minus": "\u3000\u2015\u2015",
             "U0-Minus": "\u2015\u2015",  # HORIZONTAL BAR * 2
         },
@@ -1272,8 +1273,6 @@ def configure(keymap) -> None:
             "U0-Colon": "Colon",
             "U0-Slash": "Slash",
             "U1-Minus": "Minus",
-            "U0-SemiColon": "SemiColon",
-            "U1-SemiColon": "+:",
             "U1-X": "!",
             "LS-U1-X": "!=",
             "U0-Comma": "Comma",
