@@ -1167,19 +1167,44 @@ def configure(keymap) -> None:
     keymap_global["U1-N"] = SKKSender().under_kanamode("C-S-Left", SKKKey.convpoint, "S-4", "Tab")
     keymap_global["U1-4"] = SKKSender().under_kanamode(SKKKey.convpoint, "S-4")
 
-    keymap_global["U0-SemiColon"] = SKKSender().invoke(
-        ImeControl(0).to_skk_full_latin, "SemiColon", SKKKey.kana
-    )
+    def apply_fullwidth_sender() -> None:
+        sender = SKKSender()
+        for key, symbol in {
+            "S-U0-Colon": "\uff1a",  # FULLWIDTH COLON
+            "U0-SemiColon": "\uff1b",  # FULLWIDTH SEMICOLON
+        }.items():
+            keymap_global[key] = sender.invoke(
+                sender.control.to_skk_full_latin, symbol, SKKKey.kana
+            )
+
+    apply_fullwidth_sender()
+
+    def apply_fullwidth_circumfix_sender() -> None:
+        sender = SKKSender()
+        for key, pair in {
+            "U0-8": ["\u300e", "\u300f"],  # WHITE CORNER BRACKET 『』
+            "U0-9": ["\u3010", "\u3011"],  # BLACK LENTICULAR BRACKET 【】
+            "U0-OpenBracket": ["\u300c", "\u300d"],  # CORNER BRACKET 「」
+            "U1-2": ["\u201c", "\u201d"],  # DOUBLE QUOTATION MARK “”
+            "U1-7": ["\u2018", "\u2019"],  # SINGLE QUOTATION MARK ‘’
+            "U1-8": ["\uff08", "\uff09"],  # FULLWIDTH PARENTHESIS （）
+            "U0-Y": ["\u3008", "\u3009"],  # ANGLE BRACKET
+            "U1-Y": ["\u300a", "\u300b"],  # DOUBLE ANGLE BRACKET
+            "U1-K": ["\u3014", "\u3015"],  # TORTOISE BRACKET
+            "U1-OpenBracket": ["\uff3b", "\uff3d"],  # FULLWIDTH SQUARE BRACKET ［］
+        }.items():
+            keymap_global[key] = sender.invoke(
+                sender.control.to_skk_full_latin, *pair, "Left", SKKKey.kana
+            )
+
+    apply_fullwidth_circumfix_sender()
 
     class DirectSender:
-        def __init__(self, recover_ime: bool = True) -> None:
+        def __init__(self) -> None:
             self.skk = SKKSender(inter_stroke_pause=0)
-            self.recover = recover_ime
 
         def invoke(self, *sequence: str) -> CallbackFunc:
             seq = list(sequence)
-            if self.recover:
-                seq.append(SKKKey.toggle_vk)
             return self.skk.invoke(self.skk.control.turnoff_skk, *seq)
 
         def bind(self, km: WindowKeymap, binding: dict) -> None:
@@ -1246,32 +1271,6 @@ def configure(keymap) -> None:
     DirectSender().bind(
         keymap_global,
         {
-            "S-U0-Colon": "\uff1a",  # FULLWIDTH COLON
-            "S-U0-Minus": "\u3000\u2015\u2015",
-            "U0-Minus": "\u2015\u2015",  # HORIZONTAL BAR * 2
-        },
-    )
-
-    DirectSender().bind_circumfix(
-        keymap_global,
-        {
-            "U0-8": ["\u300e", "\u300f"],  # WHITE CORNER BRACKET 『』
-            "U0-9": ["\u3010", "\u3011"],  # BLACK LENTICULAR BRACKET 【】
-            "U0-OpenBracket": ["\u300c", "\u300d"],  # CORNER BRACKET 「」
-            "U1-2": ["\u201c", "\u201d"],  # DOUBLE QUOTATION MARK “”
-            "U1-7": ["\u2018", "\u2019"],  # SINGLE QUOTATION MARK ‘’
-            "U1-8": ["\uff08", "\uff09"],  # FULLWIDTH PARENTHESIS （）
-            "U1-Atmark": ["\uff08`", "`\uff09"],  # FULLWIDTH PARENTHESIS and BackTick （``）
-            "U0-Y": ["\u3008", "\u3009"],  # ANGLE BRACKET
-            "U1-Y": ["\u300a", "\u300b"],  # DOUBLE ANGLE BRACKET
-            "U1-K": ["\u3014", "\u3015"],  # TORTOISE BRACKET
-            "U1-OpenBracket": ["\uff3b", "\uff3d"],  # FULLWIDTH SQUARE BRACKET ［］
-        },
-    )
-
-    DirectSender(False).bind(
-        keymap_global,
-        {
             "U0-1": "S-1",
             "U0-Colon": "Colon",
             "U0-Slash": "Slash",
@@ -1282,7 +1281,8 @@ def configure(keymap) -> None:
             "U0-Period": "Period",
         },
     )
-    DirectSender(False).bind_circumfix(
+
+    DirectSender().bind_circumfix(
         keymap_global,
         {
             "U0-CloseBracket": ["[", "]"],
@@ -2034,14 +2034,14 @@ def configure(keymap) -> None:
 
     # rsturio
     keymap_rstudio = keymap.defineWindowKeymap(exe_name="rstudio.exe")
-    keymap_rstudio["U0-Minus"] = DirectSender(False).invoke("S-Comma", "Minus")
+    keymap_rstudio["U0-Minus"] = DirectSender().invoke("S-Comma", "Minus")
 
     # slack
     keymap_slack = keymap.defineWindowKeymap(exe_name="slack.exe", class_name="Chrome_WidgetWin_1")
     keymap_slack["C-K"] = SKKSender().invoke_emitThen(ImeStatus.off, "C-K")
     keymap_slack["F3"] = keymap_slack["C-K"]
     keymap_slack["C-E"] = keymap_slack["C-K"]
-    keymap_slack["F1"] = DirectSender(False).invoke("S-SemiColon", "Colon")
+    keymap_slack["F1"] = DirectSender().invoke("S-SemiColon", "Colon")
 
     # vscode
     keymap_vscode = keymap.defineWindowKeymap(exe_name="Code.exe")
@@ -2100,7 +2100,7 @@ def configure(keymap) -> None:
     )
 
     def sumatra_view_key() -> None:
-        sender = DirectSender(False)
+        sender = DirectSender()
         for key in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
             keymap_sumatra_view[key] = sender.invoke(key)
 
