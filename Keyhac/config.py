@@ -1167,6 +1167,10 @@ def configure(keymap) -> None:
     keymap_global["U1-N"] = SKKSender().under_kanamode("C-S-Left", SKKKey.convpoint, "S-4", "Tab")
     keymap_global["U1-4"] = SKKSender().under_kanamode(SKKKey.convpoint, "S-4")
 
+    keymap_global["U0-SemiColon"] = SKKSender().invoke(
+        ImeControl(0).to_skk_full_latin, "SemiColon", SKKKey.kana
+    )
+
     class DirectSender:
         def __init__(self, recover_ime: bool = True) -> None:
             self.skk = SKKSender(inter_stroke_pause=0)
@@ -1243,7 +1247,6 @@ def configure(keymap) -> None:
         keymap_global,
         {
             "S-U0-Colon": "\uff1a",  # FULLWIDTH COLON
-            "U0-SemiColon": "\uff1b",  # FULLWIDTH SEMICOLON
             "S-U0-Minus": "\u3000\u2015\u2015",
             "U0-Minus": "\u2015\u2015",  # HORIZONTAL BAR * 2
         },
