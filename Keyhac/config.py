@@ -1221,7 +1221,7 @@ def configure(keymap) -> None:
 
     def replace_last_nchar(km: WindowKeymap, newstr: str) -> None:
         for n in "0123":
-            seq = ["Back"] * int(n) + [newstr, SKKKey.kana]
+            seq = ["Back"] * int(n) + [newstr, SKKKey.toggle_vk]
             km[n] = DirectSender().invoke(*seq)
 
     replace_last_nchar(keymap_global["U0-M"], "先生")
