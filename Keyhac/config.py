@@ -385,7 +385,6 @@ def configure(keymap) -> None:
         @staticmethod
         def set_status(status: ImeStatus) -> None:
             keymap.getWindow().setImeStatus(status.value)
-            delay(20)
 
         @classmethod
         def is_enabled(cls) -> bool:
