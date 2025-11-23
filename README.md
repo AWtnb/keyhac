@@ -1,6 +1,6 @@
 # README
 
-[keyhac](https://github.com/crftwr/keyhac) customization.
+[keyhac](https://github.com/crftwr/keyhac-win) customization.
 
 Environment:
 
