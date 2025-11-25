@@ -57,6 +57,15 @@ def is_file_locked(path: Union[Path, str]) -> bool:
         return True
 
 
+def resolve_scoop_shim(path: str) -> str:
+    if r"scoop\shims" in path:
+        p = Path(path)
+        real = p.parent.parent / "apps" / p.stem / "current" / p.name
+        if smart_check_path(real):
+            return str(real)
+    return path
+
+
 def shell_exec(path: str, *args) -> None:
     if not isinstance(path, str):
         path = str(path)
@@ -687,6 +696,8 @@ def configure(keymap) -> None:
         if exe_path is None:
             print("Diffinity not found.")
             return
+
+        exe_path = resolve_scoop_shim(exe_path)
 
         def _write_to_tempfile(content: str) -> str:
             try:
