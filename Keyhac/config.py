@@ -163,7 +163,7 @@ def configure(keymap) -> None:
             return wnd.getProcessName() == "keyhac.exe" and not wnd.getFirstChild()
 
     # keymap working on any window
-    keymap_global = keymap.defineWindowKeymap(check_func=CheckWnd().is_global_target)
+    keymap_global = keymap.defineWindowKeymap(check_func=CheckWnd.is_global_target)
 
     # keyboard macro
     keymap_global["U0-0"] = keymap.command_RecordToggle
@@ -624,7 +624,7 @@ def configure(keymap) -> None:
 
             ClipHandler().after_copy(_register)
         else:
-            ClipHandler().send_copy_key()
+            ClipHandler.send_copy_key()
 
     keymap_global["LC-C"] = smart_copy
 
@@ -632,12 +632,12 @@ def configure(keymap) -> None:
         def _paster() -> None:
             if not keymap.fifo_stack.enabled or keymap.fifo_stack.count < 1:
                 if plaintext:
-                    ClipHandler().paste()
+                    ClipHandler.paste()
                 else:
-                    ClipHandler().send_paste_key()
+                    ClipHandler.send_paste_key()
             else:
                 s = keymap.fifo_stack.pop()
-                ClipHandler().paste(s)
+                ClipHandler.paste(s)
 
         return _paster
 
@@ -670,7 +670,7 @@ def configure(keymap) -> None:
                 return s
 
             def _paste() -> None:
-                ClipHandler().paste(format_func=_clean)
+                ClipHandler.paste(format_func=_clean)
 
             return _paste
 
@@ -687,7 +687,7 @@ def configure(keymap) -> None:
                     km[mod1 + mod2 + key] = cls.invoke_paster(no_space, no_break)
 
     keymap_global["U1-V"] = keymap.defineMultiStrokeKeymap()
-    StrCleaner().apply(keymap_global["U1-V"], "V")
+    StrCleaner.apply(keymap_global["U1-V"], "V")
 
     TEMP_FILE_PREFIX = "keyhac_temp_"
 
@@ -783,7 +783,7 @@ def configure(keymap) -> None:
         @staticmethod
         def invoke_paster(func: Callable[[str], str]) -> CallbackFunc:
             def _paster() -> None:
-                ClipHandler().paste(None, func)
+                ClipHandler.paste(None, func)
 
             return _paster
 
@@ -793,7 +793,7 @@ def configure(keymap) -> None:
             km["C-" + key] = cls.invoke_paster(cls.as_single_line)
             km["S-" + key] = cls.invoke_paster(cls.skip_blank_line)
 
-    Quoter().apply(keymap_global, "U1-Q")
+    Quoter.apply(keymap_global, "U1-Q")
 
     # open url in browser
     def open_selected_url() -> None:
@@ -1029,7 +1029,7 @@ def configure(keymap) -> None:
             }.items():
                 km["U1-" + key] = cls.invoke_snapper(toward)
 
-    WndShrinker().apply(keymap_global["U1-M"])
+    WndShrinker.apply(keymap_global["U1-M"])
 
     class MonitorCenterAvoider:
 
@@ -1074,8 +1074,8 @@ def configure(keymap) -> None:
 
             return _avoider
 
-    keymap_global["U1-M"]["OpenBracket"] = MonitorCenterAvoider().invoke_avoider(False)
-    keymap_global["U1-M"]["CloseBracket"] = MonitorCenterAvoider().invoke_avoider(True)
+    keymap_global["U1-M"]["OpenBracket"] = MonitorCenterAvoider.invoke_avoider(False)
+    keymap_global["U1-M"]["CloseBracket"] = MonitorCenterAvoider.invoke_avoider(True)
 
     ################################
     # set cursor position
@@ -1122,8 +1122,8 @@ def configure(keymap) -> None:
             to_y = int((wnd_bottom + wnd_top) / 2)
             cls.set_position(to_x, to_y)
 
-    keymap_global["O-RCtrl"] = CursorPos().snap
-    keymap_global["O-RShift"] = CursorPos().snap_to_center
+    keymap_global["O-RCtrl"] = CursorPos.snap
+    keymap_global["O-RShift"] = CursorPos.snap_to_center
 
     ################################
     # input customize
@@ -1248,7 +1248,7 @@ def configure(keymap) -> None:
         comma_tap = Tap("Comma")
         full_comma_tap = Tap("\uff0c")
         finger = VirtualFinger()
-        if ImeControl().is_enabled() and keymap.comma_mode:
+        if ImeControl.is_enabled() and keymap.comma_mode:
             finger.send_compiled(full_comma_tap)
         else:
             finger.send_compiled(comma_tap)
@@ -1267,7 +1267,7 @@ def configure(keymap) -> None:
         period_tap = Tap("Period")
         full_period_tap = Tap("\uff0e")
         finger = VirtualFinger()
-        if ImeControl().is_enabled() and keymap.period_mode:
+        if ImeControl.is_enabled() and keymap.period_mode:
             finger.send_compiled(full_period_tap)
         else:
             finger.send_compiled(period_tap)
@@ -1611,7 +1611,7 @@ def configure(keymap) -> None:
             return ""
 
         def fix_kangxi(self) -> None:
-            self._query = KangxiRadicals().fix(self._query)
+            self._query = KangxiRadicals.fix(self._query)
 
         def remove_honorific(self) -> None:
             for honor in ["先生", "様"]:
@@ -1824,7 +1824,7 @@ def configure(keymap) -> None:
                 func = cls.invoke(*params)
                 wnd_keymap[key] = func
 
-    PseudoCuteExec().apply(
+    PseudoCuteExec.apply(
         keymap_global,
         {
             "U1-F": (
@@ -1852,7 +1852,7 @@ def configure(keymap) -> None:
     )
 
     keymap_global["U1-C"] = keymap.defineMultiStrokeKeymap()
-    PseudoCuteExec().apply(
+    PseudoCuteExec.apply(
         keymap_global["U1-C"],
         {
             "Space": (
@@ -2456,7 +2456,7 @@ def configure(keymap) -> None:
             "insert blank line": FormatTools.insert_blank_line,
             "remove blank line": FormatTools.skip_blank_line,
             "fix dumb quotation": FormatTools.fix_dumb_quotation,
-            "fix KANGXI RADICALS": KangxiRadicals().fix,
+            "fix KANGXI RADICALS": KangxiRadicals.fix,
             "fix paren inside bracket": FormatTools.fix_paren_inside_bracket,
             "to double bracket": FormatTools.to_double_bracket,
             "to single bracket": FormatTools.to_single_bracket,
@@ -2467,12 +2467,12 @@ def configure(keymap) -> None:
             "encode url": FormatTools.encode_url,
             "to halfwidth": CharWidth().to_half_letter,
             "to halfwidth (including symbols)": CharWidth(True).to_half_letter,
-            "to halfwidth symbols": CharWidth().to_half_symbol,
-            "to halfwidth bracktets": CharWidth().to_half_brackets,
+            "to halfwidth symbols": CharWidth.to_half_symbol,
+            "to halfwidth bracktets": CharWidth.to_half_brackets,
             "to fullwidth": CharWidth().to_full_letter,
             "to fullwidth (including symbols)": CharWidth(True).to_full_letter,
-            "to fullwidth symbols": CharWidth().to_full_symbol,
-            "to fullwidth bracktets": CharWidth().to_full_brackets,
+            "to fullwidth symbols": CharWidth.to_full_symbol,
+            "to fullwidth bracktets": CharWidth.to_full_brackets,
             "trim honorific": FormatTools.trim_honorific,
             "fix nested paren": FormatTools.format_nested_paren,
             "fix nested bracket": FormatTools.format_nested_bracket,
@@ -2555,7 +2555,7 @@ def configure(keymap) -> None:
 
         def _finished(job_item: ckit.JobItem) -> None:
             if job_item.func:
-                ClipHandler().paste(None, job_item.func)
+                ClipHandler.paste(None, job_item.func)
 
         subthread_run(_fzf, _finished, True)
 
