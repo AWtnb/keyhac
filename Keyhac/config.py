@@ -58,11 +58,11 @@ def is_file_locked(path: Union[Path, str]) -> bool:
 
 
 def resolve_scoop_shim(path: str) -> str:
-    if r"scoop\shims" in path:
-        p = Path(path)
-        real = p.parent.parent / "apps" / p.stem / "current" / p.name
-        if smart_check_path(real):
-            return str(real)
+    if r"scoop\shims" in path and path.lower().endswith(".exe"):
+        real = str(
+            Path(path).with_suffix(".shim").read_text().strip().split(" = ")[-1].replace('"', "")
+        )
+        return real
     return path
 
 
