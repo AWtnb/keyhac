@@ -1274,8 +1274,8 @@ def configure(keymap) -> None:
     keymap_global["Period"] = send_period
 
     # markdown list
-    keymap_global["S-U0-8"] = DirectSender().invoke("U-Shift", "Minus", " ")
-    keymap_global["U1-1"] = DirectSender().invoke("1.", " ")
+    keymap_global["S-U0-8"] = DirectSender().invoke("U-Shift", "Minus", " ", SKKKey.toggle_vk)
+    keymap_global["U1-1"] = DirectSender().invoke("1.", " ", SKKKey.toggle_vk)
 
     DirectSender().bind(
         keymap_global,
