@@ -1163,10 +1163,9 @@ def configure(keymap) -> None:
             toggle_tap = Tap(SKKKey.toggle_vk)
 
             def _sender() -> None:
+                self.finger.send_compiled(*taps)
                 if ImeControl.get_status() != later_ime_status:
-                    self.finger.send_compiled(*taps, toggle_tap)
-                else:
-                    self.finger.send_compiled(*taps)
+                    self.finger.send_compiled(toggle_tap)
 
             return _sender
 
