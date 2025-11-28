@@ -2055,6 +2055,7 @@ def configure(keymap) -> None:
 
     # vscode
     keymap_vscode = keymap.defineWindowKeymap(exe_name="Code.exe")
+    keymap_vscode["U0-Slash"] = "C-Slash", "A-S-Down", "C-Slash"
 
     def remap_vscode(*keys: str) -> None:
         sender = SKKSender()
