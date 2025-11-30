@@ -236,13 +236,26 @@ def configure(keymap) -> None:
             # print
             "F1": ("C-P"),
             "U1-F1": ("F1"),
-            # AZIK
-            "U1-Z": ("A", "N", "N"),
-            "U1-K": ("I", "N", "N"),
-            "U1-D": ("E", "N", "N"),
-            "S-U1-Z": ("S-A", "N", "N"),
-            "S-U1-K": ("S-I", "N", "N"),
-            "S-U1-D": ("S-E", "N", "N"),
+        },
+    )
+
+    def bind_azik_keys(wk: WindowKeymap, bindig: dict) -> None:
+        for key, value in bindig.items():
+            value = list(value)
+            if value[-1] == "N":
+                value.append("N")
+            wk[key] = tuple(value)
+            value[0] = "S-" + value[0]
+            wk["S-" + key] = tuple(value)
+
+    bind_azik_keys(
+        keymap_global,
+        {
+            "U1-Z": ("A", "N"),
+            "U1-K": ("I", "N"),
+            "U1-D": ("E", "N"),
+            "U1-O": ("O", "U"),
+            "U1-W": ("E", "I"),
         },
     )
 
