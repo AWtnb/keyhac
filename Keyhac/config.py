@@ -222,7 +222,6 @@ def configure(keymap) -> None:
             "U0-Enter": ("Period"),
             "U0-U": ("S-BackSlash"),
             "U0-Z": ("Minus"),
-            "U1-S": ("Slash"),
             # Insert line
             "U0-I": ("End", "Enter"),
             "S-U0-I": ("Home", "Enter", "Up"),
@@ -256,6 +255,7 @@ def configure(keymap) -> None:
             "U1-D": ("E", "N"),
             "U1-O": ("O", "U"),
             "U1-W": ("E", "I"),
+            "U1-S": ("A", "I"),
         },
     )
 
