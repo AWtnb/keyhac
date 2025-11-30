@@ -236,6 +236,13 @@ def configure(keymap) -> None:
             # print
             "F1": ("C-P"),
             "U1-F1": ("F1"),
+            # AZIK
+            "U1-Z": ("A", "N", "N"),
+            "U1-K": ("I", "N", "N"),
+            "U1-D": ("E", "N", "N"),
+            "S-U1-Z": ("S-A", "N", "N"),
+            "S-U1-K": ("S-I", "N", "N"),
+            "S-U1-D": ("S-E", "N", "N"),
         },
     )
 
@@ -1199,7 +1206,7 @@ def configure(keymap) -> None:
             "U1-8": ["\uff08", "\uff09"],  # FULLWIDTH PARENTHESIS （）
             "U0-Y": ["\u3008", "\u3009"],  # ANGLE BRACKET
             "U1-Y": ["\u300a", "\u300b"],  # DOUBLE ANGLE BRACKET
-            "U1-K": ["\u3014", "\u3015"],  # TORTOISE BRACKET
+            "S-U1-8": ["\u3014", "\u3015"],  # TORTOISE BRACKET
             "U1-OpenBracket": ["\uff3b", "\uff3d"],  # FULLWIDTH SQUARE BRACKET ［］
         }.items():
             keymap_global[key] = sender.invoke(
@@ -1284,8 +1291,6 @@ def configure(keymap) -> None:
             "U0-Colon": "Colon",
             "U0-Slash": "Slash",
             "U1-Minus": "Minus",
-            "U1-X": "!",
-            "LS-U1-X": "!=",
             "U0-Comma": "Comma",
             "U0-Period": "Period",
         },
@@ -1850,9 +1855,9 @@ def configure(keymap) -> None:
         },
     )
 
-    keymap_global["U1-C"] = keymap.defineMultiStrokeKeymap()
+    keymap_global["U1-X"] = keymap.defineMultiStrokeKeymap()
     PseudoCuteExec.apply(
-        keymap_global["U1-C"],
+        keymap_global["U1-X"],
         {
             "Space": (
                 keymap.default_browser.get_exe_name(),
@@ -2559,7 +2564,7 @@ def configure(keymap) -> None:
 
         subthread_run(_fzf, _finished, True)
 
-    keymap_global["U1-Z"] = fzfmenu
+    keymap_global["U1-C"] = fzfmenu
 
 
 def configure_ListWindow(window: ListWindow) -> None:
