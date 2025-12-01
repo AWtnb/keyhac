@@ -254,6 +254,7 @@ def configure(keymap) -> None:
             "U1-K": ("I", "N"),
             "U1-D": ("E", "N"),
             "U1-O": ("O", "U"),
+            "U1-U": ("U", "U"),
             "U1-W": ("E", "I"),
             "U1-S": ("A", "I"),
         },
