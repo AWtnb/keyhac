@@ -222,6 +222,7 @@ def configure(keymap) -> None:
             "U0-Enter": ("Period"),
             "U0-U": ("S-BackSlash"),
             "U0-Z": ("Minus"),
+            "U1-S": ("Slash"),
             # Insert line
             "U0-I": ("End", "Enter"),
             "S-U0-I": ("Home", "Enter", "Up"),
@@ -238,7 +239,8 @@ def configure(keymap) -> None:
         },
     )
 
-    def bind_azik_keys(wk: WindowKeymap, bindig: dict) -> None:
+    # AXIK (my custom azik)
+    def bind_axik_keys(wk: WindowKeymap, bindig: dict) -> None:
         for key, value in bindig.items():
             value = list(value)
             if value[-1] == "N":
@@ -247,16 +249,16 @@ def configure(keymap) -> None:
             value[0] = "S-" + value[0]
             wk["S-" + key] = tuple(value)
 
-    bind_azik_keys(
+    bind_axik_keys(
         keymap_global,
         {
-            "U1-Z": ("A", "N"),
+            "U1-X": ("A", "N"),
             "U1-K": ("I", "N"),
             "U1-D": ("E", "N"),
+            "U1-N": ("E", "N"),
             "U1-O": ("O", "U"),
-            "U1-U": ("U", "U"),
-            "U1-W": ("E", "I"),
-            "U1-S": ("A", "I"),
+            "U1-R": ("E", "I"),
+            "U1-I": ("A", "I"),
         },
     )
 
@@ -480,7 +482,7 @@ def configure(keymap) -> None:
             "U0-F": control.disable,
             "LS-U0-F": control.to_skk_kana,
             "S-U1-J": control.to_skk_latin,
-            "U1-I": control.reconvert_with_skk,
+            "U0-R": control.reconvert_with_skk,
             "O-(236)": control.to_skk_abbrev,
             "LS-(236)": control.start_skk_conv,
         }.items():
@@ -1194,8 +1196,7 @@ def configure(keymap) -> None:
     keymap_global["U1-B"] = SKKSender().invoke_emitThen(ImeStatus.on, "S-Left")
     keymap_global["LS-U1-B"] = SKKSender().invoke_emitThen(ImeStatus.on, "S-Right")
     keymap_global["U1-Space"] = SKKSender().invoke_emitThen(ImeStatus.on, "C-S-Left")
-    keymap_global["U1-N"] = SKKSender().under_kanamode("C-S-Left", SKKKey.convpoint, "S-4", "Tab")
-    keymap_global["U1-4"] = SKKSender().under_kanamode(SKKKey.convpoint, "S-4")
+    keymap_global["U1-4"] = SKKSender().under_kanamode(SKKKey.convpoint, "S-4", "Tab")
 
     def apply_fullwidth_sender() -> None:
         sender = SKKSender()
@@ -1869,9 +1870,9 @@ def configure(keymap) -> None:
         },
     )
 
-    keymap_global["U1-X"] = keymap.defineMultiStrokeKeymap()
+    keymap_global["U1-C"] = keymap.defineMultiStrokeKeymap()
     PseudoCuteExec.apply(
-        keymap_global["U1-X"],
+        keymap_global["U1-C"],
         {
             "Space": (
                 keymap.default_browser.get_exe_name(),
@@ -2578,7 +2579,7 @@ def configure(keymap) -> None:
 
         subthread_run(_fzf, _finished, True)
 
-    keymap_global["U1-C"] = fzfmenu
+    keymap_global["U1-Z"] = fzfmenu
 
 
 def configure_ListWindow(window: ListWindow) -> None:
