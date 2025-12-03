@@ -1727,20 +1727,30 @@ def configure(keymap) -> None:
 
         def set_prog_id(self) -> None:
             rp = r"Software\Microsoft\Windows\Shell\Associations\UrlAssociations\https\UserChoice"
-            with OpenKey(HKEY_CURRENT_USER, rp) as key:
-                self.prog_id = str(QueryValueEx(key, "ProgId")[0])
+            try:
+                with OpenKey(HKEY_CURRENT_USER, rp) as key:
+                    self.prog_id = str(QueryValueEx(key, "ProgId")[0])
+            except Exception as e:
+                print(e)
 
         def set_commandline(self) -> None:
             rp = os.path.join(self.prog_id, "shell", "open", "command")
-            with OpenKey(HKEY_CLASSES_ROOT, rp) as key:
-                self.commandline = str(QueryValueEx(key, "")[0])
+            try:
+                with OpenKey(HKEY_CLASSES_ROOT, rp) as key:
+                    self.commandline = str(QueryValueEx(key, "")[0])
+            except Exception as e:
+                print(e)
 
         def get_exe_path(self) -> str:
             ext = ".exe"
+            if self.commandline == "" or self.prog_id == "":
+                return ""
             c = self.commandline
             return c[: c.find(ext) + len(ext)].strip('"')
 
         def get_exe_name(self) -> str:
+            if self.commandline == "" or self.prog_id == "":
+                return ""
             _, name = os.path.split(self.get_exe_path())
             return name
 
