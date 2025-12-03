@@ -276,6 +276,11 @@ def configure(keymap) -> None:
         },
     )
 
+    keymap_global["U1-Up"] = keymap.MouseWheelCommand(1.0)
+    keymap_global["U1-Down"] = keymap.MouseWheelCommand(-1.0)
+    keymap_global["U1-Left"] = keymap.MouseHorizontalWheelCommand(-1.0)
+    keymap_global["U1-Right"] = keymap.MouseHorizontalWheelCommand(1.0)
+
     ################################
     # functions for custom hotkey
     ################################
