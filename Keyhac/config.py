@@ -1209,6 +1209,8 @@ def configure(keymap) -> None:
         for key, symbol in {
             "S-U0-Colon": "\uff1a",  # FULLWIDTH COLON
             "U0-SemiColon": "\uff1b",  # FULLWIDTH SEMICOLON
+            "S-U0-Comma": "\uff0c",  # FULLWIDTH COMMA
+            "S-U0-Period": "\uff0e",  # FULLWIDTH PERIOD
         }.items():
             keymap_global[key] = sender.invoke(
                 sender.control.to_skk_full_latin, symbol, SKKKey.kana
@@ -1262,44 +1264,6 @@ def configure(keymap) -> None:
             km[n] = DirectSender().invoke(*seq)
 
     replace_last_nchar(keymap_global["U0-M"], "先生")
-
-    keymap.comma_mode = False
-
-    def toggle_comma_mode() -> None:
-        keymap.comma_mode = not keymap.comma_mode
-        balloon("Comma mode: {}".format(keymap.comma_mode))
-
-    keymap_global["S-U0-Comma"] = toggle_comma_mode
-
-    def send_comma() -> None:
-        comma_tap = Tap("Comma")
-        full_comma_tap = Tap("\uff0c")
-        finger = VirtualFinger()
-        if ImeControl.is_enabled() and keymap.comma_mode:
-            finger.send_compiled(full_comma_tap)
-        else:
-            finger.send_compiled(comma_tap)
-
-    keymap_global["Comma"] = send_comma
-
-    keymap.period_mode = False
-
-    def toggle_period_mode() -> None:
-        keymap.period_mode = not keymap.period_mode
-        balloon("Period mode: {}".format(keymap.period_mode))
-
-    keymap_global["S-U0-Period"] = toggle_period_mode
-
-    def send_period() -> None:
-        period_tap = Tap("Period")
-        full_period_tap = Tap("\uff0e")
-        finger = VirtualFinger()
-        if ImeControl.is_enabled() and keymap.period_mode:
-            finger.send_compiled(full_period_tap)
-        else:
-            finger.send_compiled(period_tap)
-
-    keymap_global["Period"] = send_period
 
     # markdown list
     keymap_global["S-U0-8"] = DirectSender().invoke("U-Shift", "Minus", " ", SKKKey.toggle_vk)
