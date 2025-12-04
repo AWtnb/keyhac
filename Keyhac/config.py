@@ -2470,7 +2470,8 @@ def configure(keymap) -> None:
 
         @classmethod
         def set_line_jointer(cls, binding: dict) -> None:
-            for menu, sep in binding.items():
+            for name, sep in binding.items():
+                menu = f"Join lines with {name}"
                 keymap.cutsom_clipboard_formatter[menu] = cls.invoke_line_jointer(sep)
 
     ClipboardFormatMenu.set_formatter(
@@ -2541,9 +2542,10 @@ def configure(keymap) -> None:
 
     ClipboardFormatMenu.set_line_jointer(
         {
-            "Joint lines with Dot": "・",
-            "Joint lines with Tab": "\t",
-            "Joint lines with Slash": "／",
+            "Half-Comma": ",",
+            "Dot": "・",
+            "Tab": "\t",
+            "Slash": "／",
         }
     )
 
