@@ -18,7 +18,7 @@ Running [`ScheduledTask/install.ps1`](./ScheduledTask/install.ps1) with `keyhac.
 
 ```PowerShell
 # EXAMPLE
-.\ScheduledTask\install.ps1 "$env:USERPROFILE\Sync\portable_app\keyhac\keyhac.exe"
+.\ScheduledTask\install.ps1 "$env:USERPROFILE\Personal\tools\portable_apps\keyhac\keyhac.exe"
 ```
 
 Running [`set-startmenu.ps1`](./set-startmenu.ps1) makes start menu to edit this repository on VSCode.
