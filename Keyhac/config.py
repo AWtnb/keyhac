@@ -1829,7 +1829,7 @@ def configure(keymap) -> None:
             "U1-F": (
                 "cfiler.exe",
                 "CfilerWindowClass",
-                r"${USERPROFILE}\Personal\tools\portable_apps\cfiler\cfiler.exe",
+                r"${USERPROFILE}\Personal\portable_apps\cfiler\cfiler.exe",
             ),
             "U1-P": ("SumatraPDF.exe", "SUMATRA_PDF_FRAME"),
             "LC-U1-M": (
