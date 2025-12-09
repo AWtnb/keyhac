@@ -1690,12 +1690,19 @@ def configure(keymap) -> None:
             self.set_commandline()
 
         def set_prog_id(self) -> None:
-            rp = r"Software\Microsoft\Windows\Shell\Associations\UrlAssociations\https\UserChoice"
-            try:
-                with OpenKey(HKEY_CURRENT_USER, rp) as key:
-                    self.prog_id = str(QueryValueEx(key, "ProgId")[0])
-            except Exception as e:
-                print(e)
+            registry_paths = [
+                r"Software\Microsoft\Windows\Shell\Associations\UrlAssociations\https\UserChoiceLatest\ProgId",
+                r"Software\Microsoft\Windows\Shell\Associations\UrlAssociations\https\UserChoice",
+            ]
+
+            for path in registry_paths:
+                try:
+                    with OpenKey(HKEY_CURRENT_USER, path) as key:
+                        self.prog_id = str(QueryValueEx(key, "ProgId")[0])
+                        return
+                except Exception as e:
+                    if path == registry_paths[-1]:
+                        print(f"Failed to get ProgId: {e}")
 
         def set_commandline(self) -> None:
             rp = os.path.join(self.prog_id, "shell", "open", "command")
@@ -1726,6 +1733,7 @@ def configure(keymap) -> None:
             }.get(self.get_exe_name(), "Chrome_WidgetWin_1")
 
     keymap.default_browser = SystemBrowser()
+    print(SystemBrowser().prog_id)
 
     class WndScanner:
         def __init__(self, exe_name: str, class_name: str = "") -> None:
