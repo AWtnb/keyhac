@@ -1265,6 +1265,9 @@ def configure(keymap) -> None:
 
     replace_last_nchar(keymap_global["U0-M"], "先生")
 
+    # current dir
+    keymap_global["U0-Yen"] = DirectSender().invoke("Period", "BackSlash")
+
     # markdown list
     keymap_global["S-U0-8"] = DirectSender().invoke("U-Shift", "Minus", " ", SKKKey.toggle_vk)
     keymap_global["U1-1"] = DirectSender().invoke("1.", " ", SKKKey.toggle_vk)
@@ -1733,7 +1736,6 @@ def configure(keymap) -> None:
             }.get(self.get_exe_name(), "Chrome_WidgetWin_1")
 
     keymap.default_browser = SystemBrowser()
-    print(SystemBrowser().prog_id)
 
     class WndScanner:
         def __init__(self, exe_name: str, class_name: str = "") -> None:
