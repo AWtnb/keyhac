@@ -2412,6 +2412,12 @@ def configure(keymap) -> None:
                 table.append(_join(_split(line)))
             return "\n".join(table)
 
+    def invoke_comment_remover(symbol: str) -> Callable[[str], str]:
+        def _remover(s: str) -> str:
+            return "\n".join([l for l in s.splitlines() if not l.strip().startswith(symbol)])
+
+        return _remover
+
     keymap.cutsom_clipboard_formatter = {}
 
     class ClipboardFormatMenu:
@@ -2489,6 +2495,8 @@ def configure(keymap) -> None:
             "fix nested bracket": FormatTools.format_nested_bracket,
             "zoom invitation": format_zoom_invitation,
             "remove whitespaces": StrCleaner.remove_whitespace,
+            "remove javascript comment line": invoke_comment_remover("// "),
+            "remove python comment line": invoke_comment_remover("# "),
         }
     )
     ClipboardFormatMenu.set_replacer(
