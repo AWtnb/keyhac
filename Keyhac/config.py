@@ -464,7 +464,7 @@ def configure(keymap) -> None:
             "U0-F": control.disable,
             "LS-U0-F": control.to_skk_kana,
             "S-U1-J": control.to_skk_latin,
-            "U0-R": control.reconvert_with_skk,
+            "U1-I": control.reconvert_with_skk,
             "O-(236)": control.to_skk_abbrev,
             "LS-(236)": control.start_skk_conv,
         }.items():
