@@ -2273,10 +2273,6 @@ def configure(keymap) -> None:
             return re.sub(r"[:：]\s*", "\u2015\u2015", s)
 
         @staticmethod
-        def as_codeblock(s: str) -> str:
-            return "\n".join(["```", s, "```", ""])
-
-        @staticmethod
         def skip_blank_line(s: str) -> str:
             lines = s.strip().splitlines()
             return "\n".join([l for l in lines if l.strip()])
@@ -2457,7 +2453,8 @@ def configure(keymap) -> None:
     ClipboardFormatMenu.set_formatter(
         {
             "swap tabs": FormatTools.swap_tabs,
-            "as code": lambda c: f"`{c}`",
+            "to code": lambda c: f"`{c}`",
+            "to codeblock": lambda c: f"```\n{c}\n```\n",
             "trim space on line head": FormatTools.trim_space_on_line_head,
             "my markdown frontmatter": lambda _: md_frontmatter(),
             "FIFO: join items with Tab": lambda _: keymap.fifo_stack.join_items("\t"),
@@ -2477,7 +2474,6 @@ def configure(keymap) -> None:
             "fix paren inside bracket": FormatTools.fix_paren_inside_bracket,
             "to double bracket": FormatTools.to_double_bracket,
             "to single bracket": FormatTools.to_single_bracket,
-            "to markdown codeblock": FormatTools.as_codeblock,
             "TSV to markdown table": FormatTools.mdtable_from_tsv,
             "split postalcode and address": FormatTools.split_postalcode,
             "decode url": FormatTools.decode_url,
