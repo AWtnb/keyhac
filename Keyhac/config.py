@@ -1680,8 +1680,10 @@ def configure(keymap) -> None:
                         self.prog_id = str(QueryValueEx(key, "ProgId")[0])
                         return
                 except Exception as e:
-                    if path == registry_paths[-1]:
-                        print(f"Failed to get ProgId: {e}")
+                    print(e)
+                    print(f"Failed to get ProgId by registry `{path}`")
+                    if path != registry_paths[-1]:
+                        print("Try next path...")
 
         def set_commandline(self) -> None:
             rp = os.path.join(self.prog_id, "shell", "open", "command")
@@ -1692,11 +1694,11 @@ def configure(keymap) -> None:
                 print(e)
 
         def get_exe_path(self) -> str:
-            ext = ".exe"
             if self.commandline == "" or self.prog_id == "":
                 return ""
             c = self.commandline
-            return c[: c.find(ext) + len(ext)].strip('"')
+            e = ".exe"
+            return c[: c.find(e) + len(e)].strip('"')
 
         def get_exe_name(self) -> str:
             if self.commandline == "" or self.prog_id == "":
