@@ -1686,12 +1686,15 @@ def configure(keymap) -> None:
                         print("Try next path...")
 
         def set_commandline(self) -> None:
-            rp = os.path.join(self.prog_id, "shell", "open", "command")
+            if self.prog_id == "":
+                return
+            registry_path = os.path.join(self.prog_id, "shell", "open", "command")
             try:
-                with OpenKey(HKEY_CLASSES_ROOT, rp) as key:
+                with OpenKey(HKEY_CLASSES_ROOT, registry_path) as key:
                     self.commandline = str(QueryValueEx(key, "")[0])
             except Exception as e:
                 print(e)
+                print(f"Failed to get ProgId by registry `{registry_path}`")
 
         def get_exe_path(self) -> str:
             if self.commandline == "" or self.prog_id == "":
