@@ -635,14 +635,14 @@ def configure(keymap) -> None:
 
     def smart_paste(plaintext: bool) -> CallbackFunc:
         def _paster() -> None:
-            if not keymap.fifo_stack.enabled or keymap.fifo_stack.count < 1:
+            if keymap.fifo_stack.enabled and 0 < keymap.fifo_stack.count:
+                s = keymap.fifo_stack.pop()
+                ClipHandler.paste(s)
+            else:
                 if plaintext:
                     ClipHandler.paste()
                 else:
                     ClipHandler.send_paste_key()
-            else:
-                s = keymap.fifo_stack.pop()
-                ClipHandler.paste(s)
 
         return _paster
 
