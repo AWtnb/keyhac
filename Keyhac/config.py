@@ -239,29 +239,6 @@ def configure(keymap) -> None:
         },
     )
 
-    # AXIK (my custom azik)
-    def bind_axik_keys(wk: WindowKeymap, bindig: dict) -> None:
-        for key, value in bindig.items():
-            value = list(value)
-            if value[-1] == "N":
-                value.append("N")
-            wk[key] = tuple(value)
-            value[0] = "S-" + value[0]
-            wk["S-" + key] = tuple(value)
-
-    bind_axik_keys(
-        keymap_global,
-        {
-            "U1-X": ("A", "N"),
-            "U1-K": ("I", "N"),
-            "U1-D": ("E", "N"),
-            "U1-O": ("O", "U"),
-            "U1-R": ("E", "I"),
-            "U1-I": ("A", "I"),
-            "U1-U": ("U", "U"),
-        },
-    )
-
     def bind_paired_keys(wk: WindowKeymap, binding: dict) -> None:
         for key, value in binding.items():
             wk[key] = value, value, "Left"
