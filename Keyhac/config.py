@@ -2090,6 +2090,10 @@ def configure(keymap) -> None:
         }
     )
 
+    # Kiri
+    keymap_kiri_edit = keymap.defineWindowKeymap(exe_name="KIRI10.exe", class_name="Edit")
+    keymap_kiri_edit["C-Enter"] = "F4"
+
     # sumatra PDF
     keymap_sumatra = keymap.defineWindowKeymap(
         check_func=lambda wnd: wnd.getProcessName() == "SumatraPDF.exe"
