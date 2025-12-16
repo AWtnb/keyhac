@@ -223,6 +223,7 @@ def configure(keymap) -> None:
             "U0-U": ("S-BackSlash"),
             "U0-Z": ("Minus"),
             "U1-S": ("Slash"),
+            "U1-X": ("S-1"),
             # Insert line
             "U0-I": ("End", "Enter"),
             "S-U0-I": ("Home", "Enter", "Up"),
@@ -1823,6 +1824,8 @@ def configure(keymap) -> None:
                 r"${USERPROFILE}\Personal\portable_apps\cfiler\cfiler.exe",
             ),
             "U1-P": ("SumatraPDF.exe", "SUMATRA_PDF_FRAME"),
+            "U1-K": ("KIRI10.exe", "*"),
+            "LC-U1-C": ("smoothcsv-app.exe", "*"),
             "LC-U1-M": (
                 "Mery.exe",
                 "TChildForm",
