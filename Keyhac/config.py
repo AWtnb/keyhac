@@ -2093,6 +2093,7 @@ def configure(keymap) -> None:
     # Kiri
     keymap_kiri_edit = keymap.defineWindowKeymap(exe_name="KIRI10.exe", class_name="Edit")
     keymap_kiri_edit["C-Enter"] = "F4", "Down"
+    keymap_kiri_edit["LC-U0-Space"] = keymap_kiri_edit["C-Enter"]
     keymap_kiri_edit["U0-V"] = "C-V", "Home"
 
     # sumatra PDF
