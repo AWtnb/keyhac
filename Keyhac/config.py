@@ -925,7 +925,7 @@ def configure(keymap) -> None:
             return self.move_edge(toward, delta)
 
     def apply_window_snapper(km: WindowKeymap) -> None:
-        altkey_status = [False, True]
+        altkey_stat = ["", "LA-", "RA-"]
         scale_mapping = {
             "": 1 / 2,
             "S-": 2 / 3,
@@ -938,18 +938,16 @@ def configure(keymap) -> None:
             "K": RectEdge.top,
         }
 
-        for alt_pressed in altkey_status:
+        for idx, alt in enumerate(altkey_stat):
             for area_mod, scale in scale_mapping.items():
                 for key, edge in edge_mapping.items():
 
-                    def _invoke(
-                        a: bool = alt_pressed, s: float = scale, e: RectEdge = edge
-                    ) -> CallbackFunc:
+                    def _invoke(i: int = idx, s: float = scale, e: RectEdge = edge) -> CallbackFunc:
 
                         def __get_new_rect() -> list[int]:
                             infos = pyauto.Window.getMonitorInfo()
                             infos.sort(key=lambda info: info[2] != 1)
-                            target = infos[1] if 1 < len(infos) and a else infos[0]
+                            target = infos[i]
                             monitor_work_rect = Rect(*target[1])
                             return monitor_work_rect.resize(s, e)
 
@@ -975,8 +973,7 @@ def configure(keymap) -> None:
 
                         return __snap
 
-                    mod_alt = "A-" if alt_pressed else ""
-                    km[mod_alt + area_mod + key] = _invoke()
+                    km[alt + area_mod + key] = _invoke()
 
     apply_window_snapper(keymap_global["U1-M"])
 
