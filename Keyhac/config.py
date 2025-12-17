@@ -977,31 +977,35 @@ def configure(keymap) -> None:
 
     apply_window_snapper(keymap_global["U1-M"])
 
-    def apply_maximized_window_snapper(km: WindowKeymap, keybinding: dict) -> None:
-        finger = VirtualFinger()
-        for key, towards in keybinding.items():
+    def apply_maximized_window_snapper() -> None:
+        for key in ["1", "2", "3"]:
+            monitor_idx = int(key) - 1
 
-            def _snap() -> None:
-                def __maximize(_) -> None:
-                    keymap.getTopLevelWindow().maximize()
+            def _snap(mi: int = monitor_idx) -> None:
+                infos = pyauto.Window.getMonitorInfo()
+                infos.sort(key=lambda info: info[2] != 1)
+                target = infos[mi][1]
 
-                def __snapper(_) -> None:
-                    finger.send("LShift-LWin-" + towards)
+                def __snap(job_item: ckit.JobItem) -> None:
+                    job_item.wnd = None
 
-                subthread_run(__maximize, __snapper)
+                    wnd = keymap.getTopLevelWindow()
+                    if not wnd or CheckWnd.is_keyhac_console(wnd):
+                        return
+                    if wnd.isMaximized():
+                        wnd.restore()
+                        delay()
+                    wnd.setRect(target)
+                    job_item.wnd = wnd
 
-            km[key] = _snap
+                def __maximize(job_item: ckit.JobItem) -> None:
+                    job_item.wnd.maximize()
 
-    apply_maximized_window_snapper(keymap_global, {"LC-U1-L": "Right", "LC-U1-H": "Left"})
-    apply_maximized_window_snapper(
-        keymap_global["U1-M"],
-        {
-            "U0-L": "Right",
-            "U0-J": "Right",
-            "U0-H": "Left",
-            "U0-K": "Left",
-        },
-    )
+                subthread_run(__snap, __maximize)
+
+            keymap_global["U1-M"][str(key)] = _snap
+
+    apply_maximized_window_snapper()
 
     class WndShrinker:
 
