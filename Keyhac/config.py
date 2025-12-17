@@ -249,7 +249,6 @@ def configure(keymap) -> None:
         {
             "U0-2": "LS-2",
             "U0-7": "LS-7",
-            "U0-AtMark": "LS-AtMark",
         },
     )
 
@@ -1178,6 +1177,10 @@ def configure(keymap) -> None:
                     self.finger.send_compiled(toggle_tap)
 
             return _sender
+
+    keymap_global["U0-AtMark"] = SKKSender().invoke_emitThen(
+        ImeStatus.off, "LS-AtMark", "LS-AtMark", "Left"
+    )
 
     # select-to-left with ime control
     keymap_global["U1-B"] = SKKSender().invoke_emitThen(ImeStatus.on, "S-Left")
