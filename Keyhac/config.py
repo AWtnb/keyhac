@@ -984,7 +984,10 @@ def configure(keymap) -> None:
             def _snap(mi: int = monitor_idx) -> None:
                 infos = pyauto.Window.getMonitorInfo()
                 infos.sort(key=lambda info: info[2] != 1)
-                target = infos[mi][1]
+                try:
+                    target = infos[mi][1]
+                except IndexError:
+                    return
 
                 def __snap(job_item: ckit.JobItem) -> None:
                     job_item.wnd = None
