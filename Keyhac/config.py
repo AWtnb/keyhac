@@ -1,29 +1,32 @@
 import datetime
-import os
 import fnmatch
+import os
 import re
-import time
 import shutil
 import subprocess
 import tempfile
-import urllib.parse
+import time
 import unicodedata
+import urllib.parse
 import webbrowser
-from enum import Enum
-from typing import Union, Callable
-from pathlib import Path
-from winreg import HKEY_CURRENT_USER, HKEY_CLASSES_ROOT, OpenKey, QueryValueEx
 from concurrent.futures import ThreadPoolExecutor
+from enum import Enum
+from pathlib import Path
+from typing import Callable, Union
+from winreg import HKEY_CLASSES_ROOT, HKEY_CURRENT_USER, OpenKey, QueryValueEx
 
 import ckit  # type: ignore
-import pyauto  # type: ignore
 import keyhac_ini  # type: ignore
-from keyhac import *  # type: ignore
+import pyauto  # type: ignore
 from keyhac_keymap import KeyCondition, WindowKeymap  # type: ignore
 from keyhac_listwindow import ListWindow  # type: ignore
 
+from keyhac import *  # type: ignore  # noqa: F403
 
-def smart_check_path(path: Union[str, Path], timeout_sec: Union[int, float, None] = None) -> bool:
+
+def smart_check_path(
+    path: Union[str, Path], timeout_sec: Union[int, float, None] = None
+) -> bool:
     """CASE-INSENSITIVE path check with timeout"""
     p = path if isinstance(path, Path) else Path(path)
     try:
@@ -60,7 +63,12 @@ def is_file_locked(path: Union[Path, str]) -> bool:
 def resolve_scoop_shim(path: str) -> str:
     if r"scoop\shims" in path and path.lower().endswith(".exe"):
         real = str(
-            Path(path).with_suffix(".shim").read_text().strip().split(" = ")[-1].replace('"', "")
+            Path(path)
+            .with_suffix(".shim")
+            .read_text()
+            .strip()
+            .split(" = ")[-1]
+            .replace('"', "")
         )
         return real
     return path
@@ -84,7 +92,6 @@ CallbackFunc = Callable[[], None]
 
 
 def configure(keymap) -> None:
-
     def balloon(message: Union[str, Exception], timeout_msec: int = 1500) -> None:
         title = datetime.datetime.today().strftime("%Y%m%d-%H%M%S-%f")
         print(message)
@@ -267,7 +274,9 @@ def configure(keymap) -> None:
 
     class Tap:
         mod: int = 0
-        sequence: list[Union[pyauto.Key, pyauto.KeyUp, pyauto.KeyDown, pyauto.Char]] = []
+        sequence: list[
+            Union[pyauto.Key, pyauto.KeyUp, pyauto.KeyDown, pyauto.Char]
+        ] = []
 
         def __init__(self, name: str):
             up = None
@@ -375,7 +384,6 @@ def configure(keymap) -> None:
         off = 0
 
     class ImeControl:
-
         def __init__(self, inter_stroke_pause: int = 10) -> None:
             self._finger = VirtualFinger(inter_stroke_pause)
 
@@ -512,7 +520,9 @@ def configure(keymap) -> None:
 
         @classmethod
         def paste(
-            cls, s: Union[str, None] = None, format_func: Union[Callable[[str], str], None] = None
+            cls,
+            s: Union[str, None] = None,
+            format_func: Union[Callable[[str], str], None] = None,
         ) -> None:
             if s is None:
                 s = cls.get_string()
@@ -617,7 +627,9 @@ def configure(keymap) -> None:
 
     keymap_global["LC-LS-U0-X"] = keymap.fifo_stack.toggle
 
-    keymap_global["LC-LS-U0-F"] = lambda: keymap.fifo_stack.bulk_register(ClipHandler.get_string())
+    keymap_global["LC-LS-U0-F"] = lambda: keymap.fifo_stack.bulk_register(
+        ClipHandler.get_string()
+    )
 
     def smart_copy() -> None:
         if keymap.fifo_stack.enabled:
@@ -665,7 +677,9 @@ def configure(keymap) -> None:
             )
 
         @classmethod
-        def invoke_paster(cls, no_space: bool = False, no_break: bool = False) -> CallbackFunc:
+        def invoke_paster(
+            cls, no_space: bool = False, no_break: bool = False
+        ) -> CallbackFunc:
             def _clean(s) -> str:
                 s = s.strip()
                 if no_space:
@@ -941,8 +955,9 @@ def configure(keymap) -> None:
             for area_mod, scale in scale_mapping.items():
                 for key, edge in edge_mapping.items():
 
-                    def _invoke(i: int = idx, s: float = scale, e: RectEdge = edge) -> CallbackFunc:
-
+                    def _invoke(
+                        i: int = idx, s: float = scale, e: RectEdge = edge
+                    ) -> CallbackFunc:
                         def __get_new_rect() -> list[int]:
                             infos = pyauto.Window.getMonitorInfo()
                             infos.sort(key=lambda info: info[2] != 1)
@@ -1010,14 +1025,13 @@ def configure(keymap) -> None:
     apply_maximized_window_snapper()
 
     class WndShrinker:
-
         @staticmethod
         def invoke_snapper(toward: RectEdge) -> CallbackFunc:
-
             def _snapper() -> None:
                 def __snap(_) -> None:
                     wnd = keymap.getTopLevelWindow()
                     rect = wnd.getRect()
+
                     resized = Rect(*rect).resize(0.5, toward)
                     if wnd.isMaximized():
                         wnd.restore()
@@ -1041,7 +1055,6 @@ def configure(keymap) -> None:
     WndShrinker.apply(keymap_global["U1-M"])
 
     class MonitorCenterAvoider:
-
         @staticmethod
         def get_border_x(wnd: pyauto.Window) -> int:
             x = -1
@@ -1057,7 +1070,6 @@ def configure(keymap) -> None:
 
         @classmethod
         def invoke_avoider(cls, show_left: bool) -> CallbackFunc:
-
             def _avoider() -> None:
                 def _snap(_) -> None:
                     wnd = keymap.getTopLevelWindow()
@@ -1167,7 +1179,9 @@ def configure(keymap) -> None:
             sender = self.invoke(self.control.disable, *sequence)
             return sender
 
-        def invoke_emitThen(self, later_ime_status: ImeStatus, *sequence: str) -> CallbackFunc:
+        def invoke_emitThen(
+            self, later_ime_status: ImeStatus, *sequence: str
+        ) -> CallbackFunc:
             taps = self.finger.compile(*sequence)
             toggle_tap = Tap(SKKKey.toggle_vk)
 
@@ -1253,7 +1267,9 @@ def configure(keymap) -> None:
     keymap_global["U0-Yen"] = DirectSender().invoke("Period", "BackSlash")
 
     # markdown list
-    keymap_global["S-U0-8"] = DirectSender().invoke("U-Shift", "Minus", " ", SKKKey.toggle_vk)
+    keymap_global["S-U0-8"] = DirectSender().invoke(
+        "U-Shift", "Minus", " ", SKKKey.toggle_vk
+    )
     keymap_global["U1-1"] = DirectSender().invoke("1.", " ", SKKKey.toggle_vk)
 
     DirectSender().bind(
@@ -1594,7 +1610,15 @@ def configure(keymap) -> None:
                 self._query = self._query.replace(honor, " ")
 
         def remove_editorial_style(self) -> None:
-            for honor in ["監修", "共著", "共編著", "編著", "共編", "分担執筆", "et al."]:
+            for honor in [
+                "監修",
+                "共著",
+                "共編著",
+                "編著",
+                "共編",
+                "分担執筆",
+                "et al.",
+            ]:
                 self._query = self._query.replace(honor, " ")
 
         def remove_hiragana(self) -> None:
@@ -1615,7 +1639,9 @@ def configure(keymap) -> None:
             self._uri_mapping = uri_mapping
 
         @staticmethod
-        def invoke(uri: str, strict: bool = False, strip_hiragana: bool = False) -> CallbackFunc:
+        def invoke(
+            uri: str, strict: bool = False, strip_hiragana: bool = False
+        ) -> CallbackFunc:
             def _searcher() -> None:
                 def _search(job_item: ckit.JobItem) -> None:
                     s = job_item.copied
@@ -1641,7 +1667,9 @@ def configure(keymap) -> None:
                     trigger_key = shift_key + ctrl_key + "U0-S"
                     km[trigger_key] = keymap.defineMultiStrokeKeymap()
                     for key, uri in self._uri_mapping.items():
-                        km[trigger_key][key] = self.invoke(uri, is_strict, strip_hiragana)
+                        km[trigger_key][key] = self.invoke(
+                            uri, is_strict, strip_hiragana
+                        )
 
     WebSearcher(
         {
@@ -1746,7 +1774,9 @@ def configure(keymap) -> None:
                 return True
             if not wnd.isEnabled():
                 return True
-            if self.class_name and not fnmatch.fnmatch(wnd.getClassName(), self.class_name):
+            if self.class_name and not fnmatch.fnmatch(
+                wnd.getClassName(), self.class_name
+            ):
                 return True
             if not fnmatch.fnmatch(wnd.getProcessName(), self.exe_name):
                 return True
@@ -1789,9 +1819,10 @@ def configure(keymap) -> None:
 
     class PseudoCuteExec:
         @staticmethod
-        def invoke(exe_name: str, class_name: str = "", exe_path: str = "") -> CallbackFunc:
+        def invoke(
+            exe_name: str, class_name: str = "", exe_path: str = ""
+        ) -> CallbackFunc:
             def _executor() -> None:
-
                 def _activate(job_item: ckit.JobItem) -> None:
                     job_item.result = None
                     delay(40)
@@ -2008,7 +2039,8 @@ def configure(keymap) -> None:
             delay()
             job_item.result = None
             scanner = WndScanner(
-                keymap.default_browser.get_exe_name(), keymap.default_browser.get_wnd_class()
+                keymap.default_browser.get_exe_name(),
+                keymap.default_browser.get_wnd_class(),
             )
             scanner.scan()
             wnd = scanner.found
@@ -2047,7 +2079,9 @@ def configure(keymap) -> None:
     keymap_rstudio["U0-Minus"] = DirectSender().invoke("S-Comma", "Minus")
 
     # slack
-    keymap_slack = keymap.defineWindowKeymap(exe_name="slack.exe", class_name="Chrome_WidgetWin_1")
+    keymap_slack = keymap.defineWindowKeymap(
+        exe_name="slack.exe", class_name="Chrome_WidgetWin_1"
+    )
     keymap_slack["C-K"] = SKKSender().invoke_emitThen(ImeStatus.off, "C-K")
     keymap_slack["F3"] = keymap_slack["C-K"]
     keymap_slack["C-E"] = keymap_slack["C-K"]
@@ -2098,7 +2132,9 @@ def configure(keymap) -> None:
     )
 
     # Kiri
-    keymap_kiri_edit = keymap.defineWindowKeymap(exe_name="KIRI10.exe", class_name="Edit")
+    keymap_kiri_edit = keymap.defineWindowKeymap(
+        exe_name="KIRI10.exe", class_name="Edit"
+    )
     keymap_kiri_edit["C-Enter"] = "F4", "Down"
     keymap_kiri_edit["LC-U0-Space"] = keymap_kiri_edit["C-Enter"]
     keymap_kiri_edit["U0-V"] = "C-V", "Home"
@@ -2112,7 +2148,8 @@ def configure(keymap) -> None:
     # sumatra PDF (not focused on inputbox)
     keymap_sumatra_view = keymap.defineWindowKeymap(
         check_func=(
-            lambda wnd: wnd.getProcessName() == "SumatraPDF.exe" and wnd.getClassName() != "Edit"
+            lambda wnd: wnd.getProcessName() == "SumatraPDF.exe"
+            and wnd.getClassName() != "Edit"
         )
     )
 
@@ -2188,7 +2225,6 @@ def configure(keymap) -> None:
             return s.translate(str.maketrans(cls.half_brackets, cls.full_brackets))
 
     def format_zoom_invitation(s: str) -> str:
-
         def _is_ignorable(line: str) -> bool:
             phrases = [
                 "あなたをスケジュール済みの",
@@ -2407,7 +2443,9 @@ def configure(keymap) -> None:
 
     def invoke_comment_remover(symbol: str) -> Callable[[str], str]:
         def _remover(s: str) -> str:
-            return "\n".join([l for l in s.splitlines() if not l.strip().startswith(symbol)])
+            return "\n".join(
+                [l for l in s.splitlines() if not l.strip().startswith(symbol)]
+            )
 
         return _remover
 
@@ -2435,7 +2473,6 @@ def configure(keymap) -> None:
 
         @staticmethod
         def invoke_line_jointer(sep: str) -> Callable[[str], str]:
-
             def _jointer(s: str) -> str:
                 return sep.join(s.splitlines())
 
@@ -2455,7 +2492,9 @@ def configure(keymap) -> None:
             "trim space on line head": FormatTools.trim_space_on_line_head,
             "my markdown frontmatter": lambda _: md_frontmatter(),
             "FIFO: join items with Tab": lambda _: keymap.fifo_stack.join_items("\t"),
-            "FIFO: join items with LineBreak": lambda _: keymap.fifo_stack.join_items("\n"),
+            "FIFO: join items with LineBreak": lambda _: keymap.fifo_stack.join_items(
+                "\n"
+            ),
             "to lowercase": lambda c: c.lower(),
             "to uppercase": lambda c: c.upper(),
             "to slack feed subscribe": lambda c: "/feed subscribe {}".format(c),
@@ -2504,8 +2543,14 @@ def configure(keymap) -> None:
             "remove non-digit-char": (r"[^\d]", ""),
             "remove quotations": (r"[\u0022\u0027]", ""),
             "remove inside paren": (r"[（\(].+?[）\)]", ""),
-            "fix msword-bullet": (r"[\uF06C\uF0D8\uF0B2\uF09F\u25E6\uF0A7\uF06C]\u0009", "\u30fb"),
-            "remove msword-bullet": (r"[\uF06C\uF0D8\uF0B2\uF09F\u25E6\uF0A7\uF06C]\u0009", ""),
+            "fix msword-bullet": (
+                r"[\uF06C\uF0D8\uF0B2\uF09F\u25E6\uF0A7\uF06C]\u0009",
+                "\u30fb",
+            ),
+            "remove msword-bullet": (
+                r"[\uF06C\uF0D8\uF0B2\uF09F\u25E6\uF0A7\uF06C]\u0009",
+                "",
+            ),
             "to curly-comma (\uff0c)": (r"\u3001", "\uff0c"),
             "to japanese-comma (\u3001)": (r"\uff0c", "\u3001"),
             "shorten amazon url": (
