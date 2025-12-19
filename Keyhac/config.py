@@ -977,8 +977,8 @@ def configure(keymap) -> None:
     apply_window_snapper(keymap_global["U1-M"])
 
     def apply_maximized_window_snapper() -> None:
-        for key in ["1", "2", "3"]:
-            monitor_idx = int(key) - 1
+        for key in ["0", "1", "2"]:
+            monitor_idx = int(key)
 
             def _snap(mi: int = monitor_idx) -> None:
                 infos = pyauto.Window.getMonitorInfo()
