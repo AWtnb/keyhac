@@ -32,7 +32,7 @@ def smart_check_path(
     try:
         future = ThreadPoolExecutor(max_workers=1).submit(p.exists)
         return future.result(timeout_sec)
-    except:
+    except Exception:
         return False
 
 
@@ -97,7 +97,7 @@ def configure(keymap) -> None:
         print(message)
         try:
             keymap.popBalloon(title, message, timeout_msec)
-        except:
+        except Exception:
             pass
 
     ################################
@@ -493,7 +493,7 @@ def configure(keymap) -> None:
         def get_string() -> str:
             try:
                 return ckit.getClipboardText() or ""
-            except:
+            except Exception:
                 return ""
 
         @staticmethod
@@ -507,7 +507,7 @@ def configure(keymap) -> None:
         def set_string(s: str) -> None:
             try:
                 ckit.setClipboardText(str(s))
-            except:
+            except Exception:
                 pass
 
         @classmethod
@@ -2164,7 +2164,7 @@ def configure(keymap) -> None:
     keymap_sumatra_view["L"] = "C-Tab"
 
     # word
-    keymap_word = keymap.defineWindowKeymap(exe_name="WINWORD.EXE")
+    keymap_word = keymap.defineWindowKeymap(exe_name="WINWORD.EXE")  # noqa: F841
 
     # powerpoint
     keymap_ppt = keymap.defineWindowKeymap(exe_name="powerpnt.exe")
@@ -2308,7 +2308,7 @@ def configure(keymap) -> None:
         @staticmethod
         def skip_blank_line(s: str) -> str:
             lines = s.strip().splitlines()
-            return "\n".join([l for l in lines if l.strip()])
+            return "\n".join([line for line in lines if line.strip()])
 
         @staticmethod
         def insert_blank_line(s: str) -> str:
@@ -2343,7 +2343,7 @@ def configure(keymap) -> None:
         @staticmethod
         def to_list(s: str) -> str:
             lines = s.splitlines()
-            return "\n".join(["- " + l for l in lines])
+            return "\n".join(["- " + line for line in lines])
 
         @staticmethod
         def split_postalcode(s: str) -> str:
@@ -2444,7 +2444,7 @@ def configure(keymap) -> None:
     def invoke_comment_remover(symbol: str) -> Callable[[str], str]:
         def _remover(s: str) -> str:
             return "\n".join(
-                [l for l in s.splitlines() if not l.strip().startswith(symbol)]
+                [line for line in s.splitlines() if not line.strip().startswith(symbol)]
             )
 
         return _remover
