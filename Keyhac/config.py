@@ -851,7 +851,7 @@ def configure(keymap) -> None:
     keymap_global["U1-F12"] = reload_config
 
     def open_keyhac_repo() -> None:
-        config_path = os.path.join(os.environ.get("APPDATA", ""), "Keyhac")
+        config_path = os.path.expandvars(r"${APPDATA}\Keyhac")
         if not smart_check_path(config_path):
             balloon("config not found: {}".format(config_path))
             return
@@ -1867,7 +1867,7 @@ def configure(keymap) -> None:
             "LC-U1-M": (
                 "Mery.exe",
                 "TChildForm",
-                r"${USERPROFILE}\AppData\Local\Programs\Mery\Mery.exe",
+                r"${LOCALAPPDATA}\Programs\Mery\Mery.exe",
             ),
             "LC-U1-N": (
                 "notepad.exe",
@@ -1896,20 +1896,20 @@ def configure(keymap) -> None:
                 "Chrome_WidgetWin_1",
                 r"C:\Program Files\Google\Chrome\Application\chrome.exe",
             ),
-            "G": (
-                "msedge.exe",
+            "N": (
+                "Notion.exe",
                 "Chrome_WidgetWin_1",
-                r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+                r"${LOCALAPPDATA}\Programs\Notion\Notion.exe",
             ),
             "D": (
                 "vivaldi.exe",
                 "Chrome_WidgetWin_1",
-                r"${USERPROFILE}\AppData\Local\Vivaldi\Application\vivaldi.exe",
+                r"${LOCALAPPDATA}\Vivaldi\Application\vivaldi.exe",
             ),
             "S": (
                 "slack.exe",
                 "Chrome_WidgetWin_1",
-                r"${USERPROFILE}\AppData\Local\slack\slack.exe",
+                r"${LOCALAPPDATA}\slack\slack.exe",
             ),
             "F": (
                 "firefox.exe",
@@ -1936,7 +1936,7 @@ def configure(keymap) -> None:
             "M": (
                 "Mery.exe",
                 "TChildForm",
-                r"${USERPROFILE}\AppData\Local\Programs\Mery\Mery.exe",
+                r"${LOCALAPPDATA}\Programs\Mery\Mery.exe",
             ),
             "X": ("explorer.exe", "CabinetWClass", r"C:\Windows\explorer.exe"),
         },
