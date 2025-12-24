@@ -255,6 +255,7 @@ def configure(keymap) -> None:
         keymap_global,
         {
             "U0-2": "LS-2",
+            "U0-5": "S-5",
             "U0-7": "LS-7",
         },
     )
