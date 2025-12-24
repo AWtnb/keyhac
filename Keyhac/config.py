@@ -2140,6 +2140,14 @@ def configure(keymap) -> None:
     keymap_kiri_edit["LC-U0-Space"] = keymap_kiri_edit["C-Enter"]
     keymap_kiri_edit["U0-V"] = "C-V", "Home"
 
+    # smooth csv
+    keymap_smoothcsv = keymap.defineWindowKeymap(
+        exe_name="msedgewebview2.exe",
+        class_name="Chrome_WidgetWin_1",
+        window_text="tauri.localhost",
+    )
+    keymap_smoothcsv["C-S-F"] = SKKSender().invoke_emitThen(ImeStatus.off, "C-S-F")
+
     # sumatra PDF
     keymap_sumatra = keymap.defineWindowKeymap(
         check_func=lambda wnd: wnd.getProcessName() == "SumatraPDF.exe"
