@@ -738,6 +738,8 @@ def configure(keymap) -> None:
         def _ivoke_diffinity(job_item: ckit.JobItem) -> None:
             origin = job_item.origin
             copied = job_item.copied
+            if len(origin.strip()) == 0 or len(copied.strip()) == 0:
+                return
 
             def __write(job_item: ckit.JobItem) -> None:
                 job_item.org_temp_path = _write_to_tempfile(origin)
