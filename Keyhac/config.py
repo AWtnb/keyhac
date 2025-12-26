@@ -255,7 +255,6 @@ def configure(keymap) -> None:
         keymap_global,
         {
             "U0-2": "LS-2",
-            "U0-5": "S-5",
             "U0-7": "LS-7",
         },
     )
@@ -1197,6 +1196,9 @@ def configure(keymap) -> None:
 
     keymap_global["U0-AtMark"] = SKKSender().invoke_emitThen(
         ImeStatus.off, "LS-AtMark", "LS-AtMark", "Left"
+    )
+    keymap_global["U0-5"] = SKKSender().invoke_emitThen(
+        ImeStatus.off, "S-7", "S-5", "S-5", "S-7", "Left", "Left"
     )
 
     # select-to-left with ime control
