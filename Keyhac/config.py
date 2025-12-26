@@ -1866,7 +1866,7 @@ def configure(keymap) -> None:
             ),
             "U1-P": ("SumatraPDF.exe", "SUMATRA_PDF_FRAME"),
             "U1-K": ("KIRI10.exe", "*"),
-            "LC-U1-C": ("smoothcsv-app.exe", "*"),
+            "U1-3": ("smoothcsv-app.exe", "*"),
             "LC-U1-M": (
                 "Mery.exe",
                 "TChildForm",
