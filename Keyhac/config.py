@@ -1249,11 +1249,13 @@ def configure(keymap) -> None:
             seq = list(sequence)
             return self.skk.invoke(self.skk.control.turnoff_skk, *seq)
 
-        def bind(self, km: WindowKeymap, binding: dict) -> None:
+        def bind(self, km: WindowKeymap, binding: dict[str, tuple[str, ...]]) -> None:
             for key, sent in binding.items():
-                km[key] = self.invoke(sent)
+                km[key] = self.invoke(*sent)
 
-        def bind_circumfix(self, km: WindowKeymap, binding: dict) -> None:
+        def bind_circumfix(
+            self, km: WindowKeymap, binding: dict[str, list[str]]
+        ) -> None:
             for key, circumfix in binding.items():
                 _, suffix = circumfix
                 sequence = circumfix + ["Left"] * len(suffix)
@@ -1268,24 +1270,19 @@ def configure(keymap) -> None:
 
     replace_last_nchar(keymap_global["U0-M"], "先生")
 
-    # current dir
-    keymap_global["U0-Yen"] = DirectSender().invoke("Period", "BackSlash")
-
-    # markdown list
-    keymap_global["S-U0-8"] = DirectSender().invoke(
-        "U-Shift", "Minus", " ", SKKKey.toggle_vk
-    )
-    keymap_global["U1-1"] = DirectSender().invoke("1.", " ", SKKKey.toggle_vk)
-
     DirectSender().bind(
         keymap_global,
         {
-            "U0-1": "S-1",
-            "U0-Colon": "Colon",
-            "U0-Slash": "Slash",
-            "U1-Minus": "Minus",
-            "U0-Comma": "Comma",
-            "U0-Period": "Period",
+            "U0-1": ("S-1",),
+            "U0-Colon": ("Colon",),
+            "U0-Slash": ("Slash",),
+            "U1-Minus": ("Minus",),
+            "U0-Comma": ("Comma",),
+            "U0-Period": ("Period",),
+            "S-U0-Enter": ("Period",),
+            "U0-Yen": ("Period", "BackSlash"),
+            "S-U0-8": ("U-Shift", "Minus", "Space", SKKKey.toggle_vk),
+            "U1-1": ("1.", "Space", SKKKey.toggle_vk),
         },
     )
 
