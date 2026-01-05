@@ -1279,7 +1279,10 @@ def configure(keymap) -> None:
             "U1-Minus": ("Minus",),
             "U0-Comma": ("Comma",),
             "U0-Period": ("Period",),
-            "S-U0-Enter": ("Period",),
+            "S-U0-Enter": (
+                "U-Shift",
+                "Period",
+            ),
             "U0-Yen": ("Period", "BackSlash"),
             "S-U0-8": ("U-Shift", "Minus", "Space", SKKKey.toggle_vk),
             "U1-1": ("1.", "Space", SKKKey.toggle_vk),
