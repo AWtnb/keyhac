@@ -212,8 +212,6 @@ def configure(keymap) -> None:
             "U1-T": ("LWin-T"),
             # send n and space
             "LS-U0-N": ("N", "N", "Space"),
-            # close
-            "LC-Q": ("A-F4"),
             # delete around cursor
             "U0-Back": ("Back", "Delete"),
             # delete to bol / eol
@@ -365,6 +363,20 @@ def configure(keymap) -> None:
 
         job = ckit.JobItem(func, _finished)
         ckit.JobQueue.defaultQueue().enqueue(job)
+
+    def safe_close() -> None:
+        finger = VirtualFinger(0)
+        close_key = finger.compile("A-F4")
+
+        def _wait(_) -> None:
+            delay(200)
+
+        def _close(_) -> None:
+            finger.send_compiled(*close_key)
+
+        subthread_run(_wait, _close)
+
+    keymap_global["C-Q"] = safe_close
 
     class SKKKey:
         toggle_vk = "(243)"
