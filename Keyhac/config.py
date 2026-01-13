@@ -237,8 +237,6 @@ def configure(keymap) -> None:
             "S-U0-C": ("S-Apps"),
             # rename
             "U0-N": ("F2"),
-            # indent
-            "U0-Tab": ("Home", "Tab"),
             # print
             "F1": ("C-P"),
             "U1-F1": ("F1"),
@@ -1295,7 +1293,7 @@ def configure(keymap) -> None:
                 "U-Shift",
                 "Period",
             ),
-            "U0-Yen": ("Period", "BackSlash"),
+            "U0-Tab": ("Period", "BackSlash"),
             "S-U0-8": ("U-Shift", "Minus", "Space", SKKKey.toggle_vk),
             "U1-1": ("1.", "Space", SKKKey.toggle_vk),
         },
