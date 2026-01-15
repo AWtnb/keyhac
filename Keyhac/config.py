@@ -2152,7 +2152,6 @@ def configure(keymap) -> None:
     )
     keymap_kiri_edit["C-Enter"] = "F4", "Down"
     keymap_kiri_edit["LC-U0-Space"] = keymap_kiri_edit["C-Enter"]
-    keymap_kiri_edit["U0-V"] = "C-V", "Home"
 
     # smooth csv
     keymap_smoothcsv = keymap.defineWindowKeymap(
