@@ -2147,6 +2147,12 @@ def configure(keymap) -> None:
     )
 
     # Kiri
+    keymap_kiri = keymap.defineWindowKeymap(
+        exe_name="KIRI10.exe", class_name="TblCommCtrl"
+    )
+    keymap_kiri["F2"] = "F2", "End"
+    keymap_kiri["U0-N"] = keymap_kiri["F2"]
+
     keymap_kiri_edit = keymap.defineWindowKeymap(
         exe_name="KIRI10.exe", class_name="Edit"
     )
