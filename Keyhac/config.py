@@ -227,7 +227,6 @@ def configure(keymap) -> None:
             "U0-Enter": ("Period"),
             "U0-U": ("S-BackSlash"),
             "U0-Z": ("Minus"),
-            "U1-S": ("Slash"),
             "U1-X": ("S-1"),
             # Insert line
             "U0-I": ("End", "Enter"),
@@ -1284,6 +1283,7 @@ def configure(keymap) -> None:
         keymap_global,
         {
             "U0-1": ("S-1",),
+            "U1-S": ("Slash",),
             "U0-Colon": ("Colon",),
             "U0-Slash": ("Slash",),
             "U1-Minus": ("Minus",),
