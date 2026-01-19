@@ -1294,6 +1294,7 @@ def configure(keymap) -> None:
                 "Period",
             ),
             "U0-Tab": ("Period", "BackSlash"),
+            "U1-Tab": ("Period", "Period", "BackSlash"),
             "S-U0-8": ("U-Shift", "Minus", "Space", SKKKey.toggle_vk),
             "U1-1": ("1.", "Space", SKKKey.toggle_vk),
             "S-U0-SemiColon": ("U-Shift", "SemiColon"),
