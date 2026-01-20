@@ -375,6 +375,27 @@ def configure(keymap) -> None:
 
     keymap_global["C-Q"] = safe_close
 
+    def window_num_hotkey(numkey: str) -> CallbackFunc:
+        finger = VirtualFinger(0)
+        taps = finger.compile(f"LWin-{numkey}")
+
+        def _keypress() -> None:
+            def __wait(_) -> None:
+                delay(200)
+
+            def __press(_) -> None:
+                finger.send_compiled(*taps)
+
+            subthread_run(__wait, __press)
+
+        return _keypress
+
+    def apply_window_num_hotkey(keymap: WindowKeymap) -> None:
+        for n in "123456789":
+            keymap[f"LWin-{n}"] = window_num_hotkey(n)
+
+    apply_window_num_hotkey(keymap_global)
+
     class SKKKey:
         toggle_vk = "(243)"
         kata = "Q"
