@@ -229,7 +229,6 @@ def configure(keymap) -> None:
             "U0-U": ("S-BackSlash"),
             "U0-Z": ("Minus"),
             "U1-X": ("S-1"),
-            "U0-P": ("S-Comma"),
             # Insert line
             "U0-I": ("End", "Enter"),
             "S-U0-I": ("Home", "Enter", "Up"),
@@ -427,6 +426,7 @@ def configure(keymap) -> None:
             self.taps_to_half_kata = self._tapify(SKKKey.halfkata)
             self.taps_to_full_latin = self._tapify(SKKKey.jlatin)
             self.taps_to_conv = self._tapify(SKKKey.convpoint)
+            self.taps_to_conv_suffix = self._tapify(SKKKey.convpoint, SKKKey.affix)
             self.taps_to_reconv = self._tapify(SKKKey.reconv, SKKKey.cancel)
 
         def _tapify(self, *keys: str) -> list[Tap]:
@@ -488,6 +488,10 @@ def configure(keymap) -> None:
             self.enable()
             self._finger.send_compiled(*self.taps_to_conv)
 
+        def start_skk_conv_suffix(self) -> None:
+            self.enable()
+            self._finger.send_compiled(*self.taps_to_conv_suffix)
+
         def reconvert_with_skk(self) -> None:
             self.enable()
             self._finger.send_compiled(*self.taps_to_reconv)
@@ -506,6 +510,7 @@ def configure(keymap) -> None:
             "S-U1-J": control.to_skk_latin,
             "U1-I": control.reconvert_with_skk,
             "O-(236)": control.to_skk_abbrev,
+            "U0-P": control.start_skk_conv_suffix,
         }.items():
             keymap_global[key] = func
 
