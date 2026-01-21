@@ -223,6 +223,7 @@ def configure(keymap) -> None:
             # line selection
             "U1-A": ("End", "S-Home"),
             # punctuation
+            "U1-S": ("Slash"),
             "U0-4": ("S-4", "S-BackSlash"),
             "U0-Enter": ("Period"),
             "U0-U": ("S-BackSlash"),
@@ -1304,7 +1305,6 @@ def configure(keymap) -> None:
         keymap_global,
         {
             "U0-1": ("S-1",),
-            "U1-S": ("Slash",),
             "U0-Colon": ("Colon",),
             "U0-Slash": ("Slash",),
             "U1-Minus": ("Minus",),
