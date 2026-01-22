@@ -510,8 +510,8 @@ def configure(keymap) -> None:
             "S-U1-J": control.to_skk_latin,
             "U1-I": control.reconvert_with_skk,
             "O-(236)": control.to_skk_abbrev,
-            "U0-P": control.start_skk_conv_suffix,
             "U1-G": control.start_skk_conv_suffix,
+            "U1-U": control.start_skk_conv_suffix,
         }.items():
             keymap_global[key] = func
 
