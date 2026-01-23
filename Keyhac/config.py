@@ -377,10 +377,10 @@ def configure(keymap) -> None:
     keymap_global["C-Q"] = safe_close
 
     def apply_window_num_hotkey(keymap: WindowKeymap) -> None:
-        finger = VirtualFinger(0)
+        finger = VirtualFinger(10)
 
         for n in "123456789":
-            taps = finger.compile(f"LWin-{n}", "U-WLin", f"U-{n}")
+            taps = finger.compile(f"LWin-{n}", f"U-{n}")
 
             def _keypress(taps: list[Tap] = taps) -> None:
                 finger.send_compiled(*taps)
