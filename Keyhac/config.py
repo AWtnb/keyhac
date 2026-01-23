@@ -376,24 +376,16 @@ def configure(keymap) -> None:
 
     keymap_global["C-Q"] = safe_close
 
-    def window_num_hotkey(numkey: str) -> CallbackFunc:
+    def apply_window_num_hotkey(keymap: WindowKeymap) -> None:
         finger = VirtualFinger(0)
-        taps = finger.compile(f"LWin-{numkey}")
 
-        def _keypress() -> None:
-            def __wait(_) -> None:
-                delay(200)
+        for n in "123456789":
+            taps = finger.compile(f"LWin-{n}", "U-WLin", f"U-{n}")
 
-            def __press(_) -> None:
+            def _keypress(taps: list[Tap] = taps) -> None:
                 finger.send_compiled(*taps)
 
-            subthread_run(__wait, __press)
-
-        return _keypress
-
-    def apply_window_num_hotkey(keymap: WindowKeymap) -> None:
-        for n in "123456789":
-            keymap[f"LWin-{n}"] = window_num_hotkey(n)
+            keymap[f"LWin-{n}"] = _keypress
 
     apply_window_num_hotkey(keymap_global)
 
