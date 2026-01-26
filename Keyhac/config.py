@@ -2614,6 +2614,7 @@ def configure(keymap) -> None:
             "Dot": "・",
             "Tab": "\t",
             "Slash": "／",
+            "Pipe": "|",
         }
     )
 
