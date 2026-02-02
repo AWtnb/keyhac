@@ -2187,6 +2187,15 @@ def configure(keymap) -> None:
     )
     keymap_smoothcsv["C-S-F"] = SKKSender().invoke_emitThen(ImeStatus.off, "C-S-F")
 
+    def smoothcsv_sql_filter(km: WindowKeymap) -> None:
+        sender = DirectSender()
+        for n in "123456789":
+            cmd = f"c{n} LIKE '%%'"
+            km[n] = sender.invoke(cmd, "Left", "Left")
+
+    keymap_smoothcsv["U0-S"] = keymap.defineMultiStrokeKeymap()
+    smoothcsv_sql_filter(keymap_smoothcsv["U0-S"])
+
     # sumatra PDF
     keymap_sumatra = keymap.defineWindowKeymap(
         check_func=lambda wnd: wnd.getProcessName() == "SumatraPDF.exe"
