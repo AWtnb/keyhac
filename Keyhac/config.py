@@ -1931,11 +1931,6 @@ def configure(keymap) -> None:
                 "Chrome_WidgetWin_1",
                 r"C:\Program Files\Google\Chrome\Application\chrome.exe",
             ),
-            "N": (
-                "Notion.exe",
-                "Chrome_WidgetWin_1",
-                r"${LOCALAPPDATA}\Programs\Notion\Notion.exe",
-            ),
             "D": (
                 "vivaldi.exe",
                 "Chrome_WidgetWin_1",
