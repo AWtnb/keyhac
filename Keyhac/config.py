@@ -2131,6 +2131,7 @@ def configure(keymap) -> None:
         "C-F",
         "C-S-F",
         "C-S-E",
+        "C-S-O",
         "C-S-G",
         "RC-RS-X",
         "C-0",
@@ -2200,8 +2201,10 @@ def configure(keymap) -> None:
     # sumatra PDF (not focused on inputbox)
     keymap_sumatra_view = keymap.defineWindowKeymap(
         check_func=(
-            lambda wnd: wnd.getProcessName() == "SumatraPDF.exe"
-            and wnd.getClassName() != "Edit"
+            lambda wnd: (
+                wnd.getProcessName() == "SumatraPDF.exe"
+                and wnd.getClassName() != "Edit"
+            )
         )
     )
 
