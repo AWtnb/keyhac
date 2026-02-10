@@ -376,19 +376,6 @@ def configure(keymap) -> None:
 
     keymap_global["C-Q"] = safe_close
 
-    def apply_window_num_hotkey(keymap: WindowKeymap) -> None:
-        finger = VirtualFinger(10)
-
-        for n in "123456789":
-            taps = finger.compile(f"LWin-{n}", f"U-{n}")
-
-            def _keypress(taps: list[Tap] = taps) -> None:
-                finger.send_compiled(*taps)
-
-            keymap[f"LWin-{n}"] = _keypress
-
-    apply_window_num_hotkey(keymap_global)
-
     class SKKKey:
         toggle_vk = "(243)"
         kata = "Q"
