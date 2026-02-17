@@ -2127,6 +2127,7 @@ def configure(keymap) -> None:
         "C-A-AtMark",
         "C-1",
         "C-2",
+        "C-S-Enter",
     )
 
     # mery
