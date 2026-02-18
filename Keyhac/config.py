@@ -2116,6 +2116,7 @@ def configure(keymap) -> None:
     remap_vscode(
         "C-E",
         "C-F",
+        "C-T",
         "C-S-F",
         "C-S-E",
         "C-S-O",
