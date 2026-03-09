@@ -12,7 +12,7 @@ import webbrowser
 from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
 from pathlib import Path
-from typing import Callable, Union
+from typing import Callable
 from winreg import HKEY_CLASSES_ROOT, HKEY_CURRENT_USER, OpenKey, QueryValueEx
 
 import ckit  # type: ignore
@@ -24,9 +24,7 @@ from keyhac_listwindow import ListWindow  # type: ignore
 from keyhac import *  # type: ignore  # noqa: F403
 
 
-def smart_check_path(
-    path: Union[str, Path], timeout_sec: Union[int, float, None] = None
-) -> bool:
+def smart_check_path(path: str | Path, timeout_sec: int | float | None = None) -> bool:
     """CASE-INSENSITIVE path check with timeout"""
     p = path if isinstance(path, Path) else Path(path)
     try:
@@ -52,7 +50,7 @@ def open_vscode(*args: str) -> bool:
         return False
 
 
-def is_file_locked(path: Union[Path, str]) -> bool:
+def is_file_locked(path: Path | str) -> bool:
     try:
         with open(path, "a"):
             return False
@@ -92,7 +90,7 @@ CallbackFunc = Callable[[], None]
 
 
 def configure(keymap) -> None:
-    def balloon(message: Union[str, Exception], timeout_msec: int = 1500) -> None:
+    def balloon(message: str | Exception, timeout_msec: int = 1500) -> None:
         title = datetime.datetime.today().strftime("%Y%m%d-%H%M%S-%f")
         print(message)
         try:
@@ -270,9 +268,7 @@ def configure(keymap) -> None:
 
     class Tap:
         mod: int = 0
-        sequence: list[
-            Union[pyauto.Key, pyauto.KeyUp, pyauto.KeyDown, pyauto.Char]
-        ] = []
+        sequence: list[pyauto.Key | pyauto.KeyUp | pyauto.KeyDown | pyauto.Char] = []
 
         def __init__(self, name: str):
             up = None
@@ -347,7 +343,7 @@ def configure(keymap) -> None:
 
     def subthread_run(
         func: Callable,
-        finished: Union[Callable, None] = None,
+        finished: Callable | None = None,
         focus_changed_in_subthread: bool = False,
     ) -> None:
         finger = VirtualFinger(0)
@@ -536,8 +532,8 @@ def configure(keymap) -> None:
         @classmethod
         def paste(
             cls,
-            s: Union[str, None] = None,
-            format_func: Union[Callable[[str], str], None] = None,
+            s: str | None = None,
+            format_func: Callable[[str], str] | None = None,
         ) -> None:
             if s is None:
                 s = cls.get_string()
@@ -624,7 +620,7 @@ def configure(keymap) -> None:
         def count(self) -> int:
             return len(self.items)
 
-        def pop(self) -> Union[str, None]:
+        def pop(self) -> str | None:
             if not self.enabled:
                 balloon("FIFO mode is not enabled.")
                 return None
@@ -1842,7 +1838,7 @@ def configure(keymap) -> None:
     class PseudoCuteExec:
         @staticmethod
         def invoke(
-            exe_name: str, class_name: str = "", exe_path: str = ""
+            exe_name: str, class_name: str = "", exe_path: str | CallbackFunc = ""
         ) -> CallbackFunc:
             def _executor() -> None:
                 def _activate(job_item: ckit.JobItem) -> None:
@@ -1853,10 +1849,10 @@ def configure(keymap) -> None:
                     wnd = scanner.found
                     if wnd is None:
                         if exe_path:
-                            if isinstance(exe_path, Callable):
-                                exe_path()
-                            else:
+                            if isinstance(exe_path, str):
                                 shell_exec(exe_path)
+                            else:
+                                exe_path()
                     else:
                         job_item.result = WindowActivator(wnd).activate()
 
