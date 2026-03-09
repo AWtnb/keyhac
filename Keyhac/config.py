@@ -537,7 +537,7 @@ def configure(keymap) -> None:
         ) -> None:
             if s is None:
                 s = cls.get_string()
-                if 0x10000 < ord(s):
+                if any([0x10000 < ord(c) for c in s]):
                     # newer emoji
                     cls.send_paste_key()
                     return
