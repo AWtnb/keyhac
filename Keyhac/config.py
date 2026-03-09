@@ -537,6 +537,11 @@ def configure(keymap) -> None:
         ) -> None:
             if s is None:
                 s = cls.get_string()
+                if 0x10000 < ord(s):
+                    # newer emoji
+                    cls.send_paste_key()
+                    return
+
                 if len(s) < 1:
                     # empty clipboard text may means image inside clipboard.
                     cls.send_paste_key()
