@@ -1312,6 +1312,7 @@ def configure(keymap) -> None:
         {
             "U0-CloseBracket": ["[", "]"],
             "U1-9": ["(", ")"],
+            "S-U0-9": ['("', '")'],
             "U1-CloseBracket": ["{", "}"],
             "U0-Caret": ["~~", "~~"],
             "U1-Comma": ["<", ">"],
