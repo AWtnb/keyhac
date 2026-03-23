@@ -1258,8 +1258,8 @@ def configure(keymap) -> None:
     apply_fullwidth_circumfix_sender()
 
     class DirectSender:
-        def __init__(self) -> None:
-            self.skk = SKKSender(inter_stroke_pause=0)
+        def __init__(self, inter_stroke_pause: int = 0) -> None:
+            self.skk = SKKSender(inter_stroke_pause=inter_stroke_pause)
 
         def invoke(self, *sequence: str) -> CallbackFunc:
             seq = list(sequence)
@@ -2177,7 +2177,7 @@ def configure(keymap) -> None:
     keymap_smoothcsv["S-Space"] = DirectSender().invoke("S-Space")
 
     def smoothcsv_sql_filter(km: WindowKeymap) -> None:
-        sender = DirectSender()
+        sender = DirectSender(10)
         for n in "123456789":
             cmd = f"c{n} LIKE '%%'"
             km[n] = sender.invoke(cmd, "Left", "Left")
