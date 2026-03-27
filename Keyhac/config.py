@@ -674,7 +674,7 @@ def configure(keymap) -> None:
         def _paster() -> None:
             if keymap.fifo_stack.enabled and 0 < keymap.fifo_stack.count:
                 s = keymap.fifo_stack.pop()
-                ClipboardManager.paste(s)
+                ClipboardManager().paste(s)
             else:
                 if plaintext:
                     ClipboardManager().paste()
