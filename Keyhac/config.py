@@ -2186,10 +2186,10 @@ def configure(keymap) -> None:
     keymap_smoothcsv["S-Space"] = DirectSender().invoke("S-Space")
 
     def smoothcsv_sql_filter(km: WindowKeymap) -> None:
-        sender = DirectSender(10)
+        sender = DirectSender()
         for n in "123456789":
             cmd = f"c{n} LIKE '%%'"
-            km[n] = sender.invoke(cmd, "Left", "Left")
+            km[f"D-{n}"] = sender.invoke(cmd, "Left", "Left")
 
     keymap_smoothcsv["U0-S"] = keymap.defineMultiStrokeKeymap()
     smoothcsv_sql_filter(keymap_smoothcsv["U0-S"])
