@@ -1237,7 +1237,9 @@ def configure(keymap) -> None:
     # select-to-left with ime control
     keymap_global["U1-B"] = SKKSender().invoke_emitThen(ImeStatus.on, "S-Left")
     keymap_global["LS-U1-B"] = SKKSender().invoke_emitThen(ImeStatus.on, "S-Right")
-    keymap_global["U1-Space"] = SKKSender().invoke_emitThen(ImeStatus.on, "C-S-Left")
+    keymap_global["U1-Space"] = SKKSender().invoke_emitThen(
+        ImeStatus.on, "C-S-Left", "C-J"
+    )
     keymap_global["U1-4"] = SKKSender().under_kanamode(SKKKey.convpoint, "S-4", "Tab")
 
     def apply_fullwidth_sender() -> None:
