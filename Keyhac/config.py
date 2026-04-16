@@ -2554,9 +2554,8 @@ def configure(keymap) -> None:
 
     ClipboardFormatMenu.set_formatter(
         {
-            "swap tabs": FormatTools.swap_tabs,
-            "to code": lambda c: f"`{c}`",
             "to codeblock": lambda c: f"```\n{c}\n```\n",
+            "swap tabs": FormatTools.swap_tabs,
             "trim space on line head": FormatTools.trim_space_on_line_head,
             "my markdown frontmatter": lambda _: md_frontmatter(),
             "FIFO: join items with Tab": lambda _: keymap.fifo_stack.join_items("\t"),
