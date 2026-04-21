@@ -1235,9 +1235,9 @@ def configure(keymap) -> None:
     )
 
     # select-to-left with ime control
-    keymap_global["U1-B"] = SKKSender().invoke_emitThen(ImeStatus.on, "S-Left")
-    keymap_global["LS-U1-B"] = SKKSender().invoke_emitThen(ImeStatus.on, "S-Right")
-    keymap_global["U1-Space"] = SKKSender().invoke_emitThen(ImeStatus.on, "C-S-Left")
+    keymap_global["U1-B"] = SKKSender().under_kanamode("S-Left")
+    keymap_global["LS-U1-B"] = SKKSender().under_kanamode("S-Right")
+    keymap_global["U1-Space"] = SKKSender().under_kanamode("C-S-Left")
     keymap_global["U1-4"] = SKKSender().under_kanamode(SKKKey.convpoint, "S-4", "Tab")
 
     def apply_fullwidth_sender() -> None:
@@ -1904,7 +1904,7 @@ def configure(keymap) -> None:
             ),
             "U1-P": ("SumatraPDF.exe", "SUMATRA_PDF_FRAME"),
             "U1-K": ("KIRI10.exe", "*"),
-            "U1-3": ("smoothcsv-app.exe", "*"),
+            "C-U1-S": ("smoothcsv-app.exe", "*"),
             "LC-U1-M": (
                 "Mery.exe",
                 "TChildForm",
