@@ -740,53 +740,6 @@ def configure(keymap) -> None:
 
     TEMP_FILE_PREFIX = "keyhac_temp_"
 
-    def diffinity() -> None:
-        exe_path = shutil.which("Diffinity")
-        if exe_path is None:
-            print("Diffinity not found.")
-            return
-
-        exe_path = resolve_scoop_shim(exe_path)
-
-        def _write_to_tempfile(content: str) -> str:
-            try:
-                tf = tempfile.NamedTemporaryFile(
-                    mode="w",
-                    encoding="utf-8",
-                    delete=False,
-                    suffix=".txt",
-                    prefix=TEMP_FILE_PREFIX,
-                )
-                tf.write(content)
-                tf.close()
-                return tf.name
-            except Exception as e:
-                print(e)
-                return ""
-
-        def _ivoke_diffinity(job_item: ckit.JobItem) -> None:
-            origin = job_item.origin
-            copied = job_item.copied
-            if len(origin.strip()) == 0 or len(copied.strip()) == 0:
-                return
-
-            def __write(job_item: ckit.JobItem) -> None:
-                job_item.org_temp_path = _write_to_tempfile(origin)
-                job_item.cop_temp_path = _write_to_tempfile(copied)
-
-            def __finished(job_item: ckit.JobItem) -> None:
-                p1 = job_item.org_temp_path
-                p2 = job_item.cop_temp_path
-                if p1 == "" or p2 == "":
-                    return
-                shell_exec(exe_path, p1, p2)
-
-            subthread_run(__write, __finished)
-
-        ClipboardManager().after_register(_ivoke_diffinity)
-
-    keymap_global["U1-5"] = diffinity
-
     def remove_tempfiles() -> None:
         temp_dir = tempfile.gettempdir()
         count = 0
