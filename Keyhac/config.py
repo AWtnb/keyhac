@@ -235,9 +235,6 @@ def configure(keymap) -> None:
             "S-U0-C": ("S-Apps"),
             # rename
             "U0-N": ("F2"),
-            # print
-            "F1": ("C-P"),
-            "U1-F1": ("F1"),
         },
     )
 
