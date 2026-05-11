@@ -2549,6 +2549,7 @@ def configure(keymap) -> None:
     )
     ClipboardFormatMenu.set_replacer(
         {
+            "backslash to slash": (r"\\", "/"),
             "escape backslash": (r"\\", r"\\\\"),
             "escape double-quotation": (r"\"", r'\\"'),
             "remove double-quotation": (r'"', ""),
