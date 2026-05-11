@@ -207,7 +207,7 @@ def configure(keymap) -> None:
         keymap_global,
         {
             # focus taskbar
-            "U1-T": ("LWin-T"),
+            "LC-U1-T": ("LWin-T"),
             # send n and space
             "LS-U0-N": ("N", "N", "Space"),
             # delete around cursor
@@ -1213,9 +1213,9 @@ def configure(keymap) -> None:
             "U1-2": ["\u201c", "\u201d"],  # DOUBLE QUOTATION MARK “”
             "U1-7": ["\u2018", "\u2019"],  # SINGLE QUOTATION MARK ‘’
             "U1-8": ["\uff08", "\uff09"],  # FULLWIDTH PARENTHESIS （）
-            "U0-Y": ["\u3008", "\u3009"],  # ANGLE BRACKET
-            "U1-Y": ["\u300a", "\u300b"],  # DOUBLE ANGLE BRACKET
-            "S-U1-8": ["\u3014", "\u3015"],  # TORTOISE BRACKET
+            "U0-Y": ["\u3008", "\u3009"],  # ANGLE BRACKET 〈〉
+            "U1-Y": ["\u300a", "\u300b"],  # DOUBLE ANGLE BRACKET 《》
+            "S-U1-8": ["\u3014", "\u3015"],  # TORTOISE BRACKET 〔〕
             "U1-OpenBracket": ["\uff3b", "\uff3d"],  # FULLWIDTH SQUARE BRACKET ［］
         }.items():
             keymap_global[key] = sender.invoke(
