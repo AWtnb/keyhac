@@ -2153,6 +2153,17 @@ def configure(keymap) -> None:
     keymap_smoothcsv["U0-S"] = keymap.defineMultiStrokeKeymap()
     smoothcsv_sql_filter(keymap_smoothcsv["U0-S"])
 
+    def copy_and_unselect_line() -> None:
+        finger = VirtualFinger()
+        taps = VirtualFinger.compile("Up", "Down")
+
+        def _unselect(_) -> None:
+            finger.send_compiled(*taps)
+
+        ClipboardManager().after_register(_unselect)
+
+    keymap_smoothcsv["U1-C"] = copy_and_unselect_line
+
     # sumatra PDF
     keymap_sumatra = keymap.defineWindowKeymap(
         check_func=lambda wnd: wnd.getProcessName() == "SumatraPDF.exe"
