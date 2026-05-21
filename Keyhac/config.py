@@ -614,9 +614,9 @@ def configure(keymap) -> None:
             else:
                 balloon("FIFO mode is not enabled.")
 
-        def bulk_paste(self) -> str:
+        def bulk_paste(self, delimiter: str) -> str:
             if self.enabled:
-                s = "\n".join(self.items)
+                s = delimiter.join(self.items)
                 self.reset()
                 self._disable()
                 return s
@@ -2521,7 +2521,10 @@ def configure(keymap) -> None:
             "FIFO: join items with LineBreak": lambda _: keymap.fifo_stack.join_items(
                 "\n"
             ),
-            "FIFO: bulk paste": lambda _: keymap.fifo_stack.bulk_paste(),
+            "FIFO: bulk paste": lambda _: keymap.fifo_stack.bulk_paste("\n"),
+            "FIFO: bulk paste (join with space)": lambda _: (
+                keymap.fifo_stack.bulk_paste(" ")
+            ),
             "to lowercase": lambda c: c.lower(),
             "to uppercase": lambda c: c.upper(),
             "to slack feed subscribe": lambda c: "/feed subscribe {}".format(c),
