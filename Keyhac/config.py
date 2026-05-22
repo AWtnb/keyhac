@@ -2251,6 +2251,10 @@ def configure(keymap) -> None:
         def to_full_brackets(cls, s: str) -> str:
             return s.translate(str.maketrans(cls.half_brackets, cls.full_brackets))
 
+    keymap_global["U1-W"] = lambda: ClipboardManager().paste(
+        format_func=CharWidth().to_full_letter
+    )
+
     def format_zoom_invitation(s: str) -> str:
         def _is_ignorable(line: str) -> bool:
             phrases = [
