@@ -2252,10 +2252,10 @@ def configure(keymap) -> None:
             return s.translate(str.maketrans(cls.half_brackets, cls.full_brackets))
 
     keymap_global["U1-W"] = lambda: ClipboardManager().paste(
-        format_func=CharWidth().to_full_letter
+        format_func=CharWidth(True).to_full_letter
     )
     keymap_global["LS-U1-W"] = lambda: ClipboardManager().paste(
-        format_func=CharWidth().to_half_letter
+        format_func=CharWidth(True).to_half_letter
     )
 
     def format_zoom_invitation(s: str) -> str:
