@@ -468,7 +468,7 @@ def configure(keymap) -> None:
             self.enable()
             self._finger.send_compiled(*self.taps_to_reconv)
 
-    def apply_ime_control() -> None:
+    def bind_ime_control() -> None:
         control = ImeControl(0)
         for key, func in {
             "U1-J": control.to_skk_kana,
@@ -486,7 +486,7 @@ def configure(keymap) -> None:
         }.items():
             keymap_global[key] = func
 
-    apply_ime_control()
+    bind_ime_control()
 
     class ClipboardManager:
         tap_to_register: Tap
@@ -724,7 +724,7 @@ def configure(keymap) -> None:
             return _paste
 
         @classmethod
-        def apply(cls, km: WindowKeymap, key: str) -> None:
+        def bind(cls, km: WindowKeymap, key: str) -> None:
             for mod1, no_space in {
                 "": False,
                 "C-": True,
@@ -736,7 +736,7 @@ def configure(keymap) -> None:
                     km[mod1 + mod2 + key] = cls.invoke_paster(no_space, no_break)
 
     keymap_global["U1-V"] = keymap.defineMultiStrokeKeymap()
-    StrCleaner.apply(keymap_global["U1-V"], "V")
+    StrCleaner.bind(keymap_global["U1-V"], "V")
 
     TEMP_FILE_PREFIX = "keyhac_temp_"
 
@@ -792,12 +792,12 @@ def configure(keymap) -> None:
             return _paster
 
         @classmethod
-        def apply(cls, km: WindowKeymap, key: str) -> None:
+        def bind(cls, km: WindowKeymap, key: str) -> None:
             km[key] = cls.invoke_paster(cls.simple_quote)
             km["C-" + key] = cls.invoke_paster(cls.as_single_line)
             km["S-" + key] = cls.invoke_paster(cls.skip_blank_line)
 
-    Quoter.apply(keymap_global, "U1-Q")
+    Quoter.bind(keymap_global, "U1-Q")
 
     # open url in browser
     def open_selected_url() -> None:
@@ -863,7 +863,7 @@ def configure(keymap) -> None:
     # set window position
     ################################
 
-    def apply_window_mover(km: WindowKeymap) -> None:
+    def bind_window_mover(km: WindowKeymap) -> None:
         for key, delta in {
             "Left": (-10, 0),
             "Right": (+10, 0),
@@ -874,7 +874,7 @@ def configure(keymap) -> None:
             for mod, scale in {"": 15, "S-": 5, "C-": 5, "S-C-": 1}.items():
                 km[mod + "U0-" + key] = keymap.MoveWindowCommand(x * scale, y * scale)
 
-    apply_window_mover(keymap_global)
+    bind_window_mover(keymap_global)
 
     keymap_global["U1-L"] = "LWin-Right"
     keymap_global["U1-H"] = "LWin-Left"
@@ -922,7 +922,7 @@ def configure(keymap) -> None:
                 delta = delta * -1
             return self.move_edge(toward, delta)
 
-    def apply_window_snapper(km: WindowKeymap) -> None:
+    def bind_window_snapper(km: WindowKeymap) -> None:
         altkey_stat = ["", "LA-", "RA-"]
         scale_mapping = {
             "": 1 / 2,
@@ -974,9 +974,9 @@ def configure(keymap) -> None:
 
                     km[alt + area_mod + key] = _invoke()
 
-    apply_window_snapper(keymap_global["U1-M"])
+    bind_window_snapper(keymap_global["U1-M"])
 
-    def apply_maximized_window_snapper() -> None:
+    def bind_maximized_window_snapper() -> None:
         for key in ["0", "1", "2"]:
             monitor_idx = int(key)
 
@@ -1007,7 +1007,7 @@ def configure(keymap) -> None:
 
             keymap_global["U1-M"][str(key)] = _snap
 
-    apply_maximized_window_snapper()
+    bind_maximized_window_snapper()
 
     class WndShrinker:
         @staticmethod
@@ -1028,7 +1028,7 @@ def configure(keymap) -> None:
             return _snapper
 
         @classmethod
-        def apply(cls, km: WindowKeymap) -> None:
+        def bind(cls, km: WindowKeymap) -> None:
             for key, toward in {
                 "H": RectEdge.left,
                 "L": RectEdge.right,
@@ -1037,7 +1037,7 @@ def configure(keymap) -> None:
             }.items():
                 km["U1-" + key] = cls.invoke_snapper(toward)
 
-    WndShrinker.apply(keymap_global["U1-M"])
+    WndShrinker.bind(keymap_global["U1-M"])
 
     class MonitorCenterAvoider:
         @staticmethod
@@ -1190,7 +1190,7 @@ def configure(keymap) -> None:
     keymap_global["U1-Space"] = SKKSender().under_kanamode("C-S-Left")
     keymap_global["U1-4"] = SKKSender().under_kanamode(SKKKey.convpoint, "S-4", "Tab")
 
-    def apply_fullwidth_sender() -> None:
+    def bind_fullwidth_sender() -> None:
         sender = SKKSender()
         for key, symbol in {
             "S-U0-Colon": "\uff1a",  # FULLWIDTH COLON
@@ -1202,9 +1202,9 @@ def configure(keymap) -> None:
                 sender.control.to_skk_full_latin, symbol, SKKKey.kana
             )
 
-    apply_fullwidth_sender()
+    bind_fullwidth_sender()
 
-    def apply_fullwidth_circumfix_sender() -> None:
+    def bind_fullwidth_circumfix_sender() -> None:
         sender = SKKSender()
         for key, pair in {
             "U0-8": ["\u300e", "\u300f"],  # WHITE CORNER BRACKET 『』
@@ -1222,7 +1222,7 @@ def configure(keymap) -> None:
                 sender.control.to_skk_full_latin, *pair, "Left", SKKKey.kana
             )
 
-    apply_fullwidth_circumfix_sender()
+    bind_fullwidth_circumfix_sender()
 
     class DirectSender:
         def __init__(self, inter_stroke_pause: int = 0) -> None:
@@ -1650,7 +1650,7 @@ def configure(keymap) -> None:
 
             return _searcher
 
-        def apply(self, km: WindowKeymap) -> None:
+        def bind(self, km: WindowKeymap) -> None:
             for shift_key in ("", "S-"):
                 for ctrl_key in ("", "C-"):
                     is_strict = 0 < len(shift_key)
@@ -1681,7 +1681,7 @@ def configure(keymap) -> None:
             "Y": "https://duckduckgo.com/?q=site%3Ayuhikaku.co.jp%20{}",
             "W": "https://www.worldcat.org/search?q={}",
         }
-    ).apply(keymap_global)
+    ).bind(keymap_global)
 
     ################################
     # activate window
@@ -1839,12 +1839,12 @@ def configure(keymap) -> None:
             return _executor
 
         @classmethod
-        def apply(cls, wnd_keymap: WindowKeymap, remap_table: dict = {}) -> None:
+        def bind(cls, wnd_keymap: WindowKeymap, remap_table: dict = {}) -> None:
             for key, params in remap_table.items():
                 func = cls.invoke(*params)
                 wnd_keymap[key] = func
 
-    PseudoCuteExec.apply(
+    PseudoCuteExec.bind(
         keymap_global,
         {
             "U1-F": (
@@ -1874,7 +1874,7 @@ def configure(keymap) -> None:
     )
 
     keymap_global["U1-C"] = keymap.defineMultiStrokeKeymap()
-    PseudoCuteExec.apply(
+    PseudoCuteExec.bind(
         keymap_global["U1-C"],
         {
             "Space": (
