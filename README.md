@@ -21,14 +21,5 @@ Running [`ScheduledTask/install.ps1`](./ScheduledTask/install.ps1) with `keyhac.
 .\ScheduledTask\install.ps1 "$env:USERPROFILE\Personal\tools\portable_apps\keyhac\keyhac.exe"
 ```
 
-Running [`set-startmenu.ps1`](./set-startmenu.ps1) makes start menu to edit this repository on VSCode.
-
-With [Syncthing](https://syncthing.net/), append below on `.stignore` to skip syncing local history.
-
-```
-(?d)keyhac.ini
-```
-
-
 
 
