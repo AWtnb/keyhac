@@ -224,7 +224,6 @@ def configure(keymap) -> None:
             "U1-S": ("Slash"),
             "U0-4": ("S-4", "S-BackSlash"),
             "U0-Enter": ("Period"),
-            "U0-U": ("S-BackSlash"),
             "U0-Z": ("Minus"),
             "U1-X": ("S-1"),
             # Insert line
@@ -1176,6 +1175,9 @@ def configure(keymap) -> None:
                     self.finger.send_compiled(toggle_tap)
 
             return _sender
+
+    keymap_global["U0-P"] = SKKSender().under_kanamode("・")
+    keymap_global["U0-U"] = SKKSender().invoke_emitThen(ImeStatus.off, "S-BackSlash")
 
     keymap_global["U0-AtMark"] = SKKSender().invoke_emitThen(
         ImeStatus.off, "LS-AtMark", "LS-AtMark", "Left"
