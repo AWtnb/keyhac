@@ -544,7 +544,7 @@ def configure(keymap) -> None:
                     return
 
                 if len(s) < 1:
-                    # empty clipboard text may means image inside clipboard.
+                    # empty clipboard could be image.
                     self.send_paste_key()
                     return
             if format_func is not None:
@@ -674,13 +674,13 @@ def configure(keymap) -> None:
     keymap_global["LC-C"] = smart_copy(False)
     keymap_global["LC-X"] = smart_copy(True)
 
-    def smart_paste(plaintext: bool) -> CallbackFunc:
+    def smart_paste(strip_decolation: bool) -> CallbackFunc:
         def _paster() -> None:
             if keymap.fifo_stack.enabled and 0 < keymap.fifo_stack.count:
                 s = keymap.fifo_stack.pop()
                 ClipboardManager().paste(s)
             else:
-                if plaintext:
+                if strip_decolation:
                     ClipboardManager().paste()
                 else:
                     ClipboardManager().send_paste_key()
