@@ -2143,7 +2143,9 @@ def configure(keymap) -> None:
         class_name="Chrome_WidgetWin_1",
         window_text="tauri.localhost",
     )
-    keymap_smoothcsv["C-S-F"] = SKKSender().invoke_emitThen(ImeStatus.off, "C-S-F")
+    keymap_smoothcsv["C-S-F"] = SKKSender(10).invoke_emitThen(
+        ImeStatus.off, "C-S-F", "C-A"
+    )
     keymap_smoothcsv["S-Space"] = DirectSender().invoke("S-Space")
 
     def smoothcsv_sql_filter(km: WindowKeymap) -> None:
