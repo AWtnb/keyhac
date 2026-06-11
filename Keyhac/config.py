@@ -221,6 +221,7 @@ def configure(keymap) -> None:
             # line selection
             "U1-A": ("End", "S-Home"),
             # punctuation
+            "U0-U": ("S-BackSlash"),
             "U1-S": ("Slash"),
             "U0-4": ("S-4", "S-BackSlash"),
             "U0-Enter": ("Period"),
@@ -1177,7 +1178,6 @@ def configure(keymap) -> None:
             return _sender
 
     keymap_global["U0-P"] = SKKSender().under_kanamode("・")
-    keymap_global["U0-U"] = SKKSender().invoke_emitThen(ImeStatus.off, "S-BackSlash")
 
     keymap_global["U0-AtMark"] = SKKSender().invoke_emitThen(
         ImeStatus.off, "LS-AtMark", "LS-AtMark", "Left"
