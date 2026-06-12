@@ -2147,6 +2147,7 @@ def configure(keymap) -> None:
         ImeStatus.off, "C-S-F", "C-A"
     )
     keymap_smoothcsv["S-Space"] = DirectSender().invoke("S-Space")
+    keymap_smoothcsv["S-U0-N"] = "F2", "Home"
 
     def smoothcsv_sql_filter(km: WindowKeymap) -> None:
         sender = DirectSender(20)
