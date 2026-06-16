@@ -1293,6 +1293,27 @@ def configure(keymap) -> None:
     # web search
     ################################
 
+    class Radicals:
+        mapping = {
+            "\u2e92": "\u5df3",
+            "\u2e9f": "\u6bcd",
+            "\u2ea0": "\u6c11",
+            "\u2ec4": "\u897f",
+            "\u2ed1": "\u9577",
+            "\u2ed8": "\u9752",
+            "\u2ee4": "\u9b3c",
+            "\u2ee8": "\u9ea6",
+            "\u2ee9": "\u9ec4",
+            "\u2eeb": "\u6589",
+            "\u2eed": "\u6b6f",
+            "\u2eef": "\u7adc",
+            "\u2ef2": "\u4e80",
+        }
+
+        @classmethod
+        def fix(cls, s: str) -> str:
+            return s.translate(str.maketrans(cls.mapping))
+
     class KangxiRadicals:
         mapping = {
             "\u2f00": "\u4e00",
@@ -1596,7 +1617,7 @@ def configure(keymap) -> None:
             return ""
 
         def fix_kangxi(self) -> None:
-            self._query = KangxiRadicals.fix(self._query)
+            self._query = Radicals.fix(KangxiRadicals.fix(self._query))
 
         def remove_honorific(self) -> None:
             for honor in ["先生", "様"]:
