@@ -1177,6 +1177,8 @@ def configure(keymap) -> None:
 
             return _sender
 
+    keymap_global["Yen"] = SKKSender().invoke_emitThen(ImeStatus.off, "Yen")
+
     keymap_global["U0-P"] = SKKSender().under_kanamode("・")
 
     keymap_global["U0-AtMark"] = SKKSender().invoke_emitThen(
