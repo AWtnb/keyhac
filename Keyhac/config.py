@@ -2167,19 +2167,12 @@ def configure(keymap) -> None:
         window_text="tauri.localhost",
     )
     keymap_smoothcsv["C-S-F"] = SKKSender(20).invoke_emitThen(
-        ImeStatus.off, "C-S-F", "C-A"
+        ImeStatus.off, "C-S-F", "S-End"
     )
     keymap_smoothcsv["S-Space"] = DirectSender().invoke("S-Space")
     keymap_smoothcsv["S-U0-N"] = lambda: VirtualFinger(20).send("F2", "Home")
 
-    def smoothcsv_sql_filter(km: WindowKeymap) -> None:
-        sender = DirectSender(20)
-        for n in "123456789":
-            cmd = f"c{n} LIKE "
-            km[f"{n}"] = sender.invoke(cmd)
-
-    keymap_smoothcsv["U0-S"] = keymap.defineMultiStrokeKeymap()
-    smoothcsv_sql_filter(keymap_smoothcsv["U0-S"])
+    keymap_smoothcsv["A-Q"] = DirectSender().invoke(" LIKE '%%'", "Left", "Left")
 
     def copy_and_unselect_line() -> None:
         finger = VirtualFinger()
