@@ -2078,9 +2078,9 @@ def configure(keymap) -> None:
     # browser
     keymap_browser = keymap.defineWindowKeymap(check_func=CheckWnd.is_browser)
     keymap_browser["LC-LS-W"] = "A-Left"
-    keymap_browser["LC-F"] = SKKSender().invoke_emitThen(ImeStatus.off, "C-F")
-    keymap_browser["LC-L"] = SKKSender().invoke_emitThen(ImeStatus.off, "C-L")
-    keymap_browser["LC-N"] = SKKSender().invoke_emitThen(ImeStatus.off, "C-N")
+    keymap_browser["LC-F"] = SKKSender(40).invoke_emitThen(ImeStatus.off, "C-F")
+    keymap_browser["LC-L"] = SKKSender(40).invoke_emitThen(ImeStatus.off, "C-L")
+    keymap_browser["LC-D"] = SKKSender(40).invoke_emitThen(ImeStatus.off, "C-D")
 
     # intra
     keymap_intra = keymap.defineWindowKeymap(exe_name="APARClientAWS.exe")
