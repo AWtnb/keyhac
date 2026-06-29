@@ -2166,9 +2166,7 @@ def configure(keymap) -> None:
         class_name="Chrome_WidgetWin_1",
         window_text="tauri.localhost",
     )
-    keymap_smoothcsv["C-S-F"] = SKKSender(20).invoke_emitThen(
-        ImeStatus.off, "C-S-F", "S-End"
-    )
+    keymap_smoothcsv["C-S-F"] = SKKSender(20).invoke_emitThen(ImeStatus.off, "C-S-F")
     keymap_smoothcsv["S-Space"] = DirectSender().invoke("S-Space")
     keymap_smoothcsv["S-U0-N"] = lambda: VirtualFinger(20).send("F2", "Home")
 
