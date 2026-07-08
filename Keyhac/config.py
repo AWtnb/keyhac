@@ -1219,7 +1219,7 @@ def configure(keymap) -> None:
             "U1-8": ["\uff08", "\uff09"],  # FULLWIDTH PARENTHESIS （）
             "U0-Y": ["\u3008", "\u3009"],  # ANGLE BRACKET 〈〉
             "U1-Y": ["\u300a", "\u300b"],  # DOUBLE ANGLE BRACKET 《》
-            "S-U1-8": ["\u3014", "\u3015"],  # TORTOISE BRACKET 〔〕
+            "U1-T": ["\u3014", "\u3015"],  # TORTOISE BRACKET 〔〕
             "U1-OpenBracket": ["\uff3b", "\uff3d"],  # FULLWIDTH SQUARE BRACKET ［］
         }.items():
             keymap_global[key] = sender.invoke(
@@ -1286,8 +1286,8 @@ def configure(keymap) -> None:
             "S-U0-9": ['("', '")'],
             "U1-CloseBracket": ["{", "}"],
             "U0-Caret": ["~~", "~~"],
-            "U1-Comma": ["<", ">"],
-            "LS-U1-Comma": ["</", ">"],
+            "LC-U0-Comma": ["<", ">"],
+            "LC-U0-Period": ["</", ">"],
         },
     )
 
