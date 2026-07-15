@@ -1286,8 +1286,8 @@ def configure(keymap) -> None:
             "S-U0-9": ['("', '")'],
             "U1-CloseBracket": ["{", "}"],
             "U0-Caret": ["~~", "~~"],
-            "LC-U0-Comma": ["<", ">"],
-            "LC-U0-Period": ["</", ">"],
+            "U0-T": ["<", ">"],
+            "LC-U0-T": ["</", ">"],
         },
     )
 
