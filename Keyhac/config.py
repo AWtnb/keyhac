@@ -2178,7 +2178,7 @@ def configure(keymap) -> None:
     keymap_smoothcsv["S-Space"] = DirectSender().invoke("S-Space")
     keymap_smoothcsv["S-U0-N"] = lambda: VirtualFinger(20).send("F2", "Home")
 
-    keymap_smoothcsv["A-Q"] = DirectSender(20).invoke(" LIKE '%%'", "Left", "Left")
+    keymap_smoothcsv["F9"] = DirectSender(20).invoke(" LIKE ", "'%%'", "Left", "Left")
 
     def copy_and_unselect_line() -> None:
         finger = VirtualFinger()
