@@ -1285,6 +1285,12 @@ def configure(keymap) -> None:
             "U1-9": ["(", ")"],
             "S-U0-9": ['("', '")'],
             "U1-CloseBracket": ["{", "}"],
+        },
+    )
+
+    DirectSender(20).bind_circumfix(
+        keymap_global,
+        {
             "U0-Caret": ["~~", "~~"],
             "U0-T": ["<", ">"],
             "LC-U0-T": ["</", ">"],
