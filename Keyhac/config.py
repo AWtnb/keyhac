@@ -2079,6 +2079,7 @@ def configure(keymap) -> None:
     keymap_browser["LC-F"] = SKKSender(40).invoke_emitThen(ImeStatus.off, "C-F")
     keymap_browser["LC-L"] = SKKSender(40).invoke_emitThen(ImeStatus.off, "C-L")
     keymap_browser["LC-D"] = SKKSender(40).invoke_emitThen(ImeStatus.off, "C-D")
+    keymap_browser["LC-K"] = SKKSender(40).invoke_emitThen(ImeStatus.off, "C-K")
 
     # intra
     keymap_intra = keymap.defineWindowKeymap(exe_name="APARClientAWS.exe")
