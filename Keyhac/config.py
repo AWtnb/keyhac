@@ -1263,7 +1263,7 @@ def configure(keymap) -> None:
             "U0-Colon": ("Colon",),
             "U0-Slash": ("Slash",),
             "U1-Minus": ("Minus",),
-            "S-U0-U": ("Minus",),
+            "LC-U0-U": ("Minus",),
             "U0-Comma": ("Comma",),
             "U0-Period": ("Period",),
             "S-U0-Enter": (
