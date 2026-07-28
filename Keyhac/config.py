@@ -1198,7 +1198,6 @@ def configure(keymap) -> None:
         sender = SKKSender()
         for key, symbol in {
             "S-U0-Colon": "\uff1a",  # FULLWIDTH COLON
-            "U0-SemiColon": "\uff1b",  # FULLWIDTH SEMICOLON
             "S-U0-Comma": "\uff0c",  # FULLWIDTH COMMA
             "S-U0-Period": "\uff0e",  # FULLWIDTH PERIOD
         }.items():
