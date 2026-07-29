@@ -1261,6 +1261,7 @@ def configure(keymap) -> None:
     DirectSender().bind(
         keymap_global,
         {
+            "Decimal": ("Period",),
             "U0-1": ("S-1",),
             "U0-Colon": ("Colon",),
             "U0-Slash": ("Slash",),
