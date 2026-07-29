@@ -301,6 +301,11 @@ def configure(keymap) -> None:
         def __init__(self, inter_stroke_pause: int = 10) -> None:
             self._inter_stroke_pause = inter_stroke_pause
 
+            self._mod_release_taps = []
+            for mod in ["Shift", "Alt", "Ctrl"]:
+                for pos in ["", "L", "R"]:
+                    self._mod_release_taps.append(Tap(f"U-{pos}{mod}"))
+
         @staticmethod
         def begin() -> None:
             keymap.beginInput()
@@ -319,24 +324,21 @@ def configure(keymap) -> None:
             self.send_compiled(*taps)
 
         def send_compiled(self, *taps: Tap) -> None:
+            self.begin()
+
+            for t in self._mod_release_taps:
+                for x in t.sequence:
+                    keymap.input_seq.append(x)
+
             for t in taps:
                 delay(self._inter_stroke_pause)
-                self.begin()
                 keymap.setInput_Modifier(t.mod)
                 for x in t.sequence:
                     keymap.input_seq.append(x)
-                self.end()
+
+            self.end()
 
     keymap.magical_key = VirtualFinger.compile("LWin-S-M", "U-Alt")
-
-    def mod_release_sequence() -> list[Tap]:
-        seq = []
-        for mod in ["Shift", "Alt", "Ctrl"]:
-            for pos in ["", "L", "R"]:
-                seq.append("U-{}{}".format(pos, mod))
-        return VirtualFinger.compile(*seq)
-
-    keymap.mod_release_sequence = mod_release_sequence()
 
     def subthread_run(
         func: Callable,
