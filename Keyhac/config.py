@@ -301,10 +301,8 @@ def configure(keymap) -> None:
         def __init__(self, inter_stroke_pause: int = 10) -> None:
             self._inter_stroke_pause = inter_stroke_pause
 
-            self._mod_release_taps = []
-            for mod in ["Shift", "Alt", "Ctrl"]:
-                for pos in ["", "L", "R"]:
-                    self._mod_release_taps.append(Tap(f"U-{pos}{mod}"))
+            mod_keys = ["Shift", "Alt", "Ctrl"]
+            self._mod_release_taps = [Tap(f"U-{mod}") for mod in mod_keys]
 
         @staticmethod
         def begin() -> None:
