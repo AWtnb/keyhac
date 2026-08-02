@@ -19,7 +19,7 @@ from keyhac_listwindow import ListWindow  # type: ignore
 
 from keyhac import *  # type: ignore  # noqa: F403
 
-from .tools import virtual_finger
+from .tools import subthread, virtual_finger
 from .tools.common import (
     CallbackFunc,
     balloon,
@@ -39,6 +39,7 @@ from .tools.virtual_finger import Tap
 def setup(keymap) -> None:
 
     virtual_finger.keymap = keymap
+    subthread.keymap = keymap
 
     ################################
     # general setting
@@ -152,30 +153,6 @@ def setup(keymap) -> None:
     keymap_global["U1-Left"] = keymap.MouseHorizontalWheelCommand(-1.0)
     keymap_global["U1-Right"] = keymap.MouseHorizontalWheelCommand(1.0)
 
-    ################################
-    # functions for custom hotkey
-    ################################
-
-    MAGICAL_KEY = virtual_finger.VirtualFinger().compile("LWin-S-M", "U-Alt")
-
-    def subthread_run(
-        func: Callable,
-        finished: Callable | None = None,
-        focus_changed_in_subthread: bool = False,
-    ) -> None:
-
-        finger = virtual_finger.VirtualFinger(0)
-        if focus_changed_in_subthread:
-            finger.send_compiled(*MAGICAL_KEY)
-
-        def _finished(job_item: ckit.JobItem) -> None:
-            keymap.setInput_Modifier(0)
-            if finished is not None:
-                finished(job_item)
-
-        job = ckit.JobItem(func, _finished)
-        ckit.JobQueue.defaultQueue().enqueue(job)
-
     def safe_close() -> None:
         finger = virtual_finger.VirtualFinger(0)
         close_key = finger.compile("A-F4")
@@ -186,7 +163,7 @@ def setup(keymap) -> None:
         def _close(_) -> None:
             finger.send_compiled(*close_key)
 
-        subthread_run(_wait, _close)
+        subthread.run(_wait, _close)
 
     keymap_global["C-Q"] = safe_close
 
@@ -393,7 +370,7 @@ def setup(keymap) -> None:
                         job_item.copied = s
                         break
 
-            subthread_run(_watch_clipboard, deferred)
+            subthread.run(_watch_clipboard, deferred)
 
     class FIFOStack:
         def __init__(self) -> None:
@@ -652,7 +629,7 @@ def setup(keymap) -> None:
             ts = datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S")
             balloon(keymap, "{} reloaded config.py".format(ts))
 
-        subthread_run(_wait, _reload)
+        subthread.run(_wait, _reload)
 
     keymap_global["U1-F12"] = reload_config
 
@@ -671,7 +648,7 @@ def setup(keymap) -> None:
             if not result:
                 shell_exec(dir_path)
 
-        subthread_run(_open)
+        subthread.run(_open)
 
     keymap.editor = lambda _: open_keyhac_repo()
 
@@ -789,7 +766,7 @@ def setup(keymap) -> None:
                                 if wnd.getRect() != rect:
                                     wnd.setRect(rect)
 
-                            subthread_run(_job_snap, _job_finished)
+                            subthread.run(_job_snap, _job_finished)
 
                         return __snap
 
@@ -824,7 +801,7 @@ def setup(keymap) -> None:
                 def __maximize(job_item: ckit.JobItem) -> None:
                     job_item.wnd.maximize()
 
-                subthread_run(__snap, __maximize)
+                subthread.run(__snap, __maximize)
 
             keymap_global["U1-M"][str(key)] = _snap
 
@@ -844,7 +821,7 @@ def setup(keymap) -> None:
                         delay()
                     wnd.setRect(resized)
 
-                subthread_run(__snap)
+                subthread.run(__snap)
 
             return _snapper
 
@@ -897,7 +874,7 @@ def setup(keymap) -> None:
                         rect[i] = border
                     wnd.setRect(rect)
 
-                subthread_run(_snap)
+                subthread.run(_snap)
 
             return _avoider
 
@@ -1679,7 +1656,7 @@ def setup(keymap) -> None:
                         if not job_item.result:
                             virtual_finger.VirtualFinger().send("LCtrl-LAlt-Tab")
 
-                subthread_run(_activate, _finished, True)
+                subthread.run(_activate, _finished, True)
 
             return _executor
 
@@ -1848,7 +1825,7 @@ def setup(keymap) -> None:
                 if not job_item.result:
                     virtual_finger.VirtualFinger().send("LCtrl-LAlt-Tab")
 
-        subthread_run(_fzf_wnd, _finished, True)
+        subthread.run(_fzf_wnd, _finished, True)
 
     keymap_global["U1-E"] = fuzzy_window_switcher
 
@@ -1856,7 +1833,7 @@ def setup(keymap) -> None:
         def _invoke(_) -> None:
             shell_exec(r"${USERPROFILE}\Personal\draft.txt")
 
-        subthread_run(_invoke)
+        subthread.run(_invoke)
 
     keymap_global["LS-LC-U1-M"] = invoke_draft
 
@@ -1887,7 +1864,7 @@ def setup(keymap) -> None:
                 else:
                     finger.send("LCtrl-LAlt-Tab")
 
-        subthread_run(_activate, _finished, True)
+        subthread.run(_activate, _finished, True)
 
     keymap_global["U0-Q"] = search_on_browser
 
@@ -2495,7 +2472,7 @@ def setup(keymap) -> None:
             if job_item.func:
                 ClipboardManager().paste(None, job_item.func)
 
-        subthread_run(_fzf, _finished, True)
+        subthread.run(_fzf, _finished, True)
 
     keymap_global["U1-Z"] = fzfmenu
 
