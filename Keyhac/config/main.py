@@ -861,20 +861,20 @@ def setup(keymap) -> None:
     )
 
     def bind_fullwidth_sender() -> None:
-        _sender = sender_tool.SKKSender()
+        sender = sender_tool.SKKSender()
         for key, symbol in {
             "S-U0-Colon": "\uff1a",  # FULLWIDTH COLON
             "S-U0-Comma": "\uff0c",  # FULLWIDTH COMMA
             "S-U0-Period": "\uff0e",  # FULLWIDTH PERIOD
         }.items():
-            keymap_global[key] = _sender.invoke(
-                _sender.control.to_skk_full_latin, symbol, ime_tool.SKKKey.kana
+            keymap_global[key] = sender.invoke(
+                sender.control.to_skk_full_latin, symbol, ime_tool.SKKKey.kana
             )
 
     bind_fullwidth_sender()
 
     def bind_fullwidth_circumfix_sender() -> None:
-        _sender = sender_tool.SKKSender()
+        sender = sender_tool.SKKSender()
         for key, pair in {
             "U0-8": ["\u300e", "\u300f"],  # WHITE CORNER BRACKET 『』
             "U0-9": ["\u3010", "\u3011"],  # BLACK LENTICULAR BRACKET 【】
@@ -887,8 +887,8 @@ def setup(keymap) -> None:
             "U1-T": ["\u3014", "\u3015"],  # TORTOISE BRACKET 〔〕
             "U1-OpenBracket": ["\uff3b", "\uff3d"],  # FULLWIDTH SQUARE BRACKET ［］
         }.items():
-            keymap_global[key] = _sender.invoke(
-                _sender.control.to_skk_full_latin, *pair, "Left", ime_tool.SKKKey.kana
+            keymap_global[key] = sender.invoke(
+                sender.control.to_skk_full_latin, *pair, "Left", ime_tool.SKKKey.kana
             )
 
     bind_fullwidth_circumfix_sender()
@@ -1754,9 +1754,9 @@ def setup(keymap) -> None:
     keymap_vscode["U0-Slash"] = "C-Slash", "A-S-Down", "C-Slash"
 
     def remap_vscode(*keys: str) -> None:
-        _sender = sender_tool.SKKSender()
+        sender = sender_tool.SKKSender()
         for key in keys:
-            keymap_vscode[key] = _sender.invoke_emitThen(ime_tool.ImeStatus.off, key)
+            keymap_vscode[key] = sender.invoke_emitThen(ime_tool.ImeStatus.off, key)
 
     remap_vscode(
         "C-E",
@@ -1850,9 +1850,9 @@ def setup(keymap) -> None:
     )
 
     def sumatra_view_key() -> None:
-        _sender = sender_tool.DirectSender()
+        sender = sender_tool.DirectSender()
         for key in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
-            keymap_sumatra_view[key] = _sender.invoke(key)
+            keymap_sumatra_view[key] = sender.invoke(key)
 
     sumatra_view_key()
 
