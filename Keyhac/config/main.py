@@ -19,7 +19,7 @@ from keyhac_listwindow import ListWindow  # type: ignore
 
 from keyhac import *  # type: ignore  # noqa: F403
 
-from .tools import subthread, virtual_finger
+from .tools import ime, subthread, virtual_finger
 from .tools.common import (
     CallbackFunc,
     balloon,
@@ -40,6 +40,7 @@ def setup(keymap) -> None:
 
     virtual_finger.keymap = keymap
     subthread.keymap = keymap
+    ime.keymap = keymap
 
     ################################
     # general setting
@@ -167,107 +168,8 @@ def setup(keymap) -> None:
 
     keymap_global["C-Q"] = safe_close
 
-    class SKKKey:
-        toggle_vk = "(243)"
-        kata = "Q"
-        kana = "C-J"
-        halfkata = "C-O"
-        latin = "S-L"
-        cancel = "Esc"
-        reconv = "LWin-Slash"
-        abbrev = "Slash"
-        convpoint = "S-0"
-        jlatin = "S-Q"
-        affix = "S-Period"
-
-    class ImeStatus(Enum):
-        on = 1
-        off = 0
-
-    class ImeControl:
-        def __init__(self, inter_stroke_pause: int = 10) -> None:
-            self._finger = virtual_finger.VirtualFinger(inter_stroke_pause)
-
-            self.taps_to_kana = self._tapify()
-            self.taps_to_turnoff = self._tapify(SKKKey.toggle_vk)
-            self.taps_to_kata = self._tapify(SKKKey.kata)
-            self.taps_to_latin = self._tapify(SKKKey.latin)
-            self.taps_to_abbrev = self._tapify(SKKKey.abbrev)
-            self.taps_to_half_kata = self._tapify(SKKKey.halfkata)
-            self.taps_to_full_latin = self._tapify(SKKKey.jlatin)
-            self.taps_to_conv = self._tapify(SKKKey.convpoint)
-            self.taps_to_conv_suffix = self._tapify(SKKKey.convpoint, SKKKey.affix)
-            self.taps_to_reconv = self._tapify(SKKKey.reconv, SKKKey.cancel)
-
-        def _tapify(self, *keys: str) -> list[Tap]:
-            return self._finger.compile(SKKKey.kana, *keys)
-
-        @staticmethod
-        def get_status() -> ImeStatus:
-            return ImeStatus(keymap.getWindow().getImeStatus())
-
-        @staticmethod
-        def set_status(status: ImeStatus) -> None:
-            keymap.getWindow().setImeStatus(status.value)
-
-        @classmethod
-        def is_enabled(cls) -> bool:
-            return cls.get_status() == ImeStatus.on
-
-        @classmethod
-        def enable(cls) -> None:
-            if not cls.is_enabled():
-                cls.set_status(ImeStatus.on)
-
-        # Unlike the `turnoff_skk` method, this method forcibly turns off the IME itself.
-        # Once SKK is disabled with this method, the next execution of the `enable` method starts SKK with the mode it was in just before being turned off.
-        @classmethod
-        def disable(cls) -> None:
-            if cls.is_enabled():
-                cls.set_status(ImeStatus.off)
-
-        def turnoff_skk(self) -> None:
-            if self.is_enabled():
-                self._finger.send_compiled(*self.taps_to_turnoff)
-
-        def to_skk_kana(self) -> None:
-            self.enable()
-            self._finger.send_compiled(*self.taps_to_kana)
-
-        def to_skk_latin(self) -> None:
-            self.enable()
-            self._finger.send_compiled(*self.taps_to_latin)
-
-        def to_skk_abbrev(self) -> None:
-            self.enable()
-            self._finger.send_compiled(*self.taps_to_abbrev)
-
-        def to_skk_kata(self) -> None:
-            self.enable()
-            self._finger.send_compiled(*self.taps_to_kata)
-
-        def to_skk_half_kata(self) -> None:
-            self.enable()
-            self._finger.send_compiled(*self.taps_to_half_kata)
-
-        def to_skk_full_latin(self) -> None:
-            self.enable()
-            self._finger.send_compiled(*self.taps_to_full_latin)
-
-        def start_skk_conv(self) -> None:
-            self.enable()
-            self._finger.send_compiled(*self.taps_to_conv)
-
-        def start_skk_conv_suffix(self) -> None:
-            self.enable()
-            self._finger.send_compiled(*self.taps_to_conv_suffix)
-
-        def reconvert_with_skk(self) -> None:
-            self.enable()
-            self._finger.send_compiled(*self.taps_to_reconv)
-
     def bind_ime_control() -> None:
-        control = ImeControl(0)
+        control = ime.ImeControl(0)
         for key, func in {
             "U1-J": control.to_skk_kana,
             "LC-U0-I": control.to_skk_kata,
@@ -939,7 +841,7 @@ def setup(keymap) -> None:
             inter_stroke_pause: int = 0,
         ) -> None:
             self.finger = virtual_finger.VirtualFinger(inter_stroke_pause)
-            self.control = ImeControl(inter_stroke_pause)
+            self.control = ime.ImeControl(inter_stroke_pause)
 
         def invoke(self, mode_setter: CallbackFunc, *sequence: str) -> CallbackFunc:
             taps = self.finger.compile(*sequence)
@@ -963,34 +865,36 @@ def setup(keymap) -> None:
             return sender
 
         def invoke_emitThen(
-            self, later_ime_status: ImeStatus, *sequence: str
+            self, later_ime_status: ime.ImeStatus, *sequence: str
         ) -> CallbackFunc:
             taps = self.finger.compile(*sequence)
-            toggle_tap = Tap(SKKKey.toggle_vk)
+            toggle_tap = Tap(ime.SKKKey.toggle_vk)
 
             def _sender() -> None:
                 self.finger.send_compiled(*taps)
-                if ImeControl.get_status() != later_ime_status:
+                if ime.ImeControl.get_status() != later_ime_status:
                     self.finger.send_compiled(toggle_tap)
 
             return _sender
 
-    keymap_global["Yen"] = SKKSender().invoke_emitThen(ImeStatus.off, "Yen")
+    keymap_global["Yen"] = SKKSender().invoke_emitThen(ime.ImeStatus.off, "Yen")
 
     keymap_global["U0-P"] = SKKSender().under_kanamode("・")
 
     keymap_global["U0-AtMark"] = SKKSender().invoke_emitThen(
-        ImeStatus.off, "LS-AtMark", "LS-AtMark", "Left"
+        ime.ImeStatus.off, "LS-AtMark", "LS-AtMark", "Left"
     )
     keymap_global["U0-5"] = SKKSender().invoke_emitThen(
-        ImeStatus.off, "S-7", "S-5", "S-5", "S-7", "Left", "Left"
+        ime.ImeStatus.off, "S-7", "S-5", "S-5", "S-7", "Left", "Left"
     )
 
     # select-to-left with ime control
     keymap_global["U1-B"] = SKKSender().under_kanamode("S-Left")
     keymap_global["LS-U1-B"] = SKKSender().under_kanamode("S-Right")
     keymap_global["U1-Space"] = SKKSender().under_kanamode("C-S-Left")
-    keymap_global["U1-4"] = SKKSender().under_kanamode(SKKKey.convpoint, "S-4", "Tab")
+    keymap_global["U1-4"] = SKKSender().under_kanamode(
+        ime.SKKKey.convpoint, "S-4", "Tab"
+    )
 
     def bind_fullwidth_sender() -> None:
         sender = SKKSender()
@@ -1000,7 +904,7 @@ def setup(keymap) -> None:
             "S-U0-Period": "\uff0e",  # FULLWIDTH PERIOD
         }.items():
             keymap_global[key] = sender.invoke(
-                sender.control.to_skk_full_latin, symbol, SKKKey.kana
+                sender.control.to_skk_full_latin, symbol, ime.SKKKey.kana
             )
 
     bind_fullwidth_sender()
@@ -1020,7 +924,7 @@ def setup(keymap) -> None:
             "U1-OpenBracket": ["\uff3b", "\uff3d"],  # FULLWIDTH SQUARE BRACKET ［］
         }.items():
             keymap_global[key] = sender.invoke(
-                sender.control.to_skk_full_latin, *pair, "Left", SKKKey.kana
+                sender.control.to_skk_full_latin, *pair, "Left", ime.SKKKey.kana
             )
 
     bind_fullwidth_circumfix_sender()
@@ -1049,7 +953,7 @@ def setup(keymap) -> None:
 
     def replace_last_nchar(km: WindowKeymap, newstr: str) -> None:
         for n in "0123":
-            seq = ["Back"] * int(n) + [newstr, SKKKey.toggle_vk]
+            seq = ["Back"] * int(n) + [newstr, ime.SKKKey.toggle_vk]
             km[n] = DirectSender().invoke(*seq)
 
     replace_last_nchar(keymap_global["U0-M"], "先生")
@@ -1071,8 +975,8 @@ def setup(keymap) -> None:
             ),
             "U0-Tab": ("Period", "BackSlash"),
             "U1-Tab": ("Period", "Period", "BackSlash"),
-            "S-U0-8": ("U-Shift", "Minus", "Space", SKKKey.toggle_vk),
-            "U1-1": ("1.", "Space", SKKKey.toggle_vk),
+            "S-U0-8": ("U-Shift", "Minus", "Space", ime.SKKKey.toggle_vk),
+            "U1-1": ("1.", "Space", ime.SKKKey.toggle_vk),
             "S-U0-SemiColon": ("U-Shift", "SemiColon"),
             "U0-T": ("</>", "Left", "S-Left"),
         },
@@ -1875,9 +1779,8 @@ def setup(keymap) -> None:
     # browser
     keymap_browser = keymap.defineWindowKeymap(check_func=is_browser)
     keymap_browser["LC-LS-W"] = "A-Left"
-    keymap_browser["LC-F"] = SKKSender(40).invoke_emitThen(ImeStatus.off, "C-F")
-    keymap_browser["LC-L"] = SKKSender(40).invoke_emitThen(ImeStatus.off, "C-L")
-    keymap_browser["LC-K"] = SKKSender(40).invoke_emitThen(ImeStatus.off, "C-K")
+    keymap_browser["LC-F"] = SKKSender(40).invoke_emitThen(ime.ImeStatus.off, "C-F")
+    keymap_browser["LC-K"] = SKKSender(40).invoke_emitThen(ime.ImeStatus.off, "C-K")
 
     # intra
     keymap_intra = keymap.defineWindowKeymap(exe_name="APARClientAWS.exe")
@@ -1891,7 +1794,7 @@ def setup(keymap) -> None:
     keymap_slack = keymap.defineWindowKeymap(
         exe_name="slack.exe", class_name="Chrome_WidgetWin_1"
     )
-    keymap_slack["C-K"] = SKKSender().invoke_emitThen(ImeStatus.off, "C-K")
+    keymap_slack["C-K"] = SKKSender().invoke_emitThen(ime.ImeStatus.off, "C-K")
     keymap_slack["F3"] = keymap_slack["C-K"]
     keymap_slack["C-E"] = keymap_slack["C-K"]
     keymap_slack["F1"] = DirectSender().invoke("S-SemiColon", "Colon")
@@ -1903,7 +1806,7 @@ def setup(keymap) -> None:
     def remap_vscode(*keys: str) -> None:
         sender = SKKSender()
         for key in keys:
-            keymap_vscode[key] = sender.invoke_emitThen(ImeStatus.off, key)
+            keymap_vscode[key] = sender.invoke_emitThen(ime.ImeStatus.off, key)
 
     remap_vscode(
         "C-E",
@@ -1964,7 +1867,7 @@ def setup(keymap) -> None:
         window_text="tauri.localhost",
     )
     keymap_smoothcsv["C-S-F"] = SKKSender(80).invoke_emitThen(
-        ImeStatus.off, "C-S-F", "C-A"
+        ime.ImeStatus.off, "C-S-F", "C-A"
     )
     keymap_smoothcsv["S-Space"] = DirectSender().invoke("S-Space")
     keymap_smoothcsv["S-U0-N"] = lambda: virtual_finger.VirtualFinger(20).send(
@@ -2013,7 +1916,7 @@ def setup(keymap) -> None:
 
     # powerpoint
     keymap_ppt = keymap.defineWindowKeymap(exe_name="powerpnt.exe")
-    keymap_ppt["O-(236)"] = ImeControl(40).to_skk_abbrev
+    keymap_ppt["O-(236)"] = ime.ImeControl(40).to_skk_abbrev
 
     # excel
     keymap_excel = keymap.defineWindowKeymap(exe_name="excel.exe")
