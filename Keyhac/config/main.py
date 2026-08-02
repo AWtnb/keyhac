@@ -19,7 +19,10 @@ from keyhac_listwindow import ListWindow  # type: ignore
 
 from keyhac import *  # type: ignore  # noqa: F403
 
-from .tools import ime, subthread, virtual_finger
+from .tools import ime as ime_tool
+from .tools import sender as sender_tool
+from .tools import subthread as subthread_tool
+from .tools import virtual_finger as vf_tool
 from .tools.common import (
     CallbackFunc,
     balloon,
@@ -38,9 +41,10 @@ from .tools.virtual_finger import Tap
 
 def setup(keymap) -> None:
 
-    virtual_finger.keymap = keymap
-    subthread.keymap = keymap
-    ime.keymap = keymap
+    vf_tool.keymap = keymap
+    subthread_tool.keymap = keymap
+    ime_tool.keymap = keymap
+    sender_tool.keymap = keymap
 
     ################################
     # general setting
@@ -155,7 +159,7 @@ def setup(keymap) -> None:
     keymap_global["U1-Right"] = keymap.MouseHorizontalWheelCommand(1.0)
 
     def safe_close() -> None:
-        finger = virtual_finger.VirtualFinger(0)
+        finger = vf_tool.VirtualFinger(0)
         close_key = finger.compile("A-F4")
 
         def _wait(_) -> None:
@@ -164,12 +168,12 @@ def setup(keymap) -> None:
         def _close(_) -> None:
             finger.send_compiled(*close_key)
 
-        subthread.run(_wait, _close)
+        subthread_tool.run(_wait, _close)
 
     keymap_global["C-Q"] = safe_close
 
     def bind_ime_control() -> None:
-        control = ime.ImeControl(0)
+        control = ime_tool.ImeControl(0)
         for key, func in {
             "U1-J": control.to_skk_kana,
             "LC-U0-I": control.to_skk_kata,
@@ -196,14 +200,14 @@ def setup(keymap) -> None:
             "powershell.exe",
             "wezterm-gui.exe",
         ]
-        finger: virtual_finger.VirtualFinger
+        finger: vf_tool.VirtualFinger
 
         def __init__(self, cut_mode: bool = False) -> None:
             if cut_mode:
                 self.tap_to_register = Tap("C-X")
             else:
                 self.tap_to_register = Tap("C-C")
-            self.finger = virtual_finger.VirtualFinger()
+            self.finger = vf_tool.VirtualFinger()
 
         @staticmethod
         def get_string() -> str:
@@ -272,7 +276,7 @@ def setup(keymap) -> None:
                         job_item.copied = s
                         break
 
-            subthread.run(_watch_clipboard, deferred)
+            subthread_tool.run(_watch_clipboard, deferred)
 
     class FIFOStack:
         def __init__(self) -> None:
@@ -531,7 +535,7 @@ def setup(keymap) -> None:
             ts = datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S")
             balloon(keymap, "{} reloaded config.py".format(ts))
 
-        subthread.run(_wait, _reload)
+        subthread_tool.run(_wait, _reload)
 
     keymap_global["U1-F12"] = reload_config
 
@@ -550,7 +554,7 @@ def setup(keymap) -> None:
             if not result:
                 shell_exec(dir_path)
 
-        subthread.run(_open)
+        subthread_tool.run(_open)
 
     keymap.editor = lambda _: open_keyhac_repo()
 
@@ -668,7 +672,7 @@ def setup(keymap) -> None:
                                 if wnd.getRect() != rect:
                                     wnd.setRect(rect)
 
-                            subthread.run(_job_snap, _job_finished)
+                            subthread_tool.run(_job_snap, _job_finished)
 
                         return __snap
 
@@ -703,7 +707,7 @@ def setup(keymap) -> None:
                 def __maximize(job_item: ckit.JobItem) -> None:
                     job_item.wnd.maximize()
 
-                subthread.run(__snap, __maximize)
+                subthread_tool.run(__snap, __maximize)
 
             keymap_global["U1-M"][str(key)] = _snap
 
@@ -723,7 +727,7 @@ def setup(keymap) -> None:
                         delay()
                     wnd.setRect(resized)
 
-                subthread.run(__snap)
+                subthread_tool.run(__snap)
 
             return _snapper
 
@@ -776,7 +780,7 @@ def setup(keymap) -> None:
                         rect[i] = border
                     wnd.setRect(rect)
 
-                subthread.run(_snap)
+                subthread_tool.run(_snap)
 
             return _avoider
 
@@ -835,82 +839,42 @@ def setup(keymap) -> None:
     # input customize
     ################################
 
-    class SKKSender:
-        def __init__(
-            self,
-            inter_stroke_pause: int = 0,
-        ) -> None:
-            self.finger = virtual_finger.VirtualFinger(inter_stroke_pause)
-            self.control = ime.ImeControl(inter_stroke_pause)
-
-        def invoke(self, mode_setter: CallbackFunc, *sequence: str) -> CallbackFunc:
-            taps = self.finger.compile(*sequence)
-
-            def _sender() -> None:
-                mode_setter()
-                self.finger.send_compiled(*taps)
-
-            return _sender
-
-        def under_kanamode(self, *sequence: str) -> CallbackFunc:
-            sender = self.invoke(self.control.to_skk_kana, *sequence)
-            return sender
-
-        def under_latinmode(self, *sequence: str) -> CallbackFunc:
-            sender = self.invoke(self.control.to_skk_latin, *sequence)
-            return sender
-
-        def without_mode(self, *sequence: str) -> CallbackFunc:
-            sender = self.invoke(self.control.disable, *sequence)
-            return sender
-
-        def invoke_emitThen(
-            self, later_ime_status: ime.ImeStatus, *sequence: str
-        ) -> CallbackFunc:
-            taps = self.finger.compile(*sequence)
-            toggle_tap = Tap(ime.SKKKey.toggle_vk)
-
-            def _sender() -> None:
-                self.finger.send_compiled(*taps)
-                if ime.ImeControl.get_status() != later_ime_status:
-                    self.finger.send_compiled(toggle_tap)
-
-            return _sender
-
-    keymap_global["Yen"] = SKKSender().invoke_emitThen(ime.ImeStatus.off, "Yen")
-
-    keymap_global["U0-P"] = SKKSender().under_kanamode("・")
-
-    keymap_global["U0-AtMark"] = SKKSender().invoke_emitThen(
-        ime.ImeStatus.off, "LS-AtMark", "LS-AtMark", "Left"
+    keymap_global["Yen"] = sender_tool.SKKSender().invoke_emitThen(
+        ime_tool.ImeStatus.off, "Yen"
     )
-    keymap_global["U0-5"] = SKKSender().invoke_emitThen(
-        ime.ImeStatus.off, "S-7", "S-5", "S-5", "S-7", "Left", "Left"
+
+    keymap_global["U0-P"] = sender_tool.SKKSender().under_kanamode("・")
+
+    keymap_global["U0-AtMark"] = sender_tool.SKKSender().invoke_emitThen(
+        ime_tool.ImeStatus.off, "LS-AtMark", "LS-AtMark", "Left"
+    )
+    keymap_global["U0-5"] = sender_tool.SKKSender().invoke_emitThen(
+        ime_tool.ImeStatus.off, "S-7", "S-5", "S-5", "S-7", "Left", "Left"
     )
 
     # select-to-left with ime control
-    keymap_global["U1-B"] = SKKSender().under_kanamode("S-Left")
-    keymap_global["LS-U1-B"] = SKKSender().under_kanamode("S-Right")
-    keymap_global["U1-Space"] = SKKSender().under_kanamode("C-S-Left")
-    keymap_global["U1-4"] = SKKSender().under_kanamode(
-        ime.SKKKey.convpoint, "S-4", "Tab"
+    keymap_global["U1-B"] = sender_tool.SKKSender().under_kanamode("S-Left")
+    keymap_global["LS-U1-B"] = sender_tool.SKKSender().under_kanamode("S-Right")
+    keymap_global["U1-Space"] = sender_tool.SKKSender().under_kanamode("C-S-Left")
+    keymap_global["U1-4"] = sender_tool.SKKSender().under_kanamode(
+        ime_tool.SKKKey.convpoint, "S-4", "Tab"
     )
 
     def bind_fullwidth_sender() -> None:
-        sender = SKKSender()
+        _sender = sender_tool.SKKSender()
         for key, symbol in {
             "S-U0-Colon": "\uff1a",  # FULLWIDTH COLON
             "S-U0-Comma": "\uff0c",  # FULLWIDTH COMMA
             "S-U0-Period": "\uff0e",  # FULLWIDTH PERIOD
         }.items():
-            keymap_global[key] = sender.invoke(
-                sender.control.to_skk_full_latin, symbol, ime.SKKKey.kana
+            keymap_global[key] = _sender.invoke(
+                _sender.control.to_skk_full_latin, symbol, ime_tool.SKKKey.kana
             )
 
     bind_fullwidth_sender()
 
     def bind_fullwidth_circumfix_sender() -> None:
-        sender = SKKSender()
+        _sender = sender_tool.SKKSender()
         for key, pair in {
             "U0-8": ["\u300e", "\u300f"],  # WHITE CORNER BRACKET 『』
             "U0-9": ["\u3010", "\u3011"],  # BLACK LENTICULAR BRACKET 【】
@@ -923,42 +887,22 @@ def setup(keymap) -> None:
             "U1-T": ["\u3014", "\u3015"],  # TORTOISE BRACKET 〔〕
             "U1-OpenBracket": ["\uff3b", "\uff3d"],  # FULLWIDTH SQUARE BRACKET ［］
         }.items():
-            keymap_global[key] = sender.invoke(
-                sender.control.to_skk_full_latin, *pair, "Left", ime.SKKKey.kana
+            keymap_global[key] = _sender.invoke(
+                _sender.control.to_skk_full_latin, *pair, "Left", ime_tool.SKKKey.kana
             )
 
     bind_fullwidth_circumfix_sender()
-
-    class DirectSender:
-        def __init__(self, inter_stroke_pause: int = 0) -> None:
-            self.skk = SKKSender(inter_stroke_pause=inter_stroke_pause)
-
-        def invoke(self, *sequence: str) -> CallbackFunc:
-            seq = list(sequence)
-            return self.skk.invoke(self.skk.control.turnoff_skk, *seq)
-
-        def bind(self, km: WindowKeymap, binding: dict[str, tuple[str, ...]]) -> None:
-            for key, sent in binding.items():
-                km[key] = self.invoke(*sent)
-
-        def bind_circumfix(
-            self, km: WindowKeymap, binding: dict[str, list[str]]
-        ) -> None:
-            for key, circumfix in binding.items():
-                _, suffix = circumfix
-                sequence = circumfix + ["Left"] * len(suffix)
-                km[key] = self.invoke(*sequence)
 
     keymap_global["U0-M"] = keymap.defineMultiStrokeKeymap()
 
     def replace_last_nchar(km: WindowKeymap, newstr: str) -> None:
         for n in "0123":
-            seq = ["Back"] * int(n) + [newstr, ime.SKKKey.toggle_vk]
-            km[n] = DirectSender().invoke(*seq)
+            seq = ["Back"] * int(n) + [newstr, ime_tool.SKKKey.toggle_vk]
+            km[n] = sender_tool.DirectSender().invoke(*seq)
 
     replace_last_nchar(keymap_global["U0-M"], "先生")
 
-    DirectSender().bind(
+    sender_tool.DirectSender().bind(
         keymap_global,
         {
             "Decimal": ("Period",),
@@ -975,14 +919,14 @@ def setup(keymap) -> None:
             ),
             "U0-Tab": ("Period", "BackSlash"),
             "U1-Tab": ("Period", "Period", "BackSlash"),
-            "S-U0-8": ("U-Shift", "Minus", "Space", ime.SKKKey.toggle_vk),
-            "U1-1": ("1.", "Space", ime.SKKKey.toggle_vk),
+            "S-U0-8": ("U-Shift", "Minus", "Space", ime_tool.SKKKey.toggle_vk),
+            "U1-1": ("1.", "Space", ime_tool.SKKKey.toggle_vk),
             "S-U0-SemiColon": ("U-Shift", "SemiColon"),
             "U0-T": ("</>", "Left", "S-Left"),
         },
     )
 
-    DirectSender().bind_circumfix(
+    sender_tool.DirectSender().bind_circumfix(
         keymap_global,
         {
             "U0-CloseBracket": ["[", "]"],
@@ -1558,9 +1502,9 @@ def setup(keymap) -> None:
                 def _finished(job_item: ckit.JobItem) -> None:
                     if job_item.result is not None:
                         if not job_item.result:
-                            virtual_finger.VirtualFinger().send("LCtrl-LAlt-Tab")
+                            vf_tool.VirtualFinger().send("LCtrl-LAlt-Tab")
 
-                subthread.run(_activate, _finished, True)
+                subthread_tool.run(_activate, _finished, True)
 
             return _executor
 
@@ -1727,9 +1671,9 @@ def setup(keymap) -> None:
         def _finished(job_item: ckit.JobItem) -> None:
             if job_item.result is not None:
                 if not job_item.result:
-                    virtual_finger.VirtualFinger().send("LCtrl-LAlt-Tab")
+                    vf_tool.VirtualFinger().send("LCtrl-LAlt-Tab")
 
-        subthread.run(_fzf_wnd, _finished, True)
+        subthread_tool.run(_fzf_wnd, _finished, True)
 
     keymap_global["U1-E"] = fuzzy_window_switcher
 
@@ -1737,12 +1681,12 @@ def setup(keymap) -> None:
         def _invoke(_) -> None:
             shell_exec(r"${USERPROFILE}\Personal\draft.txt")
 
-        subthread.run(_invoke)
+        subthread_tool.run(_invoke)
 
     keymap_global["LS-LC-U1-M"] = invoke_draft
 
     def search_on_browser() -> None:
-        finger = virtual_finger.VirtualFinger(20)
+        finger = vf_tool.VirtualFinger(20)
         if keymap.getWindow().getProcessName() == keymap.default_browser.get_exe_name():
             finger.send("C-T")
             return
@@ -1768,7 +1712,7 @@ def setup(keymap) -> None:
                 else:
                     finger.send("LCtrl-LAlt-Tab")
 
-        subthread.run(_activate, _finished, True)
+        subthread_tool.run(_activate, _finished, True)
 
     keymap_global["U0-Q"] = search_on_browser
 
@@ -1779,8 +1723,12 @@ def setup(keymap) -> None:
     # browser
     keymap_browser = keymap.defineWindowKeymap(check_func=is_browser)
     keymap_browser["LC-LS-W"] = "A-Left"
-    keymap_browser["LC-F"] = SKKSender(40).invoke_emitThen(ime.ImeStatus.off, "C-F")
-    keymap_browser["LC-K"] = SKKSender(40).invoke_emitThen(ime.ImeStatus.off, "C-K")
+    keymap_browser["LC-F"] = sender_tool.SKKSender(40).invoke_emitThen(
+        ime_tool.ImeStatus.off, "C-F"
+    )
+    keymap_browser["LC-K"] = sender_tool.SKKSender(40).invoke_emitThen(
+        ime_tool.ImeStatus.off, "C-K"
+    )
 
     # intra
     keymap_intra = keymap.defineWindowKeymap(exe_name="APARClientAWS.exe")
@@ -1788,25 +1736,27 @@ def setup(keymap) -> None:
 
     # rsturio
     keymap_rstudio = keymap.defineWindowKeymap(exe_name="rstudio.exe")
-    keymap_rstudio["U0-Minus"] = DirectSender().invoke("S-Comma", "Minus")
+    keymap_rstudio["U0-Minus"] = sender_tool.DirectSender().invoke("S-Comma", "Minus")
 
     # slack
     keymap_slack = keymap.defineWindowKeymap(
         exe_name="slack.exe", class_name="Chrome_WidgetWin_1"
     )
-    keymap_slack["C-K"] = SKKSender().invoke_emitThen(ime.ImeStatus.off, "C-K")
+    keymap_slack["C-K"] = sender_tool.SKKSender().invoke_emitThen(
+        ime_tool.ImeStatus.off, "C-K"
+    )
     keymap_slack["F3"] = keymap_slack["C-K"]
     keymap_slack["C-E"] = keymap_slack["C-K"]
-    keymap_slack["F1"] = DirectSender().invoke("S-SemiColon", "Colon")
+    keymap_slack["F1"] = sender_tool.DirectSender().invoke("S-SemiColon", "Colon")
 
     # vscode
     keymap_vscode = keymap.defineWindowKeymap(exe_name="Code.exe")
     keymap_vscode["U0-Slash"] = "C-Slash", "A-S-Down", "C-Slash"
 
     def remap_vscode(*keys: str) -> None:
-        sender = SKKSender()
+        _sender = sender_tool.SKKSender()
         for key in keys:
-            keymap_vscode[key] = sender.invoke_emitThen(ime.ImeStatus.off, key)
+            keymap_vscode[key] = _sender.invoke_emitThen(ime_tool.ImeStatus.off, key)
 
     remap_vscode(
         "C-E",
@@ -1866,17 +1816,15 @@ def setup(keymap) -> None:
         class_name="Chrome_WidgetWin_1",
         window_text="tauri.localhost",
     )
-    keymap_smoothcsv["C-S-F"] = SKKSender(80).invoke_emitThen(
-        ime.ImeStatus.off, "C-S-F", "C-A"
+    keymap_smoothcsv["C-S-F"] = sender_tool.SKKSender(80).invoke_emitThen(
+        ime_tool.ImeStatus.off, "C-S-F", "C-A"
     )
-    keymap_smoothcsv["S-Space"] = DirectSender().invoke("S-Space")
-    keymap_smoothcsv["S-U0-N"] = lambda: virtual_finger.VirtualFinger(20).send(
-        "F2", "Home"
-    )
+    keymap_smoothcsv["S-Space"] = sender_tool.DirectSender().invoke("S-Space")
+    keymap_smoothcsv["S-U0-N"] = lambda: vf_tool.VirtualFinger(20).send("F2", "Home")
 
     def copy_and_unselect_line() -> None:
-        finger = virtual_finger.VirtualFinger()
-        taps = virtual_finger.VirtualFinger().compile("Up", "Down")
+        finger = vf_tool.VirtualFinger()
+        taps = vf_tool.VirtualFinger().compile("Up", "Down")
 
         def _unselect(_) -> None:
             finger.send_compiled(*taps)
@@ -1902,9 +1850,9 @@ def setup(keymap) -> None:
     )
 
     def sumatra_view_key() -> None:
-        sender = DirectSender()
+        _sender = sender_tool.DirectSender()
         for key in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
-            keymap_sumatra_view[key] = sender.invoke(key)
+            keymap_sumatra_view[key] = _sender.invoke(key)
 
     sumatra_view_key()
 
@@ -1916,13 +1864,13 @@ def setup(keymap) -> None:
 
     # powerpoint
     keymap_ppt = keymap.defineWindowKeymap(exe_name="powerpnt.exe")
-    keymap_ppt["O-(236)"] = ime.ImeControl(40).to_skk_abbrev
+    keymap_ppt["O-(236)"] = ime_tool.ImeControl(40).to_skk_abbrev
 
     # excel
     keymap_excel = keymap.defineWindowKeymap(exe_name="excel.exe")
 
     def select_all() -> None:
-        finger = virtual_finger.VirtualFinger()
+        finger = vf_tool.VirtualFinger()
         if keymap.getWindow().getClassName() == "EXCEL6":
             finger.send("C-End", "C-S-Home")
         else:
@@ -2375,7 +2323,7 @@ def setup(keymap) -> None:
             if job_item.func:
                 ClipboardManager().paste(None, job_item.func)
 
-        subthread.run(_fzf, _finished, True)
+        subthread_tool.run(_fzf, _finished, True)
 
     keymap_global["U1-Z"] = fzfmenu
 
