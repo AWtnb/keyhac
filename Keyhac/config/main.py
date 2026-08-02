@@ -19,8 +19,8 @@ from keyhac_listwindow import ListWindow  # type: ignore
 
 from keyhac import *  # type: ignore  # noqa: F403
 
-from . import subthread, virtual_finger
-from .common import (
+from .tools import virtual_finger
+from .tools.common import (
     CallbackFunc,
     balloon,
     check_fzf,
@@ -33,7 +33,7 @@ from .common import (
     shell_exec,
     smart_check_path,
 )
-from .virtual_finger import Tap
+from .tools.virtual_finger import Tap
 
 
 def setup(keymap) -> None:
@@ -156,12 +156,25 @@ def setup(keymap) -> None:
     # functions for custom hotkey
     ################################
 
+    MAGICAL_KEY = virtual_finger.VirtualFinger().compile("LWin-S-M", "U-Alt")
+
     def subthread_run(
         func: Callable,
         finished: Callable | None = None,
         focus_changed_in_subthread: bool = False,
     ) -> None:
-        subthread.run(keymap, func, finished, focus_changed_in_subthread)
+
+        finger = virtual_finger.VirtualFinger(0)
+        if focus_changed_in_subthread:
+            finger.send_compiled(*MAGICAL_KEY)
+
+        def _finished(job_item: ckit.JobItem) -> None:
+            keymap.setInput_Modifier(0)
+            if finished is not None:
+                finished(job_item)
+
+        job = ckit.JobItem(func, _finished)
+        ckit.JobQueue.defaultQueue().enqueue(job)
 
     def safe_close() -> None:
         finger = virtual_finger.VirtualFinger(0)
