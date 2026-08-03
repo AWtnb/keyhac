@@ -109,3 +109,9 @@ def is_global_target(wnd: pyauto.Window) -> bool:
 
 def is_keyhac_console(wnd: pyauto.Window) -> bool:
     return wnd.getProcessName() == "keyhac.exe" and not wnd.getFirstChild()
+
+
+def get_monitor_infos() -> list:
+    infos = pyauto.Window.getMonitorInfo()
+    infos.sort(key=lambda info: info[2] != 1)
+    return infos

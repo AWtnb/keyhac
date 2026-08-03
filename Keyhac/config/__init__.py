@@ -1,4 +1,4 @@
-from . import main, style
+from . import main, style  # noqa: N999
 
 
 def configure(keymap) -> None:

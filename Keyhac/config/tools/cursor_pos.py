@@ -1,6 +1,7 @@
 import pyauto  # type: ignore
 from keyhac_keymap import WindowKeymap  # type: ignore
 
+from .common import get_monitor_infos
 from .window_rect import Rect
 
 
@@ -10,8 +11,7 @@ def setup(_keymap: WindowKeymap) -> None:
 
 
 def get_pos() -> list:
-    infos = pyauto.Window.getMonitorInfo()
-    infos.sort(key=lambda info: info[2] != 1)
+    infos = get_monitor_infos()
     rects = [Rect(*info[1]) for info in infos]
     pos = []
     for rect in rects:

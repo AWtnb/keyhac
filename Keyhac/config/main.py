@@ -20,6 +20,7 @@ from .tools import ime as ime_tool
 from .tools import sender as sender_tool
 from .tools import subthread as subthread_tool
 from .tools import virtual_finger as vf_tool
+from .tools import window_snap as window_snap_tool
 from .tools.clipboard import (
     FIFOStack,
     invoke_clean_paster,
@@ -46,7 +47,8 @@ from .tools.format_str import (
     simple_quote,
     skip_blank_line,
 )
-from .tools.window_rect import RectEdge, as_rect
+from .tools.window_rect import RectEdge
+from .tools.window_snap import invoke_maximized_snapper, invoke_shrinker, invoke_snapper
 
 
 def setup(keymap) -> None:
@@ -57,6 +59,7 @@ def setup(keymap) -> None:
     sender_tool.keymap = keymap
     cb_tool.setup(keymap)
     cursor_pos_tool.setup(keymap)
+    window_snap_tool.setup(keymap)
 
     ################################
     # general setting
@@ -324,7 +327,7 @@ def setup(keymap) -> None:
     keymap_global["U1-M"]["N"] = keymap.getTopLevelWindow().minimize
 
     def bind_window_snapper(km: WindowKeymap) -> None:
-        altkey_stat = ["", "LA-", "RA-"]
+        altkey_stat = {0: "", 1: "LA-", 2: "RA-"}
         scale_mapping = {
             "": 1 / 2,
             "S-": 2 / 3,
@@ -337,108 +340,31 @@ def setup(keymap) -> None:
             "K": RectEdge.top,
         }
 
-        for idx, alt in enumerate(altkey_stat):
+        for idx, alt in altkey_stat.items():
             for area_mod, scale in scale_mapping.items():
                 for key, edge in edge_mapping.items():
-
-                    def _invoke(
-                        i: int = idx, s: float = scale, e: RectEdge = edge
-                    ) -> CallbackFunc:
-                        def __get_new_rect() -> list[int]:
-                            infos = pyauto.Window.getMonitorInfo()
-                            infos.sort(key=lambda info: info[2] != 1)
-                            target = infos[i]
-                            monitor_work_rect = as_rect(*target[1])
-                            return monitor_work_rect.resize(s, e)
-
-                        def __snap() -> None:
-                            wnd = keymap.getTopLevelWindow()
-                            if not wnd or is_keyhac_console(wnd):
-                                return
-                            rect = __get_new_rect()
-                            if wnd.getRect() == rect:
-                                return
-
-                            def _job_snap(_) -> None:
-                                if wnd.isMaximized():
-                                    wnd.restore()
-                                    delay()
-                                wnd.setRect(rect)
-
-                            def _job_finished(_) -> None:
-                                if wnd.getRect() != rect:
-                                    wnd.setRect(rect)
-
-                            subthread_tool.run(_job_snap, _job_finished)
-
-                        return __snap
-
-                    km[alt + area_mod + key] = _invoke()
+                    km[alt + area_mod + key] = invoke_snapper(idx, scale, edge)
 
     bind_window_snapper(keymap_global["U1-M"])
 
     def bind_maximized_window_snapper() -> None:
         for key in ["0", "1", "2"]:
             monitor_idx = int(key)
-
-            def _snap(mi: int = monitor_idx) -> None:
-                infos = pyauto.Window.getMonitorInfo()
-                infos.sort(key=lambda info: info[2] != 1)
-                try:
-                    target = infos[mi][1]
-                except IndexError:
-                    return
-
-                def __snap(job_item: ckit.JobItem) -> None:
-                    job_item.wnd = None
-
-                    wnd = keymap.getTopLevelWindow()
-                    if not wnd or is_keyhac_console(wnd):
-                        return
-                    if wnd.isMaximized():
-                        wnd.restore()
-                        delay()
-                    wnd.setRect(target)
-                    job_item.wnd = wnd
-
-                def __maximize(job_item: ckit.JobItem) -> None:
-                    job_item.wnd.maximize()
-
-                subthread_tool.run(__snap, __maximize)
-
+            _snap = invoke_maximized_snapper(monitor_idx)
             keymap_global["U1-M"][str(key)] = _snap
 
     bind_maximized_window_snapper()
 
-    class WndShrinker:
-        @staticmethod
-        def invoke_snapper(toward: RectEdge) -> CallbackFunc:
-            def _snapper() -> None:
-                def __snap(_) -> None:
-                    wnd = keymap.getTopLevelWindow()
-                    rect = wnd.getRect()
+    def bind_window_shrinker(km: WindowKeymap) -> None:
+        for key, toward in {
+            "H": RectEdge.left,
+            "L": RectEdge.right,
+            "K": RectEdge.top,
+            "J": RectEdge.bottom,
+        }.items():
+            km["U1-" + key] = invoke_shrinker(toward)
 
-                    resized = as_rect(*rect).resize(0.5, toward)
-                    if wnd.isMaximized():
-                        wnd.restore()
-                        delay()
-                    wnd.setRect(resized)
-
-                subthread_tool.run(__snap)
-
-            return _snapper
-
-        @classmethod
-        def bind(cls, km: WindowKeymap) -> None:
-            for key, toward in {
-                "H": RectEdge.left,
-                "L": RectEdge.right,
-                "K": RectEdge.top,
-                "J": RectEdge.bottom,
-            }.items():
-                km["U1-" + key] = cls.invoke_snapper(toward)
-
-    WndShrinker.bind(keymap_global["U1-M"])
+    bind_window_shrinker(keymap_global["U1-M"])
 
     ################################
     # set cursor position

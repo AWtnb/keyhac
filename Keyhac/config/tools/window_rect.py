@@ -17,7 +17,7 @@ class Rect(NamedTuple):
     width: int
     height: int
 
-    def move_edge(self, toward: RectEdge, delta: int) -> list[int]:
+    def move_edge(self, toward: RectEdge, delta: int) -> tuple[int, int, int, int]:
         r = [
             self.left,
             self.top,
@@ -26,9 +26,9 @@ class Rect(NamedTuple):
         ]
         opposite = (toward.value + 2) % 4
         r[opposite] = r[toward.value] + delta
-        return r
+        return tuple(r)
 
-    def resize(self, scale: float, toward: RectEdge) -> list[int]:
+    def resize(self, scale: float, toward: RectEdge) -> tuple[int, int, int, int]:
         if toward in [RectEdge.left, RectEdge.right]:
             dim = self.width
         else:
