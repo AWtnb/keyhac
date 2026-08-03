@@ -21,5 +21,14 @@ Running [`ScheduledTask/install.ps1`](./ScheduledTask/install.ps1) with `keyhac.
 .\ScheduledTask\install.ps1 "$env:USERPROFILE\Personal\tools\portable_apps\keyhac\keyhac.exe"
 ```
 
+## Development Setup
+
+This project uses [uv](https://docs.astral.sh/uv/) to match the Python version bundled with keyhac.
+
+To set up the development environment, run:
+
+```
+uv sync
+```
 
 
