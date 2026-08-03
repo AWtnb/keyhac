@@ -7,17 +7,16 @@ import tempfile
 import unicodedata
 import urllib.parse
 import webbrowser
+from collections.abc import Callable
 from enum import Enum
 from pathlib import Path
-from typing import Callable
 from winreg import HKEY_CLASSES_ROOT, HKEY_CURRENT_USER, OpenKey, QueryValueEx
 
 import ckit  # type: ignore
 import pyauto  # type: ignore
 from keyhac_keymap import WindowKeymap  # type: ignore
-from keyhac_listwindow import ListWindow  # type: ignore
 
-from keyhac import *  # type: ignore  # noqa: F403
+from keyhac import *  # type: ignore
 
 from .tools import ime as ime_tool
 from .tools import sender as sender_tool
@@ -301,7 +300,7 @@ def setup(keymap) -> None:
         def register(self, s: str) -> None:
             if self.enabled:
                 self.items.append(s)
-                msg = "FIFO stack total: {}".format(self.count)
+                msg = f"FIFO stack total: {self.count}"
                 balloon(keymap, msg)
             else:
                 balloon(keymap, "FIFO mode is not enabled.")
@@ -313,7 +312,7 @@ def setup(keymap) -> None:
             if self.enabled:
                 self.reset()
                 self.items = [line for line in lines.splitlines() if line.strip()]
-                msg = "FIFO stack total: {}".format(self.count)
+                msg = f"FIFO stack total: {self.count}"
                 balloon(keymap, msg)
             else:
                 balloon(keymap, "FIFO mode is not enabled.")
@@ -349,7 +348,7 @@ def setup(keymap) -> None:
                     balloon(keymap, "FIFO mode OFF! (pasted last item)", 5000)
                     self._disable(False)
                 else:
-                    balloon(keymap, "FIFO next:{}".format(self.items[0]), 5000)
+                    balloon(keymap, f"FIFO next:{self.items[0]}", 5000)
                 return cb
             return None
 
@@ -455,10 +454,10 @@ def setup(keymap) -> None:
                         p.unlink()
                         count += 1
                 except Exception as e:
-                    print("Failed to remove temp file :{}\n{}".format(file, e))
+                    print(f"Failed to remove temp file :{file}\n{e}")
 
         if 0 < count:
-            msg = "Removed {} tempfile".format(count)
+            msg = f"Removed {count} tempfile"
             if 1 < count:
                 msg += "s"
             msg += "."
@@ -533,7 +532,7 @@ def setup(keymap) -> None:
             keymap.configure()
             keymap.updateKeymap()
             ts = datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S")
-            balloon(keymap, "{} reloaded config.py".format(ts))
+            balloon(keymap, f"{ts} reloaded config.py")
 
         subthread_tool.run(_wait, _reload)
 
@@ -542,7 +541,7 @@ def setup(keymap) -> None:
     def open_keyhac_repo() -> None:
         config_path = os.path.expandvars(r"${APPDATA}\Keyhac")
         if not smart_check_path(config_path):
-            balloon(keymap, "config not found: {}".format(config_path))
+            balloon(keymap, f"config not found: {config_path}")
             return
 
         dir_path = config_path
@@ -752,7 +751,7 @@ def setup(keymap) -> None:
             monitors = pyauto.Window.getMonitorInfo()
             for monitor in monitors:
                 monitor_rect = Rect(*monitor[1])
-                if monitor_rect.left <= center_x and center_x <= monitor_rect.right:
+                if monitor_rect.left <= center_x <= monitor_rect.right:
                     x = int((monitor_rect.left + monitor_rect.right) / 2)
                     break
             return x
@@ -1290,7 +1289,7 @@ def setup(keymap) -> None:
             for word in self.noise_mapping.cleanup(self._query).split(" "):
                 if len(word):
                     if strict:
-                        words.append('"{}"'.format(word))
+                        words.append(f'"{word}"')
                     else:
                         words.append(word)
             return urllib.parse.quote(" ".join(words))
@@ -1642,7 +1641,7 @@ def setup(keymap) -> None:
                 if popup := wnd.getLastActivePopup():
                     n = popup.getProcessName().replace(".exe", "")
                     if t := popup.getText():
-                        n += "[{}]".format(t)
+                        n += f"[{t}]"
                     popup_table[n] = popup
                     if proc.stdin:
                         proc.stdin.write(n + "\n")
@@ -2060,7 +2059,7 @@ def setup(keymap) -> None:
                 hankaku = CharWidth().to_half_letter(line.strip().strip("\u3012"))
                 m = reg.match(hankaku)
                 if m:
-                    ss.append("{}-{}\t{}".format(m.group(1), m.group(2), m.group(3)))
+                    ss.append(f"{m.group(1)}-{m.group(2)}\t{m.group(3)}")
                 else:
                     ss.append(line)
             return "\n".join(ss)
@@ -2080,8 +2079,8 @@ def setup(keymap) -> None:
 
             def _replacer(mo: re.Match) -> str:
                 if str(mo.group(0)).startswith('"'):
-                    return "\u201c{}\u201d".format(mo.group(1))
-                return "\u2018{}\u2019".format(mo.group(1))
+                    return f"\u201c{mo.group(1)}\u201d"
+                return f"\u2018{mo.group(1)}\u2019"
 
             return reg.sub(_replacer, s)
 
@@ -2203,8 +2202,8 @@ def setup(keymap) -> None:
             ),
             "to lowercase": lambda c: c.lower(),
             "to uppercase": lambda c: c.upper(),
-            "to slack feed subscribe": lambda c: "/feed subscribe {}".format(c),
-            "to slack feed remove": lambda c: "/feed remove {}".format(c),
+            "to slack feed subscribe": lambda c: f"/feed subscribe {c}",
+            "to slack feed remove": lambda c: f"/feed remove {c}",
             "to list": FormatTools.to_list,
             "to deepl-friendly": FormatTools.to_deepl_friendly,
             "swap abbreviation around colon": FormatTools.swap_abbreviation,
@@ -2326,32 +2325,3 @@ def setup(keymap) -> None:
         subthread_tool.run(_fzf, _finished, True)
 
     keymap_global["U1-Z"] = fzfmenu
-
-
-def configure_ListWindow(window: ListWindow) -> None:
-    window.keymap["J"] = window.command_CursorDown
-    window.keymap["K"] = window.command_CursorUp
-    window.keymap["C-J"] = window.command_CursorPageDown
-    window.keymap["C-K"] = window.command_CursorPageUp
-    window.keymap["L"] = window.command_Enter
-    for mod in ["", "S-", "C-", "C-S-"]:
-        for key in ["L", "Space"]:
-            window.keymap[mod + key] = window.command_Enter
-
-    def to_top_of_list() -> None:
-        if window.isearch:
-            return
-        window.select = 0
-        window.scroll_info.makeVisible(window.select, window.itemsHeight())
-        window.paint()
-
-    window.keymap["A"] = to_top_of_list
-
-    def to_end_of_list() -> None:
-        if window.isearch:
-            return
-        window.select = len(window.items) - 1
-        window.scroll_info.makeVisible(window.select, window.itemsHeight())
-        window.paint()
-
-    window.keymap["E"] = to_end_of_list
