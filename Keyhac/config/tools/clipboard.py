@@ -6,7 +6,7 @@ from keyhac_keymap import WindowKeymap  # type: ignore
 from keyhac import *  # type: ignore
 
 from . import subthread, virtual_finger
-from .common import delay
+from .common import balloon, delay
 from .virtual_finger import Tap
 
 
@@ -103,3 +103,79 @@ class Manager:
                     break
 
         subthread.run(_watch_clipboard, deferred)
+
+
+class FIFOStack:
+    def __init__(self) -> None:
+        self.items = []
+        self.enabled = False
+
+    def _enable(self) -> None:
+        balloon(keymap, "FIFO mode ON!")
+        self.enabled = True
+
+    def _disable(self, alert: bool = True) -> None:
+        if alert:
+            balloon(keymap, "FIFO mode OFF!")
+        self.enabled = False
+
+    def toggle(self) -> None:
+        if self.enabled:
+            self._disable()
+        else:
+            self._enable()
+
+    def register(self, s: str) -> None:
+        if self.enabled:
+            self.items.append(s)
+            msg = f"FIFO stack total: {self.count}"
+            balloon(keymap, msg)
+        else:
+            balloon(keymap, "FIFO mode is not enabled.")
+
+    def reset(self) -> None:
+        self.items = []
+
+    def bulk_register(self, lines: str) -> None:
+        if self.enabled:
+            self.reset()
+            self.items = [line for line in lines.splitlines() if line.strip()]
+            msg = f"FIFO stack total: {self.count}"
+            balloon(keymap, msg)
+        else:
+            balloon(keymap, "FIFO mode is not enabled.")
+
+    def bulk_paste(self, delimiter: str) -> str:
+        if self.enabled:
+            s = delimiter.join(self.items)
+            self.reset()
+            self._disable()
+            return s
+        return ""
+
+    def join_items(self, sep: str) -> str:
+        if not self.enabled:
+            balloon(keymap, "FIFO mode is not enabled.")
+            return ""
+        s = sep.join(self.items)
+        self.reset()
+        self._disable()
+        return s
+
+    @property
+    def count(self) -> int:
+        return len(self.items)
+
+    def pop(self) -> str | None:
+        if not self.enabled:
+            balloon(keymap, "FIFO mode is not enabled.")
+            return None
+        if 0 < self.count:
+            cb = self.items.pop(0)
+            if self.count == 0:
+                balloon(keymap, "FIFO mode OFF! (pasted last item)", 5000)
+                self._disable(False)
+            else:
+                balloon(keymap, f"FIFO next:{self.items[0]}", 5000)
+            return cb
+        return None
