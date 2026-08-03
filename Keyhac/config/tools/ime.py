@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import Enum, StrEnum
 
 from keyhac_keymap import WindowKeymap  # type: ignore
 
@@ -44,7 +44,7 @@ def disable() -> None:
         set_status(ImeStatus.off)
 
 
-class SKKKey:
+class SKKKey(StrEnum):
     toggle_vk = "(243)"
     kata = "Q"
     kana = "C-J"
