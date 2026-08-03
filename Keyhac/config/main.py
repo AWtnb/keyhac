@@ -18,6 +18,7 @@ from keyhac_keymap import WindowKeymap  # type: ignore
 
 from keyhac import *  # type: ignore
 
+from .tools import clipboard as cb_tool
 from .tools import ime as ime_tool
 from .tools import sender as sender_tool
 from .tools import subthread as subthread_tool
@@ -35,7 +36,6 @@ from .tools.common import (
     shell_exec,
     smart_check_path,
 )
-from .tools.virtual_finger import Tap
 
 
 def setup(keymap) -> None:
@@ -191,91 +191,91 @@ def setup(keymap) -> None:
 
     bind_ime_control()
 
-    class ClipboardManager:
-        tap_to_register: Tap
-        tap_to_paste: Tap = Tap("C-V")
-        terminal_process: list[str] = [
-            "pwsh.exe",
-            "powershell.exe",
-            "wezterm-gui.exe",
-        ]
-        finger: vf_tool.VirtualFinger
+    # class ClipboardManager:
+    #     tap_to_register: Tap
+    #     tap_to_paste: Tap = Tap("C-V")
+    #     terminal_process: tuple[str, ...] = (
+    #         "pwsh.exe",
+    #         "powershell.exe",
+    #         "wezterm-gui.exe",
+    #     )
+    #     finger: vf_tool.VirtualFinger
 
-        def __init__(self, cut_mode: bool = False) -> None:
-            if cut_mode:
-                self.tap_to_register = Tap("C-X")
-            else:
-                self.tap_to_register = Tap("C-C")
-            self.finger = vf_tool.VirtualFinger()
+    #     def __init__(self, cut_mode: bool = False) -> None:
+    #         if cut_mode:
+    #             self.tap_to_register = Tap("C-X")
+    #         else:
+    #             self.tap_to_register = Tap("C-C")
+    #         self.finger = vf_tool.VirtualFinger()
 
-        @staticmethod
-        def get_string() -> str:
-            try:
-                return ckit.getClipboardText() or ""
-            except Exception:
-                return ""
+    #     @staticmethod
+    #     def get_string() -> str:
+    #         try:
+    #             return ckit.getClipboardText() or ""
+    #         except Exception:
+    #             return ""
 
-        @staticmethod
-        def get_latest_clipboard_history() -> str:
-            try:
-                return keymap.clipboard_history.items[0]
-            except IndexError:
-                return ""
+    #     @staticmethod
+    #     def get_latest_clipboard_history() -> str:
+    #         try:
+    #             return keymap.clipboard_history.items[0]
+    #         except IndexError:
+    #             return ""
 
-        @staticmethod
-        def set_string(s: str) -> None:
-            try:
-                ckit.setClipboardText(str(s))
-            except Exception:
-                pass
+    #     @staticmethod
+    #     def set_string(s: str) -> None:
+    #         try:
+    #             ckit.setClipboardText(str(s))
+    #         except Exception:
+    #             pass
 
-        def send_register_key(self) -> None:
-            self.finger.send_compiled(self.tap_to_register)
+    #     def send_register_key(self) -> None:
+    #         self.finger.send_compiled(self.tap_to_register)
 
-        def send_paste_key(self) -> None:
-            self.finger.send_compiled(self.tap_to_paste)
+    #     def send_paste_key(self) -> None:
+    #         self.finger.send_compiled(self.tap_to_paste)
 
-        def paste(
-            self,
-            s: str | None = None,
-            format_func: Callable[[str], str] | None = None,
-        ) -> None:
-            if s is None:
-                s = self.get_string()
-                if any([0x10000 < ord(c) for c in s]):
-                    # newer emoji
-                    self.send_paste_key()
-                    return
+    #     def paste(
+    #         self,
+    #         s: str | None = None,
+    #         format_func: Callable[[str], str] | None = None,
+    #     ) -> None:
+    #         if s is None:
+    #             s = self.get_string()
+    #             if any([0x10000 < ord(c) for c in s]):
+    #                 # newer emoji
+    #                 self.send_paste_key()
+    #                 return
 
-                if len(s) < 1:
-                    # empty clipboard could be image.
-                    self.send_paste_key()
-                    return
-            if format_func is not None:
-                s = format_func(s)
-            if keymap.getWindow().getProcessName() in self.terminal_process:
-                s = s.strip()
-            self.set_string(s)
-            self.send_paste_key()
+    #             if len(s) < 1:
+    #                 # empty clipboard could be image.
+    #                 self.send_paste_key()
+    #                 return
+    #         if format_func is not None:
+    #             s = format_func(s)
+    #         if keymap.getWindow().getProcessName() in self.terminal_process:
+    #             s = s.strip()
+    #         self.set_string(s)
+    #         self.send_paste_key()
 
-        def after_register(self, deferred: Callable[[ckit.JobItem], None]) -> None:
-            cb = self.get_latest_clipboard_history()
-            self.send_register_key()
-            delay(40)
+    #     def after_register(self, deferred: Callable[[ckit.JobItem], None]) -> None:
+    #         cb = self.get_latest_clipboard_history()
+    #         self.send_register_key()
+    #         delay(40)
 
-            def _watch_clipboard(job_item: ckit.JobItem) -> None:
-                job_item.origin = cb
-                job_item.copied = ""
-                trial = 600
-                for _ in range(trial):
-                    s = self.get_latest_clipboard_history()
-                    if not s.strip():
-                        continue
-                    if s != job_item.origin:
-                        job_item.copied = s
-                        break
+    #         def _watch_clipboard(job_item: ckit.JobItem) -> None:
+    #             job_item.origin = cb
+    #             job_item.copied = ""
+    #             trial = 600
+    #             for _ in range(trial):
+    #                 s = self.get_latest_clipboard_history()
+    #                 if not s.strip():
+    #                     continue
+    #                 if s != job_item.origin:
+    #                     job_item.copied = s
+    #                     break
 
-            subthread_tool.run(_watch_clipboard, deferred)
+    #         subthread_tool.run(_watch_clipboard, deferred)
 
     class FIFOStack:
         def __init__(self) -> None:
@@ -357,7 +357,7 @@ def setup(keymap) -> None:
     keymap_global["LC-LS-U0-X"] = keymap.fifo_stack.toggle
 
     keymap_global["LC-LS-U0-F"] = lambda: keymap.fifo_stack.bulk_register(
-        ClipboardManager.get_string()
+        cb_tool.get_string()
     )
 
     def smart_copy(cut_mode: bool) -> CallbackFunc:
@@ -369,9 +369,9 @@ def setup(keymap) -> None:
                     if cb:
                         keymap.fifo_stack.register(cb)
 
-                ClipboardManager(cut_mode).after_register(_register)
+                cb_tool.Manager(cut_mode).after_register(_register)
             else:
-                ClipboardManager(cut_mode).send_register_key()
+                cb_tool.Manager(cut_mode).send_register_key()
 
         return _copier
 
@@ -382,12 +382,12 @@ def setup(keymap) -> None:
         def _paster() -> None:
             if keymap.fifo_stack.enabled and 0 < keymap.fifo_stack.count:
                 s = keymap.fifo_stack.pop()
-                ClipboardManager().paste(s)
+                cb_tool.Manager().paste(s)
             else:
                 if strip_decolation:
-                    ClipboardManager().paste()
+                    cb_tool.Manager().paste()
                 else:
-                    ClipboardManager().send_paste_key()
+                    cb_tool.Manager().send_paste_key()
 
         return _paster
 
@@ -422,7 +422,7 @@ def setup(keymap) -> None:
                 return s
 
             def _paste() -> None:
-                ClipboardManager().paste(format_func=_clean)
+                cb_tool.Manager().paste(format_func=_clean)
 
             return _paste
 
@@ -490,7 +490,7 @@ def setup(keymap) -> None:
         @staticmethod
         def invoke_paster(func: Callable[[str], str]) -> CallbackFunc:
             def _paster() -> None:
-                ClipboardManager().paste(None, func)
+                cb_tool.Manager().paste(None, func)
 
             return _paster
 
@@ -515,7 +515,7 @@ def setup(keymap) -> None:
             else:
                 balloon(keymap, f"invalid path: {u}")
 
-        ClipboardManager().after_register(_open)
+        cb_tool.Manager().after_register(_open)
 
     keymap_global["C-U0-O"] = open_selected_url
 
@@ -1315,7 +1315,7 @@ def setup(keymap) -> None:
                         query.remove_hiragana()
                     shell_exec(uri.format(query.encode(strict)))
 
-                ClipboardManager().after_register(_search)
+                cb_tool.Manager().after_register(_search)
 
             return _searcher
 
@@ -1828,7 +1828,7 @@ def setup(keymap) -> None:
         def _unselect(_) -> None:
             finger.send_compiled(*taps)
 
-        ClipboardManager().after_register(_unselect)
+        cb_tool.Manager().after_register(_unselect)
 
     keymap_smoothcsv["U1-C"] = copy_and_unselect_line
 
@@ -1919,10 +1919,10 @@ def setup(keymap) -> None:
         def to_full_brackets(cls, s: str) -> str:
             return s.translate(str.maketrans(cls.half_brackets, cls.full_brackets))
 
-    keymap_global["U1-W"] = lambda: ClipboardManager().paste(
+    keymap_global["U1-W"] = lambda: cb_tool.Manager().paste(
         format_func=CharWidth(True).to_full_letter
     )
-    keymap_global["LS-U1-W"] = lambda: ClipboardManager().paste(
+    keymap_global["LS-U1-W"] = lambda: cb_tool.Manager().paste(
         format_func=CharWidth(True).to_half_letter
     )
 
@@ -2281,7 +2281,7 @@ def setup(keymap) -> None:
             balloon(keymap, "cannot find fzf on PC.")
             return
 
-        if not ClipboardManager.get_string():
+        if not cb_tool.get_string():
             balloon(keymap, "no text in clipboard.")
             return
 
@@ -2320,7 +2320,7 @@ def setup(keymap) -> None:
 
         def _finished(job_item: ckit.JobItem) -> None:
             if job_item.func:
-                ClipboardManager().paste(None, job_item.func)
+                cb_tool.Manager().paste(None, job_item.func)
 
         subthread_tool.run(_fzf, _finished, True)
 
