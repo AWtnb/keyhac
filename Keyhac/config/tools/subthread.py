@@ -1,17 +1,18 @@
-from typing import Callable
+from collections.abc import Callable
 
 import ckit  # type: ignore
 from keyhac_keymap import WindowKeymap  # type: ignore
 
-from keyhac import *  # type: ignore  # noqa: F403
+from keyhac import *  # type: ignore
 
 from . import virtual_finger
+from .virtual_finger import Tap
 
 keymap: WindowKeymap = None
 
 virtual_finger.keymap = keymap
 
-MAGICAL_KEY = virtual_finger.VirtualFinger().compile("LWin-S-M", "U-Alt")
+MAGICAL_SEQUENCE = [Tap(elem) for elem in ("LWin-S-M", "U-Alt")]
 
 
 def run(
@@ -22,7 +23,7 @@ def run(
 
     finger = virtual_finger.VirtualFinger(0)
     if focus_changed_in_subthread:
-        finger.send_compiled(*MAGICAL_KEY)
+        finger.send_compiled(*MAGICAL_SEQUENCE)
 
     def _finished(job_item: ckit.JobItem) -> None:
         keymap.setInput_Modifier(0)

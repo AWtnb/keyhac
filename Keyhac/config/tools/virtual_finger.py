@@ -8,7 +8,7 @@ keymap: WindowKeymap = None
 
 class Tap:
     mod: int = 0
-    sequence: list[pyauto.Key | pyauto.KeyUp | pyauto.KeyDown | pyauto.Char] = []
+    sequence: list[pyauto.Key | pyauto.KeyUp | pyauto.KeyDown | pyauto.Char] = []  # noqa: RUF012
 
     def __init__(self, name: str):
         up = None
