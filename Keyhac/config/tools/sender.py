@@ -18,7 +18,7 @@ def setup(_keymap: WindowKeymap) -> None:
 class SKKSender:
     def __init__(self, inter_stroke_pause: int = 0) -> None:
         self.finger = virtual_finger.VirtualFinger(inter_stroke_pause)
-        self.control = ime.Handler(inter_stroke_pause)
+        self.ime_handler = ime.Handler(inter_stroke_pause)
 
     def invoke(self, mode_setter: CallbackFunc, *sequence: str) -> CallbackFunc:
         taps = self.finger.compile(*sequence)
@@ -30,11 +30,11 @@ class SKKSender:
         return _sender
 
     def under_kanamode(self, *sequence: str) -> CallbackFunc:
-        sender = self.invoke(self.control.to_skk_kana, *sequence)
+        sender = self.invoke(self.ime_handler.to_skk_kana, *sequence)
         return sender
 
     def under_latinmode(self, *sequence: str) -> CallbackFunc:
-        sender = self.invoke(self.control.to_skk_latin, *sequence)
+        sender = self.invoke(self.ime_handler.to_skk_latin, *sequence)
         return sender
 
     def without_mode(self, *sequence: str) -> CallbackFunc:
@@ -61,4 +61,4 @@ class DirectSender:
 
     def invoke(self, *sequence: str) -> CallbackFunc:
         seq = list(sequence)
-        return self.skk.invoke(self.skk.control.turnoff_skk, *seq)
+        return self.skk.invoke(self.skk.ime_handler.turnoff_skk, *seq)

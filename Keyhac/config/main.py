@@ -191,25 +191,25 @@ def setup(keymap) -> None:
 
     keymap_global["C-Q"] = safe_close
 
-    def bind_ime_control() -> None:
-        control = ime_tool.Handler(0)
+    def bind_ime_handler() -> None:
+        ime_handler = ime_tool.Handler(0)
         for key, func in {
-            "U1-J": control.to_skk_kana,
-            "LC-U0-I": control.to_skk_kata,
-            "U0-F7": control.to_skk_kata,
-            "U0-O": control.to_skk_half_kata,
-            "LC-LS-U0-I": control.to_skk_half_kata,
-            "U0-F8": control.to_skk_half_kata,
+            "U1-J": ime_handler.to_skk_kana,
+            "LC-U0-I": ime_handler.to_skk_kata,
+            "U0-F7": ime_handler.to_skk_kata,
+            "U0-O": ime_handler.to_skk_half_kata,
+            "LC-LS-U0-I": ime_handler.to_skk_half_kata,
+            "U0-F8": ime_handler.to_skk_half_kata,
             "U0-F": ime_tool.disable,
-            "LS-U0-F": control.to_skk_kana,
-            "S-U1-J": control.to_skk_latin,
-            "U1-I": control.reconvert_with_skk,
-            "O-(236)": control.to_skk_abbrev,
-            "U1-U": control.start_skk_conv_suffix,
+            "LS-U0-F": ime_handler.to_skk_kana,
+            "S-U1-J": ime_handler.to_skk_latin,
+            "U1-I": ime_handler.reconvert_with_skk,
+            "O-(236)": ime_handler.to_skk_abbrev,
+            "U1-U": ime_handler.start_skk_conv_suffix,
         }.items():
             keymap_global[key] = func
 
-    bind_ime_control()
+    bind_ime_handler()
 
     keymap_global["U0-V"] = paste
 
@@ -400,7 +400,7 @@ def setup(keymap) -> None:
             "S-U0-Period": "\uff0e",  # FULLWIDTH PERIOD
         }.items():
             keymap_global[key] = sender.invoke(
-                sender.control.to_skk_full_latin, symbol, ime_tool.SKKKey.kana
+                sender.ime_handler.to_skk_full_latin, symbol, ime_tool.SKKKey.kana
             )
 
     bind_fullwidth_sender()
@@ -420,7 +420,10 @@ def setup(keymap) -> None:
             "U1-OpenBracket": ["\uff3b", "\uff3d"],  # FULLWIDTH SQUARE BRACKET ［］
         }.items():
             keymap_global[key] = sender.invoke(
-                sender.control.to_skk_full_latin, *pair, "Left", ime_tool.SKKKey.kana
+                sender.ime_handler.to_skk_full_latin,
+                *pair,
+                "Left",
+                ime_tool.SKKKey.kana,
             )
 
     bind_fullwidth_circumfix_sender()
