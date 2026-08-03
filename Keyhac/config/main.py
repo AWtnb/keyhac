@@ -24,7 +24,6 @@ from .tools import window_snap as window_snap_tool
 from .tools.clipboard import (
     FIFOStack,
     invoke_clean_paster,
-    invoke_quote_paster,
     smart_copy,
     smart_paste,
 )
@@ -238,9 +237,9 @@ def setup(keymap) -> None:
     bind_cleanup_paster(keymap_global["U1-V"], "V")
 
     # paste with quote mark
-    keymap_global["U1-Q"] = invoke_quote_paster(simple_quote)
-    keymap_global["LC-U1-Q"] = invoke_quote_paster(as_single_line)
-    keymap_global["LS-U1-Q"] = invoke_quote_paster(skip_blank_line)
+    keymap_global["U1-Q"] = lambda: cb_tool.Manager().paste(None, simple_quote)
+    keymap_global["LC-U1-Q"] = lambda: cb_tool.Manager().paste(None, as_single_line)
+    keymap_global["LS-U1-Q"] = lambda: cb_tool.Manager().paste(None, skip_blank_line)
 
     # open url in browser
     def open_selected_url() -> None:

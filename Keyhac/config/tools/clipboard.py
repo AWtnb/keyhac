@@ -197,16 +197,9 @@ def invoke_clean_paster(no_space: bool = False, no_break: bool = False) -> Callb
     return _paste
 
 
-def invoke_quote_paster(func: Callable[[str], str]) -> CallbackFunc:
-    def _paster() -> None:
-        Manager().paste(None, func)
-
-    return _paster
-
-
 def smart_copy(cut_mode: bool) -> CallbackFunc:
     def _copier() -> None:
-        if keymap.fifo_stack.enabled:
+        if keymap.fifo_stack and keymap.fifo_stack.enabled:
 
             def _register(job_item: ckit.JobItem) -> None:
                 cb = job_item.copied
@@ -222,7 +215,11 @@ def smart_copy(cut_mode: bool) -> CallbackFunc:
 
 def smart_paste(strip_decolation: bool) -> CallbackFunc:
     def _paster() -> None:
-        if keymap.fifo_stack.enabled and 0 < keymap.fifo_stack.count:
+        if (
+            keymap.fifo_stack
+            and keymap.fifo_stack.enabled
+            and 0 < keymap.fifo_stack.count
+        ):
             s = keymap.fifo_stack.pop()
             Manager().paste(s)
         else:
