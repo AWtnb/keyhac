@@ -45,6 +45,7 @@ def setup(keymap) -> None:
     subthread_tool.keymap = keymap
     ime_tool.keymap = keymap
     sender_tool.keymap = keymap
+    cb_tool.setup(keymap)
 
     ################################
     # general setting
