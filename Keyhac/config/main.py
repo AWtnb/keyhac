@@ -507,13 +507,6 @@ def setup(keymap) -> None:
 
     keymap_global["U0-M"] = keymap.defineMultiStrokeKeymap()
 
-    def replace_last_nchar(km: WindowKeymap, newstr: str) -> None:
-        for n in "0123":
-            seq = ["Back"] * int(n) + [newstr, ime_tool.SKKKey.toggle_vk]
-            km[n] = sender_tool.DirectSender().invoke(*seq)
-
-    replace_last_nchar(keymap_global["U0-M"], "先生")
-
     def bind_direct_sender(
         km: WindowKeymap, binding: dict[str, tuple[str, ...]]
     ) -> None:
