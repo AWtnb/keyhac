@@ -21,9 +21,7 @@ from .tools import virtual_finger as vf_tool
 from .tools import window_activate as window_activate_tool
 from .tools import window_snap as window_snap_tool
 from .tools.browser_info import SystemBrowser
-from .tools.clipboard import (
-    invoke_clean_paster,
-)
+from .tools.clipboard import copy_then, invoke_clean_paster, paste
 from .tools.common import (
     CallbackFunc,
     balloon,
@@ -207,7 +205,7 @@ def setup(keymap) -> None:
 
     bind_ime_control()
 
-    keymap_global["U0-V"] = cb_tool.Manager.paste
+    keymap_global["U0-V"] = paste
 
     ################################
     # custom hotkey
@@ -228,9 +226,9 @@ def setup(keymap) -> None:
     bind_cleanup_paster(keymap_global["U1-V"], "V")
 
     # paste with quote mark
-    keymap_global["U1-Q"] = lambda: cb_tool.Manager().paste(None, simple_quote)
-    keymap_global["LC-U1-Q"] = lambda: cb_tool.Manager().paste(None, as_single_line)
-    keymap_global["LS-U1-Q"] = lambda: cb_tool.Manager().paste(None, skip_blank_line)
+    keymap_global["U1-Q"] = lambda: paste(None, simple_quote)
+    keymap_global["LC-U1-Q"] = lambda: paste(None, as_single_line)
+    keymap_global["LS-U1-Q"] = lambda: paste(None, skip_blank_line)
 
     # open url in browser
     def open_selected_url() -> None:
@@ -245,7 +243,7 @@ def setup(keymap) -> None:
             else:
                 balloon(keymap, f"invalid path: {u}")
 
-        cb_tool.Manager().after_register(_open)
+        copy_then(_open)
 
     keymap_global["C-U0-O"] = open_selected_url
 
@@ -486,7 +484,7 @@ def setup(keymap) -> None:
                     s = job_item.origin
                 search_func(s)
 
-            cb_tool.Manager().after_register(_search)
+            copy_then(_search)
 
         return _searcher
 
@@ -851,7 +849,7 @@ def setup(keymap) -> None:
         def _unselect(_) -> None:
             finger.send_compiled(*taps)
 
-        cb_tool.Manager().after_register(_unselect)
+        copy_then(_unselect)
 
     keymap_smoothcsv["U1-C"] = copy_and_unselect_line
 
@@ -942,12 +940,8 @@ def setup(keymap) -> None:
         def to_full_brackets(cls, s: str) -> str:
             return s.translate(str.maketrans(cls.half_brackets, cls.full_brackets))
 
-    keymap_global["U1-W"] = lambda: cb_tool.Manager().paste(
-        format_func=CharWidth(True).to_full_letter
-    )
-    keymap_global["LS-U1-W"] = lambda: cb_tool.Manager().paste(
-        format_func=CharWidth(True).to_half_letter
-    )
+    keymap_global["U1-W"] = lambda: paste(format_func=CharWidth(True).to_full_letter)
+    keymap_global["LS-U1-W"] = lambda: paste(format_func=CharWidth(True).to_half_letter)
 
     class NestedCircumfix:
         def __init__(self, prime_pair: tuple, secondary_pair: tuple):
@@ -1300,7 +1294,7 @@ def setup(keymap) -> None:
 
         def _finished(job_item: ckit.JobItem) -> None:
             if job_item.func:
-                cb_tool.Manager().paste(None, job_item.func)
+                paste(None, job_item.func)
 
         subthread_tool.run(_fzf, _finished, True)
 

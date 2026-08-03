@@ -40,70 +40,59 @@ def set_string(s: str) -> None:
         pass
 
 
-class Manager:
-    tap_to_register: Tap
-    tap_to_paste: Tap = Tap("C-V")
-    terminal_process: tuple[str, ...] = (
-        "pwsh.exe",
-        "powershell.exe",
-        "wezterm-gui.exe",
-    )
-    finger: virtual_finger.VirtualFinger
+VF = virtual_finger.VirtualFinger()
+TAP_TO_COPY = Tap("C-C")
+TAP_TO_PASTE = Tap("C-V")
 
-    def __init__(self, cut_mode: bool = False) -> None:
-        if cut_mode:
-            self.tap_to_register = Tap("C-X")
-        else:
-            self.tap_to_register = Tap("C-C")
-        self.finger = virtual_finger.VirtualFinger()
 
-    def send_register_key(self) -> None:
-        self.finger.send_compiled(self.tap_to_register)
+def send_copy_key() -> None:
+    VF.send_compiled(TAP_TO_COPY)
 
-    def send_paste_key(self) -> None:
-        self.finger.send_compiled(self.tap_to_paste)
 
-    def paste(
-        self,
-        s: str | None = None,
-        format_func: Callable[[str], str] | None = None,
-    ) -> None:
-        if s is None:
-            s = get_string()
-            if any(0x10000 < ord(c) for c in s):
-                # newer emoji
-                self.send_paste_key()
-                return
+def send_paste_key() -> None:
+    VF.send_compiled(TAP_TO_PASTE)
 
-            if len(s) < 1:
-                # empty clipboard could be image.
-                self.send_paste_key()
-                return
-        if format_func is not None:
-            s = format_func(s)
-        if keymap.getWindow().getProcessName() in self.terminal_process:
-            s = s.strip()
-        set_string(s)
-        self.send_paste_key()
 
-    def after_register(self, deferred: Callable[[ckit.JobItem], None]) -> None:
-        cb = get_latest_clipboard_history()
-        self.send_register_key()
-        delay(40)
+def paste(
+    s: str | None = None, format_func: Callable[[str], str] | None = None
+) -> None:
+    if s is None:
+        s = get_string()
+        if any(0x10000 < ord(c) for c in s):
+            # newer emoji
+            send_paste_key()
+            return
 
-        def _watch_clipboard(job_item: ckit.JobItem) -> None:
-            job_item.origin = cb
-            job_item.copied = ""
-            trial = 600
-            for _ in range(trial):
-                s = get_latest_clipboard_history()
-                if not s.strip():
-                    continue
-                if s != job_item.origin:
-                    job_item.copied = s
-                    break
+        if len(s) < 1:
+            # empty clipboard could be image.
+            send_paste_key()
+            return
 
-        subthread.run(_watch_clipboard, deferred)
+    if format_func is not None:
+        s = format_func(s)
+
+    set_string(s)
+    send_paste_key()
+
+
+def copy_then(deferred: Callable[[ckit.JobItem], None]) -> None:
+    cb = get_latest_clipboard_history()
+    virtual_finger.VirtualFinger().send_compiled(Tap("C-C"))
+    delay(40)
+
+    def _watch_clipboard(job_item: ckit.JobItem) -> None:
+        job_item.origin = cb
+        job_item.copied = ""
+        trial = 600
+        for _ in range(trial):
+            s = get_latest_clipboard_history()
+            if not s.strip():
+                continue
+            if s != job_item.origin:
+                job_item.copied = s
+                break
+
+    subthread.run(_watch_clipboard, deferred)
 
 
 def invoke_clean_paster(no_space: bool = False, no_break: bool = False) -> CallbackFunc:
@@ -116,6 +105,6 @@ def invoke_clean_paster(no_space: bool = False, no_break: bool = False) -> Callb
         return s
 
     def _paste() -> None:
-        Manager().paste(format_func=_clean)
+        paste(format_func=_clean)
 
     return _paste
