@@ -535,7 +535,7 @@ def setup(keymap) -> None:
     # activate window
     ################################
 
-    keymap.default_browser = SystemBrowser()
+    SYSTEM_BROWSER = SystemBrowser()
 
     def bind_cute_exec(wnd_keymap: WindowKeymap, remap_table: dict) -> None:
         for key, params in remap_table.items():
@@ -576,9 +576,9 @@ def setup(keymap) -> None:
         keymap_global["U1-C"],
         {
             "Space": (
-                keymap.default_browser.get_exe_name(),
-                keymap.default_browser.get_wnd_class(),
-                keymap.default_browser.get_exe_path(),
+                SYSTEM_BROWSER.get_exe_name(),
+                SYSTEM_BROWSER.get_wnd_class(),
+                SYSTEM_BROWSER.get_exe_path(),
             ),
             "C": (
                 "chrome.exe",
@@ -716,7 +716,7 @@ def setup(keymap) -> None:
 
     def search_on_browser() -> None:
         finger = vf_tool.VirtualFinger(20)
-        if keymap.getWindow().getProcessName() == keymap.default_browser.get_exe_name():
+        if keymap.getWindow().getProcessName() == SYSTEM_BROWSER.get_exe_name():
             finger.send("C-T")
             return
 
@@ -724,8 +724,8 @@ def setup(keymap) -> None:
             delay()
             job_item.result = None
             scanner = WndScanner(
-                keymap.default_browser.get_exe_name(),
-                keymap.default_browser.get_wnd_class(),
+                SYSTEM_BROWSER.get_exe_name(),
+                SYSTEM_BROWSER.get_wnd_class(),
             )
             scanner.scan()
             wnd = scanner.found
