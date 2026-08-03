@@ -1,7 +1,6 @@
 import os
 import re
 import subprocess
-import unicodedata
 import urllib.parse
 import webbrowser
 from collections.abc import Callable
@@ -21,6 +20,14 @@ from .tools import virtual_finger as vf_tool
 from .tools import window_activate as window_activate_tool
 from .tools import window_snap as window_snap_tool
 from .tools.browser_info import SystemBrowser
+from .tools.char_width import (
+    to_full_brackets,
+    to_full_letter,
+    to_full_symbol,
+    to_half_brackets,
+    to_half_letter,
+    to_half_symbol,
+)
 from .tools.clipboard import copy_then, invoke_clean_paster, paste
 from .tools.common import (
     CallbackFunc,
@@ -902,46 +909,10 @@ def setup(keymap) -> None:
     # popup clipboard menu
     ################################
 
-    class CharWidth:
-        full_letters = "\uff41\uff42\uff43\uff44\uff45\uff46\uff47\uff48\uff49\uff4a\uff4b\uff4c\uff4d\uff4e\uff4f\uff50\uff51\uff52\uff53\uff54\uff55\uff56\uff57\uff58\uff59\uff5a\uff21\uff22\uff23\uff24\uff25\uff26\uff27\uff28\uff29\uff2a\uff2b\uff2c\uff2d\uff2e\uff2f\uff30\uff31\uff32\uff33\uff34\uff35\uff36\uff37\uff38\uff39\uff3a\uff10\uff11\uff12\uff13\uff14\uff15\uff16\uff17\uff18\uff19\uff0d"
-        half_letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-"
-        full_symbols = "\uff01\uff02\uff03\uff04\uff05\uff06\uff07\uff08\uff09\uff0a\uff0b\uff0c\uff0d\uff0e\uff0f\uff1a\uff1b\uff1c\uff1d\uff1e\uff1f\uff20\uff3b\uff3c\uff3d\uff3e\uff3f\uff40\uff5b\uff5c\uff5d\uff5e"
-        half_symbols = "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
-        full_brackets = "\uff08\uff09\uff3b\uff3d\uff5b\uff5d"
-        half_brackets = "()[]{}"
-
-        def __init__(self, totally: bool = False) -> None:
-            self._totally = totally
-
-        def to_half_letter(self, s: str) -> str:
-            if self._totally:
-                return unicodedata.normalize("NFKC", s)
-            return s.translate(str.maketrans(self.full_letters, self.half_letters))
-
-        def to_full_letter(self, s: str) -> str:
-            s = s.translate(str.maketrans(self.half_letters, self.full_letters))
-            if not self._totally:
-                return s
-            return self.to_full_symbol(s)
-
-        @classmethod
-        def to_half_symbol(cls, s: str) -> str:
-            return s.translate(str.maketrans(cls.full_symbols, cls.half_symbols))
-
-        @classmethod
-        def to_full_symbol(cls, s: str) -> str:
-            return s.translate(str.maketrans(cls.half_symbols, cls.full_symbols))
-
-        @classmethod
-        def to_half_brackets(cls, s: str) -> str:
-            return s.translate(str.maketrans(cls.full_brackets, cls.half_brackets))
-
-        @classmethod
-        def to_full_brackets(cls, s: str) -> str:
-            return s.translate(str.maketrans(cls.half_brackets, cls.full_brackets))
-
-    keymap_global["U1-W"] = lambda: paste(format_func=CharWidth(True).to_full_letter)
-    keymap_global["LS-U1-W"] = lambda: paste(format_func=CharWidth(True).to_half_letter)
+    keymap_global["U1-W"] = lambda: paste(format_func=lambda s: to_full_letter(s, True))
+    keymap_global["LS-U1-W"] = lambda: paste(
+        format_func=lambda s: to_half_letter(s, True)
+    )
 
     class NestedCircumfix:
         def __init__(self, prime_pair: tuple, secondary_pair: tuple):
@@ -1038,7 +1009,7 @@ def setup(keymap) -> None:
                 reg = re.compile(r"(\d{3}).(\d{4})[\s]*(.+$)")
             ss = []
             for line in lines:
-                hankaku = CharWidth().to_half_letter(line.strip().strip("\u3012"))
+                hankaku = to_half_letter(line.strip().strip("\u3012"), True)
                 m = reg.match(hankaku)
                 if m:
                     ss.append(f"{m.group(1)}-{m.group(2)}\t{m.group(3)}")
@@ -1194,14 +1165,14 @@ def setup(keymap) -> None:
             "split postalcode and address": FormatTools.split_postalcode,
             "decode url": FormatTools.decode_url,
             "encode url": FormatTools.encode_url,
-            "to halfwidth": CharWidth().to_half_letter,
-            "to halfwidth (including symbols)": CharWidth(True).to_half_letter,
-            "to halfwidth symbols": CharWidth.to_half_symbol,
-            "to halfwidth bracktets": CharWidth.to_half_brackets,
-            "to fullwidth": CharWidth().to_full_letter,
-            "to fullwidth (including symbols)": CharWidth(True).to_full_letter,
-            "to fullwidth symbols": CharWidth.to_full_symbol,
-            "to fullwidth bracktets": CharWidth.to_full_brackets,
+            "to halfwidth": lambda s: to_half_letter(s, False),
+            "to halfwidth (including symbols)": lambda s: to_half_letter(s, True),
+            "to halfwidth symbols": to_half_symbol,
+            "to halfwidth bracktets": to_half_brackets,
+            "to fullwidth": lambda s: to_full_letter(s, False),
+            "to fullwidth (including symbols)": lambda s: to_full_letter(s, True),
+            "to fullwidth symbols": to_full_symbol,
+            "to fullwidth bracktets": to_full_brackets,
             "trim honorific": FormatTools.trim_honorific,
             "fix nested paren": FormatTools.format_nested_paren,
             "fix nested bracket": FormatTools.format_nested_bracket,
