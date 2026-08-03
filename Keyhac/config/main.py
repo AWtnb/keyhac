@@ -6,7 +6,6 @@ import unicodedata
 import urllib.parse
 import webbrowser
 from collections.abc import Callable
-from enum import Enum
 from winreg import HKEY_CLASSES_ROOT, HKEY_CURRENT_USER, OpenKey, QueryValueEx
 
 import ckit  # type: ignore
@@ -16,6 +15,7 @@ from keyhac_keymap import WindowKeymap  # type: ignore
 from keyhac import *  # type: ignore
 
 from .tools import clipboard as cb_tool
+from .tools import cursor_pos as cursor_pos_tool
 from .tools import ime as ime_tool
 from .tools import sender as sender_tool
 from .tools import subthread as subthread_tool
@@ -46,6 +46,7 @@ from .tools.format_str import (
     simple_quote,
     skip_blank_line,
 )
+from .tools.window_rect import RectEdge, as_rect
 
 
 def setup(keymap) -> None:
@@ -55,6 +56,7 @@ def setup(keymap) -> None:
     ime_tool.keymap = keymap
     sender_tool.keymap = keymap
     cb_tool.setup(keymap)
+    cursor_pos_tool.setup(keymap)
 
     ################################
     # general setting
@@ -318,47 +320,8 @@ def setup(keymap) -> None:
     keymap_global["U1-H"] = "LWin-Left"
 
     keymap_global["U1-M"] = keymap.defineMultiStrokeKeymap()
-    keymap_global["U1-M"]["X"] = lambda: keymap.getTopLevelWindow().maximize()
-    keymap_global["U1-M"]["N"] = lambda: keymap.getTopLevelWindow().minimize()
-
-    class RectEdge(Enum):
-        left = 0
-        top = 1
-        right = 2
-        bottom = 3
-
-    class Rect:
-        min_width = 300
-        min_height = 200
-
-        def __init__(self, left: int, top: int, right: int, bottom: int) -> None:
-            self.left = left
-            self.top = top
-            self.right = right
-            self.bottom = bottom
-            self.width = right - left
-            self.height = bottom - top
-
-        def move_edge(self, toward: RectEdge, delta: int) -> list[int]:
-            r = [
-                self.left,
-                self.top,
-                self.right,
-                self.bottom,
-            ]
-            opposite = (toward.value + 2) % 4
-            r[opposite] = r[toward.value] + delta
-            return r
-
-        def resize(self, scale: float, toward: RectEdge) -> list[int]:
-            if toward in [RectEdge.left, RectEdge.right]:
-                dim = self.width
-            else:
-                dim = self.height
-            delta = int(dim * scale)
-            if toward in [RectEdge.right, RectEdge.bottom]:
-                delta = delta * -1
-            return self.move_edge(toward, delta)
+    keymap_global["U1-M"]["X"] = keymap.getTopLevelWindow().maximize
+    keymap_global["U1-M"]["N"] = keymap.getTopLevelWindow().minimize
 
     def bind_window_snapper(km: WindowKeymap) -> None:
         altkey_stat = ["", "LA-", "RA-"]
@@ -385,7 +348,7 @@ def setup(keymap) -> None:
                             infos = pyauto.Window.getMonitorInfo()
                             infos.sort(key=lambda info: info[2] != 1)
                             target = infos[i]
-                            monitor_work_rect = Rect(*target[1])
+                            monitor_work_rect = as_rect(*target[1])
                             return monitor_work_rect.resize(s, e)
 
                         def __snap() -> None:
@@ -455,7 +418,7 @@ def setup(keymap) -> None:
                     wnd = keymap.getTopLevelWindow()
                     rect = wnd.getRect()
 
-                    resized = Rect(*rect).resize(0.5, toward)
+                    resized = as_rect(*rect).resize(0.5, toward)
                     if wnd.isMaximized():
                         wnd.restore()
                         delay()
@@ -477,97 +440,12 @@ def setup(keymap) -> None:
 
     WndShrinker.bind(keymap_global["U1-M"])
 
-    class MonitorCenterAvoider:
-        @staticmethod
-        def get_border_x(wnd: pyauto.Window) -> int:
-            x = -1
-            rect = Rect(*wnd.getRect())
-            center_x = int((rect.left + rect.right) / 2)
-            monitors = pyauto.Window.getMonitorInfo()
-            for monitor in monitors:
-                monitor_rect = Rect(*monitor[1])
-                if monitor_rect.left <= center_x <= monitor_rect.right:
-                    x = int((monitor_rect.left + monitor_rect.right) / 2)
-                    break
-            return x
-
-        @classmethod
-        def invoke_avoider(cls, show_left: bool) -> CallbackFunc:
-            def _avoider() -> None:
-                def _snap(_) -> None:
-                    wnd = keymap.getTopLevelWindow()
-                    if is_keyhac_console(wnd) or wnd.isMaximized():
-                        return
-                    border = cls.get_border_x(wnd)
-                    if border < 0:
-                        return
-                    rect = list(wnd.getRect())
-                    width = Rect(*rect).width
-                    if rect[0] == border:
-                        rect[0] = border - width
-                        rect[2] = rect[0] + width
-                    elif rect[2] == border:
-                        rect[0] = border
-                        rect[2] = rect[0] + width
-                    else:
-                        i = 0 if show_left else 2
-                        rect[i] = border
-                    wnd.setRect(rect)
-
-                subthread_tool.run(_snap)
-
-            return _avoider
-
-    keymap_global["U1-M"]["OpenBracket"] = MonitorCenterAvoider.invoke_avoider(False)
-    keymap_global["U1-M"]["CloseBracket"] = MonitorCenterAvoider.invoke_avoider(True)
-
     ################################
     # set cursor position
     ################################
 
-    class CursorPos:
-        @staticmethod
-        def get_pos() -> list:
-            infos = pyauto.Window.getMonitorInfo()
-            infos.sort(key=lambda info: info[2] != 1)
-            rects = [Rect(*info[1]) for info in infos]
-            pos = []
-            for rect in rects:
-                for i in (1, 3):
-                    y = rect.top + int(rect.height / 2)
-                    x = rect.left + int(rect.width / 4) * i
-                    pos.append([x, y])
-            return pos
-
-        @classmethod
-        def snap(cls) -> None:
-            pos = cls.get_pos()
-            x, y = pyauto.Input.getCursorPos()
-            idx = -1
-            for i, p in enumerate(pos):
-                if p[0] == x and p[1] == y:
-                    idx = i
-            if idx < 0 or idx == len(pos) - 1:
-                cls.set_position(*pos[0])
-            else:
-                cls.set_position(*pos[idx + 1])
-
-        @staticmethod
-        def set_position(x: int, y: int) -> None:
-            keymap.beginInput()
-            keymap.input_seq.append(pyauto.MouseMove(x, y))
-            keymap.endInput()
-
-        @classmethod
-        def snap_to_center(cls) -> None:
-            wnd = keymap.getTopLevelWindow()
-            wnd_left, wnd_top, wnd_right, wnd_bottom = wnd.getRect()
-            to_x = int((wnd_left + wnd_right) / 2)
-            to_y = int((wnd_bottom + wnd_top) / 2)
-            cls.set_position(to_x, to_y)
-
-    keymap_global["O-RCtrl"] = CursorPos.snap
-    keymap_global["O-RShift"] = CursorPos.snap_to_center
+    keymap_global["O-RCtrl"] = cursor_pos_tool.snap_cursor
+    keymap_global["O-RShift"] = cursor_pos_tool.snap_to_center
 
     ################################
     # input customize
