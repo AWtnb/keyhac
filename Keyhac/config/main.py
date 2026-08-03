@@ -323,8 +323,8 @@ def setup(keymap) -> None:
     keymap_global["U1-H"] = "LWin-Left"
 
     keymap_global["U1-M"] = keymap.defineMultiStrokeKeymap()
-    keymap_global["U1-M"]["X"] = keymap.getTopLevelWindow().maximize
-    keymap_global["U1-M"]["N"] = keymap.getTopLevelWindow().minimize
+    keymap_global["U1-M"]["X"] = lambda: keymap.getTopLevelWindow().maximize()
+    keymap_global["U1-M"]["N"] = lambda: keymap.getTopLevelWindow().minimize()
 
     def bind_window_snapper(km: WindowKeymap) -> None:
         altkey_stat = {0: "", 1: "LA-", 2: "RA-"}
