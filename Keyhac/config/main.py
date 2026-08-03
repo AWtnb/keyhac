@@ -23,7 +23,7 @@ from .tools import ime as ime_tool
 from .tools import sender as sender_tool
 from .tools import subthread as subthread_tool
 from .tools import virtual_finger as vf_tool
-from .tools.clipboard import FIFOStack
+from .tools.clipboard import FIFOStack, StrCleaner, remove_whitespace
 from .tools.common import (
     CallbackFunc,
     balloon,
@@ -236,46 +236,6 @@ def setup(keymap) -> None:
     ################################
     # custom hotkey
     ################################
-
-    class StrCleaner:
-        @staticmethod
-        def remove_whitespace(s: str) -> str:
-            return s.strip().translate(
-                str.maketrans(
-                    "",
-                    "",
-                    "\u0009\u0020\u00a0\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u200b\u200c\u200d\u200e\u200f\u202f\u205f\u3000\ufeff",
-                )
-            )
-
-        @classmethod
-        def invoke_paster(
-            cls, no_space: bool = False, no_break: bool = False
-        ) -> CallbackFunc:
-            def _clean(s) -> str:
-                s = s.strip()
-                if no_space:
-                    s = cls.remove_whitespace(s)
-                if no_break:
-                    s = "".join(s.splitlines())
-                return s
-
-            def _paste() -> None:
-                cb_tool.Manager().paste(format_func=_clean)
-
-            return _paste
-
-        @classmethod
-        def bind(cls, km: WindowKeymap, key: str) -> None:
-            for mod1, no_space in {
-                "": False,
-                "C-": True,
-            }.items():
-                for mod2, no_break in {
-                    "": False,
-                    "S-": True,
-                }.items():
-                    km[mod1 + mod2 + key] = cls.invoke_paster(no_space, no_break)
 
     keymap_global["U1-V"] = keymap.defineMultiStrokeKeymap()
     StrCleaner.bind(keymap_global["U1-V"], "V")
@@ -2070,7 +2030,7 @@ def setup(keymap) -> None:
             "fix nested paren": FormatTools.format_nested_paren,
             "fix nested bracket": FormatTools.format_nested_bracket,
             "zoom invitation": format_zoom_invitation,
-            "remove whitespaces": StrCleaner.remove_whitespace,
+            "remove whitespaces": remove_whitespace,
             "remove javascript comment line": invoke_comment_remover("// "),
             "remove python comment line": invoke_comment_remover("# "),
         }

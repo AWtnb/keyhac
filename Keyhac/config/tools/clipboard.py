@@ -6,7 +6,7 @@ from keyhac_keymap import WindowKeymap  # type: ignore
 from keyhac import *  # type: ignore
 
 from . import subthread, virtual_finger
-from .common import balloon, delay
+from .common import CallbackFunc, balloon, delay
 from .virtual_finger import Tap
 
 
@@ -179,3 +179,44 @@ class FIFOStack:
                 balloon(keymap, f"FIFO next:{self.items[0]}", 5000)
             return cb
         return None
+
+
+def remove_whitespace(s: str) -> str:
+    return s.strip().translate(
+        str.maketrans(
+            "",
+            "",
+            "\u0009\u0020\u00a0\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u200b\u200c\u200d\u200e\u200f\u202f\u205f\u3000\ufeff",
+        )
+    )
+
+
+class StrCleaner:
+    @classmethod
+    def invoke_paster(
+        cls, no_space: bool = False, no_break: bool = False
+    ) -> CallbackFunc:
+        def _clean(s) -> str:
+            s = s.strip()
+            if no_space:
+                s = remove_whitespace(s)
+            if no_break:
+                s = "".join(s.splitlines())
+            return s
+
+        def _paste() -> None:
+            Manager().paste(format_func=_clean)
+
+        return _paste
+
+    @classmethod
+    def bind(cls, km: WindowKeymap, key: str) -> None:
+        for mod1, no_space in {
+            "": False,
+            "C-": True,
+        }.items():
+            for mod2, no_break in {
+                "": False,
+                "S-": True,
+            }.items():
+                km[mod1 + mod2 + key] = cls.invoke_paster(no_space, no_break)
