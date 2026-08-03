@@ -2,13 +2,11 @@ import fnmatch
 import os
 import re
 import subprocess
-import tempfile
 import unicodedata
 import urllib.parse
 import webbrowser
 from collections.abc import Callable
 from enum import Enum
-from pathlib import Path
 from winreg import HKEY_CLASSES_ROOT, HKEY_CURRENT_USER, OpenKey, QueryValueEx
 
 import ckit  # type: ignore
@@ -24,12 +22,10 @@ from .tools import subthread as subthread_tool
 from .tools import virtual_finger as vf_tool
 from .tools.clipboard import (
     FIFOStack,
-    as_single_line,
     invoke_clean_paster,
     invoke_quote_paster,
-    remove_whitespace,
-    simple_quote,
-    skip_blank_line,
+    smart_copy,
+    smart_paste,
 )
 from .tools.common import (
     CallbackFunc,
@@ -38,12 +34,17 @@ from .tools.common import (
     delay,
     get_now,
     is_browser,
-    is_file_locked,
     is_global_target,
     is_keyhac_console,
     open_vscode,
     shell_exec,
     smart_check_path,
+)
+from .tools.format_str import (
+    as_single_line,
+    remove_whitespace,
+    simple_quote,
+    skip_blank_line,
 )
 
 
@@ -208,45 +209,14 @@ def setup(keymap) -> None:
         cb_tool.get_string()
     )
 
-    def smart_copy(cut_mode: bool) -> CallbackFunc:
-        def _copier() -> None:
-            if keymap.fifo_stack.enabled:
-
-                def _register(job_item: ckit.JobItem) -> None:
-                    cb = job_item.copied
-                    if cb:
-                        keymap.fifo_stack.register(cb)
-
-                cb_tool.Manager(cut_mode).after_register(_register)
-            else:
-                cb_tool.Manager(cut_mode).send_register_key()
-
-        return _copier
-
     keymap_global["LC-C"] = smart_copy(False)
     keymap_global["LC-X"] = smart_copy(True)
-
-    def smart_paste(strip_decolation: bool) -> CallbackFunc:
-        def _paster() -> None:
-            if keymap.fifo_stack.enabled and 0 < keymap.fifo_stack.count:
-                s = keymap.fifo_stack.pop()
-                cb_tool.Manager().paste(s)
-            else:
-                if strip_decolation:
-                    cb_tool.Manager().paste()
-                else:
-                    cb_tool.Manager().send_paste_key()
-
-        return _paster
-
     keymap_global["LC-V"] = smart_paste(False)
     keymap_global["U0-V"] = smart_paste(True)
 
     ################################
     # custom hotkey
     ################################
-
-    keymap_global["U1-V"] = keymap.defineMultiStrokeKeymap()
 
     def bind_cleanup_paster(km: WindowKeymap, key: str) -> None:
         for mod1, no_space in {
@@ -259,31 +229,8 @@ def setup(keymap) -> None:
             }.items():
                 km[mod1 + mod2 + key] = invoke_clean_paster(no_space, no_break)
 
+    keymap_global["U1-V"] = keymap.defineMultiStrokeKeymap()
     bind_cleanup_paster(keymap_global["U1-V"], "V")
-
-    TEMP_FILE_PREFIX = "keyhac_temp_"
-
-    def remove_tempfiles() -> None:
-        temp_dir = tempfile.gettempdir()
-        count = 0
-        for file in os.listdir(temp_dir):
-            if file.startswith(TEMP_FILE_PREFIX) and file.endswith(".txt"):
-                try:
-                    p = Path(temp_dir, file)
-                    if not is_file_locked(p):
-                        p.unlink()
-                        count += 1
-                except Exception as e:  # noqa: BLE001
-                    print(f"Failed to remove temp file :{file}\n{e}")
-
-        if 0 < count:
-            msg = f"Removed {count} tempfile"
-            if 1 < count:
-                msg += "s"
-            msg += "."
-            print(msg)
-
-    remove_tempfiles()
 
     # paste with quote mark
     keymap_global["U1-Q"] = invoke_quote_paster(simple_quote)

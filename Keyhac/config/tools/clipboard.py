@@ -7,6 +7,7 @@ from keyhac import *  # ty: ignore[unresolved-import]
 
 from . import subthread, virtual_finger
 from .common import CallbackFunc, balloon, delay
+from .format_str import remove_whitespace
 from .virtual_finger import Tap
 
 
@@ -181,16 +182,6 @@ class FIFOStack:
         return None
 
 
-def remove_whitespace(s: str) -> str:
-    return s.strip().translate(
-        str.maketrans(
-            "",
-            "",
-            "\u0009\u0020\u00a0\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u200b\u200c\u200d\u200e\u200f\u202f\u205f\u3000\ufeff",
-        )
-    )
-
-
 def invoke_clean_paster(no_space: bool = False, no_break: bool = False) -> CallbackFunc:
     def _clean(s) -> str:
         s = s.strip()
@@ -206,28 +197,38 @@ def invoke_clean_paster(no_space: bool = False, no_break: bool = False) -> Callb
     return _paste
 
 
-def simple_quote(s: str) -> str:
-    lines = s.strip().splitlines()
-    return "\n".join([keymap.quote_mark + line for line in lines])
-
-
-def as_single_line(s: str) -> str:
-    lines = s.strip().splitlines()
-    return keymap.quote_mark + "".join([line.strip() for line in lines])
-
-
-def skip_blank_line(s: str) -> str:
-    lines = []
-    for line in s.strip().splitlines():
-        if 0 < len(line.strip()):
-            lines.append(keymap.quote_mark + line)
-        else:
-            lines.append("")
-    return "\n".join(lines)
-
-
 def invoke_quote_paster(func: Callable[[str], str]) -> CallbackFunc:
     def _paster() -> None:
         Manager().paste(None, func)
+
+    return _paster
+
+
+def smart_copy(cut_mode: bool) -> CallbackFunc:
+    def _copier() -> None:
+        if keymap.fifo_stack.enabled:
+
+            def _register(job_item: ckit.JobItem) -> None:
+                cb = job_item.copied
+                if cb:
+                    keymap.fifo_stack.register(cb)
+
+            Manager(cut_mode).after_register(_register)
+        else:
+            Manager(cut_mode).send_register_key()
+
+    return _copier
+
+
+def smart_paste(strip_decolation: bool) -> CallbackFunc:
+    def _paster() -> None:
+        if keymap.fifo_stack.enabled and 0 < keymap.fifo_stack.count:
+            s = keymap.fifo_stack.pop()
+            Manager().paste(s)
+        else:
+            if strip_decolation:
+                Manager().paste()
+            else:
+                Manager().send_paste_key()
 
     return _paster
