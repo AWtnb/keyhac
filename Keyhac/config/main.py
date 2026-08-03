@@ -1,4 +1,3 @@
-import datetime
 import fnmatch
 import os
 import re
@@ -37,6 +36,7 @@ from .tools.common import (
     balloon,
     check_fzf,
     delay,
+    get_now,
     is_browser,
     is_file_locked,
     is_global_target,
@@ -273,7 +273,7 @@ def setup(keymap) -> None:
                     if not is_file_locked(p):
                         p.unlink()
                         count += 1
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     print(f"Failed to remove temp file :{file}\n{e}")
 
         if 0 < count:
@@ -319,7 +319,7 @@ def setup(keymap) -> None:
             ckit.JobQueue.cancelAll()
             keymap.configure()
             keymap.updateKeymap()
-            ts = datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S")
+            ts = get_now().strftime("%Y-%m-%d %H:%M:%S")
             balloon(keymap, f"{ts} reloaded config.py")
 
         subthread_tool.run(_wait, _reload)
@@ -689,7 +689,14 @@ def setup(keymap) -> None:
 
     replace_last_nchar(keymap_global["U0-M"], "先生")
 
-    sender_tool.DirectSender().bind(
+    def bind_direct_sender(
+        km: WindowKeymap, binding: dict[str, tuple[str, ...]]
+    ) -> None:
+        sender = sender_tool.DirectSender()
+        for key, sent in binding.items():
+            km[key] = sender.invoke(*sent)
+
+    bind_direct_sender(
         keymap_global,
         {
             "Decimal": ("Period",),
@@ -700,10 +707,7 @@ def setup(keymap) -> None:
             "LC-U0-U": ("Minus",),
             "U0-Comma": ("Comma",),
             "U0-Period": ("Period",),
-            "S-U0-Enter": (
-                "U-Shift",
-                "Period",
-            ),
+            "S-U0-Enter": ("U-Shift", "Period"),
             "U0-Tab": ("Period", "BackSlash"),
             "U1-Tab": ("Period", "Period", "BackSlash"),
             "S-U0-8": ("U-Shift", "Minus", "Space", ime_tool.SKKKey.toggle_vk),
@@ -713,7 +717,16 @@ def setup(keymap) -> None:
         },
     )
 
-    sender_tool.DirectSender().bind_circumfix(
+    def bind_direct_sender_circumfix(
+        km: WindowKeymap, binding: dict[str, list[str]]
+    ) -> None:
+        sender = sender_tool.DirectSender()
+        for key, circumfix in binding.items():
+            _, suffix = circumfix
+            sequence = circumfix + ["Left"] * len(suffix)
+            km[key] = sender.invoke(*sequence)
+
+    bind_direct_sender_circumfix(
         keymap_global,
         {
             "U0-CloseBracket": ["[", "]"],

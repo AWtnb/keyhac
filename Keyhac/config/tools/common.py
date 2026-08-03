@@ -13,9 +13,13 @@ import pyauto  # type: ignore
 from keyhac import *  # type: ignore
 
 
-def balloon(keymap, message: str | Exception, timeout_msec: int = 1500) -> None:
+def get_now() -> datetime.datetime:
     JST = datetime.timezone(datetime.timedelta(hours=9))
-    title = datetime.datetime.now(tz=JST).strftime("%Y%m%d-%H%M%S-%f")
+    return datetime.datetime.now(tz=JST)
+
+
+def balloon(keymap, message: str | Exception, timeout_msec: int = 1500) -> None:
+    title = get_now().strftime("%Y%m%d-%H%M%S-%f")
     print(message)
     try:
         keymap.popBalloon(title, message, timeout_msec)

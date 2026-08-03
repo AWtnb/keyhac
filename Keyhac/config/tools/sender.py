@@ -62,13 +62,3 @@ class DirectSender:
     def invoke(self, *sequence: str) -> CallbackFunc:
         seq = list(sequence)
         return self.skk.invoke(self.skk.control.turnoff_skk, *seq)
-
-    def bind(self, km: WindowKeymap, binding: dict[str, tuple[str, ...]]) -> None:
-        for key, sent in binding.items():
-            km[key] = self.invoke(*sent)
-
-    def bind_circumfix(self, km: WindowKeymap, binding: dict[str, list[str]]) -> None:
-        for key, circumfix in binding.items():
-            _, suffix = circumfix
-            sequence = circumfix + ["Left"] * len(suffix)
-            km[key] = self.invoke(*sequence)

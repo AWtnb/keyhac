@@ -3,7 +3,7 @@ from collections.abc import Callable
 import ckit  # type: ignore
 from keyhac_keymap import WindowKeymap  # type: ignore
 
-from keyhac import *  # type: ignore
+from keyhac import *  # ty: ignore[unresolved-import]
 
 from . import subthread, virtual_finger
 from .common import CallbackFunc, balloon, delay
