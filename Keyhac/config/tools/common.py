@@ -4,25 +4,26 @@ import shutil
 import subprocess
 import time
 import webbrowser
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Callable
 
 import pyauto  # type: ignore
 
-from keyhac import *  # type: ignore  # noqa: F403
+from keyhac import *  # type: ignore
 
 
 def balloon(keymap, message: str | Exception, timeout_msec: int = 1500) -> None:
-    title = datetime.datetime.today().strftime("%Y%m%d-%H%M%S-%f")
+    JST = datetime.timezone(datetime.timedelta(hours=9))
+    title = datetime.datetime.now(tz=JST).strftime("%Y%m%d-%H%M%S-%f")
     print(message)
     try:
         keymap.popBalloon(title, message, timeout_msec)
-    except Exception:
-        pass
+    except Exception as e:  # noqa: BLE001
+        print(e)
 
 
-def smart_check_path(path: str | Path, timeout_sec: int | float | None = None) -> bool:
+def smart_check_path(path: str | Path, timeout_sec: float | None = None) -> bool:
     """
     CASE-INSENSITIVE path check with timeout
     """
@@ -30,7 +31,7 @@ def smart_check_path(path: str | Path, timeout_sec: int | float | None = None) -
     try:
         future = ThreadPoolExecutor(max_workers=1).submit(p.exists)
         return future.result(timeout_sec)
-    except Exception:
+    except Exception:  # noqa: BLE001
         return False
 
 
@@ -42,10 +43,10 @@ def open_vscode(*args: str) -> bool:
     try:
         if code_path := shutil.which("code"):
             cmd = [code_path] + list(args)
-            subprocess.run(cmd, creationflags=subprocess.CREATE_NO_WINDOW)
+            subprocess.run(cmd, creationflags=subprocess.CREATE_NO_WINDOW, check=False)
             return True
         return False
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         print(e)
         return False
 
@@ -81,8 +82,8 @@ def shell_exec(path: str, *args) -> None:
     path = os.path.expandvars(path)
     try:
         cmd = ["start", "", path] + list(args)
-        subprocess.run(cmd, shell=True)
-    except Exception as e:
+        subprocess.run(cmd, shell=True, check=False)
+    except Exception as e:  # noqa: BLE001
         print(e)
 
 

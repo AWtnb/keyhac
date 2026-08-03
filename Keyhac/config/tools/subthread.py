@@ -8,9 +8,13 @@ from keyhac import *  # type: ignore
 from . import virtual_finger
 from .virtual_finger import Tap
 
-keymap: WindowKeymap = None
 
-virtual_finger.keymap = keymap
+def setup(_keymap: WindowKeymap) -> None:
+    global keymap  # ty: ignore[unresolved-global]
+    keymap = _keymap
+
+    virtual_finger.setup(keymap)
+
 
 MAGICAL_SEQUENCE = [Tap(elem) for elem in ("LWin-S-M", "U-Alt")]
 

@@ -2,13 +2,17 @@ from enum import Enum
 
 from keyhac_keymap import WindowKeymap  # type: ignore
 
-from keyhac import *  # type: ignore  # noqa: F403
+from keyhac import *  # type: ignore
 
 from . import virtual_finger
 from .virtual_finger import Tap
 
-keymap: WindowKeymap = None
-virtual_finger.keymap = keymap
+
+def setup(_keymap: WindowKeymap) -> None:
+    global keymap  # ty: ignore[unresolved-global]
+    keymap = _keymap
+
+    virtual_finger.setup(keymap)
 
 
 class SKKKey:

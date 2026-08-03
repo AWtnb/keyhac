@@ -40,7 +40,7 @@ from .tools.virtual_finger import Tap
 
 def setup(keymap) -> None:
 
-    vf_tool.keymap = keymap
+    vf_tool.setup(keymap)
     subthread_tool.keymap = keymap
     ime_tool.keymap = keymap
     sender_tool.keymap = keymap

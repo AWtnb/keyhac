@@ -3,7 +3,10 @@ from keyhac_keymap import KeyCondition, WindowKeymap  # ty:ignore[unresolved-imp
 
 from .common import delay
 
-keymap: WindowKeymap = None
+
+def setup(_keymap: WindowKeymap) -> None:
+    global keymap  # ty: ignore[unresolved-global]
+    keymap = _keymap
 
 
 class Tap:
