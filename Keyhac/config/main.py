@@ -22,10 +22,7 @@ from .tools import window_activate as window_activate_tool
 from .tools import window_snap as window_snap_tool
 from .tools.browser_info import SystemBrowser
 from .tools.clipboard import (
-    FIFOStack,
     invoke_clean_paster,
-    smart_copy,
-    smart_paste,
 )
 from .tools.common import (
     CallbackFunc,
@@ -210,17 +207,7 @@ def setup(keymap) -> None:
 
     bind_ime_control()
 
-    keymap.fifo_stack = FIFOStack()
-    keymap_global["LC-LS-U0-X"] = keymap.fifo_stack.toggle
-
-    keymap_global["LC-LS-U0-F"] = lambda: keymap.fifo_stack.bulk_register(
-        cb_tool.get_string()
-    )
-
-    keymap_global["LC-C"] = smart_copy(False)
-    keymap_global["LC-X"] = smart_copy(True)
-    keymap_global["LC-V"] = smart_paste(False)
-    keymap_global["U0-V"] = smart_paste(True)
+    keymap_global["U0-V"] = cb_tool.Manager.paste
 
     ################################
     # custom hotkey
@@ -1192,14 +1179,6 @@ def setup(keymap) -> None:
             "to codeblock": lambda c: f"```\n{c}\n```\n",
             "swap tabs": FormatTools.swap_tabs,
             "trim space on line head": FormatTools.trim_space_on_line_head,
-            "FIFO: join items with Tab": lambda _: keymap.fifo_stack.join_items("\t"),
-            "FIFO: join items with LineBreak": lambda _: keymap.fifo_stack.join_items(
-                "\n"
-            ),
-            "FIFO: bulk paste": lambda _: keymap.fifo_stack.bulk_paste("\n"),
-            "FIFO: bulk paste (join with space)": lambda _: (
-                keymap.fifo_stack.bulk_paste(" ")
-            ),
             "to lowercase": lambda c: c.lower(),
             "to uppercase": lambda c: c.upper(),
             "to slack feed subscribe": lambda c: f"/feed subscribe {c}",

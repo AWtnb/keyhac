@@ -6,7 +6,7 @@ from keyhac_keymap import WindowKeymap  # type: ignore
 from keyhac import *  # ty: ignore[unresolved-import]
 
 from . import subthread, virtual_finger
-from .common import CallbackFunc, balloon, delay
+from .common import CallbackFunc, delay
 from .format_str import remove_whitespace
 from .virtual_finger import Tap
 
@@ -106,82 +106,6 @@ class Manager:
         subthread.run(_watch_clipboard, deferred)
 
 
-class FIFOStack:
-    def __init__(self) -> None:
-        self.items = []
-        self.enabled = False
-
-    def _enable(self) -> None:
-        balloon(keymap, "FIFO mode ON!")
-        self.enabled = True
-
-    def _disable(self, alert: bool = True) -> None:
-        if alert:
-            balloon(keymap, "FIFO mode OFF!")
-        self.enabled = False
-
-    def toggle(self) -> None:
-        if self.enabled:
-            self._disable()
-        else:
-            self._enable()
-
-    def register(self, s: str) -> None:
-        if self.enabled:
-            self.items.append(s)
-            msg = f"FIFO stack total: {self.count}"
-            balloon(keymap, msg)
-        else:
-            balloon(keymap, "FIFO mode is not enabled.")
-
-    def reset(self) -> None:
-        self.items = []
-
-    def bulk_register(self, lines: str) -> None:
-        if self.enabled:
-            self.reset()
-            self.items = [line for line in lines.splitlines() if line.strip()]
-            msg = f"FIFO stack total: {self.count}"
-            balloon(keymap, msg)
-        else:
-            balloon(keymap, "FIFO mode is not enabled.")
-
-    def bulk_paste(self, delimiter: str) -> str:
-        if self.enabled:
-            s = delimiter.join(self.items)
-            self.reset()
-            self._disable()
-            return s
-        return ""
-
-    def join_items(self, sep: str) -> str:
-        if not self.enabled:
-            balloon(keymap, "FIFO mode is not enabled.")
-            return ""
-        s = sep.join(self.items)
-        self.reset()
-        self._disable()
-        return s
-
-    @property
-    def count(self) -> int:
-        return len(self.items)
-
-    def pop(self) -> str | None:
-        if not self.enabled:
-            balloon(keymap, "FIFO mode is not enabled.")
-            return None
-        if 0 < self.count:
-            cb = self.items.pop(0)
-            if self.count == 0:
-                balloon(keymap, "FIFO mode OFF! (pasted last item)", 5000)
-                self._disable(False)
-            else:
-                balloon(keymap, f"FIFO next:{self.items[0]}", 5000)
-            return cb
-        return None
-
-
 def invoke_clean_paster(no_space: bool = False, no_break: bool = False) -> CallbackFunc:
     def _clean(s) -> str:
         s = s.strip()
@@ -195,37 +119,3 @@ def invoke_clean_paster(no_space: bool = False, no_break: bool = False) -> Callb
         Manager().paste(format_func=_clean)
 
     return _paste
-
-
-def smart_copy(cut_mode: bool) -> CallbackFunc:
-    def _copier() -> None:
-        if keymap.fifo_stack and keymap.fifo_stack.enabled:
-
-            def _register(job_item: ckit.JobItem) -> None:
-                cb = job_item.copied
-                if cb:
-                    keymap.fifo_stack.register(cb)
-
-            Manager(cut_mode).after_register(_register)
-        else:
-            Manager(cut_mode).send_register_key()
-
-    return _copier
-
-
-def smart_paste(strip_decolation: bool) -> CallbackFunc:
-    def _paster() -> None:
-        if (
-            keymap.fifo_stack
-            and keymap.fifo_stack.enabled
-            and 0 < keymap.fifo_stack.count
-        ):
-            s = keymap.fifo_stack.pop()
-            Manager().paste(s)
-        else:
-            if strip_decolation:
-                Manager().paste()
-            else:
-                Manager().send_paste_key()
-
-    return _paster
