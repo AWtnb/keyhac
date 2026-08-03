@@ -1,4 +1,3 @@
-import fnmatch
 import os
 import re
 import subprocess
@@ -19,6 +18,7 @@ from .tools import ime as ime_tool
 from .tools import sender as sender_tool
 from .tools import subthread as subthread_tool
 from .tools import virtual_finger as vf_tool
+from .tools import window_activate as window_activate_tool
 from .tools import window_snap as window_snap_tool
 from .tools.browser_info import SystemBrowser
 from .tools.clipboard import (
@@ -48,6 +48,7 @@ from .tools.format_str import (
 )
 from .tools.punctuation import KANGXI_RADICAL_MAPPING, RADICAL_MAPPING
 from .tools.web_search import invoke_web_seacher
+from .tools.window_activate import WindowActivator, WndScanner
 from .tools.window_rect import RectEdge
 from .tools.window_snap import invoke_maximized_snapper, invoke_shrinker, invoke_snapper
 
@@ -61,6 +62,7 @@ def setup(keymap) -> None:
     cb_tool.setup(keymap)
     cursor_pos_tool.setup(keymap)
     window_snap_tool.setup(keymap)
+    window_activate_tool.setup(keymap)
 
     ################################
     # general setting
@@ -541,106 +543,12 @@ def setup(keymap) -> None:
 
     keymap.default_browser = SystemBrowser()
 
-    class WndScanner:
-        def __init__(self, exe_name: str, class_name: str = "") -> None:
-            self.exe_name = exe_name
-            self.class_name = class_name
-            self.found = None
+    def bind_cute_exec(wnd_keymap: WindowKeymap, remap_table: dict) -> None:
+        for key, params in remap_table.items():
+            func = window_activate_tool.invoke_cute_exec(*params)
+            wnd_keymap[key] = func
 
-        def reset(self) -> None:
-            self.found = None
-
-        def scan(self) -> None:
-            self.reset()
-            pyauto.Window.enum(self.walk, None)
-
-        def walk(self, wnd: pyauto.Window, _) -> bool:
-            if not wnd:
-                return False
-            if not wnd.isVisible():
-                return True
-            if not wnd.isEnabled():
-                return True
-            if self.class_name and not fnmatch.fnmatch(
-                wnd.getClassName(), self.class_name
-            ):
-                return True
-            if not fnmatch.fnmatch(wnd.getProcessName(), self.exe_name):
-                return True
-            popup = wnd.getLastActivePopup()
-            if not popup:
-                return True
-            self.found = popup
-            return False
-
-    class WindowActivator:
-        def __init__(self, wnd: pyauto.Window) -> None:
-            self._target = wnd
-
-        def _check(self) -> bool:
-            return pyauto.Window.getForeground() == self._target
-
-        def activate(self) -> bool:
-            if self._check():
-                return True
-
-            if self._target.isMinimized():
-                self._target.restore()
-                delay()
-
-            interval = 20
-            trial = 40
-            for _ in range(trial):
-                try:
-                    self._target.setForeground()
-                    delay(interval)
-                    if self._check():
-                        self._target.setForeground(True)
-                        return True
-                except Exception as e:
-                    print("Failed to activate window due to exception:", e)
-                    return False
-
-            print("Failed to activate window due to timeout.")
-            return False
-
-    class PseudoCuteExec:
-        @staticmethod
-        def invoke(
-            exe_name: str, class_name: str = "", exe_path: str | CallbackFunc = ""
-        ) -> CallbackFunc:
-            def _executor() -> None:
-                def _activate(job_item: ckit.JobItem) -> None:
-                    job_item.result = None
-                    delay(40)
-                    scanner = WndScanner(exe_name, class_name)
-                    scanner.scan()
-                    wnd = scanner.found
-                    if wnd is None:
-                        if exe_path:
-                            if isinstance(exe_path, str):
-                                shell_exec(exe_path)
-                            else:
-                                exe_path()
-                    else:
-                        job_item.result = WindowActivator(wnd).activate()
-
-                def _finished(job_item: ckit.JobItem) -> None:
-                    if job_item.result is not None:
-                        if not job_item.result:
-                            vf_tool.VirtualFinger().send("LCtrl-LAlt-Tab")
-
-                subthread_tool.run(_activate, _finished, True)
-
-            return _executor
-
-        @classmethod
-        def bind(cls, wnd_keymap: WindowKeymap, remap_table: dict = {}) -> None:
-            for key, params in remap_table.items():
-                func = cls.invoke(*params)
-                wnd_keymap[key] = func
-
-    PseudoCuteExec.bind(
+    bind_cute_exec(
         keymap_global,
         {
             "U1-F": (
@@ -670,7 +578,7 @@ def setup(keymap) -> None:
     )
 
     keymap_global["U1-C"] = keymap.defineMultiStrokeKeymap()
-    PseudoCuteExec.bind(
+    bind_cute_exec(
         keymap_global["U1-C"],
         {
             "Space": (
@@ -778,7 +686,7 @@ def setup(keymap) -> None:
                 pyauto.Window.enum(_walk, None)
                 if proc.stdin:
                     proc.stdin.close()
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 print(e)
                 return
 
@@ -795,9 +703,10 @@ def setup(keymap) -> None:
                 job_item.result = WindowActivator(wnd).activate()
 
         def _finished(job_item: ckit.JobItem) -> None:
-            if job_item.result is not None:
-                if not job_item.result:
-                    vf_tool.VirtualFinger().send("LCtrl-LAlt-Tab")
+            if job_item.result is None:
+                return
+            if not job_item.result:
+                vf_tool.VirtualFinger().send("LCtrl-LAlt-Tab")
 
         subthread_tool.run(_fzf_wnd, _finished, True)
 
@@ -1053,41 +962,6 @@ def setup(keymap) -> None:
         format_func=CharWidth(True).to_half_letter
     )
 
-    def format_zoom_invitation(s: str) -> str:
-        def _is_ignorable(line: str) -> bool:
-            phrases = [
-                "あなたをスケジュール済みの",
-                "ミーティングに参加する",
-                "参加手順",
-                "invitations?signature=",
-            ]
-            for p in phrases:
-                if p in line:
-                    return True
-            return False
-
-        stack = []
-        lines = s.strip().splitlines()
-        for line in lines:
-            if _is_ignorable(line):
-                stack.append("")
-            else:
-                stack.append(line)
-        content = "\n".join(stack).strip()
-        hr = "=============================="
-        return "\n".join([hr, content, hr])
-
-    def md_frontmatter() -> str:
-        return "\n".join(
-            [
-                "---",
-                "title:",
-                "load:",
-                "  - style.css",
-                "---",
-            ]
-        )
-
     class NestedCircumfix:
         def __init__(self, prime_pair: tuple, secondary_pair: tuple):
             self.pairs = [prime_pair, secondary_pair]
@@ -1318,7 +1192,6 @@ def setup(keymap) -> None:
             "to codeblock": lambda c: f"```\n{c}\n```\n",
             "swap tabs": FormatTools.swap_tabs,
             "trim space on line head": FormatTools.trim_space_on_line_head,
-            "my markdown frontmatter": lambda _: md_frontmatter(),
             "FIFO: join items with Tab": lambda _: keymap.fifo_stack.join_items("\t"),
             "FIFO: join items with LineBreak": lambda _: keymap.fifo_stack.join_items(
                 "\n"
@@ -1359,7 +1232,6 @@ def setup(keymap) -> None:
             "trim honorific": FormatTools.trim_honorific,
             "fix nested paren": FormatTools.format_nested_paren,
             "fix nested bracket": FormatTools.format_nested_bracket,
-            "zoom invitation": format_zoom_invitation,
             "remove whitespaces": remove_whitespace,
             "remove javascript comment line": invoke_comment_remover("// "),
             "remove python comment line": invoke_comment_remover("# "),
