@@ -18,7 +18,7 @@ def setup(_keymap: WindowKeymap) -> None:
 class SKKSender:
     def __init__(self, inter_stroke_pause: int = 0) -> None:
         self.finger = virtual_finger.VirtualFinger(inter_stroke_pause)
-        self.control = ime.ImeControl(inter_stroke_pause)
+        self.control = ime.Handler(inter_stroke_pause)
 
     def invoke(self, mode_setter: CallbackFunc, *sequence: str) -> CallbackFunc:
         taps = self.finger.compile(*sequence)
@@ -38,7 +38,7 @@ class SKKSender:
         return sender
 
     def without_mode(self, *sequence: str) -> CallbackFunc:
-        sender = self.invoke(self.control.disable, *sequence)
+        sender = self.invoke(ime.disable, *sequence)
         return sender
 
     def invoke_emitThen(
@@ -49,7 +49,7 @@ class SKKSender:
 
         def _sender() -> None:
             self.finger.send_compiled(*taps)
-            if ime.ImeControl.get_status() != later_ime_status:
+            if ime.get_status() != later_ime_status:
                 self.finger.send_compiled(toggle_tap)
 
         return _sender

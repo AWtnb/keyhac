@@ -192,7 +192,7 @@ def setup(keymap) -> None:
     keymap_global["C-Q"] = safe_close
 
     def bind_ime_control() -> None:
-        control = ime_tool.ImeControl(0)
+        control = ime_tool.Handler(0)
         for key, func in {
             "U1-J": control.to_skk_kana,
             "LC-U0-I": control.to_skk_kata,
@@ -200,7 +200,7 @@ def setup(keymap) -> None:
             "U0-O": control.to_skk_half_kata,
             "LC-LS-U0-I": control.to_skk_half_kata,
             "U0-F8": control.to_skk_half_kata,
-            "U0-F": control.disable,
+            "U0-F": ime_tool.disable,
             "LS-U0-F": control.to_skk_kana,
             "S-U1-J": control.to_skk_latin,
             "U1-I": control.reconvert_with_skk,

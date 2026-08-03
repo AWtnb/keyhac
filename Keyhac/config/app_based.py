@@ -156,7 +156,7 @@ def bind_sumatra_pdf(keymap) -> None:
 
 def bind_office_powerpoint(keymap) -> None:
     keymap_ppt = keymap.defineWindowKeymap(exe_name="powerpnt.exe")
-    keymap_ppt["O-(236)"] = ime_tool.ImeControl(40).to_skk_abbrev
+    keymap_ppt["O-(236)"] = ime_tool.Handler(40).to_skk_abbrev
 
 
 def bind_office_excel(keymap) -> None:
