@@ -46,6 +46,8 @@ from .tools.format_str import (
     simple_quote,
     skip_blank_line,
 )
+from .tools.punctuation import KANGXI_RADICAL_MAPPING, RADICAL_MAPPING
+from .tools.web_search import invoke_web_seacher
 from .tools.window_rect import RectEdge
 from .tools.window_snap import invoke_maximized_snapper, invoke_shrinker, invoke_snapper
 
@@ -483,399 +485,36 @@ def setup(keymap) -> None:
     # web search
     ################################
 
-    class Radicals:
-        mapping = {
-            "\u2e92": "\u5df3",
-            "\u2e9f": "\u6bcd",
-            "\u2ea0": "\u6c11",
-            "\u2ec4": "\u897f",
-            "\u2ed1": "\u9577",
-            "\u2ed8": "\u9752",
-            "\u2ee4": "\u9b3c",
-            "\u2ee8": "\u9ea6",
-            "\u2ee9": "\u9ec4",
-            "\u2eeb": "\u6589",
-            "\u2eed": "\u6b6f",
-            "\u2eef": "\u7adc",
-            "\u2ef2": "\u4e80",
-        }
+    def invoke_web_search_job(
+        uri: str, strict: bool = False, strip_hiragana: bool = False
+    ) -> CallbackFunc:
+        search_func = invoke_web_seacher(uri, strict, strip_hiragana)
 
-        @classmethod
-        def fix(cls, s: str) -> str:
-            return s.translate(str.maketrans(cls.mapping))
+        def _searcher() -> None:
+            def _search(job_item: ckit.JobItem) -> None:
+                s = job_item.copied
+                if len(s) < 1:
+                    s = job_item.origin
+                search_func(s)
 
-    class KangxiRadicals:
-        mapping = {
-            "\u2f00": "\u4e00",
-            "\u2f01": "\u4e28",
-            "\u2f02": "\u4e36",
-            "\u2f03": "\u4e3f",
-            "\u2f04": "\u4e59",
-            "\u2f05": "\u4e85",
-            "\u2f06": "\u4e8c",
-            "\u2f07": "\u4ea0",
-            "\u2f08": "\u4eba",
-            "\u2f09": "\u513f",
-            "\u2f0a": "\u5165",
-            "\u2f0b": "\u516b",
-            "\u2f0c": "\u5182",
-            "\u2f0d": "\u5196",
-            "\u2f0e": "\u51ab",
-            "\u2f0f": "\u51e0",
-            "\u2f10": "\u51f5",
-            "\u2f11": "\u5200",
-            "\u2f12": "\u529b",
-            "\u2f13": "\u52f9",
-            "\u2f14": "\u5315",
-            "\u2f15": "\u531a",
-            "\u2f16": "\u5338",
-            "\u2f17": "\u5341",
-            "\u2f18": "\u535c",
-            "\u2f19": "\u5369",
-            "\u2f1a": "\u5382",
-            "\u2f1b": "\u53b6",
-            "\u2f1c": "\u53c8",
-            "\u2f1d": "\u53e3",
-            "\u2f1e": "\u56d7",
-            "\u2f1f": "\u571f",
-            "\u2f20": "\u58eb",
-            "\u2f21": "\u5902",
-            "\u2f22": "\u590a",
-            "\u2f23": "\u5915",
-            "\u2f24": "\u5927",
-            "\u2f25": "\u5973",
-            "\u2f26": "\u5b50",
-            "\u2f27": "\u5b80",
-            "\u2f28": "\u5bf8",
-            "\u2f29": "\u5c0f",
-            "\u2f2a": "\u5c22",
-            "\u2f2b": "\u5c38",
-            "\u2f2c": "\u5c6e",
-            "\u2f2d": "\u5c71",
-            "\u2f2e": "\u5ddb",
-            "\u2f2f": "\u5de5",
-            "\u2f30": "\u5df1",
-            "\u2f31": "\u5dfe",
-            "\u2f32": "\u5e72",
-            "\u2f33": "\u5e7a",
-            "\u2f34": "\u5e7f",
-            "\u2f35": "\u5ef4",
-            "\u2f36": "\u5efe",
-            "\u2f37": "\u5f0b",
-            "\u2f38": "\u5f13",
-            "\u2f39": "\u5f50",
-            "\u2f3a": "\u5f61",
-            "\u2f3b": "\u5f73",
-            "\u2f3c": "\u5fc3",
-            "\u2f3d": "\u6208",
-            "\u2f3e": "\u6238",
-            "\u2f3f": "\u624b",
-            "\u2f40": "\u652f",
-            "\u2f41": "\u6534",
-            "\u2f42": "\u6587",
-            "\u2f43": "\u6597",
-            "\u2f44": "\u65a4",
-            "\u2f45": "\u65b9",
-            "\u2f46": "\u65e0",
-            "\u2f47": "\u65e5",
-            "\u2f48": "\u66f0",
-            "\u2f49": "\u6708",
-            "\u2f4a": "\u6728",
-            "\u2f4b": "\u6b20",
-            "\u2f4c": "\u6b62",
-            "\u2f4d": "\u6b79",
-            "\u2f4e": "\u6bb3",
-            "\u2f4f": "\u6bcb",
-            "\u2f50": "\u6bd4",
-            "\u2f51": "\u6bdb",
-            "\u2f52": "\u6c0f",
-            "\u2f53": "\u6c14",
-            "\u2f54": "\u6c34",
-            "\u2f55": "\u706b",
-            "\u2f56": "\u722a",
-            "\u2f57": "\u7236",
-            "\u2f58": "\u723b",
-            "\u2f59": "\u723f",
-            "\u2f5a": "\u7247",
-            "\u2f5b": "\u7259",
-            "\u2f5c": "\u725b",
-            "\u2f5d": "\u72ac",
-            "\u2f5e": "\u7384",
-            "\u2f5f": "\u7389",
-            "\u2f60": "\u74dc",
-            "\u2f61": "\u74e6",
-            "\u2f62": "\u7518",
-            "\u2f63": "\u751f",
-            "\u2f64": "\u7528",
-            "\u2f65": "\u7530",
-            "\u2f66": "\u758b",
-            "\u2f67": "\u7592",
-            "\u2f68": "\u7676",
-            "\u2f69": "\u767d",
-            "\u2f6a": "\u76ae",
-            "\u2f6b": "\u76bf",
-            "\u2f6c": "\u76ee",
-            "\u2f6d": "\u77db",
-            "\u2f6e": "\u77e2",
-            "\u2f6f": "\u77f3",
-            "\u2f70": "\u793a",
-            "\u2f71": "\u79b8",
-            "\u2f72": "\u79be",
-            "\u2f73": "\u7a74",
-            "\u2f74": "\u7acb",
-            "\u2f75": "\u7af9",
-            "\u2f76": "\u7c73",
-            "\u2f77": "\u7cf8",
-            "\u2f78": "\u7f36",
-            "\u2f79": "\u7f51",
-            "\u2f7a": "\u7f8a",
-            "\u2f7b": "\u7fbd",
-            "\u2f7c": "\u8001",
-            "\u2f7d": "\u800c",
-            "\u2f7e": "\u8012",
-            "\u2f7f": "\u8033",
-            "\u2f80": "\u807f",
-            "\u2f81": "\u8089",
-            "\u2f82": "\u81e3",
-            "\u2f83": "\u81ea",
-            "\u2f84": "\u81f3",
-            "\u2f85": "\u81fc",
-            "\u2f86": "\u820c",
-            "\u2f87": "\u821b",
-            "\u2f88": "\u821f",
-            "\u2f89": "\u826e",
-            "\u2f8a": "\u8272",
-            "\u2f8b": "\u8278",
-            "\u2f8c": "\u864d",
-            "\u2f8d": "\u866b",
-            "\u2f8e": "\u8840",
-            "\u2f8f": "\u884c",
-            "\u2f90": "\u8863",
-            "\u2f91": "\u897e",
-            "\u2f92": "\u898b",
-            "\u2f93": "\u89d2",
-            "\u2f94": "\u8a00",
-            "\u2f95": "\u8c37",
-            "\u2f96": "\u8c46",
-            "\u2f97": "\u8c55",
-            "\u2f98": "\u8c78",
-            "\u2f99": "\u8c9d",
-            "\u2f9a": "\u8d64",
-            "\u2f9b": "\u8d70",
-            "\u2f9c": "\u8db3",
-            "\u2f9d": "\u8eab",
-            "\u2f9e": "\u8eca",
-            "\u2f9f": "\u8f9b",
-            "\u2fa0": "\u8fb0",
-            "\u2fa1": "\u8fb5",
-            "\u2fa2": "\u9091",
-            "\u2fa3": "\u9149",
-            "\u2fa4": "\u91c6",
-            "\u2fa5": "\u91cc",
-            "\u2fa6": "\u91d1",
-            "\u2fa7": "\u9577",
-            "\u2fa8": "\u9580",
-            "\u2fa9": "\u961c",
-            "\u2faa": "\u96b6",
-            "\u2fab": "\u96b9",
-            "\u2fac": "\u96e8",
-            "\u2fad": "\u9751",
-            "\u2fae": "\u975e",
-            "\u2faf": "\u9762",
-            "\u2fb0": "\u9769",
-            "\u2fb1": "\u97cb",
-            "\u2fb2": "\u97ed",
-            "\u2fb3": "\u97f3",
-            "\u2fb4": "\u9801",
-            "\u2fb5": "\u98a8",
-            "\u2fb6": "\u98db",
-            "\u2fb7": "\u98df",
-            "\u2fb8": "\u9996",
-            "\u2fb9": "\u9999",
-            "\u2fba": "\u99ac",
-            "\u2fbb": "\u9aa8",
-            "\u2fbc": "\u9ad8",
-            "\u2fbd": "\u9adf",
-            "\u2fbe": "\u9b25",
-            "\u2fbf": "\u9b2f",
-            "\u2fc0": "\u9b32",
-            "\u2fc1": "\u9b3c",
-            "\u2fc2": "\u9b5a",
-            "\u2fc3": "\u9ce5",
-            "\u2fc4": "\u9e75",
-            "\u2fc5": "\u9e7f",
-            "\u2fc6": "\u9ea5",
-            "\u2fc7": "\u9ebb",
-            "\u2fc8": "\u9ec3",
-            "\u2fc9": "\u9ecd",
-            "\u2fca": "\u9ed2",
-            "\u2fcb": "\u9ef9",
-            "\u2fcc": "\u9efd",
-            "\u2fcd": "\u9f0e",
-            "\u2fce": "\u9f13",
-            "\u2fcf": "\u9f20",
-            "\u2fd0": "\u9f3b",
-            "\u2fd1": "\u9f4a",
-            "\u2fd2": "\u9f52",
-            "\u2fd3": "\u9f8d",
-            "\u2fd4": "\u9f9c",
-            "\u2fd5": "\u9fa0",
-        }
+            cb_tool.Manager().after_register(_search)
 
-        @classmethod
-        def fix(cls, s: str) -> str:
-            return s.translate(str.maketrans(cls.mapping))
+        return _searcher
 
-    class UnicodeMapper:
-        def __init__(self, repl: str) -> None:
-            if len(repl):
-                self._repl = ord(repl)
-            else:
-                self._repl = None
-            self.mapping = {}
+    def bind_web_search_key(km: WindowKeymap, mapping: dict[str, str]) -> None:
+        for shift_key in ("", "S-"):
+            for ctrl_key in ("", "C-"):
+                is_strict = shift_key != ""
+                strip_hiragana = ctrl_key != ""
+                trigger_key = shift_key + ctrl_key + "U0-S"
+                km[trigger_key] = keymap.defineMultiStrokeKeymap()
+                for key, uri in mapping.items():
+                    km[trigger_key][key] = invoke_web_search_job(
+                        uri, is_strict, strip_hiragana
+                    )
 
-        def register(self, charcode: int) -> None:
-            self.mapping[charcode] = self._repl
-
-        def register_range(self, start: int, end: int) -> None:
-            for i in range(start, end + 1):
-                self.register(i)
-
-    class SearchNoise(UnicodeMapper):
-        def __init__(self) -> None:
-            super().__init__(" ")
-            self.register(0x30FB)  # KATAKANA MIDDLE DOT
-            self.register_range(0x2018, 0x201F)  # quotation
-            self.register_range(0x2E80, 0x2EF3)  # kangxi
-            noises = (
-                [
-                    # ascii
-                    (0x0021, 0x002F),
-                    (0x003A, 0x0040),
-                    (0x005B, 0x0060),
-                    (0x007B, 0x007E),
-                ]
-                + [
-                    # bars
-                    (0x2010, 0x2017),
-                    (0x2500, 0x2501),
-                    (0x2E3A, 0x2E3B),
-                ]
-                + [
-                    # fullwidth
-                    (0x25A0, 0x25EF),
-                    (0x3000, 0x3004),
-                    (0x3008, 0x3040),
-                    (0x3097, 0x30A0),
-                    (0x3097, 0x30A0),
-                    (0x30FD, 0x30FF),
-                    (0xFF01, 0xFF0F),
-                    (0xFF1A, 0xFF20),
-                    (0xFF3B, 0xFF40),
-                    (0xFF5B, 0xFF65),
-                ]
-            )
-            for noise in noises:
-                self.register_range(*noise)
-
-        def cleanup(self, s: str) -> str:
-            return s.translate(str.maketrans(self.mapping))
-
-    class SearchQuery:
-        noise_mapping = SearchNoise()
-
-        def __init__(self, query: str) -> None:
-            self._query = ""
-            lines = (
-                query.strip()
-                .replace("\u200b", "")
-                .replace("\u3000", " ")
-                .replace("\t", " ")
-                .splitlines()
-            )
-            for line in lines:
-                self._query += self.format_line(line)
-
-        @staticmethod
-        def format_line(s: str) -> str:
-            if s.endswith("-"):
-                return s.rstrip("-")
-            if len(s.strip()):
-                if s[-1].encode("utf-8").isalnum():
-                    return s + " "
-                return s.rstrip()
-            return ""
-
-        def fix_kangxi(self) -> None:
-            self._query = Radicals.fix(KangxiRadicals.fix(self._query))
-
-        def remove_honorific(self) -> None:
-            for honor in ["先生", "様"]:
-                self._query = self._query.replace(honor, " ")
-
-        def remove_editorial_style(self) -> None:
-            for honor in [
-                "監修",
-                "共著",
-                "共編著",
-                "編著",
-                "共編",
-                "分担執筆",
-                "et al.",
-            ]:
-                self._query = self._query.replace(honor, " ")
-
-        def remove_hiragana(self) -> None:
-            self._query = re.sub(r"[\u3041-\u3093]", " ", self._query)
-
-        def encode(self, strict: bool = False) -> str:
-            words = []
-            for word in self.noise_mapping.cleanup(self._query).split(" "):
-                if len(word):
-                    if strict:
-                        words.append(f'"{word}"')
-                    else:
-                        words.append(word)
-            return urllib.parse.quote(" ".join(words))
-
-    class WebSearcher:
-        def __init__(self, uri_mapping: dict) -> None:
-            self._uri_mapping = uri_mapping
-
-        @staticmethod
-        def invoke(
-            uri: str, strict: bool = False, strip_hiragana: bool = False
-        ) -> CallbackFunc:
-            def _searcher() -> None:
-                def _search(job_item: ckit.JobItem) -> None:
-                    s = job_item.copied
-                    if len(s) < 1:
-                        s = job_item.origin
-                    query = SearchQuery(s)
-                    query.fix_kangxi()
-                    query.remove_honorific()
-                    query.remove_editorial_style()
-                    if strip_hiragana:
-                        query.remove_hiragana()
-                    shell_exec(uri.format(query.encode(strict)))
-
-                cb_tool.Manager().after_register(_search)
-
-            return _searcher
-
-        def bind(self, km: WindowKeymap) -> None:
-            for shift_key in ("", "S-"):
-                for ctrl_key in ("", "C-"):
-                    is_strict = 0 < len(shift_key)
-                    strip_hiragana = 0 < len(ctrl_key)
-                    trigger_key = shift_key + ctrl_key + "U0-S"
-                    km[trigger_key] = keymap.defineMultiStrokeKeymap()
-                    for key, uri in self._uri_mapping.items():
-                        km[trigger_key][key] = self.invoke(
-                            uri, is_strict, strip_hiragana
-                        )
-
-    WebSearcher(
+    bind_web_search_key(
+        keymap_global,
         {
             "A": "https://www.amazon.co.jp/s?i=stripbooks&k={}",
             "B": "https://www.google.com/search?nfpr=1&q=site%3Abooks.or.jp%20{}",
@@ -893,8 +532,8 @@ def setup(keymap) -> None:
             "T": "https://twitter.com/search?q={}",
             "Y": "https://duckduckgo.com/?q=site%3Ayuhikaku.co.jp%20{}",
             "W": "https://www.worldcat.org/search?q={}",
-        }
-    ).bind(keymap_global)
+        },
+    )
 
     ################################
     # activate window
@@ -1755,7 +1394,9 @@ def setup(keymap) -> None:
             "insert blank line": FormatTools.insert_blank_line,
             "remove blank line": FormatTools.skip_blank_line,
             "fix dumb quotation": FormatTools.fix_dumb_quotation,
-            "fix KANGXI RADICALS": KangxiRadicals.fix,
+            "fix KANGXI RADICALS": lambda s: s.transrate(
+                str.maketrans(KANGXI_RADICAL_MAPPING | RADICAL_MAPPING)
+            ),
             "fix paren inside bracket": FormatTools.fix_paren_inside_bracket,
             "to double bracket": FormatTools.to_double_bracket,
             "to single bracket": FormatTools.to_single_bracket,

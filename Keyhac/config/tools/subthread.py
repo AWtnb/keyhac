@@ -24,9 +24,8 @@ def run(
     finished: Callable | None = None,
     focus_changed_in_subthread: bool = False,
 ) -> None:
-
-    finger = virtual_finger.VirtualFinger(0)
     if focus_changed_in_subthread:
+        finger = virtual_finger.VirtualFinger(0)
         finger.send_compiled(*MAGICAL_SEQUENCE)
 
     def _finished(job_item: ckit.JobItem) -> None:
