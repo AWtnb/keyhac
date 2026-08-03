@@ -23,7 +23,15 @@ from .tools import ime as ime_tool
 from .tools import sender as sender_tool
 from .tools import subthread as subthread_tool
 from .tools import virtual_finger as vf_tool
-from .tools.clipboard import FIFOStack, StrCleaner, remove_whitespace
+from .tools.clipboard import (
+    FIFOStack,
+    as_single_line,
+    invoke_clean_paster,
+    invoke_quote_paster,
+    remove_whitespace,
+    simple_quote,
+    skip_blank_line,
+)
 from .tools.common import (
     CallbackFunc,
     balloon,
@@ -239,7 +247,19 @@ def setup(keymap) -> None:
     ################################
 
     keymap_global["U1-V"] = keymap.defineMultiStrokeKeymap()
-    StrCleaner.bind(keymap_global["U1-V"], "V")
+
+    def bind_cleanup_paster(km: WindowKeymap, key: str) -> None:
+        for mod1, no_space in {
+            "": False,
+            "C-": True,
+        }.items():
+            for mod2, no_break in {
+                "": False,
+                "S-": True,
+            }.items():
+                km[mod1 + mod2 + key] = invoke_clean_paster(no_space, no_break)
+
+    bind_cleanup_paster(keymap_global["U1-V"], "V")
 
     TEMP_FILE_PREFIX = "keyhac_temp_"
 
@@ -266,41 +286,9 @@ def setup(keymap) -> None:
     remove_tempfiles()
 
     # paste with quote mark
-    class Quoter:
-        @staticmethod
-        def simple_quote(s: str) -> str:
-            lines = s.strip().splitlines()
-            return "\n".join([keymap.quote_mark + line for line in lines])
-
-        @staticmethod
-        def as_single_line(s: str) -> str:
-            lines = s.strip().splitlines()
-            return keymap.quote_mark + "".join([line.strip() for line in lines])
-
-        @staticmethod
-        def skip_blank_line(s: str) -> str:
-            lines = []
-            for line in s.strip().splitlines():
-                if 0 < len(line.strip()):
-                    lines.append(keymap.quote_mark + line)
-                else:
-                    lines.append("")
-            return "\n".join(lines)
-
-        @staticmethod
-        def invoke_paster(func: Callable[[str], str]) -> CallbackFunc:
-            def _paster() -> None:
-                cb_tool.Manager().paste(None, func)
-
-            return _paster
-
-        @classmethod
-        def bind(cls, km: WindowKeymap, key: str) -> None:
-            km[key] = cls.invoke_paster(cls.simple_quote)
-            km["C-" + key] = cls.invoke_paster(cls.as_single_line)
-            km["S-" + key] = cls.invoke_paster(cls.skip_blank_line)
-
-    Quoter.bind(keymap_global, "U1-Q")
+    keymap_global["U1-Q"] = invoke_quote_paster(simple_quote)
+    keymap_global["LC-U1-Q"] = invoke_quote_paster(as_single_line)
+    keymap_global["LS-U1-Q"] = invoke_quote_paster(skip_blank_line)
 
     # open url in browser
     def open_selected_url() -> None:

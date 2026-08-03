@@ -191,32 +191,43 @@ def remove_whitespace(s: str) -> str:
     )
 
 
-class StrCleaner:
-    @classmethod
-    def invoke_paster(
-        cls, no_space: bool = False, no_break: bool = False
-    ) -> CallbackFunc:
-        def _clean(s) -> str:
-            s = s.strip()
-            if no_space:
-                s = remove_whitespace(s)
-            if no_break:
-                s = "".join(s.splitlines())
-            return s
+def invoke_clean_paster(no_space: bool = False, no_break: bool = False) -> CallbackFunc:
+    def _clean(s) -> str:
+        s = s.strip()
+        if no_space:
+            s = remove_whitespace(s)
+        if no_break:
+            s = "".join(s.splitlines())
+        return s
 
-        def _paste() -> None:
-            Manager().paste(format_func=_clean)
+    def _paste() -> None:
+        Manager().paste(format_func=_clean)
 
-        return _paste
+    return _paste
 
-    @classmethod
-    def bind(cls, km: WindowKeymap, key: str) -> None:
-        for mod1, no_space in {
-            "": False,
-            "C-": True,
-        }.items():
-            for mod2, no_break in {
-                "": False,
-                "S-": True,
-            }.items():
-                km[mod1 + mod2 + key] = cls.invoke_paster(no_space, no_break)
+
+def simple_quote(s: str) -> str:
+    lines = s.strip().splitlines()
+    return "\n".join([keymap.quote_mark + line for line in lines])
+
+
+def as_single_line(s: str) -> str:
+    lines = s.strip().splitlines()
+    return keymap.quote_mark + "".join([line.strip() for line in lines])
+
+
+def skip_blank_line(s: str) -> str:
+    lines = []
+    for line in s.strip().splitlines():
+        if 0 < len(line.strip()):
+            lines.append(keymap.quote_mark + line)
+        else:
+            lines.append("")
+    return "\n".join(lines)
+
+
+def invoke_quote_paster(func: Callable[[str], str]) -> CallbackFunc:
+    def _paster() -> None:
+        Manager().paste(None, func)
+
+    return _paster
