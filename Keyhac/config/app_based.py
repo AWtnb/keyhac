@@ -10,7 +10,19 @@ def setup(keymap) -> None:
     ime_tool.setup(keymap)
     vf_tool.setup(keymap)
 
-    # browser
+    bind_browser(keymap)
+    bind_intra(keymap)
+    bind_slack(keymap)
+    bind_vscode(keymap)
+    bind_mery(keymap)
+    bind_kiri(keymap)
+    bind_smooth_csv(keymap)
+    bind_sumatra_pdf(keymap)
+    bind_office_powerpoint(keymap)
+    bind_office_excel(keymap)
+
+
+def bind_browser(keymap) -> None:
     keymap_browser = keymap.defineWindowKeymap(check_func=is_browser)
     keymap_browser["LC-LS-W"] = "A-Left"
     keymap_browser["LC-F"] = sender_tool.SKKSender(40).invoke_emitThen(
@@ -20,14 +32,13 @@ def setup(keymap) -> None:
         ime_tool.ImeStatus.off, "C-K"
     )
 
-    # intra
+
+def bind_intra(keymap) -> None:
     keymap_intra = keymap.defineWindowKeymap(exe_name="APARClientAWS.exe")
     keymap_intra["O-(235)"] = lambda: None
-    # rstudio
-    keymap_rstudio = keymap.defineWindowKeymap(exe_name="rstudio.exe")
-    keymap_rstudio["U0-Minus"] = sender_tool.DirectSender().invoke("S-Comma", "Minus")
 
-    # slack
+
+def bind_slack(keymap) -> None:
     keymap_slack = keymap.defineWindowKeymap(
         exe_name="slack.exe", class_name="Chrome_WidgetWin_1"
     )
@@ -38,6 +49,8 @@ def setup(keymap) -> None:
     keymap_slack["C-E"] = keymap_slack["C-K"]
     keymap_slack["F1"] = sender_tool.DirectSender().invoke("S-SemiColon", "Colon")
 
+
+def bind_vscode(keymap) -> None:
     # vscode
     keymap_vscode = keymap.defineWindowKeymap(exe_name="Code.exe")
     keymap_vscode["U0-Slash"] = "C-Slash", "A-S-Down", "C-Slash"
@@ -66,7 +79,8 @@ def setup(keymap) -> None:
         "S-Enter",
     )
 
-    # mery
+
+def bind_mery(keymap) -> None:
     keymap_mery = keymap.defineWindowKeymap(exe_name="Mery.exe")
 
     def remap_mery(binding: dict) -> None:
@@ -86,7 +100,8 @@ def setup(keymap) -> None:
         }
     )
 
-    # Kiri
+
+def bind_kiri(keymap) -> None:
     keymap_kiri = keymap.defineWindowKeymap(
         exe_name="KIRI10.exe", class_name="TblCommCtrl"
     )
@@ -99,7 +114,8 @@ def setup(keymap) -> None:
     keymap_kiri_edit["C-Enter"] = "F4", "Down"
     keymap_kiri_edit["LC-U0-Space"] = keymap_kiri_edit["C-Enter"]
 
-    # smooth csv
+
+def bind_smooth_csv(keymap) -> None:
     keymap_smoothcsv = keymap.defineWindowKeymap(
         exe_name="msedgewebview2.exe",
         class_name="Chrome_WidgetWin_1",
@@ -122,13 +138,8 @@ def setup(keymap) -> None:
 
     keymap_smoothcsv["U1-C"] = copy_and_unselect_line
 
-    # sumatra PDF
-    keymap_sumatra = keymap.defineWindowKeymap(
-        check_func=lambda wnd: wnd.getProcessName() == "SumatraPDF.exe"
-    )
-    keymap_sumatra["O-LCtrl"] = "Esc", "Esc", "C-Home", "C-F"
 
-    # sumatra PDF (not focused on inputbox)
+def bind_sumatra_pdf(keymap) -> None:
     keymap_sumatra_view = keymap.defineWindowKeymap(
         check_func=(
             lambda wnd: (
@@ -138,24 +149,17 @@ def setup(keymap) -> None:
         )
     )
 
-    def sumatra_view_key() -> None:
-        sender = sender_tool.DirectSender()
-        for key in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
-            keymap_sumatra_view[key] = sender.invoke(key)
+    sender = sender_tool.DirectSender()
+    for key in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
+        keymap_sumatra_view[key] = sender.invoke(key)
 
-    sumatra_view_key()
 
-    keymap_sumatra_view["H"] = "C-S-Tab"
-    keymap_sumatra_view["L"] = "C-Tab"
-
-    # word
-    keymap_word = keymap.defineWindowKeymap(exe_name="WINWORD.EXE")  # noqa: F841
-
-    # powerpoint
+def bind_office_powerpoint(keymap) -> None:
     keymap_ppt = keymap.defineWindowKeymap(exe_name="powerpnt.exe")
     keymap_ppt["O-(236)"] = ime_tool.ImeControl(40).to_skk_abbrev
 
-    # excel
+
+def bind_office_excel(keymap) -> None:
     keymap_excel = keymap.defineWindowKeymap(exe_name="excel.exe")
 
     def select_all() -> None:
