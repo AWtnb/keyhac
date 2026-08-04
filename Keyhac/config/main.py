@@ -46,9 +46,9 @@ from .tools.window_snap import invoke_maximized_snapper, invoke_shrinker, invoke
 def setup(keymap) -> None:
 
     vf_tool.setup(keymap)
-    subthread_tool.keymap = keymap
-    ime_tool.keymap = keymap
-    sender_tool.keymap = keymap
+    subthread_tool.setup(keymap)
+    ime_tool.setup(keymap)
+    sender_tool.setup(keymap)
     cb_tool.setup(keymap)
     cursor_pos_tool.setup(keymap)
     window_snap_tool.setup(keymap)
@@ -74,26 +74,6 @@ def setup(keymap) -> None:
         subthread_tool.run(_wait, _close)
 
     keymap_global["C-Q"] = safe_close
-
-    def bind_ime_handler() -> None:
-        ime_handler = ime_tool.Handler(0)
-        for key, func in {
-            "U1-J": ime_handler.to_skk_kana,
-            "LC-U0-I": ime_handler.to_skk_kata,
-            "U0-F7": ime_handler.to_skk_kata,
-            "U0-O": ime_handler.to_skk_half_kata,
-            "LC-LS-U0-I": ime_handler.to_skk_half_kata,
-            "U0-F8": ime_handler.to_skk_half_kata,
-            "U0-F": ime_tool.disable,
-            "LS-U0-F": ime_handler.to_skk_kana,
-            "S-U1-J": ime_handler.to_skk_latin,
-            "U1-I": ime_handler.reconvert_with_skk,
-            "O-(236)": ime_handler.to_skk_abbrev,
-            "U1-U": ime_handler.start_skk_conv_suffix,
-        }.items():
-            keymap_global[key] = func
-
-    bind_ime_handler()
 
     keymap_global["U0-V"] = paste
 
@@ -141,10 +121,6 @@ def setup(keymap) -> None:
         copy_then(_open)
 
     keymap_global["C-U0-O"] = open_selected_url
-
-    ################################
-    # config keys
-    ################################
 
     def reload_config() -> None:
         def _wait(_) -> None:

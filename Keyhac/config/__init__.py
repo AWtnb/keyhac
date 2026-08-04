@@ -1,4 +1,10 @@
-from . import app_specific, bind_core, main, style  # noqa: N999
+from . import (  # noqa: N999
+    app_specific,
+    bind_core,
+    bind_ime,
+    main,
+    style,
+)
 
 
 def configure(keymap) -> None:
@@ -21,6 +27,7 @@ def configure(keymap) -> None:
 
     # load settings
     bind_core.bind(keymap)
+    bind_ime.bind(keymap)
     style.setup(keymap)
     main.setup(keymap)
     app_specific.setup(keymap)
