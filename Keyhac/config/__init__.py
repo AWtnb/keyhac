@@ -3,6 +3,7 @@ from . import (  # noqa: N999
     bind_core,
     bind_cursor_snap,
     bind_ime,
+    bind_input,
     bind_web_search,
     bind_wnd_snap,
     main,
@@ -31,6 +32,7 @@ def configure(keymap) -> None:
     # load settings
     bind_core.bind(keymap)
     bind_ime.bind(keymap)
+    bind_input.bind(keymap)
     bind_wnd_snap.bind(keymap)
     bind_cursor_snap.bind(keymap)
     bind_web_search.bind(keymap)
