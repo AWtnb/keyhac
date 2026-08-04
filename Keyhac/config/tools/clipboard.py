@@ -7,7 +7,7 @@ from keyhac import *  # ty: ignore[unresolved-import]
 
 from . import subthread, virtual_finger
 from .common import CallbackFunc, delay
-from .format_str import remove_whitespace
+from .str_tools import remove_whitespace
 from .virtual_finger import Tap
 
 

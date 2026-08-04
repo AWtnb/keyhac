@@ -3,7 +3,8 @@ from collections.abc import Callable
 
 from keyhac import *  # type: ignore
 
-from .format_str import (
+from .punctuation import KANGXI_RADICAL_MAPPING, RADICAL_MAPPING
+from .str_tools import (
     colon_to_doubledash,
     decode_url,
     encode_url,
@@ -31,7 +32,6 @@ from .format_str import (
     trim_honorific,
     trim_space_on_line_head,
 )
-from .punctuation import KANGXI_RADICAL_MAPPING, RADICAL_MAPPING
 
 CLIPBOARD_FORMATTER_MAPPING = {}
 

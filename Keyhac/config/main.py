@@ -31,7 +31,7 @@ from .tools.common import (
     smart_check_path,
 )
 from .tools.format_clipboard import CLIPBOARD_FORMATTER_MAPPING
-from .tools.format_str import (
+from .tools.str_tools import (
     as_single_quoted_line,
     simple_quote,
     to_full_letter,
