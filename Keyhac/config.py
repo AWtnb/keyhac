@@ -1,24 +1,26 @@
 import importlib
 import sys
-from pathlib import Path
+from types import ModuleType
 
+import ckit  # type: ignore
 from keyhac_listwindow import ListWindow  # type: ignore
 
 from keyhac import *  # type: ignore
 
-CONFIG_MODULE_NAME = "config"
 
-
-def configure(keymap) -> None:
-
-    config_dir = str(Path(keymap.config_filename).parent)
+def setup_config(config_module_name: str) -> ModuleType:
+    config_dir = ckit.dataPath()
     if config_dir not in sys.path:
         sys.path.insert(0, config_dir)
 
     for name in list(sys.modules):
-        if name == CONFIG_MODULE_NAME or name.startswith(CONFIG_MODULE_NAME + "."):
+        if name == config_module_name or name.startswith(config_module_name + "."):
             del sys.modules[name]
-    config = importlib.import_module(CONFIG_MODULE_NAME)
+    return importlib.import_module(config_module_name)
+
+
+def configure(keymap) -> None:
+    config = setup_config("config")
     config.configure(keymap)
 
 
