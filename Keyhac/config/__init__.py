@@ -5,6 +5,7 @@ from . import (  # noqa: N999
     bind_ime,
     bind_input,
     bind_web_search,
+    bind_wnd_activate,
     bind_wnd_snap,
     main,
     style,
@@ -34,6 +35,7 @@ def configure(keymap) -> None:
     bind_ime.bind(keymap)
     bind_input.bind(keymap)
     bind_wnd_snap.bind(keymap)
+    bind_wnd_activate.bind(keymap)
     bind_cursor_snap.bind(keymap)
     bind_web_search.bind(keymap)
     style.setup(keymap)
