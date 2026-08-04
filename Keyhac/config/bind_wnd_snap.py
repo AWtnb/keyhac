@@ -1,5 +1,6 @@
 from keyhac import *  # type: ignore
 
+from .tools import window_snap as wnd_snap_tool
 from .tools.common import is_global_target
 from .tools.window_rect import RectEdge
 from .tools.window_snap import invoke_maximized_snapper, invoke_shrinker, invoke_snapper
@@ -8,6 +9,7 @@ from .tools.window_snap import invoke_maximized_snapper, invoke_shrinker, invoke
 def bind(keymap) -> None:
 
     km = keymap.defineWindowKeymap(check_func=is_global_target)
+    wnd_snap_tool.setup(keymap)
 
     ################################
     # set window position
