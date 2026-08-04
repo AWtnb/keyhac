@@ -17,10 +17,6 @@ from .tools import virtual_finger as vf_tool
 from .tools import window_activate as window_activate_tool
 from .tools import window_snap as window_snap_tool
 from .tools.browser_info import SystemBrowser
-from .tools.char_width import (
-    to_full_letter,
-    to_half_letter,
-)
 from .tools.clipboard import copy_then, invoke_clean_paster, paste
 from .tools.common import (
     CallbackFunc,
@@ -38,6 +34,8 @@ from .tools.format_clipboard import CLIPBOARD_FORMATTER_MAPPING
 from .tools.format_str import (
     as_single_quoted_line,
     simple_quote,
+    to_full_letter,
+    to_half_letter,
 )
 from .tools.web_search import invoke_web_seacher
 from .tools.window_activate import WindowActivator, WndScanner

@@ -3,14 +3,6 @@ from collections.abc import Callable
 
 from keyhac import *  # type: ignore
 
-from .char_width import (
-    to_full_brackets,
-    to_full_letter,
-    to_full_symbol,
-    to_half_brackets,
-    to_half_letter,
-    to_half_symbol,
-)
 from .format_str import (
     colon_to_doubledash,
     decode_url,
@@ -28,6 +20,12 @@ from .format_str import (
     swap_abbreviation,
     swap_tabs,
     to_double_bracket,
+    to_full_brackets,
+    to_full_letter,
+    to_full_symbol,
+    to_half_brackets,
+    to_half_letter,
+    to_half_symbol,
     to_list,
     to_single_bracket,
     trim_honorific,
