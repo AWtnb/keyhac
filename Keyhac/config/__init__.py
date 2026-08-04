@@ -1,5 +1,6 @@
 from . import (  # noqa: N999
     app_specific,
+    bind_clipboard,
     bind_core,
     bind_cursor_snap,
     bind_ime,
@@ -32,6 +33,7 @@ def configure(keymap) -> None:
 
     # load settings
     bind_core.bind(keymap)
+    bind_clipboard.bind(keymap)
     bind_ime.bind(keymap)
     bind_input.bind(keymap)
     bind_wnd_snap.bind(keymap)

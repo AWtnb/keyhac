@@ -18,6 +18,9 @@ def setup(_keymap: WindowKeymap) -> None:
     virtual_finger.setup(keymap)
     subthread.setup(keymap)
 
+    global VF  # ty: ignore[unresolved-global]
+    VF = virtual_finger.VirtualFinger()
+
 
 def get_string() -> str:
     try:
@@ -40,7 +43,6 @@ def set_string(s: str) -> None:
         pass
 
 
-VF = virtual_finger.VirtualFinger()
 TAP_TO_COPY = Tap("C-C")
 TAP_TO_PASTE = Tap("C-V")
 
