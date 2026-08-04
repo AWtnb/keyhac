@@ -19,6 +19,17 @@ def bind(keymap) -> None:
     km["U1-Left"] = keymap.MouseHorizontalWheelCommand(-1.0)
     km["U1-Right"] = keymap.MouseHorizontalWheelCommand(1.0)
 
+    # window mover
+    for key, delta in {
+        "Left": (-10, 0),
+        "Right": (+10, 0),
+        "Up": (0, -10),
+        "Down": (0, +10),
+    }.items():
+        x, y = delta
+        for mod, scale in {"": 15, "S-": 5, "C-": 5, "S-C-": 1}.items():
+            km[mod + "U0-" + key] = keymap.MoveWindowCommand(x * scale, y * scale)
+
     mod_keys = ("", "S-", "C-", "A-", "C-S-", "C-A-", "S-A-", "C-A-S-")
     for mod_key in mod_keys:
         for key, value in {
