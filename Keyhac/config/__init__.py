@@ -31,7 +31,8 @@ def configure(keymap) -> None:
     # quote mark when paste with Ctrl.
     keymap.quote_mark = "> "
 
-    # load settings
+    # load settings and keybindings
+    style.setup(keymap)
     bind_core.bind(keymap)
     bind_clipboard.bind(keymap)
     bind_ime.bind(keymap)
@@ -41,5 +42,4 @@ def configure(keymap) -> None:
     bind_cursor_snap.bind(keymap)
     bind_web_search.bind(keymap)
     bind_misc.bind(keymap)
-    style.setup(keymap)
     bind_app_specific.setup(keymap)
