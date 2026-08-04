@@ -1,14 +1,14 @@
 from . import (  # noqa: N999
-    app_specific,
+    bind_app_specific,
     bind_clipboard,
     bind_core,
     bind_cursor_snap,
     bind_ime,
     bind_input,
+    bind_misc,
     bind_web_search,
     bind_wnd_activate,
     bind_wnd_snap,
-    main,
     style,
 )
 
@@ -40,6 +40,6 @@ def configure(keymap) -> None:
     bind_wnd_activate.bind(keymap)
     bind_cursor_snap.bind(keymap)
     bind_web_search.bind(keymap)
+    bind_misc.bind(keymap)
     style.setup(keymap)
-    main.setup(keymap)
-    app_specific.setup(keymap)
+    bind_app_specific.setup(keymap)

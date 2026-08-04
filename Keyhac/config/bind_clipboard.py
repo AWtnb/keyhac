@@ -1,4 +1,5 @@
 import subprocess
+import webbrowser
 
 import ckit  # type: ignore
 from keyhac_keymap import WindowKeymap  # type: ignore
@@ -7,7 +8,7 @@ from keyhac import *  # type: ignore
 
 from .tools import clipboard as cb_tool
 from .tools import subthread as subthread_tool
-from .tools.clipboard import invoke_clean_paster, paste
+from .tools.clipboard import copy_then, invoke_clean_paster, paste
 from .tools.common import (
     balloon,
     check_fzf,
@@ -107,3 +108,19 @@ def bind(keymap) -> None:
     km["LC-LS-X"] = keymap.command_ClipboardList
 
     km["U1-Z"] = lambda: fzfmenu(keymap)
+
+    def open_selected_url() -> None:
+        def _open(job_item: ckit.JobItem) -> None:
+            if job_item.copied:
+                u = job_item.copied
+            else:
+                u = job_item.origin
+            u = u.strip()
+            if u.startswith("http"):
+                webbrowser.open(u)
+            else:
+                balloon(keymap, f"invalid path: {u}")
+
+        copy_then(_open)
+
+    km["C-U0-O"] = open_selected_url
