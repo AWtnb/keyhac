@@ -39,8 +39,6 @@ from .tools.str_tools import (
 )
 from .tools.web_search import invoke_web_seacher
 from .tools.window_activate import WindowActivator, WndScanner
-from .tools.window_rect import RectEdge
-from .tools.window_snap import invoke_maximized_snapper, invoke_shrinker, invoke_snapper
 
 
 def setup(keymap) -> None:
@@ -53,10 +51,6 @@ def setup(keymap) -> None:
     cursor_pos_tool.setup(keymap)
     window_snap_tool.setup(keymap)
     window_activate_tool.setup(keymap)
-
-    ################################
-    # key remap
-    ################################
 
     # keymap working on any window
     keymap_global = keymap.defineWindowKeymap(check_func=is_global_target)
@@ -160,77 +154,6 @@ def setup(keymap) -> None:
 
     # clipboard menu
     keymap_global["LC-LS-X"] = keymap.command_ClipboardList
-
-    ################################
-    # set window position
-    ################################
-
-    def bind_window_mover(km: WindowKeymap) -> None:
-        for key, delta in {
-            "Left": (-10, 0),
-            "Right": (+10, 0),
-            "Up": (0, -10),
-            "Down": (0, +10),
-        }.items():
-            x, y = delta
-            for mod, scale in {"": 15, "S-": 5, "C-": 5, "S-C-": 1}.items():
-                km[mod + "U0-" + key] = keymap.MoveWindowCommand(x * scale, y * scale)
-
-    bind_window_mover(keymap_global)
-
-    keymap_global["U1-L"] = "LWin-Right"
-    keymap_global["U1-H"] = "LWin-Left"
-
-    keymap_global["U1-M"] = keymap.defineMultiStrokeKeymap()
-    keymap_global["U1-M"]["X"] = lambda: keymap.getTopLevelWindow().maximize()
-    keymap_global["U1-M"]["N"] = lambda: keymap.getTopLevelWindow().minimize()
-
-    def bind_window_snapper(km: WindowKeymap) -> None:
-        altkey_stat = {0: "", 1: "LA-", 2: "RA-"}
-        scale_mapping = {
-            "": 1 / 2,
-            "S-": 2 / 3,
-            "C-": 1 / 3,
-        }
-        edge_mapping = {
-            "H": RectEdge.left,
-            "L": RectEdge.right,
-            "J": RectEdge.bottom,
-            "K": RectEdge.top,
-        }
-
-        for idx, alt in altkey_stat.items():
-            for area_mod, scale in scale_mapping.items():
-                for key, edge in edge_mapping.items():
-                    km[alt + area_mod + key] = invoke_snapper(idx, scale, edge)
-
-    bind_window_snapper(keymap_global["U1-M"])
-
-    def bind_maximized_window_snapper() -> None:
-        for key in ["0", "1", "2"]:
-            monitor_idx = int(key)
-            _snap = invoke_maximized_snapper(monitor_idx)
-            keymap_global["U1-M"][str(key)] = _snap
-
-    bind_maximized_window_snapper()
-
-    def bind_window_shrinker(km: WindowKeymap) -> None:
-        for key, toward in {
-            "H": RectEdge.left,
-            "L": RectEdge.right,
-            "K": RectEdge.top,
-            "J": RectEdge.bottom,
-        }.items():
-            km["U1-" + key] = invoke_shrinker(toward)
-
-    bind_window_shrinker(keymap_global["U1-M"])
-
-    ################################
-    # set cursor position
-    ################################
-
-    keymap_global["O-RCtrl"] = cursor_pos_tool.snap_cursor
-    keymap_global["O-RShift"] = cursor_pos_tool.snap_to_center
 
     ################################
     # input customize
