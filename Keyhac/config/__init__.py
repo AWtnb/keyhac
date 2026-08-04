@@ -1,4 +1,4 @@
-from . import app_specific, main, style  # noqa: N999
+from . import app_specific, bind_core, main, style  # noqa: N999
 
 
 def configure(keymap) -> None:
@@ -20,6 +20,7 @@ def configure(keymap) -> None:
     keymap.quote_mark = "> "
 
     # load settings
+    bind_core.bind(keymap)
     style.setup(keymap)
     main.setup(keymap)
     app_specific.setup(keymap)
