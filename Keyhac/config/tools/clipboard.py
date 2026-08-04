@@ -8,7 +8,7 @@ from keyhac import *  # ty: ignore[unresolved-import]
 from . import subthread, virtual_finger
 from .common import CallbackFunc, delay
 from .str_tools import remove_whitespace
-from .virtual_finger import Tap
+from .virtual_finger import as_motion
 
 
 def setup(_keymap: WindowKeymap) -> None:
@@ -43,16 +43,16 @@ def set_string(s: str) -> None:
         pass
 
 
-TAP_TO_COPY = Tap("C-C")
-TAP_TO_PASTE = Tap("C-V")
+COPY_MOTION = as_motion("C-C")
+PASTE_MOTION = as_motion("C-V")
 
 
 def send_copy_key() -> None:
-    VF.send_compiled(TAP_TO_COPY)
+    VF.send_motion_sequence(COPY_MOTION)
 
 
 def send_paste_key() -> None:
-    VF.send_compiled(TAP_TO_PASTE)
+    VF.send_motion_sequence(PASTE_MOTION)
 
 
 def paste(
@@ -79,7 +79,7 @@ def paste(
 
 def copy_then(deferred: Callable[[ckit.JobItem], None]) -> None:
     cb = get_latest_clipboard_history()
-    virtual_finger.VirtualFinger().send_compiled(Tap("C-C"))
+    send_copy_key()
     delay(40)
 
     def _watch_clipboard(job_item: ckit.JobItem) -> None:

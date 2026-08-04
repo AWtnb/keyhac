@@ -1,3 +1,5 @@
+from typing import NamedTuple
+
 import pyauto  # type: ignore
 from keyhac_keymap import KeyCondition, WindowKeymap  # ty:ignore[unresolved-import]
 
@@ -9,77 +11,68 @@ def setup(_keymap: WindowKeymap) -> None:
     keymap = _keymap
 
 
-class Tap:
-    mod: int = 0
-    sequence: list[pyauto.Key | pyauto.KeyUp | pyauto.KeyDown | pyauto.Char] = []  # noqa: RUF012
+class Motion(NamedTuple):
+    mod: int
+    taps: list[pyauto.Key | pyauto.KeyUp | pyauto.KeyDown | pyauto.Char]
 
-    def __init__(self, name: str):
-        up = None
-        tokens = [s for s in name.split("-")]
 
-        for token in tokens[:-1]:
-            t = token.strip().upper()
-            try:
-                self.mod |= KeyCondition.strToMod(t, force_LR=True)
-            except ValueError:
-                if up is not None:
-                    continue
-                if t == "U":
-                    up = True
-                else:
-                    if t == "D":
-                        up = False
+def as_motion(name: str) -> Motion:
+    up = None
+    tokens = [s for s in name.split("-")]
 
-        tail = tokens[-1]
+    mod = 0
+    for token in tokens[:-1]:
+        t = token.strip().upper()
         try:
-            vk = KeyCondition.strToVk(tail.strip().upper())
-            if up is None:
-                self.sequence = [pyauto.Key(vk)]
-            else:
-                if up:
-                    self.sequence = [pyauto.KeyUp(vk)]
-                else:
-                    self.sequence = [pyauto.KeyDown(vk)]
+            mod |= KeyCondition.strToMod(t, force_LR=True)
         except ValueError:
-            self.sequence = [pyauto.Char(c) for c in str(tail)]
+            if up is not None:
+                continue
+            if t == "U":
+                up = True
+            else:
+                if t == "D":
+                    up = False
+
+    tail = tokens[-1]
+    try:
+        vk = KeyCondition.strToVk(tail.strip().upper())
+        if up is None:
+            return Motion(mod, [pyauto.Key(vk)])
+        if up:
+            return Motion(mod, [pyauto.KeyUp(vk)])
+        return Motion(mod, [pyauto.KeyDown(vk)])
+    except ValueError:
+        return Motion(mod, [pyauto.Char(c) for c in str(tail)])
+
+
+def as_motion_sequence(*sequence: str) -> list[Motion]:
+    return [as_motion(s) for s in sequence]
+
+
+MODKEY_RELEASE_MOTION_SEQUENCE = [
+    as_motion(f"U-{mod}") for mod in ("Shift", "Alt", "Ctrl")
+]
 
 
 class VirtualFinger:
     def __init__(self, inter_stroke_pause: int = 10) -> None:
-
         self._inter_stroke_pause = inter_stroke_pause
 
-        mod_keys = ["Shift", "Alt", "Ctrl"]
-        self._mod_release_taps = [Tap(f"U-{mod}") for mod in mod_keys]
+    def send(self, *sequence: str) -> None:
+        seq = as_motion_sequence(*sequence)
+        self.send_motion_sequence(*seq)
 
-    @staticmethod
-    def begin() -> None:
+    def send_motion_sequence(self, *motion_sequence: Motion) -> None:
         keymap.beginInput()
         keymap.setInput_Modifier(0)
 
-    @staticmethod
-    def end() -> None:
-        keymap.endInput()
+        for motion in MODKEY_RELEASE_MOTION_SEQUENCE:
+            keymap.input_seq.extend(tap for tap in motion.taps)
 
-    @staticmethod
-    def compile(*sequence: str) -> list[Tap]:
-        return [Tap(elem) for elem in sequence]
-
-    def send(self, *sequence: str) -> None:
-        taps = self.compile(*sequence)
-        self.send_compiled(*taps)
-
-    def send_compiled(self, *taps: Tap) -> None:
-        self.begin()
-
-        for t in self._mod_release_taps:
-            for x in t.sequence:
-                keymap.input_seq.append(x)
-
-        for t in taps:
+        for motion in motion_sequence:
             delay(self._inter_stroke_pause)
-            keymap.setInput_Modifier(t.mod)
-            for x in t.sequence:
-                keymap.input_seq.append(x)
+            keymap.setInput_Modifier(motion.mod)
+            keymap.input_seq.extend(tap for tap in motion.taps)
 
-        self.end()
+        keymap.endInput()

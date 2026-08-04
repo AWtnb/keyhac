@@ -4,7 +4,7 @@ from keyhac import *  # type: ignore
 
 from . import ime, virtual_finger
 from .common import CallbackFunc
-from .virtual_finger import Tap
+from .virtual_finger import as_motion_sequence
 
 
 def setup(_keymap: WindowKeymap) -> None:
@@ -21,11 +21,11 @@ class SKKSender:
         self.ime_handler = ime.Handler(inter_stroke_pause)
 
     def invoke(self, mode_setter: CallbackFunc, *sequence: str) -> CallbackFunc:
-        taps = self.finger.compile(*sequence)
+        seq = as_motion_sequence(*sequence)
 
         def _sender() -> None:
             mode_setter()
-            self.finger.send_compiled(*taps)
+            self.finger.send_motion_sequence(*seq)
 
         return _sender
 
@@ -44,13 +44,13 @@ class SKKSender:
     def invoke_emitThen(
         self, later_ime_status: ime.ImeStatus, *sequence: str
     ) -> CallbackFunc:
-        taps = self.finger.compile(*sequence)
-        toggle_tap = Tap(ime.SKKKey.toggle_vk)
+        seq = as_motion_sequence(*sequence)
+        toggle_seq = as_motion_sequence(ime.SKKKey.toggle_vk)
 
         def _sender() -> None:
-            self.finger.send_compiled(*taps)
+            self.finger.send_motion_sequence(*seq)
             if ime.get_status() != later_ime_status:
-                self.finger.send_compiled(toggle_tap)
+                self.finger.send_motion_sequence(*toggle_seq)
 
         return _sender
 

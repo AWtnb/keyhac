@@ -15,7 +15,7 @@ from .tools.common import (
     shell_exec,
     smart_check_path,
 )
-from .tools.virtual_finger import Tap
+from .tools.virtual_finger import as_motion
 
 
 def bind(keymap) -> None:
@@ -28,13 +28,13 @@ def bind(keymap) -> None:
     VF = vf_tool.VirtualFinger(0)
 
     def safe_close() -> None:
-        close_tap = Tap("A-F4")
+        close_motion = as_motion("A-F4")
 
         def _wait(_) -> None:
             delay(200)
 
         def _close(_) -> None:
-            VF.send_compiled(close_tap)
+            VF.send_motion_sequence(close_motion)
 
         subthread_tool.run(_wait, _close)
 

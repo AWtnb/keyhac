@@ -112,10 +112,10 @@ def bind_smooth_csv(keymap) -> None:
 
     def copy_and_unselect_line() -> None:
         finger = vf_tool.VirtualFinger()
-        taps = vf_tool.VirtualFinger().compile("Up", "Down")
+        seq = vf_tool.as_motion_sequence("Up", "Down")
 
         def _unselect(_) -> None:
-            finger.send_compiled(*taps)
+            finger.send_motion_sequence(*seq)
 
         copy_then(_unselect)
 

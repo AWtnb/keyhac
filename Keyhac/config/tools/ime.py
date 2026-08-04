@@ -5,7 +5,7 @@ from keyhac_keymap import WindowKeymap  # type: ignore
 from keyhac import *  # type: ignore
 
 from . import virtual_finger
-from .virtual_finger import Tap
+from .virtual_finger import as_motion_sequence
 
 
 def setup(_keymap: WindowKeymap) -> None:
@@ -58,61 +58,58 @@ class SKKKey(StrEnum):
     affix = "S-Period"
 
 
-def as_taps(*keys: str) -> list[Tap]:
-    return [Tap(k) for k in keys]
+TO_KANA_SEQ = as_motion_sequence(SKKKey.kana)
+TO_TURNOFF_SEQ = as_motion_sequence(SKKKey.kana, SKKKey.toggle_vk)
+TO_KATA_SEQ = as_motion_sequence(SKKKey.kana, SKKKey.kata)
+TO_LATIN_SEQ = as_motion_sequence(SKKKey.kana, SKKKey.latin)
+TO_ABBREV_SEQ = as_motion_sequence(SKKKey.kana, SKKKey.abbrev)
+TO_HALF_KATA_SEQ = as_motion_sequence(SKKKey.kana, SKKKey.halfkata)
+TO_FULL_LATIN_SEQ = as_motion_sequence(SKKKey.kana, SKKKey.jlatin)
+TO_CONV_SEQ = as_motion_sequence(SKKKey.kana, SKKKey.convpoint)
+TO_CONV_SUFFIX_SEQ = as_motion_sequence(SKKKey.kana, SKKKey.convpoint, SKKKey.affix)
+TO_RECONV_SEQ = as_motion_sequence(SKKKey.kana, SKKKey.reconv, SKKKey.cancel)
 
 
 class Handler:
     def __init__(self, inter_stroke_pause: int = 10) -> None:
         self._finger = virtual_finger.VirtualFinger(inter_stroke_pause)
 
-        self.taps_to_kana = as_taps(SKKKey.kana)
-        self.taps_to_turnoff = as_taps(SKKKey.kana, SKKKey.toggle_vk)
-        self.taps_to_kata = as_taps(SKKKey.kana, SKKKey.kata)
-        self.taps_to_latin = as_taps(SKKKey.kana, SKKKey.latin)
-        self.taps_to_abbrev = as_taps(SKKKey.kana, SKKKey.abbrev)
-        self.taps_to_half_kata = as_taps(SKKKey.kana, SKKKey.halfkata)
-        self.taps_to_full_latin = as_taps(SKKKey.kana, SKKKey.jlatin)
-        self.taps_to_conv = as_taps(SKKKey.kana, SKKKey.convpoint)
-        self.taps_to_conv_suffix = as_taps(SKKKey.kana, SKKKey.convpoint, SKKKey.affix)
-        self.taps_to_reconv = as_taps(SKKKey.kana, SKKKey.reconv, SKKKey.cancel)
-
     def turnoff_skk(self) -> None:
         if is_enabled():
-            self._finger.send_compiled(*self.taps_to_turnoff)
+            self._finger.send_motion_sequence(*TO_TURNOFF_SEQ)
 
     def to_skk_kana(self) -> None:
         enable()
-        self._finger.send_compiled(*self.taps_to_kana)
+        self._finger.send_motion_sequence(*TO_KANA_SEQ)
 
     def to_skk_latin(self) -> None:
         enable()
-        self._finger.send_compiled(*self.taps_to_latin)
+        self._finger.send_motion_sequence(*TO_LATIN_SEQ)
 
     def to_skk_abbrev(self) -> None:
         enable()
-        self._finger.send_compiled(*self.taps_to_abbrev)
+        self._finger.send_motion_sequence(*TO_ABBREV_SEQ)
 
     def to_skk_kata(self) -> None:
         enable()
-        self._finger.send_compiled(*self.taps_to_kata)
+        self._finger.send_motion_sequence(*TO_KATA_SEQ)
 
     def to_skk_half_kata(self) -> None:
         enable()
-        self._finger.send_compiled(*self.taps_to_half_kata)
+        self._finger.send_motion_sequence(*TO_HALF_KATA_SEQ)
 
     def to_skk_full_latin(self) -> None:
         enable()
-        self._finger.send_compiled(*self.taps_to_full_latin)
+        self._finger.send_motion_sequence(*TO_FULL_LATIN_SEQ)
 
     def start_skk_conv(self) -> None:
         enable()
-        self._finger.send_compiled(*self.taps_to_conv)
+        self._finger.send_motion_sequence(*TO_CONV_SEQ)
 
     def start_skk_conv_suffix(self) -> None:
         enable()
-        self._finger.send_compiled(*self.taps_to_conv_suffix)
+        self._finger.send_motion_sequence(*TO_CONV_SUFFIX_SEQ)
 
     def reconvert_with_skk(self) -> None:
         enable()
-        self._finger.send_compiled(*self.taps_to_reconv)
+        self._finger.send_motion_sequence(*TO_RECONV_SEQ)

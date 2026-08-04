@@ -6,7 +6,7 @@ from keyhac_keymap import WindowKeymap  # type: ignore
 from keyhac import *  # type: ignore
 
 from . import virtual_finger
-from .virtual_finger import Tap
+from .virtual_finger import as_motion
 
 
 def setup(_keymap: WindowKeymap) -> None:
@@ -16,7 +16,7 @@ def setup(_keymap: WindowKeymap) -> None:
     virtual_finger.setup(keymap)
 
 
-MAGICAL_SEQUENCE = [Tap(elem) for elem in ("LWin-S-M", "U-Alt")]
+MAGICAL_SEQUENCE = [as_motion(elem) for elem in ("LWin-S-M", "U-Alt")]
 
 
 def run(
@@ -26,7 +26,7 @@ def run(
 ) -> None:
     if focus_changed_in_subthread:
         finger = virtual_finger.VirtualFinger(0)
-        finger.send_compiled(*MAGICAL_SEQUENCE)
+        finger.send_motion_sequence(*MAGICAL_SEQUENCE)
 
     def _finished(job_item: ckit.JobItem) -> None:
         keymap.setInput_Modifier(0)
