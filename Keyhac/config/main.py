@@ -8,13 +8,8 @@ from keyhac_keymap import WindowKeymap  # type: ignore
 from keyhac import *  # type: ignore
 
 from .tools import clipboard as cb_tool
-from .tools import cursor_pos as cursor_pos_tool
-from .tools import ime as ime_tool
-from .tools import sender as sender_tool
 from .tools import subthread as subthread_tool
 from .tools import virtual_finger as vf_tool
-from .tools import window_activate as window_activate_tool
-from .tools import window_snap as window_snap_tool
 from .tools.clipboard import copy_then, invoke_clean_paster, paste
 from .tools.common import (
     balloon,
@@ -39,12 +34,7 @@ def setup(keymap) -> None:
 
     vf_tool.setup(keymap)
     subthread_tool.setup(keymap)
-    ime_tool.setup(keymap)
-    sender_tool.setup(keymap)
     cb_tool.setup(keymap)
-    cursor_pos_tool.setup(keymap)
-    window_snap_tool.setup(keymap)
-    window_activate_tool.setup(keymap)
 
     # keymap working on any window
     keymap_global = keymap.defineWindowKeymap(check_func=is_global_target)
