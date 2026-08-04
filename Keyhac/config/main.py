@@ -19,7 +19,6 @@ from .tools import window_snap as window_snap_tool
 from .tools.browser_info import SystemBrowser
 from .tools.clipboard import copy_then, invoke_clean_paster, paste
 from .tools.common import (
-    CallbackFunc,
     balloon,
     check_fzf,
     delay,
@@ -37,7 +36,6 @@ from .tools.str_tools import (
     to_full_letter,
     to_half_letter,
 )
-from .tools.web_search import invoke_web_seacher
 from .tools.window_activate import WindowActivator, WndScanner
 
 
@@ -262,60 +260,6 @@ def setup(keymap) -> None:
             "U1-9": ["(", ")"],
             "S-U0-9": ['("', '")'],
             "U1-CloseBracket": ["{", "}"],
-        },
-    )
-
-    ################################
-    # web search
-    ################################
-
-    def invoke_web_search_job(
-        uri: str, strict: bool = False, strip_hiragana: bool = False
-    ) -> CallbackFunc:
-        search_func = invoke_web_seacher(uri, strict, strip_hiragana)
-
-        def _searcher() -> None:
-            def _search(job_item: ckit.JobItem) -> None:
-                s = job_item.copied
-                if len(s) < 1:
-                    s = job_item.origin
-                search_func(s)
-
-            copy_then(_search)
-
-        return _searcher
-
-    def bind_web_search_key(km: WindowKeymap, mapping: dict[str, str]) -> None:
-        for shift_key in ("", "S-"):
-            for ctrl_key in ("", "C-"):
-                is_strict = shift_key != ""
-                strip_hiragana = ctrl_key != ""
-                trigger_key = shift_key + ctrl_key + "U0-S"
-                km[trigger_key] = keymap.defineMultiStrokeKeymap()
-                for key, uri in mapping.items():
-                    km[trigger_key][key] = invoke_web_search_job(
-                        uri, is_strict, strip_hiragana
-                    )
-
-    bind_web_search_key(
-        keymap_global,
-        {
-            "A": "https://www.amazon.co.jp/s?i=stripbooks&k={}",
-            "B": "https://www.google.com/search?nfpr=1&q=site%3Abooks.or.jp%20{}",
-            "C": "https://ci.nii.ac.jp/books/search?q={}",
-            "D": "https://duckduckgo.com/?q={}",
-            "G": "http://www.google.com/search?nfpr=1&q={}",
-            "H": "https://www.hanmoto.com/bd/search/order/desc/title/{}",
-            "I": "https://www.google.com/search?udm=2&nfpr=1&q={}",
-            "J": "https://eow.alc.co.jp/search?q={}",
-            "M": "https://www.merriam-webster.com/dictionary/{}",
-            "N": "https://ndlsearch.ndl.go.jp/search?cs=bib&f-ht=ndl&keyword={}",
-            "P": "https://wordpress.org/openverse/search/?q={}",
-            "R": "https://researchmap.jp/researchers?q={}",
-            "S": "https://scholar.google.com/scholar?nfpr=1&as_vis=1&q={}",
-            "T": "https://twitter.com/search?q={}",
-            "Y": "https://duckduckgo.com/?q=site%3Ayuhikaku.co.jp%20{}",
-            "W": "https://www.worldcat.org/search?q={}",
         },
     )
 
