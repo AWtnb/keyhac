@@ -5,23 +5,6 @@ from .tools.clipboard import copy_then
 from .tools.common import is_browser
 
 
-def setup(keymap) -> None:
-    sender_tool.setup(keymap)
-    ime_tool.setup(keymap)
-    vf_tool.setup(keymap)
-
-    bind_browser(keymap)
-    bind_intra(keymap)
-    bind_slack(keymap)
-    bind_vscode(keymap)
-    bind_mery(keymap)
-    bind_kiri(keymap)
-    bind_smooth_csv(keymap)
-    bind_sumatra_pdf(keymap)
-    bind_office_powerpoint(keymap)
-    bind_office_excel(keymap)
-
-
 def bind_browser(keymap) -> None:
     keymap_browser = keymap.defineWindowKeymap(check_func=is_browser)
     keymap_browser["LC-LS-W"] = "A-Left"
@@ -170,3 +153,20 @@ def bind_office_excel(keymap) -> None:
             finger.send("C-A")
 
     keymap_excel["C-A"] = select_all
+
+
+def setup(keymap) -> None:
+    sender_tool.setup(keymap)
+    ime_tool.setup(keymap)
+    vf_tool.setup(keymap)
+
+    bind_browser(keymap)
+    bind_intra(keymap)
+    bind_slack(keymap)
+    bind_vscode(keymap)
+    bind_mery(keymap)
+    bind_kiri(keymap)
+    bind_smooth_csv(keymap)
+    bind_sumatra_pdf(keymap)
+    bind_office_powerpoint(keymap)
+    bind_office_excel(keymap)
