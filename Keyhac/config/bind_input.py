@@ -2,9 +2,7 @@ from keyhac import *  # type: ignore
 
 from .tools import ime as ime_tool
 from .tools import sender as sender_tool
-from .tools.common import (
-    is_global_target,
-)
+from .tools.common import is_global_target
 
 
 def bind(keymap) -> None:

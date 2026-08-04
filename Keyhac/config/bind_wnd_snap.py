@@ -3,7 +3,6 @@ from keyhac import *  # type: ignore
 from .tools import window_snap as wnd_snap_tool
 from .tools.common import is_global_target
 from .tools.window_rect import RectEdge
-from .tools.window_snap import invoke_maximized_snapper, invoke_shrinker, invoke_snapper
 
 
 def bind(keymap) -> None:
@@ -37,11 +36,13 @@ def bind(keymap) -> None:
     for idx, alt in altkey_stat.items():
         for area_mod, scale in scale_mapping.items():
             for key, edge in edge_mapping.items():
-                km["U1-M"][alt + area_mod + key] = invoke_snapper(idx, scale, edge)
+                km["U1-M"][alt + area_mod + key] = wnd_snap_tool.invoke_snapper(
+                    idx, scale, edge
+                )
 
     for key in ["0", "1", "2"]:
         monitor_idx = int(key)
-        km["U1-M"][key] = invoke_maximized_snapper(monitor_idx)
+        km["U1-M"][key] = wnd_snap_tool.invoke_maximized_snapper(monitor_idx)
 
     for key, toward in {
         "H": RectEdge.left,
@@ -49,4 +50,4 @@ def bind(keymap) -> None:
         "K": RectEdge.top,
         "J": RectEdge.bottom,
     }.items():
-        km["U1-M"]["U1-" + key] = invoke_shrinker(toward)
+        km["U1-M"]["U1-" + key] = wnd_snap_tool.invoke_shrinker(toward)
