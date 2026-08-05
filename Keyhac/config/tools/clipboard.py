@@ -80,12 +80,12 @@ def paste(
 def copy_then(deferred: Callable[[ckit.JobItem], None]) -> None:
     cb = get_latest_clipboard_history()
     send_copy_key()
-    delay(40)
 
     def _watch_clipboard(job_item: ckit.JobItem) -> None:
+        delay(40)
         job_item.origin = cb
         job_item.copied = ""
-        trial = 600
+        trial = 200
         for _ in range(trial):
             s = get_latest_clipboard_history()
             if not s.strip():
