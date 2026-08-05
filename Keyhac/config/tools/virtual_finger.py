@@ -50,8 +50,7 @@ def as_motion_sequence(*sequence: str) -> list[Motion]:
     return [as_motion(s) for s in sequence]
 
 
-MODKEY_RELEASE_MOTION_SEQUENCE = [as_motion(f"U-{mod}") for mod in ("Shift", "Ctrl")]
-MODKEY_RELEASE_MOTION_SEQUENCE.extend(as_motion(f"{stat}-Alt") for stat in ("D", "U"))
+MODKEY_RELEASE_MOTION_SEQUENCE = as_motion_sequence("U-Shift", "U-Ctrl", "Alt", "Alt")
 
 
 class VirtualFinger:
