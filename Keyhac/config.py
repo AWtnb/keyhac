@@ -8,7 +8,7 @@ from keyhac_listwindow import ListWindow  # type: ignore
 from keyhac import *  # type: ignore
 
 
-def setup_config(config_module_name: str) -> ModuleType:
+def import_config(config_module_name: str) -> ModuleType:
     config_dir = ckit.dataPath()
     if config_dir not in sys.path:
         sys.path.insert(0, config_dir)
@@ -20,10 +20,10 @@ def setup_config(config_module_name: str) -> ModuleType:
 
 
 def configure(keymap) -> None:
-    config = setup_config("config")
+    config = import_config("config")
     config.configure(keymap)
 
 
 def configure_ListWindow(window: ListWindow) -> None:
-    config = setup_config("config_listwindow")
+    config = import_config("config_listwindow")
     config.configure(window)
