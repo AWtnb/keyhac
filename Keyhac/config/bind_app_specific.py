@@ -38,12 +38,8 @@ def bind_vscode(keymap) -> None:
     keymap_vscode = keymap.defineWindowKeymap(exe_name="Code.exe")
     keymap_vscode["U0-Slash"] = "C-Slash", "A-S-Down", "C-Slash"
 
-    def remap_vscode(*keys: str) -> None:
-        sender = sender_tool.SKKSender()
-        for key in keys:
-            keymap_vscode[key] = sender.invoke_emitThen(ime_tool.ImeStatus.off, key)
-
-    remap_vscode(
+    sender = sender_tool.SKKSender()
+    for key in [
         "C-E",
         "C-F",
         "C-T",
@@ -60,28 +56,24 @@ def bind_vscode(keymap) -> None:
         "C-2",
         "C-S-Enter",
         "S-Enter",
-    )
+    ]:
+        keymap_vscode[key] = sender.invoke_emitThen(ime_tool.ImeStatus.off, key)
 
 
 def bind_mery(keymap) -> None:
     keymap_mery = keymap.defineWindowKeymap(exe_name="Mery.exe")
 
-    def remap_mery(binding: dict) -> None:
-        for key, value in binding.items():
-            keymap_mery[key] = value
-
-    remap_mery(
-        {
-            "LA-LC-J": "LA-LC-N",
-            "LA-LC-K": "LA-LC-LS-N",
-            "LA-U0-J": "A-CloseBracket",
-            "LA-U0-K": "A-OpenBracket",
-            "LA-LC-U0-J": "A-C-CloseBracket",
-            "LA-LC-U0-K": "A-C-OpenBracket",
-            "LA-LS-U0-J": "A-S-CloseBracket",
-            "LA-LS-U0-K": "A-S-OpenBracket",
-        }
-    )
+    for key, value in {
+        "LA-LC-J": "LA-LC-N",
+        "LA-LC-K": "LA-LC-LS-N",
+        "LA-U0-J": "A-CloseBracket",
+        "LA-U0-K": "A-OpenBracket",
+        "LA-LC-U0-J": "A-C-CloseBracket",
+        "LA-LC-U0-K": "A-C-OpenBracket",
+        "LA-LS-U0-J": "A-S-CloseBracket",
+        "LA-LS-U0-K": "A-S-OpenBracket",
+    }.items():
+        keymap_mery[key] = value
 
 
 def bind_kiri(keymap) -> None:
@@ -104,8 +96,8 @@ def bind_smooth_csv(keymap) -> None:
         class_name="Chrome_WidgetWin_1",
         window_text="tauri.localhost",
     )
-    keymap_smoothcsv["C-S-F"] = sender_tool.SKKSender(80).invoke_emitThen(
-        ime_tool.ImeStatus.off, "C-S-F", "C-A"
+    keymap_smoothcsv["C-S-F"] = sender_tool.SKKSender().invoke_emitThen(
+        ime_tool.ImeStatus.off, "C-S-F"
     )
     keymap_smoothcsv["S-Space"] = sender_tool.DirectSender().invoke("S-Space")
     keymap_smoothcsv["S-U0-N"] = lambda: vf_tool.VirtualFinger(20).send("F2", "Home")
