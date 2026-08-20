@@ -50,14 +50,17 @@ def remove_whitespace(s: str) -> str:
     )
 
 
+QUOTE_MARK = "> "
+
+
 def simple_quote(s: str) -> str:
     lines = s.strip().splitlines()
-    return "\n".join([">" + line for line in lines])
+    return "\n".join([QUOTE_MARK + line for line in lines])
 
 
 def as_single_quoted_line(s: str) -> str:
     lines = s.strip().splitlines()
-    return ">" + "".join([line.strip() for line in lines])
+    return QUOTE_MARK + "".join([line.strip() for line in lines])
 
 
 def invoke_comment_remover(symbol: str) -> Callable[[str], str]:
