@@ -2,18 +2,22 @@ from .tools import ime as ime_tool
 from .tools import sender as sender_tool
 from .tools import virtual_finger as vf_tool
 from .tools.clipboard import copy_then
-from .tools.common import is_browser
+from .tools.common import delay, is_browser
 
 
 def bind_browser(keymap) -> None:
     keymap_browser = keymap.defineWindowKeymap(check_func=is_browser)
     keymap_browser["LC-LS-W"] = "A-Left"
-    keymap_browser["LC-F"] = sender_tool.SKKSender(40).invoke_emitThen(
-        ime_tool.ImeStatus.off, "C-F"
-    )
-    keymap_browser["LC-K"] = sender_tool.SKKSender(40).invoke_emitThen(
-        ime_tool.ImeStatus.off, "C-K"
-    )
+
+    sender = sender_tool.SKKSender(40)
+    for key in ["C-F", "C-K"]:
+        keymap_browser[f"L{key}"] = sender.invoke_emitThen(ime_tool.ImeStatus.off, key)
+
+    def slow_bookmark() -> None:
+        delay()
+        sender.finger.send("C-D")
+
+    keymap_browser["LC-D"] = slow_bookmark
 
 
 def bind_intra(keymap) -> None:
