@@ -30,7 +30,7 @@ class SKKKey(StrEnum):
 
 def _send_ime_sequence(*seq: str):
     """
-    IMEを有効にしてキー入力でSKKKを初期化する
+    IMEを有効にしてキー入力でSKKを初期化する
     """
     with keymap.get_input_context() as ctx:
         ctx.send_key(SKKKey.kana)
