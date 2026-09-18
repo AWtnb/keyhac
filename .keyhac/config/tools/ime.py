@@ -1,4 +1,4 @@
-from enum import Enum, StrEnum
+from enum import StrEnum
 
 
 def setup(_keymap) -> None:
@@ -6,17 +6,12 @@ def setup(_keymap) -> None:
     keymap = _keymap
 
 
-class ImeStatus(Enum):
-    on = True
-    off = False
-
-
-def get_status() -> ImeStatus | None:
+def get_status() -> bool | None:
     return keymap.get_ime_status()
 
 
-def set_status(status: ImeStatus) -> bool:
-    return keymap.set_ime_status(status.value)
+def set_status(status: bool) -> bool:
+    return keymap.set_ime_status(status)
 
 
 class SKKKey(StrEnum):
@@ -47,9 +42,9 @@ def turnon_skk() -> bool:
     status = get_status()
     if status is None:
         return False
-    if status == ImeStatus.on:
+    if status:
         return True
-    return set_status(ImeStatus.on)
+    return set_status(True)
 
 
 def turnoff_skk() -> None:
