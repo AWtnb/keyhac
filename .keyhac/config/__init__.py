@@ -1,7 +1,10 @@
-from . import bind_core  # noqa: N999
+from . import bind_core, bind_ime  # noqa: N999
 
 
 def configure(keymap) -> None:
+    """
+    https://github.com/crftwr/keyhac/blob/main/keyhac/_config.py
+    """
 
     # user modifier
     keymap.replace_key("(29)", 235)  # "muhenkan" => 235
@@ -14,3 +17,4 @@ def configure(keymap) -> None:
     keymap.clipboard_history.max_data_size = 10 * 1024 * 1024
 
     bind_core.bind(keymap)
+    bind_ime.bind(keymap)
