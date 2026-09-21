@@ -1,4 +1,4 @@
-from .tools import ime as ime_tool
+import libs.ime as ime_tool
 
 
 def bind(keymap) -> None:
