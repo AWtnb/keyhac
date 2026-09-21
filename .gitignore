@@ -2,3 +2,4 @@ __pycache__
 keyhac.ini
 .venv
 clipboard.json
+.keyhac/settings.json
