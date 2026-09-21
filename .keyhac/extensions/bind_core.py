@@ -50,8 +50,6 @@ def bind(keymap) -> None:
     for key, value in {
         # focus taskbar
         "LC-U1-T": ("LWin-T"),
-        # send n and space
-        "LS-U0-N": ("N", "N", "Space"),
         # delete around cursor
         "U0-Back": ("Back", "Delete"),
         # delete to bol / eol
