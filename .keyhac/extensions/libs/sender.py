@@ -10,7 +10,7 @@ def setup(_keymap) -> None:
     ime_tool.setup(keymap)
 
 
-def send_sequence(inter_stroke_pause: int, *sequence: str) -> None:
+def _send_sequence(inter_stroke_pause: int, *sequence: str) -> None:
     with keymap.get_input_context() as ctx:
         for key in sequence:
             delay(inter_stroke_pause)
@@ -28,7 +28,7 @@ class SKKSender:
 
         def _sender() -> None:
             if mode_setter():
-                send_sequence(self._inter_stroke_pause, *sequence)
+                _send_sequence(self._inter_stroke_pause, *sequence)
 
         return _sender
 
@@ -53,7 +53,7 @@ class SKKSender:
             seq = list(sequence)
             if status != later_ime_status:
                 seq.append(ime_tool.SKKKey.toggle_vk)
-            send_sequence(self._inter_stroke_pause, *seq)
+            _send_sequence(self._inter_stroke_pause, *seq)
 
         return _sender
 

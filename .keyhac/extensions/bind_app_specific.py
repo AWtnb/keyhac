@@ -14,8 +14,9 @@ def _bind_browser(keymap) -> None:
         kt[key] = skk_sender.invoke_emitThen(False, key)
 
     def slow_bookmark() -> None:
-        delay()
-        sender.send_sequence(pause, "C-D")
+        with keymap.get_input_context() as ctx:
+            delay(pause)
+            ctx.send_key("C-D")
 
     kt["LC-D"] = slow_bookmark
 
@@ -99,10 +100,10 @@ def _bind_office_excel(keymap) -> None:
         if focus is None:
             return
 
-        if focus.class_name == "EXCEL6":
-            sender.send_sequence(0, "C-End", "C-S-Home")
-        else:
-            sender.send_sequence(0, "C-A")
+        sequence = ["C-End", "C-S-Home"] if focus.class_name == "EXCEL6" else ["C-A"]
+        with keymap.get_input_context() as ctx:
+            for s in sequence:
+                ctx.send_key(s)
 
     kt["C-A"] = select_all
 
