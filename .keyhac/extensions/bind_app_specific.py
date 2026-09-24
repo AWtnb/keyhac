@@ -2,7 +2,7 @@ from libs import sender
 from libs._common import delay
 
 
-def bind_browser(keymap) -> None:
+def _bind_browser(keymap) -> None:
     kt = keymap.define_keytable(app="chrome|Google Chrome|firefox|Safari")
     kt["LC-LS-W"] = "A-Left"
 
@@ -20,6 +20,99 @@ def bind_browser(keymap) -> None:
     kt["LC-D"] = slow_bookmark
 
 
+def _bind_slack(keymap) -> None:
+    kt = keymap.define_keytable(app="slack.exe", class_name="Chrome_WidgetWin_1")
+    kt["C-K"] = sender.SKKSender().invoke_emitThen(False, "C-K")
+    kt["F3"] = kt["C-K"]
+    kt["C-E"] = kt["C-K"]
+    kt["F1"] = sender.DirectSender().invoke("S-SemiColon", "Colon")
+
+
+def _bind_vscode(keymap) -> None:
+    kt = keymap.define_keytable(app="Code.exe")
+    kt["U0-Slash"] = "C-Slash", "A-S-Down", "C-Slash"
+
+    for key in [
+        "C-E",
+        "C-F",
+        "C-T",
+        "C-S-F",
+        "C-S-E",
+        "C-S-O",
+        "C-S-G",
+        "RC-RS-X",
+        "C-0",
+        "C-S-P",
+        "C-A-B",
+        "C-A-AtMark",
+        "C-1",
+        "C-2",
+        "C-S-Enter",
+        "S-Enter",
+    ]:
+        kt[key] = sender.SKKSender().invoke_emitThen(False, key)
+
+
+def _bind_mery(keymap) -> None:
+    kt = keymap.define_keytable(app="Mery.exe")
+
+    for key, value in {
+        "LA-LC-J": "LA-LC-N",
+        "LA-LC-K": "LA-LC-LS-N",
+        "LA-U0-J": "A-CloseBracket",
+        "LA-U0-K": "A-OpenBracket",
+        "LA-LC-U0-J": "A-C-CloseBracket",
+        "LA-LC-U0-K": "A-C-OpenBracket",
+        "LA-LS-U0-J": "A-S-CloseBracket",
+        "LA-LS-U0-K": "A-S-OpenBracket",
+    }.items():
+        kt[key] = value
+
+
+def _bind_smooth_csv(keymap) -> None:
+    kt = keymap.define_keytable(
+        app="msedgewebview2.exe",
+        class_name="Chrome_WidgetWin_1",
+        title="tauri.localhost",
+    )
+    kt["C-S-F"] = sender.SKKSender().invoke_emitThen(False, "C-S-F")
+    kt["S-Space"] = sender.DirectSender().invoke("S-Space")
+    kt["U1-C"] = "C-C", "Up", "Down"
+
+
+def _bind_sumatra_pdf(keymap) -> None:
+    kt = keymap.define_keytable(
+        custom_condition_func=(
+            lambda focus: focus.app_name == "SumatraPDF" and focus.class_name != "Edit"
+        )
+    )
+
+    for key in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
+        kt[key] = sender.DirectSender().invoke(key)
+
+
+def _bind_office_excel(keymap) -> None:
+    kt = keymap.define_keytable(app="excel.exe")
+
+    def select_all() -> None:
+        focus = keymap.focus
+        if focus is None:
+            return
+
+        if focus.class_name == "EXCEL6":
+            sender.send_sequence(0, "C-End", "C-S-Home")
+        else:
+            sender.send_sequence(0, "C-A")
+
+    kt["C-A"] = select_all
+
+
 def bind(keymap):
     sender.setup(keymap)
-    bind_browser(keymap)
+    _bind_browser(keymap)
+    _bind_slack(keymap)
+    _bind_vscode(keymap)
+    _bind_mery(keymap)
+    _bind_smooth_csv(keymap)
+    _bind_sumatra_pdf(keymap)
+    _bind_office_excel(keymap)

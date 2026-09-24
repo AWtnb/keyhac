@@ -1,12 +1,15 @@
 from keyhac import (  # ty: ignore[unresolved-import]
     MoveWindow,
     PlaybackRecordedKeys,
+    ShowClipboardHistory,
     ToggleRecordingKeys,
 )
 
 
 def bind(keymap) -> None:
     kt = keymap.define_keytable(focus_path_pattern="*")
+
+    kt["LC-LS-X"] = ShowClipboardHistory()
 
     # keyboard macro
     kt["U0-0"] = ToggleRecordingKeys()
