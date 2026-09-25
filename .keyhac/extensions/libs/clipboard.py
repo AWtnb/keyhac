@@ -1,3 +1,10 @@
+from collections.abc import Callable
+
+from keyhac import ThreadedAction  # ty: ignore[unresolved-import]
+
+from ._common import delay
+
+
 def setup(_keymap) -> None:
     global keymap  # ty: ignore[unresolved-global]
     keymap = _keymap
@@ -28,26 +35,47 @@ def send_paste_key() -> None:
     _send_key("C-V")
 
 
-# # ---- Background work: ThreadedAction -----------------------------
+def paste(
+    s: str | None = None, format_func: Callable[[str], str] | None = None
+) -> None:
+    if s is None:
+        s = get_string()
+        if any(0x10000 < ord(c) for c in s):
+            # newer emoji
+            send_paste_key()
+            return
 
-# # Anything slow (network, subprocess, sleeping) must not run inline - it
-# # would block the keyboard hook.  run() is on a worker thread; starting()
-# # and finished() stay on the main thread, so UI and window access is fine
-# # in those two and not in run().  Esc stops a running action.
-# class TypeSlowly(ThreadedAction):
-#     def __init__(self, text):
-#         self.text = text
+        if len(s) < 1:
+            # empty clipboard could be image.
+            send_paste_key()
+            return
 
-#     def starting(self):
-#         logger.info(f"Typing {self.text!r}...")
+    if format_func is not None:
+        s = format_func(s)
 
-#     def run(self):
-#         import time
-#         for char in self.text:
-#             time.sleep(0.05)
-#             with keymap.get_input_context() as ctx:
-#                 ctx.send_key(f"Shift-{char}" if char.isupper() else char)
-#         return len(self.text)
+    set_string(s)
+    send_paste_key()
 
-#     def finished(self, result):
-#         logger.info(f"Typed {result} characters.")
+
+class CopyThen(ThreadedAction):
+    def __init__(self, deferred: Callable[[str], None]):
+        self.deferred = deferred
+        self.origin = ""
+
+    def starting(self):
+        self.origin = get_latest_clipboard_history()
+        send_copy_key()
+
+    def run(self) -> str:
+        delay(40)
+        trial = 40
+        for _ in range(trial):
+            s = get_latest_clipboard_history()
+            if not s.strip():
+                continue
+            if s != self.origin:
+                return s
+        return self.origin
+
+    def finished(self, result):
+        self.deferred(result)

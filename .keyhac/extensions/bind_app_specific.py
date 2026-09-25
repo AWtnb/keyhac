@@ -1,4 +1,5 @@
-from libs import sender
+from keyhac import ThreadedAction  # ty: ignore[unresolved-import]
+from libs import clipboard, sender
 from libs._common import delay
 
 
@@ -72,13 +73,30 @@ def _bind_mery(keymap) -> None:
 
 def _bind_smooth_csv(keymap) -> None:
     kt = keymap.define_keytable(
-        app="msedgewebview2.exe",
-        class_name="Chrome_WidgetWin_1",
-        title="tauri.localhost",
+        focus_path_pattern="/Application(smoothcsv-app)/Window(SmoothCSV)/*"
     )
-    kt["C-S-F"] = sender.SKKSender().invoke_emitThen(False, "C-S-F")
     kt["S-Space"] = sender.DirectSender().invoke("S-Space")
-    kt["U1-C"] = "C-C", "Up", "Down"
+
+    def _unselect(_) -> None:
+        with keymap.get_input_context() as ctx:
+            for key in ("Up", "Down"):
+                ctx.send_key(key)
+
+    kt["U1-C"] = clipboard.CopyThen(_unselect)
+
+    class LazyFilter(ThreadedAction):
+        def starting(self):
+            with keymap.get_input_context() as ctx:
+                ctx.send_key("C-S-F")
+
+        def run(self):
+            delay(100)
+
+        def finished(self, _):
+            with keymap.get_input_context() as ctx:
+                ctx.send_key("C-A")
+
+    kt["LC-LS-F"] = LazyFilter()
 
 
 def _bind_sumatra_pdf(keymap) -> None:
@@ -110,6 +128,8 @@ def _bind_office_excel(keymap) -> None:
 
 def bind(keymap):
     sender.setup(keymap)
+    clipboard.setup(keymap)
+
     _bind_browser(keymap)
     _bind_slack(keymap)
     _bind_vscode(keymap)
