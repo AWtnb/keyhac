@@ -14,12 +14,14 @@ def _bind_browser(keymap) -> None:
         key = f"LC-{k}"
         kt[key] = skk_sender.invoke_emitThen(False, key)
 
-    def slow_bookmark() -> None:
-        with keymap.get_input_context() as ctx:
-            delay(pause)
-            ctx.send_key("C-D")
+    class LazyBookmark(ThreadedAction):
+        def run(self):
+            delay(200)
 
-    kt["LC-D"] = slow_bookmark
+        def finished(self, _):
+            sender.send_keys("C-D")
+
+    kt["LC-D"] = LazyBookmark()
 
 
 def _bind_slack(keymap) -> None:
@@ -78,23 +80,19 @@ def _bind_smooth_csv(keymap) -> None:
     kt["S-Space"] = sender.DirectSender().invoke("S-Space")
 
     def _unselect(_) -> None:
-        with keymap.get_input_context() as ctx:
-            for key in ("Up", "Down"):
-                ctx.send_key(key)
+        sender.send_keys("Up", "Down")
 
     kt["U1-C"] = clipboard.CopyThen(_unselect)
 
     class LazyFilter(ThreadedAction):
         def starting(self):
-            with keymap.get_input_context() as ctx:
-                ctx.send_key("C-S-F")
+            sender.send_keys("C-S-F")
 
         def run(self):
             delay(100)
 
         def finished(self, _):
-            with keymap.get_input_context() as ctx:
-                ctx.send_key("C-A")
+            sender.send_keys("C-A")
 
     kt["LC-LS-F"] = LazyFilter()
 
@@ -119,9 +117,7 @@ def _bind_office_excel(keymap) -> None:
             return
 
         sequence = ["C-End", "C-S-Home"] if focus.class_name == "EXCEL6" else ["C-A"]
-        with keymap.get_input_context() as ctx:
-            for s in sequence:
-                ctx.send_key(s)
+        sender.send_keys(*sequence)
 
     kt["C-A"] = select_all
 

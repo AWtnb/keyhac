@@ -2,12 +2,14 @@ from collections.abc import Callable
 
 from keyhac import ThreadedAction  # ty: ignore[unresolved-import]
 
+from . import sender
 from ._common import delay
 
 
 def setup(_keymap) -> None:
     global keymap  # ty: ignore[unresolved-global]
     keymap = _keymap
+    sender.setup(keymap)
 
 
 def get_string() -> str:
@@ -22,17 +24,12 @@ def set_string(s: str) -> None:
     keymap.clipboard.set_text(s)
 
 
-def _send_key(key: str) -> None:
-    with keymap.get_input_context() as ctx:
-        ctx.send_key(key)
-
-
 def send_copy_key() -> None:
-    _send_key("C-C")
+    sender.send_keys("C-C")
 
 
 def send_paste_key() -> None:
-    _send_key("C-V")
+    sender.send_keys("C-V")
 
 
 def paste(

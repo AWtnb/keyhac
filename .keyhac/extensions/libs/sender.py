@@ -10,6 +10,12 @@ def setup(_keymap) -> None:
     ime_tool.setup(keymap)
 
 
+def send_keys(*keys: str) -> None:
+    with keymap.get_input_context() as ctx:
+        for key in keys:
+            ctx.send_key(key)
+
+
 def _send_sequence(inter_stroke_pause: int, *sequence: str) -> None:
     with keymap.get_input_context() as ctx:
         for key in sequence:
