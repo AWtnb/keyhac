@@ -46,11 +46,12 @@ class Paste(ThreadedAction):
                 if self.format_func is not None:
                     s = self.format_func(s)
                 set_string(s)
-            return
-        if self.format_func is None:
-            set_string(self.text)
         else:
-            set_string(self.format_func(self.text))
+            s = self.text
+            if self.format_func is not None:
+                s = self.format_func(s)
+            set_string(s)
+        delay()
 
     def finished(self, _):
         send_paste_key()
