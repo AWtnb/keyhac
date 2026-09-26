@@ -32,26 +32,28 @@ def send_paste_key() -> None:
     sender.send_keys("C-V")
 
 
-def paste(
-    s: str | None = None, format_func: Callable[[str], str] | None = None
-) -> None:
-    if s is None:
-        s = get_string()
-        if any(0x10000 < ord(c) for c in s):
-            # newer emoji
-            send_paste_key()
+class Paste(ThreadedAction):
+    def __init__(
+        self, text: str | None = None, format_func: Callable[[str], str] | None = None
+    ) -> None:
+        self.text = text
+        self.format_func = format_func
+
+    def run(self) -> None:
+        if self.text is None:
+            s = get_string()
+            if s:
+                if self.format_func is not None:
+                    s = self.format_func(s)
+                set_string(s)
             return
+        if self.format_func is None:
+            set_string(self.text)
+        else:
+            set_string(self.format_func(self.text))
 
-        if len(s) < 1:
-            # empty clipboard could be image.
-            send_paste_key()
-            return
-
-    if format_func is not None:
-        s = format_func(s)
-
-    set_string(s)
-    send_paste_key()
+    def finished(self, _):
+        send_paste_key()
 
 
 class CopyThen(ThreadedAction):

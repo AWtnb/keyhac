@@ -1,7 +1,7 @@
 import time
 from collections.abc import Callable
 
-CallbackFunc = Callable[[], None]
+type CallbackFunc = Callable[[], None]
 
 
 def delay(msec: int = 50) -> None:
