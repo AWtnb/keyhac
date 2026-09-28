@@ -1,4 +1,5 @@
 import bind_app_specific  # ty: ignore[unresolved-import]
+import bind_clipboard  # ty: ignore[unresolved-import]
 import bind_core  # ty: ignore[unresolved-import]
 import bind_ime  # ty: ignore[unresolved-import]
 
@@ -20,4 +21,5 @@ def configure(keymap) -> None:
 
     bind_core.bind(keymap)
     bind_ime.bind(keymap)
+    bind_clipboard.bind(keymap)
     bind_app_specific.bind(keymap)
