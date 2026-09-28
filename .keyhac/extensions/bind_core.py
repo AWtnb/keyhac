@@ -2,6 +2,7 @@ from keyhac import (  # ty: ignore[unresolved-import]
     MoveWindow,
     PlaybackRecordedKeys,
     ShowClipboardHistory,
+    ThreadedAction,
     ToggleRecordingKeys,
 )
 
@@ -86,3 +87,9 @@ def bind(keymap) -> None:
         "U0-7": "LS-7",
     }.items():
         kt[key] = value, value, "Left"
+
+    class LazyReload(ThreadedAction):
+        def run(self) -> None:
+            keymap.configure()
+
+    kt["U1-F12"] = LazyReload()
