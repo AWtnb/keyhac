@@ -1,4 +1,6 @@
 from keyhac import (  # ty: ignore[unresolved-import]
+    MouseHorizontalWheel,
+    MouseWheel,
     MoveWindow,
     PlaybackRecordedKeys,
     ShowClipboardHistory,
@@ -18,10 +20,10 @@ def bind(keymap) -> None:
     kt["U1-F4"] = PlaybackRecordedKeys()
 
     # mouse scroll
-    # kt["U1-Up"] = keymap.MouseWheelCommand(1.0)
-    # kt["U1-Down"] = keymap.MouseWheelCommand(-1.0)
-    # kt["U1-Left"] = keymap.MouseHorizontalWheelCommand(-1.0)
-    # kt["U1-Right"] = keymap.MouseHorizontalWheelCommand(1.0)
+    kt["U1-Up"] = MouseWheel(1.0)
+    kt["U1-Down"] = MouseWheel(-1.0)
+    kt["U1-Left"] = MouseHorizontalWheel(-1.0)
+    kt["U1-Right"] = MouseHorizontalWheel(1.0)
 
     # window mover
     window_move_unit = 10  # px
