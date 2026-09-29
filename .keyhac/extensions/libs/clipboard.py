@@ -67,9 +67,9 @@ class CopyThen(ThreadedAction):
         send_copy_key()
 
     def run(self) -> str:
-        delay(40)
         trial = 40
         for _ in range(trial):
+            delay(10)
             s = get_latest_clipboard_history()
             if not s.strip():
                 continue
