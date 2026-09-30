@@ -19,10 +19,7 @@ def bind(keymap) -> None:
     kt["U0-V"] = clipboard.Paste()
 
     def bind_cleanup_paster(key: str):
-        kt = keymap.define_keytable(
-            name="paste with whitespace trimmed:",
-            focus_path_pattern="*",
-        )
+        kt_paster = keymap.define_keytable(name="paste with whitespace trimmed:")
         for mod1, no_space in {
             "": False,
             "C-": True,
@@ -32,8 +29,8 @@ def bind(keymap) -> None:
                 "S-": True,
             }.items():
                 cleaner = make_str_cleaner(no_space, as_single_line)
-                kt[mod1 + mod2 + key] = clipboard.Paste(format_func=cleaner)
-        return kt
+                kt_paster[mod1 + mod2 + key] = clipboard.Paste(format_func=cleaner)
+        return kt_paster
 
     kt["U1-V"] = bind_cleanup_paster("V")
 
