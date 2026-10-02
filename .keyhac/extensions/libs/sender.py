@@ -1,5 +1,7 @@
 from collections.abc import Callable
 
+from keyhac import ThreadedAction  # ty: ignore[unresolved-import]
+
 from . import ime as ime_tool
 from ._common import CallbackFunc, delay
 
@@ -46,22 +48,31 @@ class SKKSender:
         sender = self.invoke(ime_tool.to_skk_latin, *sequence)
         return sender
 
+    def under_convmode(self, *sequence: str) -> CallbackFunc:
+        sender = self.invoke(ime_tool.start_skk_conv, *sequence)
+        return sender
+
     def without_mode(self, *sequence: str) -> CallbackFunc:
         sender = self.invoke(ime_tool.turnoff_skk, *sequence)
         return sender
 
-    def invoke_emitThen(self, later_ime_status: bool, *sequence: str) -> CallbackFunc:
 
-        def _sender() -> None:
-            status = ime_tool.get_status()
-            if status is None:
-                return
-            seq = list(sequence)
-            if status != later_ime_status:
-                seq.append(ime_tool.SKKKey.toggle_vk)
-            _send_sequence(self._inter_stroke_pause, *seq)
+class SendThen(ThreadedAction):
+    def __init__(
+        self,
+        deferred: Callable,
+        sequence: list[str],
+        inter_stroke_pause: int = 0,
+    ):
+        self.inter_stroke_pause = inter_stroke_pause
+        self.sequence = sequence
+        self.deferred = deferred
 
-        return _sender
+    def run(self) -> None:
+        _send_sequence(self.inter_stroke_pause, *self.sequence)
+
+    def finished(self, _) -> None:
+        self.deferred()
 
 
 class DirectSender:

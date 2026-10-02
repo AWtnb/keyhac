@@ -2,6 +2,7 @@ import bind_app_specific  # ty: ignore[unresolved-import]
 import bind_clipboard  # ty: ignore[unresolved-import]
 import bind_core  # ty: ignore[unresolved-import]
 import bind_ime  # ty: ignore[unresolved-import]
+import bind_input  # ty: ignore[unresolved-import]
 import bind_wnd_activate  # ty: ignore[unresolved-import]
 
 
@@ -26,3 +27,4 @@ def configure(keymap) -> None:
     bind_clipboard.bind(keymap)
     bind_app_specific.bind(keymap)
     bind_wnd_activate.bind(keymap)
+    bind_input.bind(keymap)

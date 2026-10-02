@@ -1,18 +1,21 @@
 from keyhac import ThreadedAction  # ty: ignore[unresolved-import]
-from libs import clipboard, sender
+from libs import clipboard, ime, sender
 from libs._common import delay
+
+
+def _setup(keymap):
+    ime.setup(keymap)
+    sender.setup(keymap)
+    clipboard.setup(keymap)
 
 
 def _bind_browser(keymap) -> None:
     kt = keymap.define_keytable(app="chrome|Google Chrome|firefox|Safari")
     kt["LC-LS-W"] = "A-Left"
 
-    pause = 40
-
-    skk_sender = sender.SKKSender(pause)
     for k in ["F", "K"]:
         key = f"LC-{k}"
-        kt[key] = skk_sender.invoke_emitThen(False, key)
+        kt[key] = sender.SendThen(ime.turnoff_skk, [key], 40)
 
     class LazyBookmark(ThreadedAction):
         def run(self):
@@ -26,7 +29,7 @@ def _bind_browser(keymap) -> None:
 
 def _bind_slack(keymap) -> None:
     kt = keymap.define_keytable(app="slack.exe", class_name="Chrome_WidgetWin_1")
-    kt["C-K"] = sender.SKKSender().invoke_emitThen(False, "C-K")
+    kt["C-K"] = sender.SendThen(ime.turnoff_skk, ["C-K"], 60)
     kt["F3"] = kt["C-K"]
     kt["C-E"] = kt["C-K"]
     kt["F1"] = sender.DirectSender().invoke("S-SemiColon", "Colon")
@@ -54,7 +57,7 @@ def _bind_vscode(keymap) -> None:
         "C-S-Enter",
         "S-Enter",
     ]:
-        kt[key] = sender.SKKSender().invoke_emitThen(False, key)
+        kt[key] = sender.SendThen(ime.turnoff_skk, [key])
 
 
 def _bind_mery(keymap) -> None:
@@ -123,9 +126,8 @@ def _bind_office_excel(keymap) -> None:
 
 
 def bind(keymap):
-    sender.setup(keymap)
-    clipboard.setup(keymap)
 
+    _setup(keymap)
     _bind_browser(keymap)
     _bind_slack(keymap)
     _bind_vscode(keymap)
