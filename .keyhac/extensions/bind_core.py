@@ -1,3 +1,8 @@
+import os
+import shutil
+import subprocess
+import time
+
 from keyhac import (  # ty: ignore[unresolved-import]
     MouseHorizontalWheel,
     MouseWheel,
@@ -95,3 +100,41 @@ def bind(keymap) -> None:
             keymap.configure()
 
     kt["U1-F12"] = LazyReload()
+
+    class CarefulQuit(ThreadedAction):
+        def run(self) -> None:
+            time.sleep(0.25)
+
+        def finished(self, _) -> None:
+            with keymap.get_input_context() as ctx:
+                ctx.send_key("A-F4")
+
+    kt["LC-Q"] = CarefulQuit()
+
+    class OpenConfigRepo(ThreadedAction):
+        def run(self) -> None:
+            config_path = os.path.expandvars(r"${USERPROFILE}\.keyhac")
+            if not os.path.exists(config_path):
+                print(f"config not found: {config_path}")
+                return
+
+            dir_path = config_path
+            if (real_path := os.path.realpath(config_path)) != dir_path:
+                dir_path = os.path.dirname(real_path)
+
+            vscode_path = shutil.which("code")
+
+            cmd = ["explorer.exe", dir_path]
+            if vscode_path is not None:
+                cmd[0] = vscode_path
+
+            try:
+                subprocess.run(
+                    cmd, creationflags=subprocess.CREATE_NO_WINDOW, check=False
+                )
+            except Exception as e:  # noqa: BLE001
+                print(e)
+
+    keymap.editor = lambda _: OpenConfigRepo()()
+
+    kt["U0-F12"] = OpenConfigRepo()
