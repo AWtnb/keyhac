@@ -111,7 +111,7 @@ def bind(keymap) -> None:
 
     kt["LC-Q"] = CarefulQuit()
 
-    class OpenConfigRepo(ThreadedAction):
+    class ConfigRepoLauncher(ThreadedAction):
         def run(self) -> None:
             config_path = os.path.expandvars(r"${USERPROFILE}\.keyhac")
             if not os.path.exists(config_path):
@@ -135,6 +135,7 @@ def bind(keymap) -> None:
             except Exception as e:  # noqa: BLE001
                 print(e)
 
-    keymap.editor = lambda _: OpenConfigRepo()()
+    config_launcher = ConfigRepoLauncher()
+    keymap.editor = lambda _: config_launcher()
 
-    kt["U0-F12"] = OpenConfigRepo()
+    kt["U0-F12"] = config_launcher
