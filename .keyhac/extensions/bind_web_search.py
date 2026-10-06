@@ -1,8 +1,13 @@
+import fnmatch
 import re
 import urllib.parse
 from collections.abc import Callable
+from pathlib import Path
 
+from keyhac import ActivateApplication, ThreadedAction  # ty: ignore[unresolved-import]
 from libs import clipboard
+from libs._common import delay
+from libs.system_browser import get_browser_path
 from libs.web_search import cleanup_web_search_query
 
 REG_HIRAGANA = re.compile(r"[\u3041-\u3093]")
@@ -72,3 +77,41 @@ def bind(keymap) -> None:
 
             trigger_key = shift_key + ctrl_key + "U0-S"
             kt[trigger_key] = kt_search
+
+    BROWSER_INFO = {}
+    if (broswer_path := get_browser_path()) is None:
+        BROWSER_INFO["app"] = "chrome|Google Chrome|firefox|Safari"
+        BROWSER_INFO["path"] = None
+    else:
+        BROWSER_INFO["app"] = Path(broswer_path).name
+        BROWSER_INFO["path"] = broswer_path
+
+    class SearchOnBrowser(ThreadedAction):
+        def __init__(self) -> None:
+            self.is_browser_in_use = False
+            self.launcher = ActivateApplication(
+                app=BROWSER_INFO["app"], launch=BROWSER_INFO["path"]
+            )
+
+        def starting(self) -> None:
+            wnd = keymap.get_active_window()
+            if wnd is None:
+                return
+
+            app_name = wnd.app_name
+            if app_name is None:
+                return
+
+            assert BROWSER_INFO["app"] is not None
+            self.is_browser_in_use = fnmatch.fnmatch(app_name, BROWSER_INFO["app"])
+
+        def run(self) -> None:
+            if not self.is_browser_in_use:
+                self.launcher()
+                delay(100)
+
+        def finished(self, _) -> None:
+            with keymap.get_input_context() as ctx:
+                ctx.send_key("C-T")
+
+    kt["U0-Q"] = SearchOnBrowser()
