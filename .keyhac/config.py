@@ -4,6 +4,7 @@ import bind_core  # ty: ignore[unresolved-import]
 import bind_ime  # ty: ignore[unresolved-import]
 import bind_input  # ty: ignore[unresolved-import]
 import bind_mouse_cursor  # ty: ignore[unresolved-import]
+import bind_web_search  # ty: ignore[unresolved-import]
 import bind_wnd_activate  # ty: ignore[unresolved-import]
 
 
@@ -23,10 +24,14 @@ def configure(keymap) -> None:
     keymap.clipboard_history.max_data_size = 10 * 1024 * 1024
 
     # key bingings
-    bind_core.bind(keymap)
-    bind_ime.bind(keymap)
-    bind_clipboard.bind(keymap)
-    bind_app_specific.bind(keymap)
-    bind_wnd_activate.bind(keymap)
-    bind_input.bind(keymap)
-    bind_mouse_cursor.bind(keymap)
+    for module in [
+        bind_app_specific,
+        bind_clipboard,
+        bind_core,
+        bind_ime,
+        bind_input,
+        bind_mouse_cursor,
+        bind_web_search,
+        bind_wnd_activate,
+    ]:
+        module.bind(keymap)
