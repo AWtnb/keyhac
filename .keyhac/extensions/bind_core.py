@@ -59,10 +59,6 @@ def bind(keymap) -> None:
             kt[f"{mod_key}U0-{key}"] = mod_key + value
 
     for key, value in {
-        # focus taskbar
-        "LC-U1-T": ("LWin-T"),
-        # delete around cursor
-        "U0-Back": ("Back", "Delete"),
         # delete to bol / eol
         "S-U0-B": ("S-Home", "Delete"),
         "S-U0-D": ("S-End", "Delete"),
