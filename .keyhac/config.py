@@ -6,6 +6,7 @@ import bind_input  # ty: ignore[unresolved-import]
 import bind_mouse_cursor  # ty: ignore[unresolved-import]
 import bind_web_search  # ty: ignore[unresolved-import]
 import bind_wnd_activate  # ty: ignore[unresolved-import]
+import bind_wnd_snap  # ty: ignore[unresolved-import]
 
 
 def configure(keymap) -> None:
@@ -33,5 +34,6 @@ def configure(keymap) -> None:
         bind_mouse_cursor,
         bind_web_search,
         bind_wnd_activate,
+        bind_wnd_snap,
     ]:
         module.bind(keymap)
