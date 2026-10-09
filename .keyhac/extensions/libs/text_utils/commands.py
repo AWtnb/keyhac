@@ -31,7 +31,7 @@ from .misc import (
 )
 from .punctuation import KANGXI_RADICAL_MAPPING, RADICAL_MAPPING
 
-CLIPBOARD_FORMAT_COMMANDS = {
+CLIPBOARD_FORMAT_COMMANDS: dict[str, Callable[[str], str]] = {
     "to codeblock": lambda c: f"\n\n```\n{c.rstrip()}\n```\n\n",
     "to codeblock-ai-safe": lambda c: (
         f"```\n{c.rstrip().replace('@', '＠')}\n```\n（アットマークは全角に変換済）\n\n"
@@ -48,7 +48,7 @@ CLIPBOARD_FORMAT_COMMANDS = {
     "insert blank line": insert_blank_line,
     "remove blank line": skip_blank_line,
     "fix dumb quotation": fix_dumb_quotation,
-    "fix KANGXI RADICALS": lambda s: s.transrate(
+    "fix KANGXI RADICALS": lambda s: s.translate(
         str.maketrans(KANGXI_RADICAL_MAPPING | RADICAL_MAPPING)
     ),
     "fix paren inside bracket": fix_paren_inside_bracket,
