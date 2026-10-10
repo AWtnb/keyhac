@@ -50,14 +50,16 @@ def bind(keymap) -> None:
             half_w = w // 2
             half_h = h // 2
 
-            if half_h < self.min_pixel or half_w < self.min_pixel:
+            if (self.direction in ("left", "right") and half_w < self.min_pixel) or (
+                self.direction in ("up", "down") and half_h < self.min_pixel
+            ):
                 return
 
             new_frame = current_frame
             if self.direction == "left":
                 new_frame = (x, y, half_w, h)
             elif self.direction == "right":
-                new_frame = (x, y + half_w, half_w, h)
+                new_frame = (x + half_w, y, half_w, h)
             elif self.direction == "up":
                 new_frame = (x, y, w, half_h)
             elif self.direction == "down":
