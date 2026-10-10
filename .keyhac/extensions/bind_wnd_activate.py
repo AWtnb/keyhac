@@ -73,8 +73,7 @@ if (browser_path := get_browser_path()) is not None:
     MULTI_KEY_MAPPING["Space"] = LaunchEntry(Path(browser_path).name, browser_path)
 
 
-def bind(keymap) -> None:
-    kt = keymap.define_keytable(focus_path_pattern="*")
+def bind(keymap, kt) -> None:
 
     for key, entry in SINGLE_KEY_MAPPING.items():
         kt[key] = ActivateApplication(**entry.as_params())

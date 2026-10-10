@@ -15,11 +15,9 @@ from libs.text_utils.misc import (
 )
 
 
-def bind(keymap) -> None:
+def bind(keymap, kt) -> None:
 
     clipboard.setup(keymap)
-
-    kt = keymap.define_keytable(focus_path_pattern="*")
 
     kt["U0-V"] = clipboard.Paste()
 

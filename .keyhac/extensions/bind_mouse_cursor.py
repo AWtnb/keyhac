@@ -1,10 +1,8 @@
 from libs import mouse_cursor
 
 
-def bind(keymap) -> None:
+def bind(keymap, kt) -> None:
     mouse_cursor.setup(keymap)
-
-    kt = keymap.define_keytable(focus_path_pattern="*")
 
     def fetch_cursor() -> None:
         x, y, w, h = keymap.get_active_window().get_frame()

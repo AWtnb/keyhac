@@ -16,8 +16,7 @@ from keyhac import (  # ty: ignore[unresolved-import]
 )
 
 
-def bind(keymap) -> None:
-    kt = keymap.define_keytable(focus_path_pattern="*")
+def bind(keymap, kt) -> None:
 
     def clipboard_history():
         chooser_action = ShowCandidates(

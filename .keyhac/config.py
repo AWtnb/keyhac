@@ -24,11 +24,11 @@ def configure(keymap) -> None:
     keymap.clipboard_history.max_items = 500
     keymap.clipboard_history.max_data_size = 10 * 1024 * 1024
 
-    # key bingings
+    # key bingings for every window
+    kt_global = keymap.define_keytable(focus_path_pattern="*")
     for module in [
-        bind_app_specific,
-        bind_clipboard,
         bind_core,
+        bind_clipboard,
         bind_ime,
         bind_input,
         bind_mouse_cursor,
@@ -36,4 +36,7 @@ def configure(keymap) -> None:
         bind_wnd_activate,
         bind_wnd_snap,
     ]:
-        module.bind(keymap)
+        module.bind(keymap, kt_global)
+
+    # key bingings for specific app window
+    bind_app_specific.bind(keymap)

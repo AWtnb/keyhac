@@ -61,7 +61,7 @@ def _bind_vscode(keymap) -> None:
 
 
 def _bind_mery(keymap) -> None:
-    kt = keymap.define_keytable(app="Mery.exe")
+    kt = keymap.define_keytable(app="Mery")
 
     for key, value in {
         "LA-LC-J": "LA-LC-N",
@@ -77,9 +77,7 @@ def _bind_mery(keymap) -> None:
 
 
 def _bind_smooth_csv(keymap) -> None:
-    kt = keymap.define_keytable(
-        focus_path_pattern="/Application(smoothcsv-app)/Window(SmoothCSV)/*"
-    )
+    kt = keymap.define_keytable(app="smoothcsv-app")
     kt["S-Space"] = sender.DirectSender().invoke("S-Space")
 
     def _unselect(_) -> None:
@@ -125,8 +123,7 @@ def _bind_office_excel(keymap) -> None:
     kt["C-A"] = select_all
 
 
-def bind(keymap):
-
+def bind(keymap) -> None:
     _setup(keymap)
     _bind_browser(keymap)
     _bind_slack(keymap)

@@ -1,8 +1,7 @@
 from keyhac import SnapWindow  # ty: ignore[unresolved-import]
 
 
-def bind(keymap) -> None:
-    kt = keymap.define_keytable(focus_path_pattern="*")
+def bind(keymap, kt) -> None:
     kt["U1-H"] = "LWin-Left"
     kt["U1-L"] = "LWin-Right"
 

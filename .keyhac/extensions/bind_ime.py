@@ -1,10 +1,8 @@
 import libs.ime as ime_tool
 
 
-def bind(keymap) -> None:
+def bind(keymap, kt) -> None:
     ime_tool.setup(keymap)
-
-    kt = keymap.define_keytable(focus_path_pattern="*")
     for key, func in {
         "U1-J": ime_tool.to_skk_kana,
         "U0-F7": ime_tool.to_skk_kata,

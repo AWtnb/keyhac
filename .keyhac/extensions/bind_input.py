@@ -1,11 +1,9 @@
 from libs import ime, sender
 
 
-def bind(keymap) -> None:
+def bind(keymap, kt) -> None:
     ime.setup(keymap)
     sender.setup(keymap)
-
-    kt = keymap.define_keytable(focus_path_pattern="*")
 
     base_sender = sender.SKKSender()
     kt["U1-4"] = base_sender.under_convmode("S-4", "Tab")

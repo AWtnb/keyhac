@@ -34,7 +34,7 @@ MAPPING = {
 }
 
 
-def bind(keymap) -> None:
+def bind(keymap, kt) -> None:
     clipboard.setup(keymap)
 
     def build_web_searcher(
@@ -56,8 +56,6 @@ def bind(keymap) -> None:
             keymap.app_control.open_url(url)
 
         return _searcher
-
-    kt = keymap.define_keytable(focus_path_pattern="*")
 
     for shift_key in ("", "S-"):
         for ctrl_key in ("", "C-"):
