@@ -6,7 +6,7 @@ def bind(keymap) -> None:
     kt["U1-H"] = "LWin-Left"
     kt["U1-L"] = "LWin-Right"
 
-    kt_snap = keymap.define_keytable()
+    kt_snap = keymap.define_keytable(name="Resize active window")
     kt_snap["U0-L"] = "LWin-Shift-Right"
     kt_snap["U0-H"] = "LWin-Shift-Left"
 
@@ -32,18 +32,38 @@ def bind(keymap) -> None:
         }.items():
             kt_snap[mod + key] = SnapWindow(position=position, ratio=ratio)
 
-    class HalfSizer:
+    class WindowHalfResizer:
         def __init__(self, direction: str) -> None:
             if direction not in ("left", "right", "up", "down"):
                 raise ValueError(f"invalid direction: {direction}")
 
             self.direction = direction
+            self.min_pixel = 200
 
         def __call__(self) -> None:
             active_wnd = keymap.get_active_window()
             if active_wnd is None:
                 return
-            print(active_wnd.get_frame())
+
+            current_frame = active_wnd.get_frame()
+            x, y, w, h = current_frame
+            half_w = w // 2
+            half_h = h // 2
+
+            if half_h < self.min_pixel or half_w < self.min_pixel:
+                return
+
+            new_frame = current_frame
+            if self.direction == "left":
+                new_frame = (x, y, half_w, h)
+            elif self.direction == "right":
+                new_frame = (x, y + half_w, half_w, h)
+            elif self.direction == "up":
+                new_frame = (x, y, w, half_h)
+            elif self.direction == "down":
+                new_frame = (x, y + half_h, w, half_h)
+
+            active_wnd.set_frame(*new_frame)
 
     for key, direction in {
         "H": "left",
@@ -51,6 +71,6 @@ def bind(keymap) -> None:
         "J": "down",
         "K": "up",
     }.items():
-        kt_snap[f"U1-{key}"] = HalfSizer(direction)
+        kt_snap[f"U1-{key}"] = WindowHalfResizer(direction)
 
     kt["U1-M"] = kt_snap
