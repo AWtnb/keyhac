@@ -11,7 +11,7 @@ def bind(keymap) -> None:
 
     kt["LC-LS-W"] = "A-Left"
 
-    for k in ["F", "K"]:
+    for k in ["F", "K", "L"]:
         key = f"LC-{k}"
         kt[key] = sender.SendThen(ime.turnoff_skk, [key], 40)
 
