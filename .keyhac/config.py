@@ -1,11 +1,11 @@
-import bind_clipboard  # ty: ignore[unresolved-import]
-import bind_core  # ty: ignore[unresolved-import]
-import bind_ime  # ty: ignore[unresolved-import]
-import bind_input  # ty: ignore[unresolved-import]
-import bind_mouse_cursor  # ty: ignore[unresolved-import]
-import bind_web_search  # ty: ignore[unresolved-import]
-import bind_wnd_activate  # ty: ignore[unresolved-import]
-import bind_wnd_snap  # ty: ignore[unresolved-import]
+import clipboard  # ty: ignore[unresolved-import]
+import core  # ty: ignore[unresolved-import]
+import ime  # ty: ignore[unresolved-import]
+import mouse_cursor  # ty: ignore[unresolved-import]
+import sender  # ty: ignore[unresolved-import]
+import web_search  # ty: ignore[unresolved-import]
+import wnd_activate  # ty: ignore[unresolved-import]
+import wnd_snap  # ty: ignore[unresolved-import]
 from keytables import (  # ty: ignore[unresolved-import]
     browser,
     excel,
@@ -35,14 +35,14 @@ def configure(keymap) -> None:
     # key bingings for every window
     kt_global = keymap.define_keytable(focus_path_pattern="*")
     for module in [
-        bind_core,
-        bind_clipboard,
-        bind_ime,
-        bind_input,
-        bind_mouse_cursor,
-        bind_web_search,
-        bind_wnd_activate,
-        bind_wnd_snap,
+        core,
+        clipboard,
+        ime,
+        sender,
+        mouse_cursor,
+        web_search,
+        wnd_activate,
+        wnd_snap,
     ]:
         module.bind(keymap, kt_global)
 
