@@ -23,13 +23,12 @@ def bind(keymap, kt) -> None:
         candidates = []
         frames = keymap.screen_work_frames()
         for x, y, w, h in frames:
-            for n in (1, 3):
-                candidates.append(
-                    (
-                        x + (w // 4) * n,
-                        y + (h // 2),
-                    )
+            candidates.append(
+                (
+                    x + (w // 2),
+                    y + (h // 2),
                 )
+            )
 
         try:
             idx = (candidates.index(current) + 1) % len(candidates)
@@ -38,4 +37,4 @@ def bind(keymap, kt) -> None:
 
         mouse_cursor.set_position(*candidates[idx])
 
-    kt["O-LCtrl"] = snap_cycle
+    kt["O-RCtrl"] = snap_cycle
