@@ -20,9 +20,9 @@ def bind(keymap, kt) -> None:
 
     def clipboard_history():
         chooser_action = ShowCandidates(
-            [ChooserPage("Clipboard History", ClipboardHistorySource())]
+            sources=[ChooserPage("Clipboard History", ClipboardHistorySource())],
+            activates=True,
         )
-        chooser_action.activates = True
         chooser_action()
 
     kt["LC-LS-X"] = clipboard_history
