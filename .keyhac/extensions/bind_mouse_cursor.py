@@ -5,7 +5,10 @@ def bind(keymap, kt) -> None:
     mouse_cursor.setup(keymap)
 
     def fetch_cursor() -> None:
-        x, y, w, h = keymap.get_active_window().get_frame()
+        wnd = keymap.get_active_window()
+        if wnd is None:
+            return
+        x, y, w, h = wnd.get_frame()
         center_x = x + w // 2
         center_y = y + h // 2
         mouse_cursor.set_position(center_x, center_y)

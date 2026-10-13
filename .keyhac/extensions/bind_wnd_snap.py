@@ -5,7 +5,7 @@ def bind(keymap, kt) -> None:
     kt["U1-H"] = "LWin-Left"
     kt["U1-L"] = "LWin-Right"
 
-    kt_snap = keymap.define_keytable(name="Resize active window")
+    kt_snap = keymap.define_keytable(name="Snap active window")
     kt_snap["U0-L"] = "LWin-Shift-Right"
     kt_snap["U0-H"] = "LWin-Shift-Left"
 
@@ -17,6 +17,20 @@ def bind(keymap, kt) -> None:
     kt_snap["N"] = minimize
 
     kt_snap["X"] = SnapWindow(position="full")  # TODO: maximize
+
+    class SnapToScreen:
+        def __init__(self, screen_frame: tuple[int, int, int, int]) -> None:
+            self.target_frame = screen_frame
+
+        def __call__(self) -> None:
+            active_wnd = keymap.get_active_window()
+            if active_wnd is None:
+                return
+            active_wnd.set_frame(*self.target_frame)
+
+    SCREEN_FRAMES = keymap.screen_work_frames()
+    for i, frame in enumerate(SCREEN_FRAMES):
+        kt_snap[str(i)] = SnapToScreen(frame)
 
     for mod, ratio in {
         "": 1 / 2,
