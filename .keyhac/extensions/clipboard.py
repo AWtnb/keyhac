@@ -42,9 +42,8 @@ def bind(keymap, kt) -> None:
     kt["LC-U1-Q"] = clipboard.Paste(format_func=as_single_quoted_line)
 
     # paste as code
-    kt["U0-S-AtMark"] = keymap.define_keytable(name="paste as code")
-    kt["U0-S-AtMark"]["C"] = clipboard.Paste(None, lambda s: f"`{s.strip()}`")
-    kt["U0-S-AtMark"]["S-C"] = clipboard.Paste(None, lambda s: f"\n\n```\n{s}\n```\n\n")
+    kt["U0-C-AtMark"] = clipboard.Paste(None, lambda s: f"`{s.strip()}`")
+    kt["U0-S-AtMark"] = clipboard.Paste(None, lambda s: f"\n\n```\n{s}\n```\n\n")
 
     # paste as fullwidth / halfwidth
     kt["U1-W"] = clipboard.Paste(format_func=lambda s: to_full_letter(s, True))
