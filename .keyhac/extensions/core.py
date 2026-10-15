@@ -4,13 +4,11 @@ import subprocess
 import time
 
 from keyhac import (  # ty: ignore[unresolved-import]
-    ChooserPage,
-    ClipboardHistorySource,
     MouseHorizontalWheel,
     MouseWheel,
     MoveWindow,
     PlaybackRecordedKeys,
-    ShowCandidates,
+    ShowClipboardHistory,
     ThreadedAction,
     ToggleRecordingKeys,
 )
@@ -18,14 +16,8 @@ from keyhac import (  # ty: ignore[unresolved-import]
 
 def bind(keymap, kt) -> None:
 
-    def clipboard_history():
-        chooser_action = ShowCandidates(
-            sources=[ChooserPage("Clipboard History", ClipboardHistorySource())],
-            activates=True,
-        )
-        chooser_action()
-
-    kt["LC-LS-X"] = clipboard_history
+    # clipboard history
+    kt["LC-LS-X"] = ShowClipboardHistory()
 
     # keyboard macro
     kt["U0-0"] = ToggleRecordingKeys()
