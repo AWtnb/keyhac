@@ -16,7 +16,12 @@ def bind(keymap, kt) -> None:
 
     kt_snap["N"] = minimize
 
-    kt_snap["X"] = SnapWindow(position="full")  # TODO: maximize
+    def maximize() -> None:
+        wnd = keymap.get_active_window()
+        if wnd:
+            wnd.maximize()
+
+    kt_snap["X"] = maximize
 
     class SnapToScreen:
         def __init__(self, screen_frame: tuple[int, int, int, int]) -> None:
@@ -26,6 +31,8 @@ def bind(keymap, kt) -> None:
             active_wnd = keymap.get_active_window()
             if active_wnd is None:
                 return
+            if active_wnd.is_maximized():
+                active_wnd.restore()
             active_wnd.set_frame(*self.target_frame)
 
     SCREEN_FRAMES = keymap.screen_work_frames()
