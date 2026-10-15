@@ -24,7 +24,7 @@ SINGLE_KEY_MAPPING: dict[str, LaunchEntry] = {
         r"${USERPROFILE}\Personal\portable_apps\cfiler\cfiler.exe",
     ),
     "U1-P": LaunchEntry("SumatraPDF.exe", None),
-    "C-U1-S": LaunchEntry("smoothcsv-app.exe", None),
+    "U1-E": LaunchEntry("smoothcsv-app.exe", None),
     "LC-U1-M": LaunchEntry(
         "Mery.exe",
         r"${LOCALAPPDATA}\Programs\Mery\Mery.exe",
