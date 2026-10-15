@@ -11,3 +11,4 @@ def bind(keymap) -> None:
     kt["F3"] = kt["C-K"]
     kt["C-E"] = kt["C-K"]
     kt["F1"] = sender.DirectSender().invoke("S-SemiColon", "Colon")
+    kt["C-O"] = sender.DirectSender().invoke("C-O")
