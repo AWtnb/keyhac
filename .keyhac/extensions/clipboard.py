@@ -43,7 +43,18 @@ def bind(keymap, kt) -> None:
 
     # paste as code
     kt["U0-C-AtMark"] = clipboard.Paste(None, lambda s: f"`{s.strip()}`")
-    kt["U0-S-AtMark"] = clipboard.Paste(None, lambda s: f"\n\n```\n{s}\n```\n\n")
+
+    def _as_codeblock(s: str) -> str:
+        code = s.rstrip()
+        lines = list(reversed(code.splitlines()))
+        while lines:
+            line = lines.pop()
+            if line.strip():
+                lines.append(line)
+                break
+        return f"\n\n```\n{'\n'.join(reversed(lines))}\n```\n\n"
+
+    kt["U0-S-AtMark"] = clipboard.Paste(None, _as_codeblock)
 
     # paste as fullwidth / halfwidth
     kt["U1-W"] = clipboard.Paste(format_func=lambda s: to_full_letter(s, True))
