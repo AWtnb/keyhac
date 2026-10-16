@@ -1,9 +1,6 @@
-import shutil
-import subprocess
 import webbrowser
-from collections.abc import Callable
 
-from keyhac import ThreadedAction  # ty: ignore[unresolved-import]
+from keyhac import ShowClipboardTools  # ty: ignore[unresolved-import]
 from libs import clipboard
 from libs.text_utils.commands import CLIPBOARD_FORMAT_COMMANDS
 from libs.text_utils.misc import (
@@ -68,43 +65,7 @@ def bind(keymap, kt) -> None:
 
     kt["C-U0-O"] = clipboard.CopyThen(open_selected_url)
 
-    class FuzzyClipboadCommands(ThreadedAction):
-        def run(self) -> Callable | None:
-            if not shutil.which("fzf"):
-                return None
-
-            if not clipboard.get_string():
-                return None
-
-            proc = subprocess.Popen(
-                ["fzf.exe", "--no-mouse", "--margin=1"],
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                encoding="utf-8",
-            )
-            try:
-                if proc.stdin:
-                    for k in CLIPBOARD_FORMAT_COMMANDS:
-                        proc.stdin.write(k + "\n")
-                    proc.stdin.close()
-            except Exception:  # noqa: BLE001
-                print("Failed to write to fzf stdin")
-                return None
-
-            result, err = proc.communicate()
-            if proc.returncode != 0:
-                if err:
-                    print(err)
-                return None
-            result = result.strip()
-            if len(result) < 1:
-                return None
-
-            return CLIPBOARD_FORMAT_COMMANDS.get(result)
-
-        def finished(self, selected: Callable | None) -> None:
-            if selected is not None:
-                clipboard.Paste(None, selected)()
-
-    kt["U1-Z"] = FuzzyClipboadCommands()
+    CLIPBOAR_TOOL_MENU = [
+        ("", name, func) for name, func in CLIPBOARD_FORMAT_COMMANDS.items()
+    ]
+    kt["U1-Z"] = ShowClipboardTools(CLIPBOAR_TOOL_MENU)
